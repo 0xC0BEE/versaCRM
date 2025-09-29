@@ -1,0 +1,5 @@
+{
+  "name": "VersaCRM - Foundation",
+  "description": "A foundational, multi-tenant CRM application where admins can select an industry to dynamically load industry-specific fields, workflows, and dashboards.",
+  "requestFramePermissions": []
+}
