@@ -1,166 +1,185 @@
-// FIX: Imported correct types from types.ts
-import { ReportType, AnyReportData, Industry, AnyContact, Product, Transaction, User, Task, Interaction, Organization } from '../types';
-import { isWithinInterval } from 'date-fns';
+import { AnyContact, Product, User, Task, ReportType, AnyReportData, SalesReportData, InventoryReportData, FinancialReportData, ContactsReportData, TeamReportData, DashboardData, Interaction } from '../types';
+import { isWithinInterval, subDays } from 'date-fns';
 
-type MockDataStore = {
-    organizations: Organization[];
-    contacts: AnyContact[];
-    products: Product[];
-    users: User[];
-    tasks: Task[];
-    interactions: Interaction[];
+export const generateDashboardData = (
+    dateRange: { start: Date; end: Date },
+    contacts: AnyContact[],
+    interactions: Interaction[]
+): DashboardData => {
+    
+    const kpis = {
+        totalContacts: contacts.length,
+        newContacts: contacts.filter(c => isWithinInterval(new Date(c.createdAt), dateRange)).length,
+        upcomingAppointments: interactions.filter(i => (i.type === 'Appointment' || i.type === 'Meeting') && new Date(i.date) > new Date()).length,
+    };
+    
+    const charts = {
+        contactsByStatus: Object.entries(contacts.reduce((acc, c) => {
+            acc[c.status] = (acc[c.status] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>)).map(([name, value]) => ({ name, value })),
+        appointmentsByMonth: [...Array(12)].map((_, i) => ({
+            name: new Date(0, i).toLocaleString('default', { month: 'short' }),
+            value: interactions.filter(item => (item.type === 'Appointment' || item.type === 'Meeting') && new Date(item.date).getMonth() === i).length,
+        })),
+    };
+    
+    return { kpis, charts };
 };
+
 
 export const generateReportData = (
-    store: MockDataStore,
     reportType: ReportType,
     dateRange: { start: Date; end: Date },
-    industry: Industry,
-    organizationId?: string
+    contacts: AnyContact[],
+    products: Product[],
+    team: User[],
+    tasks: Task[]
 ): AnyReportData => {
-
-    // Filter all data by organization or industry
-    let relevantOrgIds: string[];
-    if (organizationId) {
-        relevantOrgIds = [organizationId];
-    } else {
-        relevantOrgIds = store.organizations
-            .filter(o => o.industry === industry)
-            .map(o => o.id);
-    }
-    
-    const industryContacts = store.contacts.filter(c => relevantOrgIds.includes(c.organizationId));
-    const industryProducts = store.products.filter(p => relevantOrgIds.includes(p.organizationId));
-    const industryUsers = store.users.filter(u => u.organizationId && relevantOrgIds.includes(u.organizationId));
-    const industryInteractions = store.interactions.filter(i => relevantOrgIds.includes(i.organizationId));
-    const industryUserIds = industryUsers.map(u => u.id);
-    const industryTasks = store.tasks.filter(t => industryUserIds.includes(t.userId));
-
-
-    const contactsInDateRange = industryContacts.filter(c =>
-        isWithinInterval(new Date(c.createdAt), dateRange)
-    );
-
     switch (reportType) {
-        case 'sales': {
-            const ordersInDateRange = industryContacts
-                .flatMap(c => c.orders || [])
-                .filter(o => isWithinInterval(new Date(o.orderDate), dateRange) && o.status === 'Completed');
-            
-            const totalRevenue = ordersInDateRange.reduce((sum, o) => sum + o.total, 0);
-            const salesByProduct: { [key: string]: { name: string, quantity: number, revenue: number } } = {};
-
-            ordersInDateRange.forEach(order => {
-                order.lineItems.forEach(item => {
-                    const product = industryProducts.find(p => p.id === item.productId);
-                    const productName = product ? product.name : item.description;
-                    if (!salesByProduct[productName]) {
-                        salesByProduct[productName] = { name: productName, quantity: 0, revenue: 0 };
-                    }
-                    salesByProduct[productName].quantity += item.quantity;
-                    salesByProduct[productName].revenue += item.quantity * item.unitPrice;
-                });
-            });
-
-            return {
-                totalRevenue,
-                totalOrders: ordersInDateRange.length,
-                averageOrderValue: ordersInDateRange.length > 0 ? totalRevenue / ordersInDateRange.length : 0,
-                salesByProduct: Object.values(salesByProduct),
-            };
-        }
-        case 'inventory': {
-            return {
-                totalProducts: industryProducts.length,
-                totalValue: industryProducts.reduce((sum, p) => sum + (p.costPrice * p.stockLevel), 0),
-                lowStockItems: industryProducts.filter(p => p.stockLevel < 100),
-                stockByCategory: industryProducts.reduce((acc, p) => {
-                    const category = acc.find(item => item.name === p.category);
-                    if (category) {
-                        category.quantity += p.stockLevel;
-                    } else {
-                        acc.push({ name: p.category, quantity: p.stockLevel });
-                    }
-                    return acc;
-                }, [] as { name: string, quantity: number }[]),
-            };
-        }
-        case 'financial': {
-             const transactionsInDateRange = industryContacts
-                .flatMap(c => c.transactions || [])
-                .filter(t => isWithinInterval(new Date(t.date), dateRange));
-            
-            const totalCharges = transactionsInDateRange.filter(t => t.type === 'Charge').reduce((sum, t) => sum + t.amount, 0);
-            const totalPayments = transactionsInDateRange.filter(t => t.type === 'Payment').reduce((sum, t) => sum + t.amount, 0);
-
-            return {
-                totalCharges,
-                totalPayments,
-                netBalance: totalCharges - totalPayments,
-                paymentsByMethod: transactionsInDateRange
-                    .filter(t => t.type === 'Payment')
-                    .reduce((acc, t) => {
-                        const method = acc.find(item => item.name === t.method);
-                        if (method) {
-                            method.amount += t.amount;
-                        } else {
-                            acc.push({ name: t.method, amount: t.amount });
-                        }
-                        return acc;
-                    }, [] as { name: Transaction['method'], amount: number }[]),
-            };
-        }
-        case 'contacts': {
-            return {
-                totalContacts: industryContacts.length,
-                newContacts: contactsInDateRange.length,
-                contactsByStatus: industryContacts.reduce((acc, c) => {
-                    const status = acc.find(item => item.name === c.status);
-                    if (status) {
-                        status.count++;
-                    } else {
-                        acc.push({ name: c.status, count: 1 });
-                    }
-                    return acc;
-                }, [] as { name: string, count: number }[]),
-                contactsByLeadSource: industryContacts.reduce((acc, c) => {
-                    const source = acc.find(item => item.name === c.leadSource);
-                    if (source) {
-                        source.count++;
-                    } else {
-                        acc.push({ name: c.leadSource, count: 1 });
-                    }
-                    return acc;
-                }, [] as { name: string, count: number }[]),
-            };
-        }
-        case 'team': {
-            return {
-                teamPerformance: industryUsers
-                .filter(u => u.role === 'Team Member' || u.role === 'Organization Admin')
-                .map(user => {
-                    const userInteractions = industryInteractions.filter(i => i.userId === user.id && isWithinInterval(new Date(i.date), dateRange));
-                    const userTasks = industryTasks.filter(t => t.userId === user.id && isWithinInterval(new Date(t.dueDate), dateRange));
-                    
-                    const interactedContactIds = [...new Set(userInteractions.map(i => i.contactId))];
-                    
-                    const userOrders = industryContacts
-                        .filter(c => interactedContactIds.includes(c.id))
-                        .flatMap(c => c.orders || [])
-                        .filter(o => isWithinInterval(new Date(o.orderDate), dateRange));
-
-                    return {
-                        teamMemberId: user.id,
-                        teamMemberName: user.name,
-                        teamMemberRole: user.role,
-                        appointments: userInteractions.filter(i => i.type === 'Meeting' || i.type === 'Appointment').length,
-                        tasks: userTasks.length,
-                        totalRevenue: userOrders.reduce((sum, o) => sum + o.total, 0),
-                    }
-                })
-            }
-        }
+        case 'sales':
+            return generateSalesReport(dateRange, contacts);
+        case 'inventory':
+            return generateInventoryReport(products);
+        case 'financial':
+            return generateFinancialReport(dateRange, contacts);
+        case 'contacts':
+            return generateContactsReport(dateRange, contacts);
+        case 'team':
+            return generateTeamReport(dateRange, contacts, team, tasks);
         default:
-            throw new Error(`Report type "${reportType}" not recognized.`);
+            throw new Error(`Unknown report type: ${reportType}`);
     }
 };
+
+function generateSalesReport(dateRange: { start: Date; end: Date }, contacts: AnyContact[]): SalesReportData {
+    const ordersInPeriod = contacts.flatMap(c => c.orders)
+        .filter(o => o.status === 'Completed' && isWithinInterval(new Date(o.orderDate), dateRange));
+
+    const totalRevenue = ordersInPeriod.reduce((sum, order) => sum + order.total, 0);
+    const totalOrders = ordersInPeriod.length;
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    const salesByProduct: Record<string, { name: string; quantity: number; revenue: number }> = {};
+    ordersInPeriod.forEach(order => {
+        order.lineItems.forEach(item => {
+            if (!salesByProduct[item.productId]) {
+                salesByProduct[item.productId] = { name: item.description, quantity: 0, revenue: 0 };
+            }
+            salesByProduct[item.productId].quantity += item.quantity;
+            salesByProduct[item.productId].revenue += item.quantity * item.unitPrice;
+        });
+    });
+
+    return {
+        totalRevenue,
+        totalOrders,
+        averageOrderValue,
+        salesByProduct: Object.values(salesByProduct).sort((a, b) => b.revenue - a.revenue),
+    };
+}
+
+function generateInventoryReport(products: Product[]): InventoryReportData {
+    const totalProducts = products.length;
+    const totalValue = products.reduce((sum, p) => sum + (p.costPrice * p.stockLevel), 0);
+    const lowStockItems = products.filter(p => p.stockLevel < 100).map(({ id, name, sku, stockLevel }) => ({ id, name, sku, stockLevel }));
+    
+    const stockByCategory: Record<string, { name: string; quantity: number }> = {};
+    products.forEach(p => {
+        const category = p.category || 'Uncategorized';
+        if (!stockByCategory[category]) {
+            stockByCategory[category] = { name: category, quantity: 0 };
+        }
+        stockByCategory[category].quantity += p.stockLevel;
+    });
+
+    return {
+        totalProducts,
+        totalValue,
+        lowStockItems,
+        stockByCategory: Object.values(stockByCategory),
+    };
+}
+
+function generateFinancialReport(dateRange: { start: Date; end: Date }, contacts: AnyContact[]): FinancialReportData {
+    const transactionsInPeriod = contacts.flatMap(c => c.transactions)
+        .filter(t => isWithinInterval(new Date(t.date), dateRange));
+
+    const totalCharges = transactionsInPeriod
+        .filter(t => t.type === 'Charge')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+    const totalPayments = transactionsInPeriod
+        .filter(t => t.type === 'Payment' || t.type === 'Credit')
+        .reduce((sum, t) => sum + t.amount, 0);
+    
+    const totalRefunds = transactionsInPeriod
+        .filter(t => t.type === 'Refund')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+    const netBalance = totalCharges - (totalPayments - totalRefunds);
+
+    const paymentsByMethod: Record<string, { name: string; amount: number }> = {};
+    transactionsInPeriod.filter(t => t.type === 'Payment').forEach(t => {
+        if (!paymentsByMethod[t.method]) {
+            paymentsByMethod[t.method] = { name: t.method, amount: 0 };
+        }
+        paymentsByMethod[t.method].amount += t.amount;
+    });
+
+    return {
+        totalCharges,
+        totalPayments,
+        netBalance,
+        paymentsByMethod: Object.values(paymentsByMethod),
+    };
+}
+
+function generateContactsReport(dateRange: { start: Date; end: Date }, contacts: AnyContact[]): ContactsReportData {
+    const totalContacts = contacts.length;
+    const newContacts = contacts.filter(c => isWithinInterval(new Date(c.createdAt), dateRange)).length;
+    
+    const contactsByStatus: Record<string, { name: string; count: number }> = {};
+    contacts.forEach(c => {
+        if (!contactsByStatus[c.status]) {
+            contactsByStatus[c.status] = { name: c.status, count: 0 };
+        }
+        contactsByStatus[c.status].count++;
+    });
+    
+    const contactsByLeadSource: Record<string, { name: string; count: number }> = {};
+    contacts.forEach(c => {
+        if (!contactsByLeadSource[c.leadSource]) {
+            contactsByLeadSource[c.leadSource] = { name: c.leadSource, count: 0 };
+        }
+        contactsByLeadSource[c.leadSource].count++;
+    });
+
+    return {
+        totalContacts,
+        newContacts,
+        contactsByStatus: Object.values(contactsByStatus),
+        contactsByLeadSource: Object.values(contactsByLeadSource),
+    };
+}
+
+function generateTeamReport(dateRange: { start: Date; end: Date }, contacts: AnyContact[], team: User[], tasks: Task[]): TeamReportData {
+    const teamPerformance = team.map(member => {
+        const interactionsInPeriod = contacts.flatMap(c => c.interactions).filter(i => i.userId === member.id && isWithinInterval(new Date(i.date), dateRange));
+        const appointments = interactionsInPeriod.filter(i => i.type === 'Appointment' || i.type === 'Meeting').length;
+        const completedTasks = tasks.filter(t => t.userId === member.id && isWithinInterval(new Date(t.dueDate), dateRange) && t.isCompleted).length;
+        // Mock revenue generation - in real app this would be complex
+        const totalRevenue = appointments * 500 + completedTasks * 50; 
+
+        return {
+            teamMemberId: member.id,
+            teamMemberName: member.name,
+            teamMemberRole: member.role,
+            appointments,
+            tasks: completedTasks,
+            totalRevenue,
+        };
+    });
+
+    return { teamPerformance };
+}

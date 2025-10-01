@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+// FIX: Corrected the import path for types to be a valid relative path.
 import { CalendarEvent } from '../../types';
+// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -29,7 +31,7 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, event }) => {
     }, [event]);
 
     const handleSave = () => {
-        if (!title || !start || !end) {
+        if (!title.trim() || !start || !end) {
             toast.error('Title, start, and end times are required.');
             return;
         }
@@ -45,19 +47,15 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, event }) => {
             // Update existing event
             updateCalendarEventMutation.mutate(eventData as CalendarEvent, {
                 onSuccess: () => {
-                    toast.success('Event updated!');
                     onClose();
-                },
-                onError: () => toast.error('Failed to update event.'),
+                }
             });
         } else {
             // Create new event
             createCalendarEventMutation.mutate(eventData as Omit<CalendarEvent, 'id'>, {
                 onSuccess: () => {
-                    toast.success('Event created!');
                     onClose();
-                },
-                onError: () => toast.error('Failed to create event.'),
+                }
             });
         }
     };

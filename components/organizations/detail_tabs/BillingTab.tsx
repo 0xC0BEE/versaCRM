@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-// FIX: Imported correct types.
+// FIX: Corrected the import path for types to be a valid relative path.
 import { AnyContact, Transaction } from '../../../types';
 import Button from '../../ui/Button';
 import { Plus, TrendingUp, TrendingDown, Link as LinkIcon } from 'lucide-react';

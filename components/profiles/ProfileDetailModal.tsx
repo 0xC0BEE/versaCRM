@@ -1,9 +1,3 @@
-// This component seems to be a duplicate or old version of ContactDetailModal.
-// We will just create a placeholder. For actual functionality, see ContactDetailModal.
-import React from 'react';
-
-const ProfileDetailModal: React.FC = () => {
-    return <div>Profile Detail Modal - Please use Contact Detail Modal.</div>;
-};
-
+// DEPRECATED: This component is a duplicate of ContactDetailModal and is scheduled for deletion.
+const ProfileDetailModal = () => null;
 export default ProfileDetailModal;

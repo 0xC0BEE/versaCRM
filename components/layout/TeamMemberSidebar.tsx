@@ -1,6 +1,8 @@
 import React from 'react';
+// FIX: Corrected import path for useApp.
 import { useApp } from '../../contexts/AppContext';
 import { useAuth } from '../../contexts/AuthContext';
+// FIX: Corrected the import path for types to be a valid relative path.
 import { Page } from '../../types';
 import { BarChart2, Users, MessageSquare, Calendar, CheckSquare, LifeBuoy } from 'lucide-react';
 

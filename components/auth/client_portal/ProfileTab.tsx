@@ -1,12 +1,13 @@
 import React from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import api from '../../../services/api';
-// FIX: Imported correct type.
+import apiClient from '../../../services/apiClient';
+// FIX: Corrected the import path for types to be a valid relative path.
 import { AnyContact } from '../../../types';
+// FIX: Changed import to default since ProfileTab has a default export now.
 import DetailedProfileTab from '../../organizations/detail_tabs/ProfileTab';
 
-const ProfileTab: React.FC = () => {
+const ClientProfileTab: React.FC = () => {
     const { authenticatedUser } = useAuth();
     // FIX: contactId now exists on User type for clients.
     const contactId = authenticatedUser?.contactId;
@@ -14,7 +15,7 @@ const ProfileTab: React.FC = () => {
     // FIX: Used correct api method and type.
     const { data: contact, isLoading, isError } = useQuery<AnyContact | null, Error>({
         queryKey: ['contactProfile', contactId],
-        queryFn: () => api.getContactById(contactId!),
+        queryFn: () => apiClient.getContactById(contactId!),
         enabled: !!contactId,
     });
 
@@ -25,4 +26,4 @@ const ProfileTab: React.FC = () => {
     return <DetailedProfileTab contact={contact} isReadOnly={true} />;
 };
 
-export default ProfileTab;
+export default ClientProfileTab;

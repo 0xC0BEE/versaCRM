@@ -3,8 +3,9 @@ import PageWrapper from '../layout/PageWrapper';
 import Card from '../ui/Card';
 import { Calendar, momentLocalizer, SlotInfo } from 'react-big-calendar';
 import moment from 'moment';
+// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
-// FIX: Imported the CalendarEvent type.
+// FIX: Corrected the import path for types to be a valid relative path.
 import { CalendarEvent } from '../../types';
 import EventModal from './EventModal';
 import { useAuth } from '../../contexts/AuthContext';

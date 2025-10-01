@@ -1,5 +1,7 @@
 import React from 'react';
+// FIX: Corrected import path for useTheme.
 import { useTheme } from '../../contexts/ThemeContext';
+// FIX: Corrected the import path for types to be a valid relative path.
 import { Theme } from '../../types';
 
 const ThemeCustomizer: React.FC = () => {

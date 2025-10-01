@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import api from '../../services/api';
+import apiClient from '../../services/apiClient';
 import toast from 'react-hot-toast';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Card from '../ui/Card';
+import { QUICK_LOGIN_USERS } from '../../config/constants';
 
 const LoginPage: React.FC = () => {
     const { login } = useAuth();
@@ -16,7 +17,7 @@ const LoginPage: React.FC = () => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const user = await api.login(email);
+            const user = await apiClient.login(email);
             if (user) {
                 toast.success(`Welcome back, ${user.name}!`);
                 login(user);
@@ -32,7 +33,7 @@ const LoginPage: React.FC = () => {
     
     const quickLogin = async (email: string) => {
         setIsLoading(true);
-        const user = await api.login(email);
+        const user = await apiClient.login(email);
         if (user) {
              toast.success(`Welcome back, ${user.name}!`);
              login(user);
@@ -55,9 +56,9 @@ const LoginPage: React.FC = () => {
                     <div className="mt-4 pt-4 border-t dark:border-dark-border text-center text-sm">
                         <p className="font-semibold mb-2 text-gray-600 dark:text-gray-400">Quick Logins (Demo)</p>
                         <div className="flex flex-wrap justify-center gap-2">
-                            <Button size="sm" variant="secondary" onClick={() => quickLogin('super@crm.com')} disabled={isLoading}>Super Admin</Button>
-                            <Button size="sm" variant="secondary" onClick={() => quickLogin('admin@crm.com')} disabled={isLoading}>Org Admin</Button>
-                            <Button size="sm" variant="secondary" onClick={() => quickLogin('team@crm.com')} disabled={isLoading}>Team Member</Button>
+                            {QUICK_LOGIN_USERS.map(user => (
+                                <Button key={user.email} size="sm" variant="secondary" onClick={() => quickLogin(user.email)} disabled={isLoading}>{user.label}</Button>
+                            ))}
                         </div>
                     </div>
                 </Card>

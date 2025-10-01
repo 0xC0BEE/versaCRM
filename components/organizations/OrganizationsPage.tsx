@@ -1,18 +1,23 @@
 import React, { useState } from 'react';
+// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
 import PageWrapper from '../layout/PageWrapper';
 import Card from '../ui/Card';
 import OrganizationsTable from './OrganizationsTable';
 import Button from '../ui/Button';
 import { Plus } from 'lucide-react';
+// FIX: Corrected the import path for types to be a valid relative path.
 import { Organization } from '../../types';
 import OrganizationEditModal from './OrganizationEditModal';
-import toast from 'react-hot-toast';
-
 
 const OrganizationsPage: React.FC = () => {
-    const { organizationsQuery } = useData();
-    const { data: organizations = [], isLoading } = organizationsQuery;
+    const { 
+        organizationsQuery, 
+        createOrganizationMutation, 
+        updateOrganizationMutation, 
+        deleteOrganizationMutation 
+    } = useData();
+    const { data: organizations = [], isLoading, isError } = organizationsQuery;
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
 
@@ -26,16 +31,28 @@ const OrganizationsPage: React.FC = () => {
         setIsModalOpen(true);
     };
     
-    // FIX: Corrected the type for orgData.
-    const handleSave = (orgData: Pick<Organization, 'name' | 'industry' | 'primaryContactEmail'>) => {
-        // Mock save logic
+    const handleSave = (orgData: Partial<Organization>) => {
         if (selectedOrg) {
-            toast.success(`Organization "${orgData.name}" updated.`);
+            updateOrganizationMutation.mutate({ ...selectedOrg, ...orgData }, {
+                onSuccess: () => setIsModalOpen(false)
+            });
         } else {
-            toast.success(`Organization "${orgData.name}" created.`);
+            createOrganizationMutation.mutate(orgData as Omit<Organization, 'id' | 'createdAt'>, {
+                onSuccess: () => setIsModalOpen(false)
+            });
         }
-        console.log("Saving:", orgData);
     };
+
+    const handleDelete = (orgId: string) => {
+        deleteOrganizationMutation.mutate(orgId, {
+             onSuccess: () => setIsModalOpen(false)
+        });
+    };
+
+    const isMutationPending = 
+        createOrganizationMutation.isPending || 
+        updateOrganizationMutation.isPending || 
+        deleteOrganizationMutation.isPending;
 
     return (
         <PageWrapper>
@@ -49,7 +66,7 @@ const OrganizationsPage: React.FC = () => {
                 {isLoading ? (
                     <div className="p-8 text-center">Loading organizations...</div>
                 ) : (
-                    <OrganizationsTable organizations={organizations} onRowClick={handleEdit} />
+                    <OrganizationsTable organizations={organizations} onRowClick={handleEdit} onAdd={handleAdd} isError={isError} />
                 )}
             </Card>
             <OrganizationEditModal 
@@ -57,6 +74,8 @@ const OrganizationsPage: React.FC = () => {
                 onClose={() => setIsModalOpen(false)}
                 organization={selectedOrg}
                 onSave={handleSave}
+                onDelete={handleDelete}
+                isLoading={isMutationPending}
             />
         </PageWrapper>
     );

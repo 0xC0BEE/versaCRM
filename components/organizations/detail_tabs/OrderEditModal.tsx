@@ -2,140 +2,163 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../../ui/Modal';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-// FIX: Imported correct types.
-import { Order, LineItem, AnyContact } from '../../../types';
-import { Plus, Trash2 } from 'lucide-react';
+import Select from '../../ui/Select';
 import toast from 'react-hot-toast';
+// FIX: Corrected the import path for types to be a valid relative path.
+import { AnyContact, Order, OrderLineItem, Product } from '../../../types';
+// FIX: Corrected the import path for DataContext to be a valid relative path.
+import { useData } from '../../../contexts/DataContext';
+import { Plus, Trash2 } from 'lucide-react';
+import { useForm } from '../../../hooks/useForm';
 
 interface OrderEditModalProps {
     isOpen: boolean;
     onClose: () => void;
-    order: Order | null;
     contact: AnyContact;
+    order: Order | null;
 }
 
-const OrderEditModal: React.FC<OrderEditModalProps> = ({ isOpen, onClose, order, contact }) => {
-    
-    // State now only holds the core editable data.
-    const getInitialState = (): Omit<Order, 'id' | 'contactId' | 'organizationId' | 'subtotal' | 'total'> => {
-        if (order) {
-            const { id, contactId, organizationId, subtotal, total, ...rest } = order;
-            return rest;
-        };
-        return {
-            orderDate: new Date().toISOString().split('T')[0],
-            status: 'Pending' as Order['status'],
-            paymentStatus: 'Unpaid' as Order['paymentStatus'],
-            lineItems: [{ id: `new-${Date.now()}`, productId: '', description: '', quantity: 1, unitPrice: 0 }],
-            tax: 0,
-            discount: 0,
-        };
-    };
+const OrderEditModal: React.FC<OrderEditModalProps> = ({ isOpen, onClose, contact, order }) => {
+    const { productsQuery, createOrderMutation, updateOrderMutation, deleteOrderMutation } = useData();
+    const { data: products = [] } = productsQuery;
+    const isNew = !order;
 
-    const [data, setData] = useState(getInitialState());
+    const getInitialState = (): Omit<Order, 'id' | 'contactId'> => ({
+        // FIX: Added organizationId to the initial state to satisfy the Order type.
+        organizationId: contact.organizationId,
+        orderDate: new Date().toISOString().split('T')[0],
+        status: 'Pending',
+        total: 0,
+        lineItems: [],
+    });
 
-    // Reset state when the modal is opened or the order prop changes.
+    const { formData, setFormData } = useForm(getInitialState(), order);
+
     useEffect(() => {
-        if (isOpen) {
-            setData(getInitialState());
-        }
-    }, [isOpen, order]);
-    
-    // Derived values are calculated on every render. No useEffect needed.
-    const subtotal = data.lineItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-    const total = subtotal + data.tax - data.discount;
-    
-    const handleLineItemChange = (index: number, field: keyof Omit<LineItem, 'id' | 'productId'>, value: string) => {
-        const updatedLineItems = data.lineItems.map((item, i) => {
-            if (i === index) {
-                const numericValue = parseFloat(value) || 0;
-                let newValue: any = value;
-                if (field === 'quantity') {
-                    newValue = numericValue > 0 ? numericValue : 0;
-                } else if (field === 'unitPrice') {
-                    newValue = numericValue >= 0 ? numericValue : 0;
-                }
-                return { ...item, [field]: newValue };
+        // Recalculate total when line items change
+        const total = formData.lineItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+        setFormData(d => ({ ...d, total }));
+    }, [formData.lineItems, setFormData]);
+
+    const handleLineItemChange = (index: number, field: keyof OrderLineItem, value: any) => {
+        const updatedLineItems = [...formData.lineItems];
+        const item = { ...updatedLineItems[index] };
+        (item as any)[field] = value;
+
+        if (field === 'productId') {
+            const product = products.find((p: Product) => p.id === value);
+            if (product) {
+                item.description = product.name;
+                item.unitPrice = product.salePrice;
             }
-            return item;
-        });
-        setData(prev => ({...prev, lineItems: updatedLineItems}));
+        }
+        updatedLineItems[index] = item;
+        setFormData(d => ({...d, lineItems: updatedLineItems }));
     };
 
     const addLineItem = () => {
-        setData(prev => ({
-            ...prev,
-            lineItems: [
-                ...prev.lineItems,
-                { id: `new-${Date.now()}`, productId: '', description: '', quantity: 1, unitPrice: 0 }
-            ]
-        }));
+        const newLineItem: OrderLineItem = {
+            productId: '',
+            description: '',
+            quantity: 1,
+            unitPrice: 0,
+        };
+        setFormData(d => ({...d, lineItems: [...d.lineItems, newLineItem]}));
+    };
+    
+    const removeLineItem = (index: number) => {
+        setFormData(d => ({...d, lineItems: d.lineItems.filter((_, i) => i !== index)}));
     };
 
-    const removeLineItem = (index: number) => {
-        if (data.lineItems.length <= 1) {
+    const handleSave = () => {
+        if (formData.lineItems.length === 0) {
             toast.error("An order must have at least one line item.");
             return;
         }
-        const updatedLineItems = data.lineItems.filter((_, i) => i !== index);
-        setData(prev => ({...prev, lineItems: updatedLineItems}));
+        if (formData.lineItems.some(item => !item.productId || item.quantity <= 0 || item.unitPrice < 0)) {
+            toast.error("All line items must have a product, positive quantity, and non-negative price.");
+            return;
+        }
+        
+        if (isNew) {
+            const newOrderData = { ...formData, contactId: contact.id };
+            createOrderMutation.mutate(newOrderData as Omit<Order, 'id'>, {
+                onSuccess: () => onClose()
+            });
+        } else {
+            updateOrderMutation.mutate({ ...order, ...formData } as Order, {
+                onSuccess: () => onClose()
+            });
+        }
+    };
+    
+    const handleDelete = () => {
+        if (order && window.confirm(`Are you sure you want to delete order #${order.id.slice(-6)}?`)) {
+            deleteOrderMutation.mutate({ contactId: contact.id, orderId: order.id }, {
+                onSuccess: () => onClose()
+            });
+        }
     };
 
-
-    const handleSave = () => {
-        // Mock save
-        toast.success("Order saved successfully!");
-        console.log("Saving order for contact " + contact.id, { ...data, subtotal, total }); // Add derived values to save payload
-        onClose();
-    };
+    const isPending = createOrderMutation.isPending || updateOrderMutation.isPending || deleteOrderMutation.isPending;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={order ? `Edit Order #${order.id.slice(-6)}` : `New Order for ${contact.contactName}`} size="3xl">
+        <Modal isOpen={isOpen} onClose={onClose} title={order ? `Edit Order #${order.id.slice(-6)}` : 'Create New Order'} size="3xl">
             <div className="space-y-4">
-                {/* Order Details */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Input id="order-date" label="Order Date" type="date" value={data.orderDate.split('T')[0]} onChange={e => setData(d => ({...d, orderDate: e.target.value}))} />
-                    <Input id="order-status" label="Status" value={data.status} onChange={e => setData(d => ({...d, status: e.target.value as any}))} />
-                    <Input id="order-payment" label="Payment Status" value={data.paymentStatus} onChange={e => setData(d => ({...d, paymentStatus: e.target.value as any}))} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input id="orderDate" label="Order Date" type="date" value={formData.orderDate.split('T')[0]} onChange={e => setFormData(d => ({...d, orderDate: e.target.value}))} disabled={isPending} />
+                    <Select id="orderStatus" label="Status" value={formData.status} onChange={e => setFormData(d => ({...d, status: e.target.value as any}))} disabled={isPending}>
+                        <option>Pending</option>
+                        <option>Completed</option>
+                        <option>Cancelled</option>
+                    </Select>
                 </div>
 
                 {/* Line Items */}
-                <div className="pt-4 border-t dark:border-dark-border">
-                    <h4 className="font-semibold mb-2">Line Items</h4>
-                    <div className="space-y-2">
-                        {data.lineItems.map((item, index) => (
-                            <div key={item.id || index} className="grid grid-cols-12 gap-2 items-center">
-                                <Input id={`desc-${index}`} label={index === 0 ? "Description" : ""} placeholder="Item or service" className="col-span-6" value={item.description} onChange={e => handleLineItemChange(index, 'description', e.target.value)}/>
-                                <Input id={`qty-${index}`} label={index === 0 ? "Qty" : ""} type="number" placeholder="1" className="col-span-2" value={item.quantity} onChange={e => handleLineItemChange(index, 'quantity', e.target.value)} />
-                                <Input id={`price-${index}`} label={index === 0 ? "Unit Price" : ""} type="number" placeholder="0.00" className="col-span-3" value={item.unitPrice} onChange={e => handleLineItemChange(index, 'unitPrice', e.target.value)} />
-                                <div className="col-span-1 pt-6">
-                                    <button onClick={() => removeLineItem(index)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
-                                </div>
+                <div className="space-y-3 pt-4 border-t dark:border-dark-border">
+                    <h4 className="font-semibold">Line Items</h4>
+                    {formData.lineItems.map((item, index) => (
+                        <div key={index} className="grid grid-cols-12 gap-2 items-center p-2 rounded-md bg-gray-50 dark:bg-gray-800/50">
+                            <div className="col-span-5">
+                                <Select id={`li-prod-${index}`} label="" value={item.productId} onChange={e => handleLineItemChange(index, 'productId', e.target.value)} disabled={isPending}>
+                                    <option value="">Select a product...</option>
+                                    {products.map((p: Product) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </Select>
                             </div>
-                        ))}
-                    </div>
-                    <Button size="sm" variant="secondary" leftIcon={<Plus size={14}/>} className="mt-2" onClick={addLineItem}>Add Line Item</Button>
+                            <div className="col-span-2">
+                                <Input id={`li-qty-${index}`} label="" type="number" min="1" value={item.quantity} onChange={e => handleLineItemChange(index, 'quantity', parseInt(e.target.value) || 1)} disabled={isPending} />
+                            </div>
+                            <div className="col-span-2">
+                                <Input id={`li-price-${index}`} label="" type="number" min="0" step="0.01" value={item.unitPrice} onChange={e => handleLineItemChange(index, 'unitPrice', parseFloat(e.target.value) || 0)} disabled={isPending} />
+                            </div>
+                            <div className="col-span-2 text-right font-medium">
+                                {(item.quantity * item.unitPrice).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                            </div>
+                             <div className="col-span-1 text-right">
+                                <button onClick={() => removeLineItem(index)} className="p-1 text-gray-400 hover:text-red-500" disabled={isPending}><Trash2 size={16} /></button>
+                            </div>
+                        </div>
+                    ))}
+                    <Button variant="secondary" size="sm" onClick={addLineItem} leftIcon={<Plus size={14} />} disabled={isPending}>Add Item</Button>
+                </div>
+                
+                <div className="text-right pt-4 border-t dark:border-dark-border">
+                    <span className="font-semibold text-lg">Total: {formData.total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                 </div>
 
-                {/* Totals */}
-                <div className="pt-4 mt-4 border-t dark:border-dark-border flex justify-end">
-                    <div className="w-full max-w-xs space-y-2 text-sm">
-                         <div className="flex justify-between"><span>Subtotal:</span> <span className="font-mono">{subtotal.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span></div>
-                         <div className="flex justify-between items-center">
-                            <label htmlFor="tax" className="w-20">Tax:</label>
-                            <Input id="tax" type="number" value={data.tax} onChange={e => setData(d => ({...d, tax: parseFloat(e.target.value) || 0}))} className="w-24 text-right font-mono" />
-                         </div>
-                         <div className="flex justify-between items-center">
-                             <label htmlFor="discount" className="w-20">Discount:</label>
-                             <Input id="discount" type="number" value={data.discount} onChange={e => setData(d => ({...d, discount: parseFloat(e.target.value) || 0}))} className="w-24 text-right font-mono" />
-                         </div>
-                         <div className="flex justify-between font-bold text-base border-t pt-2 mt-2"><span>Total:</span> <span className="font-mono">{total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span></div>
-                    </div>
-                </div>
             </div>
-            <div className="mt-6 flex justify-end space-x-2">
-                <Button variant="secondary" onClick={onClose}>Cancel</Button>
-                <Button onClick={handleSave}>Save Order</Button>
+            <div className="mt-6 flex justify-between items-center">
+                 <div>
+                    {!isNew && (
+                        <Button variant="danger" onClick={handleDelete} disabled={isPending} leftIcon={<Trash2 size={16} />}>
+                           {deleteOrderMutation.isPending ? 'Deleting...' : 'Delete'}
+                        </Button>
+                    )}
+                </div>
+                <div className="flex space-x-2">
+                    <Button variant="secondary" onClick={onClose} disabled={isPending}>Cancel</Button>
+                    <Button onClick={handleSave} disabled={isPending}>{isPending ? 'Saving...' : 'Save Order'}</Button>
+                </div>
             </div>
         </Modal>
     );

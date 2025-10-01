@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import PageWrapper from '../layout/PageWrapper';
-import Card from '../ui/Card';
+// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
 import TaskItem from './TaskItem';
+import Card from '../ui/Card';
+import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { Plus } from 'lucide-react';
-import Input from '../ui/Input';
+// FIX: Corrected the import path for types to be a valid relative path.
+import { Task } from '../../types';
+import { addDays } from 'date-fns';
 import toast from 'react-hot-toast';
 
 const MyTasksPage: React.FC = () => {
@@ -13,73 +17,74 @@ const MyTasksPage: React.FC = () => {
     const { data: tasks = [], isLoading } = tasksQuery;
     const [newTaskTitle, setNewTaskTitle] = useState('');
 
-    const handleAddTask = () => {
-        if (!newTaskTitle.trim()) return;
-        createTaskMutation.mutate(
-            {
-                title: newTaskTitle,
-                dueDate: new Date().toISOString(),
-            },
-            {
-                onSuccess: () => {
-                    setNewTaskTitle('');
-                    toast.success('Task added!');
-                },
-                onError: () => {
-                    toast.error('Failed to add task.');
-                }
+    const handleAddTask = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newTaskTitle.trim()) {
+            toast.error("Task title cannot be empty.");
+            return;
+        }
+
+        createTaskMutation.mutate({
+            title: newTaskTitle,
+            dueDate: addDays(new Date(), 1).toISOString(),
+        }, {
+            onSuccess: () => {
+                setNewTaskTitle('');
             }
-        );
+        });
     };
     
-    const pendingTasks = tasks.filter(t => !t.isCompleted);
-    const completedTasks = tasks.filter(t => t.isCompleted);
+    const { pendingTasks, completedTasks } = useMemo(() => {
+        const pending = tasks.filter((task: Task) => !task.isCompleted).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+        const completed = tasks.filter((task: Task) => task.isCompleted).sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
+        return { pendingTasks: pending, completedTasks: completed };
+    }, [tasks]);
 
     return (
         <PageWrapper>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">My Tasks</h1>
-            </div>
+            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white mb-6">My Tasks</h1>
             <Card>
-                <div className="p-6">
-                    <div className="flex gap-2 mb-6">
+                <div className="p-4 border-b dark:border-dark-border">
+                    <form onSubmit={handleAddTask} className="flex gap-2">
                         <Input 
                             id="new-task"
                             placeholder="Add a new task..."
                             value={newTaskTitle}
                             onChange={(e) => setNewTaskTitle(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
                             className="flex-grow"
+                            disabled={createTaskMutation.isPending}
+                            inputSize="lg"
                         />
-                        <Button onClick={handleAddTask} disabled={createTaskMutation.isPending} leftIcon={<Plus size={16} />}>
+                        <Button size="lg" type="submit" leftIcon={<Plus size={16} />} disabled={createTaskMutation.isPending || !newTaskTitle.trim()}>
                             Add
                         </Button>
-                    </div>
-
-                    {isLoading ? (
-                        <p>Loading tasks...</p>
-                    ) : (
+                    </form>
+                </div>
+                {isLoading ? (
+                    <div className="p-8 text-center">Loading tasks...</div>
+                ) : (
+                    <div className="p-4 space-y-4">
                         <div>
-                            <h3 className="text-lg font-semibold mb-3">Pending ({pendingTasks.length})</h3>
+                            <h3 className="font-semibold mb-2">Pending ({pendingTasks.length})</h3>
                             <div className="space-y-2">
                                 {pendingTasks.length > 0 ? (
-                                    pendingTasks.map(task => <TaskItem key={task.id} task={task} />)
+                                    pendingTasks.map((task: Task) => <TaskItem key={task.id} task={task} />)
                                 ) : (
-                                    <p className="text-gray-500 text-sm">No pending tasks. Great job!</p>
-                                )}
-                            </div>
-                            
-                            <h3 className="text-lg font-semibold mt-8 mb-3">Completed ({completedTasks.length})</h3>
-                            <div className="space-y-2">
-                                {completedTasks.length > 0 ? (
-                                    completedTasks.map(task => <TaskItem key={task.id} task={task} />)
-                                ) : (
-                                    <p className="text-gray-500 text-sm">No completed tasks yet.</p>
+                                    <p className="text-sm text-gray-500 p-3">No pending tasks. Well done!</p>
                                 )}
                             </div>
                         </div>
-                    )}
-                </div>
+
+                        {completedTasks.length > 0 && (
+                            <div className="pt-4 border-t dark:border-dark-border">
+                                <h3 className="font-semibold mb-2">Completed ({completedTasks.length})</h3>
+                                <div className="space-y-2">
+                                    {completedTasks.map((task: Task) => <TaskItem key={task.id} task={task} />)}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
             </Card>
         </PageWrapper>
     );

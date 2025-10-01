@@ -1,52 +1,51 @@
-// FIX: Imported the correct Permissions type.
-import { Permissions, UserRole, Page } from '../types';
+import { Permissions, UserRole } from '../types';
 
-const allPermissions: Permissions = {
-    Dashboard: { view: true },
-    Organizations: { view: true, create: true, edit: true, delete: true },
-    Contacts: { view: true, create: true, edit: true, delete: true },
-    Profiles: { view: true, create: true, edit: true, delete: true },
-    Interactions: { view: true, create: true, edit: true, delete: true },
-    Calendar: { view: true, create: true, edit: true, delete: true },
-    Inventory: { view: true, create: true, edit: true, delete: true },
-    Reports: { view: true },
-    Workflows: { view: true, create: true, edit: true, delete: true },
-    Team: { view: true, create: true, edit: true, delete: true },
-    Settings: { view: true, edit: true },
-    'My Tasks': { view: true, create: true, edit: true, delete: true },
-};
-
+// FIX: Created the permissions configuration file.
 export const permissionsByRole: Record<UserRole, Permissions> = {
     'Super Admin': {
-        ...allPermissions,
+        Dashboard: { view: true, create: true, edit: true, delete: true },
+        Organizations: { view: true, create: true, edit: true, delete: true },
+        Contacts: { view: true, create: true, edit: true, delete: true },
+        Interactions: { view: true, create: true, edit: true, delete: true },
+        Calendar: { view: true, create: true, edit: true, delete: true },
+        Inventory: { view: true, create: true, edit: true, delete: true },
+        Reports: { view: true, create: true, edit: true, delete: true },
+        Workflows: { view: true, create: true, edit: true, delete: true },
+        Team: { view: true, create: true, edit: true, delete: true },
+        Settings: { view: true, create: true, edit: true, delete: true },
+        'My Tasks': { view: true, create: true, edit: true, delete: true },
     },
     'Organization Admin': {
-        ...allPermissions,
-        // FIX: Changed view to true so Org Admins can see their "My Organization" page.
-        Organizations: { view: true, create: false, edit: true, delete: false }, 
+        Dashboard: { view: true, create: true, edit: true, delete: true },
+        Organizations: { view: false }, // Cannot see the list of all orgs
+        Contacts: { view: true, create: true, edit: true, delete: true },
+        Interactions: { view: true, create: true, edit: true, delete: true },
+        Calendar: { view: true, create: true, edit: true, delete: true },
+        Inventory: { view: true, create: true, edit: true, delete: true },
+        Reports: { view: true, create: true, edit: true, delete: true },
+        Workflows: { view: true, create: true, edit: true, delete: true },
         Team: { view: true, create: true, edit: true, delete: true },
-        Settings: { view: true, edit: true },
+        Settings: { view: true, create: true, edit: true, delete: true },
+        'My Tasks': { view: true, create: true, edit: true, delete: true }, // Org admins can have tasks too
     },
     'Team Member': {
         Dashboard: { view: true },
         Organizations: { view: false },
         Contacts: { view: true, create: true, edit: true },
-        Profiles: { view: true, create: true, edit: true },
-        Interactions: { view: true, create: true, edit: true },
+        Interactions: { view: true, create: true },
         Calendar: { view: true, create: true, edit: true },
-        Inventory: { view: true },
+        Inventory: { view: false },
         Reports: { view: false },
         Workflows: { view: false },
         Team: { view: false },
         Settings: { view: false },
         'My Tasks': { view: true, create: true, edit: true, delete: true },
     },
-    // FIX: Added permissions for Client role to satisfy the Permissions type.
     'Client': {
+        // Client portal has its own logic, no permissions needed for the main app pages
         Dashboard: { view: false },
         Organizations: { view: false },
         Contacts: { view: false },
-        Profiles: { view: false },
         Interactions: { view: false },
         Calendar: { view: false },
         Inventory: { view: false },

@@ -1,84 +1,88 @@
 import React from 'react';
-// FIX: Imported PieChart components from recharts.
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import Card from '../ui/Card';
+import {
+    BarChart, Bar, LineChart, Line, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
+} from 'recharts';
+// FIX: Corrected import path for useTheme.
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface DynamicChartProps {
-    title: string;
-    data: any[];
-    dataKey: string;
     type: 'bar' | 'line' | 'pie';
+    data: any[];
 }
 
-// FIX: Added colors array for PieChart slices.
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF1943'];
+const COLORS = ['#3b82f6', '#84cc16', '#f97316', '#a855f7', '#ec4899'];
 
-const DynamicChart: React.FC<DynamicChartProps> = ({ title, data, dataKey, type }) => {
+const DynamicChart: React.FC<DynamicChartProps> = ({ type, data }) => {
+    const { theme } = useTheme();
+    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const tickColor = isDark ? '#9ca3af' : '#6b7280';
+    const strokeColor = isDark ? '#4b5563' : '#d1d5db';
+
     const renderChart = () => {
-        if (type === 'bar') {
-            return (
-                <BarChart data={data}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey={dataKey} fill="#3b82f6" />
-                </BarChart>
-            );
+        if (!data || data.length === 0) {
+            return <div className="flex items-center justify-center h-full text-gray-500">No data available for this chart.</div>;
         }
-        if (type === 'line') {
-            return (
-                <LineChart data={data}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey={dataKey} stroke="#3b82f6" activeDot={{ r: 8 }}/>
-                </LineChart>
-            );
+        switch (type) {
+            case 'bar':
+                return (
+                    <BarChart data={data}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={strokeColor} />
+                        <XAxis dataKey="name" tick={{ fill: tickColor }} />
+                        <YAxis tick={{ fill: tickColor }} />
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: isDark ? '#1f2937' : '#ffffff',
+                                border: `1px solid ${strokeColor}`
+                            }}
+                        />
+                        <Legend />
+                        <Bar dataKey="value" fill="#3b82f6" name="Count"/>
+                    </BarChart>
+                );
+            case 'line':
+                return (
+                    <LineChart data={data}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={strokeColor}/>
+                        <XAxis dataKey="name" tick={{ fill: tickColor }}/>
+                        <YAxis tick={{ fill: tickColor }}/>
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: isDark ? '#1f2937' : '#ffffff',
+                                border: `1px solid ${strokeColor}`
+                            }}
+                        />
+                        <Legend />
+                        <Line type="monotone" dataKey="value" stroke="#84cc16" name="Value" />
+                    </LineChart>
+                );
+            case 'pie':
+                return (
+                     <PieChart>
+                        <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
+                            {data.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip
+                             contentStyle={{
+                                backgroundColor: isDark ? '#1f2937' : '#ffffff',
+                                border: `1px solid ${strokeColor}`
+                            }}
+                        />
+                        <Legend />
+                    </PieChart>
+                );
+            default:
+                return null;
         }
-        // FIX: Added rendering logic for 'pie' chart type.
-        if (type === 'pie') {
-            return (
-                <PieChart>
-                    <Pie
-                        data={data}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                        nameKey="name"
-                        label={({ name, percent }) => {
-                            if (typeof percent !== 'number' || isNaN(percent)) {
-                                return name;
-                            }
-                            return `${name} ${(percent * 100).toFixed(0)}%`;
-                        }}
-                    >
-                        {data.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                    </Pie>
-                    <Tooltip formatter={(value: number) => value.toLocaleString()} />
-                    <Legend />
-                </PieChart>
-            );
-        }
-        return null;
     };
-
+    
     return (
-        <Card title={title}>
-            <div style={{ width: '100%', height: 300 }}>
-                <ResponsiveContainer>
-                    {renderChart()}
-                </ResponsiveContainer>
-            </div>
-        </Card>
+        <div style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+                {renderChart()}
+            </ResponsiveContainer>
+        </div>
     );
 };
 

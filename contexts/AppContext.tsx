@@ -1,9 +1,10 @@
-import React, { createContext, useState, ReactNode, useContext, useMemo } from 'react';
-// FIX: Added IndustryConfig to import.
-import { AppContextType, Industry, Page, IndustryConfig } from '../types';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { AppContextType, Industry, Page, IndustryConfig, FilterCondition } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
-// FIX: Imported industryConfigs to derive the current config.
-import { industryConfigs } from '../config/industryConfig';
+import { useAuth } from './AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import apiClient from '../services/apiClient';
+import { industryConfigs as fallbackConfigs } from '../config/industryConfig';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -12,21 +13,31 @@ interface AppProviderProps {
 }
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-    const [currentIndustry, setCurrentIndustry] = useLocalStorage<Industry>('industry', 'Generic');
+    const { authenticatedUser } = useAuth();
     const [currentPage, setCurrentPage] = useLocalStorage<Page>('page', 'Dashboard');
+    const [currentIndustry, setCurrentIndustry] = useLocalStorage<Industry>('industry', 'Health');
+    const [contactFilters, setContactFilters] = useState<FilterCondition[]>([]);
+    
+    // When the user logs out, reset the page to Dashboard.
+    useEffect(() => {
+        if (!authenticatedUser) {
+            setCurrentPage('Dashboard');
+        }
+    }, [authenticatedUser, setCurrentPage]);
 
-    // FIX: Derive and provide the full industryConfig object.
-    const industryConfig = useMemo(
-        () => industryConfigs[currentIndustry] || industryConfigs.Generic,
-        [currentIndustry]
-    );
+    const { data: industryConfig = fallbackConfigs[currentIndustry] } = useQuery<IndustryConfig>({
+        queryKey: ['industryConfig', currentIndustry],
+        queryFn: () => apiClient.getIndustryConfig(currentIndustry),
+    });
 
     const value: AppContextType = {
-        currentIndustry,
-        setCurrentIndustry,
         currentPage,
         setCurrentPage,
+        currentIndustry,
+        setCurrentIndustry,
         industryConfig,
+        contactFilters,
+        setContactFilters,
     };
 
     return (

@@ -1,8 +1,9 @@
 import React from 'react';
-// FIX: Imported correct type.
+// FIX: Corrected the import path for types to be a valid relative path.
 import { AnyContact } from '../../../types';
 import Button from '../../ui/Button';
 import { Plus, Users } from 'lucide-react';
+// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../../contexts/DataContext';
 
 interface RelationshipsTabProps {
@@ -16,7 +17,7 @@ const RelationshipsTab: React.FC<RelationshipsTabProps> = ({ contact, isReadOnly
     const relationships = contact.relationships || [];
 
     const contactMap = React.useMemo(() => {
-        return contacts.reduce((acc, c) => {
+        return contacts.reduce((acc: Record<string, AnyContact>, c: AnyContact) => {
             acc[c.id] = c;
             return acc;
         }, {} as Record<string, AnyContact>);

@@ -1,5 +1,4 @@
 import React from 'react';
-// FIX: Imported correct type.
 import { InventoryReportData } from '../../types';
 import Card from '../ui/Card';
 import KpiCard from '../dashboard/KpiCard';
@@ -60,13 +59,13 @@ const InventoryReport: React.FC<InventoryReportProps> = ({ data }) => {
                                     fill="#8884d8"
                                     dataKey="quantity"
                                     nameKey="name"
-                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                    label
                                 >
                                     {data.stockByCategory.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
-                                <Tooltip formatter={(value) => `${(value as number).toLocaleString()} units`} />
+                                <Tooltip />
                                 <Legend />
                             </PieChart>
                         </ResponsiveContainer>

@@ -1,5 +1,4 @@
 import React from 'react';
-// FIX: Imported correct type.
 import { ReportType } from '../../types';
 
 interface ReportFiltersProps {

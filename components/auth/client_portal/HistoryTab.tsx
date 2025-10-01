@@ -1,12 +1,12 @@
 import React from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import api from '../../../services/api';
-// FIX: Imported correct type.
+import apiClient from '../../../services/apiClient';
+// FIX: Corrected the import path for types to be a valid relative path.
 import { Interaction } from '../../../types';
-import InteractionsTimeline from '../../interactions/InteractionsTimeline';
+import InteractionsTimeline from '../../common/InteractionsTimeline';
 
-const HistoryTab: React.FC = () => {
+const ClientHistoryTab: React.FC = () => {
     const { authenticatedUser } = useAuth();
     // FIX: Corrected mapping from user to contactId.
     const contactId = authenticatedUser?.contactId;
@@ -14,7 +14,7 @@ const HistoryTab: React.FC = () => {
     const { data: interactions, isLoading } = useQuery<Interaction[], Error>({
         queryKey: ['contactInteractions', contactId],
         // FIX: Used correct api method.
-        queryFn: () => api.getInteractionsByContact(contactId!),
+        queryFn: () => apiClient.getInteractionsByContact(contactId!),
         enabled: !!contactId,
     });
 
@@ -28,4 +28,4 @@ const HistoryTab: React.FC = () => {
     );
 };
 
-export default HistoryTab;
+export default ClientHistoryTab;

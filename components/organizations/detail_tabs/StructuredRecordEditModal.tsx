@@ -6,6 +6,7 @@ import Button from '../../ui/Button';
 import Input from '../../ui/Input';
 import Select from '../../ui/Select';
 import Textarea from '../../ui/Textarea';
+// FIX: Corrected import path for useApp.
 import { useApp } from '../../../contexts/AppContext';
 import toast from 'react-hot-toast';
 

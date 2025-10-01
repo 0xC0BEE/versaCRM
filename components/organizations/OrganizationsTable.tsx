@@ -1,12 +1,17 @@
 import React from 'react';
+// FIX: Corrected the import path for types to be a valid relative path.
 import { Organization } from '../../types';
+import Button from '../ui/Button';
+import { Plus } from 'lucide-react';
 
 interface OrganizationsTableProps {
     organizations: Organization[];
     onRowClick: (org: Organization) => void;
+    onAdd?: () => void;
+    isError: boolean;
 }
 
-const OrganizationsTable: React.FC<OrganizationsTableProps> = ({ organizations, onRowClick }) => {
+const OrganizationsTable: React.FC<OrganizationsTableProps> = ({ organizations, onRowClick, onAdd, isError }) => {
     return (
         <div className="overflow-x-auto">
             <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -19,7 +24,12 @@ const OrganizationsTable: React.FC<OrganizationsTableProps> = ({ organizations, 
                     </tr>
                 </thead>
                 <tbody>
-                    {organizations.map(org => (
+                    {isError && (
+                        <tr><td colSpan={4} className="text-center p-8 text-red-500">
+                            Failed to load organizations. Please try again later.
+                        </td></tr>
+                    )}
+                    {!isError && organizations.map(org => (
                         <tr
                             key={org.id}
                             onClick={() => onRowClick(org)}
@@ -32,8 +42,15 @@ const OrganizationsTable: React.FC<OrganizationsTableProps> = ({ organizations, 
                             <td className="px-6 py-4">{new Date(org.createdAt).toLocaleDateString()}</td>
                         </tr>
                     ))}
-                    {organizations.length === 0 && (
-                        <tr><td colSpan={4} className="text-center p-8">No organizations found.</td></tr>
+                    {!isError && organizations.length === 0 && (
+                        <tr><td colSpan={4} className="text-center p-8">
+                             <p className="text-gray-500">No organizations found.</p>
+                             {onAdd && (
+                                <Button size="sm" variant="secondary" className="mt-2" onClick={onAdd} leftIcon={<Plus size={14}/>}>
+                                    Create New Organization
+                                </Button>
+                             )}
+                        </td></tr>
                     )}
                 </tbody>
             </table>

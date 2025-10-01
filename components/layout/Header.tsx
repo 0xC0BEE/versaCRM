@@ -1,56 +1,87 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
-import { Sun, Moon, LogOut, ChevronDown, Building } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
-import { Industry } from '../../types';
+import { Search, Bell, LogOut } from 'lucide-react';
+import { useNotifications } from '../../contexts/NotificationContext';
+import NotificationsPanel from './NotificationsPanel';
+import SmartSearchModal from '../search/SmartSearchModal';
 
 const Header: React.FC = () => {
     const { authenticatedUser, logout } = useAuth();
-    const { theme, setTheme } = useTheme();
-    const { currentIndustry, setCurrentIndustry } = useApp();
+    const { currentPage } = useApp();
+    const { unreadCount } = useNotifications();
+    
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+                event.preventDefault();
+                setIsSearchOpen(true);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
 
     return (
-        <header className="h-16 bg-white dark:bg-dark-card border-b dark:border-dark-border flex items-center justify-between px-6 flex-shrink-0">
-            <div>
-                {authenticatedUser?.role === 'Super Admin' && (
-                     <div className="relative group">
-                        <button className="flex items-center space-x-2 text-sm font-medium p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <Building size={16} />
-                            <span>Industry: {currentIndustry}</span>
-                            <ChevronDown size={16} />
-                        </button>
-                        <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-dark-card rounded-md shadow-lg py-1 hidden group-hover:block z-10">
-                            {(['Health', 'Finance', 'Legal', 'Generic'] as Industry[]).map(ind => (
-                                <a href="#" key={ind} onClick={() => setCurrentIndustry(ind)} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                    {ind}
-                                </a>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
-            <div className="flex items-center space-x-4">
-                <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-                    {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                </button>
-                <div className="relative group">
-                    <button className="flex items-center space-x-2">
-                         <div className="w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center font-bold text-sm">
-                           {authenticatedUser?.name.charAt(0)}
-                         </div>
-                        <span className="text-sm font-medium hidden md:block">{authenticatedUser?.name}</span>
-                        <ChevronDown size={16} />
+        <>
+            <header className="h-16 flex-shrink-0 bg-white dark:bg-dark-card border-b dark:border-dark-border flex items-center justify-between px-6">
+                <div className="flex items-center">
+                    <h2 className="text-lg font-semibold text-gray-800 dark:text-white">{currentPage}</h2>
+                </div>
+
+                <div className="flex-1 flex justify-center px-8">
+                     <button
+                        onClick={() => setIsSearchOpen(true)}
+                        className="flex items-center w-full max-w-xs p-2 text-sm text-gray-500 bg-gray-100 rounded-md hover:bg-gray-200 dark:bg-gray-700/50 dark:text-gray-300 dark:hover:bg-gray-700"
+                        aria-label="Open smart search (Ctrl+K)"
+                    >
+                        <Search size={18} className="mr-2 text-gray-400" />
+                        <span className="flex-grow text-left">Smart Search...</span>
+                        <kbd className="ml-2 text-xs font-sans font-semibold text-gray-400 border dark:border-gray-600 rounded px-1.5 py-0.5">Ctrl K</kbd>
                     </button>
-                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-card rounded-md shadow-lg py-1 hidden group-hover:block z-10">
-                        <a href="#" onClick={logout} className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700">
-                           <LogOut size={16} className="mr-2" />
-                           Logout
-                        </a>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                    <div className="relative">
+                         <button
+                            onClick={() => setIsNotificationsOpen(prev => !prev)}
+                            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+                            aria-label="Open notifications"
+                        >
+                            <Bell size={20} />
+                             {unreadCount > 0 && (
+                                <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-dark-card"></span>
+                            )}
+                        </button>
+                        {isNotificationsOpen && <NotificationsPanel onClose={() => setIsNotificationsOpen(false)} />}
+                    </div>
+
+                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700"></div>
+
+                    <div className="flex items-center space-x-3">
+                        <div className="text-right">
+                            <p className="text-sm font-semibold">{authenticatedUser?.name}</p>
+                            <p className="text-xs text-gray-500">{authenticatedUser?.role}</p>
+                        </div>
+                        <button
+                            onClick={logout}
+                            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+                            aria-label="Logout"
+                        >
+                            <LogOut size={20} className="text-red-500" />
+                        </button>
                     </div>
                 </div>
-            </div>
-        </header>
+            </header>
+            <SmartSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+        </>
     );
 };
 

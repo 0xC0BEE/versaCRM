@@ -1,14 +1,16 @@
-import React from 'react';
-import { UseQueryResult, UseMutationResult } from '@tanstack/react-query';
+import { LucideIcon } from 'lucide-react';
 
 // --- CORE ---
 export type Industry = 'Health' | 'Finance' | 'Legal' | 'Generic';
-// FIX: Added all pages to the Page type to allow for correct navigation and permissions.
-export type Page = 'Dashboard' | 'Organizations' | 'Contacts' | 'Settings' | 'Interactions' | 'Calendar' | 'Inventory' | 'Reports' | 'Workflows' | 'Team' | 'My Tasks' | 'Profiles';
 export type UserRole = 'Super Admin' | 'Organization Admin' | 'Team Member' | 'Client';
-export type Theme = 'light' | 'dark' | 'system';
 
-// --- DATA MODELS ---
+export interface Organization {
+    id: string;
+    name: string;
+    industry: Industry;
+    primaryContactEmail: string;
+    createdAt: string;
+}
 
 export interface User {
     id: string;
@@ -16,66 +18,111 @@ export interface User {
     email: string;
     role: UserRole;
     organizationId?: string;
-    // FIX: Added contactId for Client portal functionality.
-    contactId?: string;
+    contactId?: string; // For 'Client' role
 }
 
-export interface Organization {
+// --- DOCUMENTS ---
+export interface Document {
+    id: string;
+    contactId: string;
+    organizationId: string;
+    fileName: string;
+    fileType: string; // e.g., 'application/pdf', 'image/jpeg'
+    fileSize: number; // in bytes
+    uploadDate: string; // ISO 8601
+    uploadedByUserId: string;
+    dataUrl: string; // Base64 encoded file for mock purposes
+}
+
+
+// --- CONTACTS & INTERACTIONS ---
+export type ContactStatus = 'Lead' | 'Active' | 'Inactive' | 'Do Not Contact';
+export type LeadSource = 'Web' | 'Referral' | 'Event' | 'Cold Call' | 'Manual';
+export type CustomFieldValue = string | number | boolean | Date | string[] | null;
+export interface CustomField {
+    id: string;
+    label: string;
+    type: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'checkbox' | 'file';
+    options?: string[];
+}
+
+export interface BaseContact {
     id:string;
-    name: string;
-    industry: Industry;
-    // FIX: Added missing properties to the Organization type.
-    primaryContactEmail: string;
+    organizationId: string;
+    contactName: string;
+    email: string;
+    phone: string;
+    status: ContactStatus;
+    leadSource: LeadSource;
     createdAt: string;
+    avatar?: string;
+    customFields: Record<string, CustomFieldValue>;
+    interactions: Interaction[];
+    orders: Order[];
+    transactions: Transaction[];
+    enrollments: Enrollment[];
+    structuredRecords: StructuredRecord[];
+    relationships: Relationship[];
+    auditLogs: AuditLogEntry[];
+    documents: Document[];
 }
+// This allows for different contact types per industry, but for now we use a generic one
+export type AnyContact = BaseContact;
 
-// FIX: Added Interaction type.
+export type InteractionType = 'Email' | 'Call' | 'Meeting' | 'Note' | 'Appointment' | 'Site Visit' | 'Maintenance Request';
+
 export interface Interaction {
     id: string;
     contactId: string;
     userId: string;
     organizationId: string;
-    type: 'Email' | 'Call' | 'Meeting' | 'Note' | 'Site Visit' | 'Maintenance Request' | 'Appointment';
-    date: string;
+    type: InteractionType;
+    date: string; // ISO 8601
     notes: string;
+    customFields?: Record<string, CustomFieldValue>;
 }
 
-// FIX: Added Task type.
-export interface Task {
+export interface AuditLogEntry {
     id: string;
+    timestamp: string; // ISO 8601
     userId: string;
-    contactId?: string;
-    title: string;
-    dueDate: string;
-    isCompleted: boolean;
+    userName: string;
+    change: string;
 }
 
-// FIX: Added CalendarEvent type.
+// --- CALENDAR & TASKS ---
 export interface CalendarEvent {
     id: string;
     title: string;
     start: Date;
     end: Date;
-    contactId?: string;
     userIds: string[];
+    contactId?: string;
+    organizationId: string;
 }
 
-// FIX: Added Product type.
+export interface Task {
+    id: string;
+    title: string;
+    dueDate: string; // ISO 8601
+    isCompleted: boolean;
+    userId: string;
+    contactId?: string;
+    organizationId: string;
+}
+
+// --- INVENTORY, ORDERS, BILLING ---
 export interface Product {
     id: string;
     organizationId: string;
-    supplierId?: string;
-    warehouseId?: string;
     name: string;
     sku: string;
     category: string;
-    description?: string;
+    description: string;
     costPrice: number;
     salePrice: number;
     stockLevel: number;
 }
-
-// FIX: Added Supplier type.
 export interface Supplier {
     id: string;
     organizationId: string;
@@ -84,8 +131,6 @@ export interface Supplier {
     email: string;
     phone: string;
 }
-
-// FIX: Added Warehouse type.
 export interface Warehouse {
     id: string;
     organizationId: string;
@@ -93,29 +138,8 @@ export interface Warehouse {
     location: string;
 }
 
-// FIX: Added Workflow types.
-export interface WorkflowTrigger {
-    type: 'contactCreated';
-    conditions?: any;
-}
-
-export interface WorkflowAction {
-    type: 'createTask' | 'sendEmail';
-    params: any;
-}
-
-export interface Workflow {
-    id: string;
-    organizationId: string;
-    name: string;
-    isActive: boolean;
-    trigger: WorkflowTrigger;
-    actions: WorkflowAction[];
-}
-
-// FIX: Added Order and LineItem types.
-export interface LineItem {
-    id: string;
+export type OrderStatus = 'Pending' | 'Completed' | 'Cancelled';
+export interface OrderLineItem {
     productId: string;
     description: string;
     quantity: number;
@@ -125,139 +149,101 @@ export interface Order {
     id: string;
     contactId: string;
     organizationId: string;
-    orderDate: string;
-    status: 'Pending' | 'Processing' | 'Completed' | 'Cancelled';
-    paymentStatus: 'Paid' | 'Unpaid' | 'Partial';
-    lineItems: LineItem[];
-    subtotal: number;
-    tax: number;
-    discount: number;
+    orderDate: string; // ISO 8601
+    status: OrderStatus;
+    lineItems: OrderLineItem[];
     total: number;
 }
 
-// FIX: Added Transaction type.
+export type TransactionType = 'Charge' | 'Payment' | 'Refund' | 'Credit';
+export type TransactionMethod = 'Credit Card' | 'Bank Transfer' | 'Cash' | 'Insurance' | 'Other';
 export interface Transaction {
     id: string;
     contactId: string;
     organizationId: string;
+    date: string; // ISO 8601
+    type: TransactionType;
+    amount: number;
+    method: TransactionMethod;
     orderId?: string;
     relatedChargeId?: string;
-    type: 'Charge' | 'Payment' | 'Refund' | 'Credit';
-    amount: number;
-    date: string;
-    method: 'Credit Card' | 'Bank Transfer' | 'Cash' | 'Insurance' | 'Other';
 }
 
-// FIX: Added Enrollment type.
+// --- INDUSTRY SPECIFIC ---
 export interface Enrollment {
     id: string;
     programName: string;
-    startDate: string;
-    endDate?: string;
-    status: 'Active' | 'Completed' | 'Cancelled';
+    startDate: string; // ISO 8601
+    endDate?: string; // ISO 8601
+    status: 'Active' | 'Completed' | 'Withdrawn';
 }
-
-// FIX: Added Relationship type.
-export interface Relationship {
-    relatedContactId: string;
-    relationshipType: string;
-}
-
-// FIX: Added StructuredRecord type.
 export interface StructuredRecord {
     id: string;
-    type: string;
+    type: string; // e.g., 'soap_note', 'portfolio_review'
     title: string;
-    recordDate: string;
+    recordDate: string; // ISO 8601
     fields: Record<string, any>;
 }
-
-// FIX: Added AuditLogEntry type.
-export interface AuditLogEntry {
-    id: string;
-    timestamp: string;
-    userId: string;
-    userName: string;
-    change: string;
+export interface Relationship {
+    relatedContactId: string;
+    relationshipType: string; // e.g., 'Spouse', 'Parent', 'Business Partner'
 }
 
-// FIX: Added a base Contact type and a union type AnyContact.
-export interface Contact {
+// --- CONFIGURATION ---
+export interface EmailTemplate {
     id: string;
     organizationId: string;
-    contactName: string;
-    email: string;
-    phone: string;
-    avatarUrl?: string;
-    status: 'Lead' | 'Active' | 'Inactive' | 'Archived';
-    leadSource: 'Web' | 'Referral' | 'Ad' | 'Direct';
-    createdAt: string;
-    customFields: Record<string, any>;
-    interactions: Interaction[];
-    orders: Order[];
-    transactions: Transaction[];
-    enrollments: Enrollment[];
-    relationships: Relationship[];
-    structuredRecords: StructuredRecord[];
-    auditLogs: AuditLogEntry[];
+    name: string;
+    subject: string;
+    body: string;
 }
-export type AnyContact = Contact; // For simplicity, using a single flexible type.
-
-// --- PERMISSIONS ---
-// FIX: Added Permissions type.
-export type PermissionSet = {
-    view: boolean;
-    create?: boolean;
-    edit?: boolean;
-    delete?: boolean;
-};
-export type Permissions = Record<Page, PermissionSet>;
-
-// --- INDUSTRY CONFIG ---
-// FIX: Added CustomField and IndustryConfig types.
-export interface CustomField {
+export type ReportDataSource = 'contacts' | 'products';
+export interface FilterCondition {
+    field: string;
+    operator: 'is' | 'is_not' | 'contains' | 'does_not_contain';
+    value: string;
+}
+export interface CustomReport {
     id: string;
-    label: string;
-    type: 'text' | 'number' | 'date' | 'textarea' | 'select';
-    options?: string[];
-}
-
-export interface IndustryConfig {
-    name: Industry;
-    contactName: string;
-    contactNamePlural: string;
-    organizationName: string;
-    organizationNamePlural: string;
-    teamMemberName: string;
-    teamMemberNamePlural: string;
-    customFields: CustomField[];
-    interactionTypes: string[];
-    interactionCustomFields: CustomField[];
-    structuredRecordTabName: string;
-    structuredRecordTypes: {
-        id: string;
-        name: string;
-        fields: CustomField[];
-    }[];
-    ordersTabName: string;
-    enrollmentsTabName: string;
-    dashboard: {
-        kpis: {
-            key: string;
-            title: string;
-            icon: React.ComponentType<any>;
-        }[];
-        charts: {
-            dataKey: string;
-            title: string;
-            type: 'bar' | 'line' | 'pie';
-        }[];
+    organizationId: string;
+    name: string;
+    config: {
+        dataSource: ReportDataSource;
+        columns: string[];
+        filters: FilterCondition[];
     };
 }
+export interface WorkflowTrigger {
+    type: 'contactCreated' | 'contactStatusChanged';
+    fromStatus?: ContactStatus;
+    toStatus?: ContactStatus;
+}
+export interface WorkflowAction {
+    type: 'createTask' | 'sendEmail' | 'updateContactField' | 'sendWebhook';
+    // for createTask
+    taskTitle?: string;
+    assigneeId?: string;
+    // for sendEmail
+    emailTemplateId?: string;
+    // for updateContactField
+    fieldId?: string;
+    newValue?: string;
+    // for sendWebhook
+    webhookUrl?: string;
+    payloadTemplate?: string;
+}
+export interface Workflow {
+    id: string;
+    organizationId: string;
+    name: string;
+    isActive: boolean;
+    trigger: WorkflowTrigger;
+    actions: WorkflowAction[];
+}
 
-// --- REPORTS ---
-// FIX: Added Report types.
+// --- REPORTING ---
 export type ReportType = 'sales' | 'inventory' | 'financial' | 'contacts' | 'team';
+
 export interface SalesReportData {
     totalRevenue: number;
     totalOrders: number;
@@ -267,14 +253,14 @@ export interface SalesReportData {
 export interface InventoryReportData {
     totalProducts: number;
     totalValue: number;
-    lowStockItems: Product[];
+    lowStockItems: { id: string; name: string; sku: string, stockLevel: number }[];
     stockByCategory: { name: string; quantity: number }[];
 }
 export interface FinancialReportData {
     totalCharges: number;
     totalPayments: number;
     netBalance: number;
-    paymentsByMethod: { name: Transaction['method']; amount: number }[];
+    paymentsByMethod: { name: string; amount: number }[];
 }
 export interface ContactsReportData {
     totalContacts: number;
@@ -292,20 +278,74 @@ export interface TeamReportData {
         totalRevenue: number;
     }[];
 }
+
 export type AnyReportData = SalesReportData | InventoryReportData | FinancialReportData | ContactsReportData | TeamReportData;
+
+export interface DashboardData {
+    kpis: Record<string, number | string>;
+    charts: Record<string, { name: string, value: number }[]>;
+}
+
+// --- APP & UI ---
+export type Page = 
+    | 'Dashboard' 
+    | 'Organizations' 
+    | 'Contacts' 
+    | 'Interactions'
+    | 'Calendar' 
+    | 'Inventory'
+    | 'Reports'
+    | 'Workflows'
+    | 'Team' 
+    | 'Settings' 
+    | 'My Tasks';
+
+export interface IndustryConfig {
+    name: Industry;
+    contactName: string;
+    contactNamePlural: string;
+    organizationName: string;
+    organizationNamePlural: string;
+    teamMemberName: string;
+    teamMemberNamePlural: string;
+    customFields: CustomField[];
+    interactionTypes: InteractionType[];
+    interactionCustomFields: CustomField[];
+    structuredRecordTabName: string;
+    structuredRecordTypes: { id: string, name: string, fields: CustomField[] }[];
+    ordersTabName: string;
+    enrollmentsTabName: string;
+    dashboard: {
+        kpis: { key: string, title: string, icon: string }[];
+        charts: { dataKey: string, title: string, type: 'bar' | 'line' | 'pie' }[];
+    }
+}
+
+export type Theme = 'light' | 'dark' | 'system';
+export interface CustomTheme {
+    id: string;
+    name: string;
+    colors: {
+        primary: string;
+        background: string;
+        card: string;
+        text: string;
+        border: string;
+    };
+}
 
 
 // --- CONTEXTS ---
-// FIX: Added IndustryConfig to AppContextType.
 export interface AppContextType {
-    currentIndustry: Industry;
-    setCurrentIndustry: (industry: Industry) => void;
     currentPage: Page;
     setCurrentPage: (page: Page) => void;
+    currentIndustry: Industry;
+    setCurrentIndustry: (industry: Industry) => void;
     industryConfig: IndustryConfig;
+    contactFilters: FilterCondition[];
+    setContactFilters: (filters: FilterCondition[]) => void;
 }
 
-// FIX: Added permissions to AuthContextType.
 export interface AuthContextType {
     authenticatedUser: User | null;
     login: (user: User) => void;
@@ -313,30 +353,42 @@ export interface AuthContextType {
     permissions: Permissions | null;
 }
 
+export interface Permissions {
+    [key: string]: {
+        view?: boolean;
+        create?: boolean;
+        edit?: boolean;
+        delete?: boolean;
+    };
+}
+
 export interface ThemeContextType {
     theme: Theme;
     setTheme: (theme: Theme) => void;
+    customThemes: CustomTheme[];
+    activeCustomThemeId: string | null;
+    addCustomTheme: (theme: CustomTheme) => void;
+    updateCustomTheme: (theme: CustomTheme) => void;
+    deleteCustomTheme: (themeId: string) => void;
+    applyCustomTheme: (themeId: string | null) => void;
 }
 
-// FIX: Added DataContextType.
-export interface DataContextType {
-    organizationsQuery: UseQueryResult<Organization[], Error>;
-    contactsQuery: UseQueryResult<AnyContact[], Error>;
-    interactionsQuery: UseQueryResult<Interaction[], Error>;
-    tasksQuery: UseQueryResult<Task[], Error>;
-    productsQuery: UseQueryResult<Product[], Error>;
-    suppliersQuery: UseQueryResult<Supplier[], Error>;
-    warehousesQuery: UseQueryResult<Warehouse[], Error>;
-    calendarEventsQuery: UseQueryResult<CalendarEvent[], Error>;
-    workflowsQuery: UseQueryResult<Workflow[], Error>;
-    teamMembersQuery: UseQueryResult<User[], Error>;
-    dashboardStatsQuery: UseQueryResult<any, Error>;
-    dashboardChartsQuery: UseQueryResult<any, Error>;
-    // Phase 1 Additions
-    createTaskMutation: UseMutationResult<Task, Error, Omit<Task, 'id' | 'isCompleted' | 'userId'>, unknown>;
-    updateTaskMutation: UseMutationResult<Task, Error, Task, unknown>;
-    deleteTaskMutation: UseMutationResult<void, Error, string, unknown>;
-    createInteractionMutation: UseMutationResult<Interaction, Error, Omit<Interaction, 'id'>, unknown>;
-    createCalendarEventMutation: UseMutationResult<CalendarEvent, Error, Omit<CalendarEvent, 'id'>, unknown>;
-    updateCalendarEventMutation: UseMutationResult<CalendarEvent, Error, CalendarEvent, unknown>;
+export type NotificationType = 'mention' | 'task_assigned';
+
+export interface Notification {
+    id: string;
+    type: NotificationType;
+    message: string;
+    timestamp: string; // ISO 8601
+    isRead: boolean;
+    userId: string; // The user who should receive the notification
+    linkTo?: string; // Optional link to navigate to, e.g., a contact page
+}
+
+export interface NotificationContextType {
+    notifications: Notification[];
+    unreadCount: number;
+    addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => void;
+    markAsRead: (notificationId: string) => void;
+    markAllAsRead: () => void;
 }

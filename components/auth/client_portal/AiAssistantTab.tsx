@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { GoogleGenAI } from '@google/genai';
-import { Bot, Send, User } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { GoogleGenAI, Chat } from '@google/genai';
+import { Bot, Send, User as UserIcon } from 'lucide-react';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -18,32 +18,43 @@ const AiAssistantTab: React.FC = () => {
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const chatRef = useRef<Chat | null>(null);
+
+    useEffect(() => {
+        try {
+            const ai = new GoogleGenAI({apiKey: process.env.API_KEY!});
+            const chat = ai.chats.create({
+                model: 'gemini-2.5-flash',
+                config: {
+                    systemInstruction: `You are a helpful AI assistant for VersaCRM. The user is ${authenticatedUser?.name}. Be friendly and concise.`
+                }
+            });
+            chatRef.current = chat;
+        } catch (error) {
+            console.error("AI Initialization Error:", error);
+            toast.error("Could not initialize the AI Assistant.");
+        }
+    }, [authenticatedUser]);
 
     const handleSend = async () => {
-        if (!input.trim()) return;
+        if (!input.trim() || !chatRef.current) return;
 
         const userMessage: Message = { sender: 'user', text: input };
         setMessages(prev => [...prev, userMessage]);
+        const currentInput = input;
         setInput('');
         setIsLoading(true);
         
         try {
-            // FIX: Use the new GoogleGenAI class with an apiKey object
-            const ai = new GoogleGenAI({apiKey: process.env.API_KEY!});
-            // FIX: Use ai.models.generateContent with model name and contents
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: input,
-            });
-
-            // FIX: Access response text directly from the .text property
+            const response = await chatRef.current.sendMessage({ message: currentInput });
             const botMessage: Message = { sender: 'bot', text: response.text };
             setMessages(prev => [...prev, botMessage]);
         } catch (error) {
             console.error("AI Assistant Error:", error);
             toast.error("Sorry, I'm having trouble connecting. Please try again later.");
-            const errorMessage: Message = { sender: 'bot', text: "I'm unable to respond right now." };
-            setMessages(prev => [...prev, errorMessage]);
+            // Re-add user message if there was an error
+            setMessages(prev => prev.slice(0, -1)); // This is simplistic, a better UX would show an error on the message itself
+            setInput(currentInput); 
         } finally {
             setIsLoading(false);
         }
@@ -59,7 +70,7 @@ const AiAssistantTab: React.FC = () => {
                         <div className={`max-w-md p-3 rounded-lg ${msg.sender === 'bot' ? 'bg-white dark:bg-dark-card' : 'bg-primary-100 dark:bg-primary-900'}`}>
                             <p className="text-sm">{msg.text}</p>
                         </div>
-                         {msg.sender === 'user' && <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 flex items-center justify-center"><User size={20} /></div>}
+                         {msg.sender === 'user' && <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 flex items-center justify-center"><UserIcon size={20} /></div>}
                     </div>
                 ))}
                 {isLoading && (

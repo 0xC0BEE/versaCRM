@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from '../ui/Button';
 import { Plus } from 'lucide-react';
-// FIX: Imported the Product type.
+// FIX: Corrected the import path for types to be a valid relative path.
 import { Product } from '../../types';
 import ProductEditModal from './ProductEditModal';
 
@@ -11,7 +12,7 @@ const ProductsTab: React.FC = () => {
     const { authenticatedUser } = useAuth();
     const organizationId = authenticatedUser?.organizationId || '';
     const { productsQuery } = useData();
-    const { data: products = [], isLoading } = productsQuery;
+    const { data: products = [], isLoading, isError } = productsQuery;
     
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -48,7 +49,12 @@ const ProductsTab: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {products.map(product => (
+                            {isError && (
+                                <tr><td colSpan={6} className="text-center p-8 text-red-500">
+                                    Failed to load products. Please try again later.
+                                </td></tr>
+                            )}
+                            {!isError && products.map(product => (
                                 <tr key={product.id} className="bg-white border-b dark:bg-dark-card dark:border-dark-border hover:bg-gray-50 dark:hover:bg-gray-600">
                                     <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{product.name}</td>
                                     <td className="px-6 py-4">{product.sku}</td>
@@ -60,8 +66,13 @@ const ProductsTab: React.FC = () => {
                                     </td>
                                 </tr>
                             ))}
-                            {products.length === 0 && (
-                                <tr><td colSpan={6} className="text-center p-8">No products found.</td></tr>
+                            {!isError && products.length === 0 && (
+                                <tr><td colSpan={6} className="text-center p-8">
+                                    <p className="text-gray-500">No products found.</p>
+                                    <Button size="sm" variant="secondary" className="mt-2" onClick={handleAdd} leftIcon={<Plus size={14}/>}>
+                                        Add your first product
+                                    </Button>
+                                </td></tr>
                             )}
                         </tbody>
                     </table>

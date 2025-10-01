@@ -4,9 +4,9 @@ import PageWrapper from '../layout/PageWrapper';
 import Card from '../ui/Card';
 import Tabs from '../ui/Tabs';
 import { useAuth } from '../../contexts/AuthContext';
-import ProfileTab from './client_portal/ProfileTab';
-import HistoryTab from './client_portal/HistoryTab';
-import DocumentsTab from './client_portal/DocumentsTab';
+import ClientProfileTab from './client_portal/ProfileTab';
+import ClientHistoryTab from './client_portal/HistoryTab';
+import ClientDocumentsTab from './client_portal/DocumentsTab';
 import AiAssistantTab from './client_portal/AiAssistantTab';
 
 const ClientPortal: React.FC = () => {
@@ -18,9 +18,9 @@ const ClientPortal: React.FC = () => {
         if (!authenticatedUser) return null;
 
         switch(activeTab) {
-            case 'Profile': return <ProfileTab />;
-            case 'History': return <HistoryTab />;
-            case 'Documents': return <DocumentsTab />;
+            case 'Profile': return <ClientProfileTab />;
+            case 'History': return <ClientHistoryTab />;
+            case 'Documents': return <ClientDocumentsTab />;
             case 'AI Assistant': return <AiAssistantTab />;
             default: return null;
         }

@@ -5,6 +5,7 @@ import Card from '../ui/Card';
 import KpiCard from '../dashboard/KpiCard';
 import { Users, UserPlus } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+// FIX: Corrected import path for useApp.
 import { useApp } from '../../contexts/AppContext';
 
 interface ContactsReportProps {

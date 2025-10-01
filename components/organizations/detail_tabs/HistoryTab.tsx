@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+// FIX: Corrected the import path for types to be a valid relative path.
 import { AnyContact, Interaction } from '../../../types';
-import InteractionsTimeline from '../../interactions/InteractionsTimeline';
+import InteractionsTimeline from '../../common/InteractionsTimeline';
 import { useQuery } from '@tanstack/react-query';
-import api from '../../../services/api';
+import apiClient from '../../../services/apiClient';
 import Button from '../../ui/Button';
 import { Plus } from 'lucide-react';
 import InteractionEditModal from '../../interactions/InteractionEditModal';
@@ -16,7 +17,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ contact }) => {
     
     const { data: interactions = [], isLoading } = useQuery<Interaction[], Error>({
         queryKey: ['contactInteractions', contact.id],
-        queryFn: () => api.getInteractionsByContact(contact.id),
+        queryFn: () => apiClient.getInteractionsByContact(contact.id),
     });
 
     return (

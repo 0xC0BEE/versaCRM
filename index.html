@@ -6,17 +6,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>VersaCRM - Foundation</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Default theme variables. These will be overridden by custom themes. */
+      :root {
+        --color-primary-50: 239 246 255;
+        --color-primary-100: 219 234 254;
+        --color-primary-200: 191 219 254;
+        --color-primary-300: 147 197 253;
+        --color-primary-400: 96 165 250;
+        --color-primary-500: 59 130 246;
+        --color-primary-600: 37 99 235;
+        --color-primary-700: 29 78 216;
+        --color-primary-800: 30 64 175;
+        --color-primary-900: 30 58 138;
+        --color-primary-950: 23 37 84;
+        
+        --color-dark-bg: 26 32 44;
+        --color-dark-card: 45 55 72;
+        --color-dark-text: 226 232 240;
+        --color-dark-border: 74 85 104;
+      }
+    </style>
     <script>
       tailwind.config = {
         darkMode: 'class',
         theme: {
           extend: {
             colors: {
-              primary: {"50":"#eff6ff","100":"#dbeafe","200":"#bfdbfe","300":"#93c5fd","400":"#60a5fa","500":"#3b82f6","600":"#2563eb","700":"#1d4ed8","800":"#1e40af","900":"#1e3a8a","950":"#172554"},
-              'dark-bg': '#1a202c',
-              'dark-card': '#2d3748',
-              'dark-text': '#e2e8f0',
-              'dark-border': '#4a5568',
+              primary: {
+                50: 'rgb(var(--color-primary-50) / <alpha-value>)',
+                100: 'rgb(var(--color-primary-100) / <alpha-value>)',
+                200: 'rgb(var(--color-primary-200) / <alpha-value>)',
+                300: 'rgb(var(--color-primary-300) / <alpha-value>)',
+                400: 'rgb(var(--color-primary-400) / <alpha-value>)',
+                500: 'rgb(var(--color-primary-500) / <alpha-value>)',
+                600: 'rgb(var(--color-primary-600) / <alpha-value>)',
+                700: 'rgb(var(--color-primary-700) / <alpha-value>)',
+                800: 'rgb(var(--color-primary-800) / <alpha-value>)',
+                900: 'rgb(var(--color-primary-900) / <alpha-value>)',
+                950: 'rgb(var(--color-primary-950) / <alpha-value>)',
+              },
+              'dark-bg': 'rgb(var(--color-dark-bg) / <alpha-value>)',
+              'dark-card': 'rgb(var(--color-dark-card) / <alpha-value>)',
+              'dark-text': 'rgb(var(--color-dark-text) / <alpha-value>)',
+              'dark-border': 'rgb(var(--color-dark-border) / <alpha-value>)',
             }
           }
         }
@@ -37,7 +70,13 @@
     "date-fns": "https://aistudiocdn.com/date-fns@^4.1.0",
     "react-big-calendar/": "https://aistudiocdn.com/react-big-calendar@^1.19.4/",
     "react-big-calendar": "https://aistudiocdn.com/react-big-calendar@^1.19.4",
-    "moment": "https://aistudiocdn.com/moment@^2.30.1"
+    "moment": "https://aistudiocdn.com/moment@^2.30.1",
+    "@faker-js/faker": "https://aistudiocdn.com/@faker-js/faker@^10.0.0",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.0.4",
+    "vitest": "https://aistudiocdn.com/vitest@^3.2.4",
+    "vitest/": "https://aistudiocdn.com/vitest@^3.2.4/",
+    "@testing-library/react": "https://aistudiocdn.com/@testing-library/react@^16.3.0",
+    "@testing-library/jest-dom/": "https://aistudiocdn.com/@testing-library/jest-dom@^6.9.0/"
   }
 }
 </script>

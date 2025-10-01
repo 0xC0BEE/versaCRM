@@ -1,55 +1,45 @@
-// FIX: Imported IndustryConfig type.
 import { IndustryConfig, Industry } from '../types';
-import { Users, Briefcase, FileText, DollarSign, Activity, Scale, Shield, Landmark } from 'lucide-react';
 
-export const industryConfigs: Record<string, IndustryConfig> = {
+export let industryConfigs: Record<Industry, IndustryConfig> = {
     Health: {
         name: 'Health',
         contactName: 'Patient',
         contactNamePlural: 'Patients',
-        organizationName: 'Practice',
-        organizationNamePlural: 'Practices',
+        organizationName: 'Clinic',
+        organizationNamePlural: 'Clinics',
         teamMemberName: 'Practitioner',
         teamMemberNamePlural: 'Practitioners',
         customFields: [
-            { id: 'dob', label: 'Date of Birth', type: 'date' },
+            { id: 'patientId', label: 'Patient ID', type: 'text' },
             { id: 'insuranceProvider', label: 'Insurance Provider', type: 'text' },
-            { id: 'policyNumber', label: 'Policy Number', type: 'text' },
-            { id: 'primaryCarePhysician', label: 'Primary Care Physician', type: 'text' },
-            { id: 'emergencyContactName', label: 'Emergency Contact Name', type: 'text' },
-            { id: 'emergencyContactPhone', label: 'Emergency Contact Phone', type: 'text' },
-            { id: 'allergies', label: 'Allergies', type: 'textarea' },
+            { id: 'dateOfBirth', label: 'Date of Birth', type: 'date' },
         ],
-        interactionTypes: ['Email', 'Call', 'Appointment', 'Note', 'Site Visit', 'Maintenance Request'],
+        interactionTypes: ['Appointment', 'Call', 'Email', 'Note', 'Site Visit'],
         interactionCustomFields: [],
-        structuredRecordTabName: 'Medical History',
+        structuredRecordTabName: 'SOAP Notes',
         structuredRecordTypes: [
             {
-                id: 'consultation', name: 'Consultation Note', fields: [
-                    { id: 'symptoms', label: 'Symptoms', type: 'textarea' },
-                    { id: 'diagnosis', label: 'Diagnosis', type: 'textarea' },
-                    { id: 'treatmentPlan', label: 'Treatment Plan', type: 'textarea' },
-                ]
+                id: 'soap_note',
+                name: 'SOAP Note',
+                fields: [
+                    { id: 'subjective', label: 'Subjective', type: 'textarea' },
+                    { id: 'objective', label: 'Objective', type: 'textarea' },
+                    { id: 'assessment', label: 'Assessment', type: 'textarea' },
+                    { id: 'plan', label: 'Plan', type: 'textarea' },
+                ],
             },
-            {
-                id: 'lab_result', name: 'Lab Result', fields: [
-                    { id: 'test_name', label: 'Test Name', type: 'text' },
-                    { id: 'result_value', label: 'Result Value', type: 'text' },
-                    { id: 'reference_range', label: 'Reference Range', type: 'text' },
-                ]
-            }
         ],
-        ordersTabName: "Billing",
-        enrollmentsTabName: "Programs",
+        ordersTabName: 'Prescriptions',
+        enrollmentsTabName: 'Treatment Plans',
         dashboard: {
             kpis: [
-                { key: 'totalContacts', title: 'Total Patients', icon: Users },
-                { key: 'newContacts', title: 'New Patients (30d)', icon: Users },
-                { key: 'upcomingAppointments', title: 'Upcoming Appointments', icon: Activity },
+                { key: 'totalContacts', title: 'Total Patients', icon: 'Users' },
+                { key: 'newContacts', title: 'New Patients (30d)', icon: 'Users' },
+                { key: 'upcomingAppointments', title: 'Upcoming Appointments', icon: 'HeartPulse' },
             ],
             charts: [
-                { dataKey: 'contactsByStatus', title: 'Patients by Status', type: 'bar' },
-                { dataKey: 'appointmentsByMonth', title: 'Appointments This Year', type: 'line' },
+                { dataKey: 'contactsByStatus', title: 'Patients by Status', type: 'pie' },
+                { dataKey: 'appointmentsByMonth', title: 'Appointments This Year', type: 'bar' },
             ]
         }
     },
@@ -62,32 +52,35 @@ export const industryConfigs: Record<string, IndustryConfig> = {
         teamMemberName: 'Advisor',
         teamMemberNamePlural: 'Advisors',
         customFields: [
-            { id: 'netWorth', label: 'Estimated Net Worth', type: 'number' },
+            { id: 'clientId', label: 'Client ID', type: 'text' },
             { id: 'riskProfile', label: 'Risk Profile', type: 'select', options: ['Conservative', 'Moderate', 'Aggressive'] },
-            { id: 'investmentGoals', label: 'Investment Goals', type: 'textarea' },
+            { id: 'netWorth', label: 'Estimated Net Worth', type: 'number' },
         ],
-        interactionTypes: ['Email', 'Call', 'Meeting', 'Note'],
+        interactionTypes: ['Meeting', 'Call', 'Email', 'Note'],
         interactionCustomFields: [],
-        structuredRecordTabName: 'Financial Records',
+        structuredRecordTabName: 'Portfolio Reviews',
         structuredRecordTypes: [
             {
-                id: 'portfolio_review', name: 'Portfolio Review', fields: [
-                    { id: 'assets_total', label: 'Total Assets', type: 'number' },
-                    { id: 'performance', label: 'Performance Notes', type: 'textarea' },
-                ]
-            }
+                id: 'portfolio_review',
+                name: 'Portfolio Review',
+                fields: [
+                    { id: 'goals', label: 'Financial Goals', type: 'textarea' },
+                    { id: 'recommendations', label: 'Recommendations', type: 'textarea' },
+                    { id: 'nextSteps', label: 'Next Steps', type: 'textarea' },
+                ],
+            },
         ],
-        ordersTabName: "Fees & Invoices",
-        enrollmentsTabName: "Services",
-        dashboard: {
+        ordersTabName: 'Trades',
+        enrollmentsTabName: 'Financial Plans',
+         dashboard: {
             kpis: [
-                { key: 'totalContacts', title: 'Total Clients', icon: Users },
-                { key: 'totalAUM', title: 'Total AUM', icon: DollarSign },
-                { key: 'avgPortfolioSize', title: 'Avg. Portfolio Size', icon: Scale },
+                { key: 'totalContacts', title: 'Total Clients', icon: 'Users' },
+                { key: 'newContacts', title: 'New Clients (30d)', icon: 'Landmark' },
+                { key: 'upcomingAppointments', title: 'Upcoming Meetings', icon: 'Handshake' },
             ],
             charts: [
-                { dataKey: 'aumByRiskProfile', title: 'AUM by Risk Profile', type: 'pie' },
-                { dataKey: 'netInflow', title: 'Net Inflow This Year', type: 'line' },
+                { dataKey: 'contactsByStatus', title: 'Clients by Status', type: 'pie' },
+                { dataKey: 'appointmentsByMonth', title: 'Meetings This Year', type: 'bar' },
             ]
         }
     },
@@ -95,36 +88,36 @@ export const industryConfigs: Record<string, IndustryConfig> = {
         name: 'Legal',
         contactName: 'Client',
         contactNamePlural: 'Clients',
-        organizationName: 'Firm',
-        organizationNamePlural: 'Firms',
+        organizationName: 'Law Firm',
+        organizationNamePlural: 'Law Firms',
         teamMemberName: 'Lawyer',
         teamMemberNamePlural: 'Lawyers',
         customFields: [
-            { id: 'caseType', label: 'Case Type', type: 'text' },
-            { id: 'opposingCounsel', label: 'Opposing Counsel', type: 'text' },
+            { id: 'caseNumber', label: 'Case Number', type: 'text' },
+            { id: 'caseType', label: 'Case Type', type: 'select', options: ['Litigation', 'Corporate', 'Family Law'] },
         ],
-        interactionTypes: ['Email', 'Call', 'Meeting', 'Note'],
+        interactionTypes: ['Meeting', 'Call', 'Email', 'Note'],
         interactionCustomFields: [],
-        structuredRecordTabName: 'Case Files',
+        structuredRecordTabName: 'Case Notes',
         structuredRecordTypes: [
             {
-                id: 'case_update', name: 'Case Update', fields: [
-                    { id: 'update_summary', label: 'Update Summary', type: 'textarea' },
-                    { id: 'next_steps', label: 'Next Steps', type: 'textarea' },
+                id: 'case_note', name: 'Case Note', fields: [
+                    { id: 'caseSummary', label: 'Case Summary', type: 'textarea' },
+                    { id: 'legalActions', label: 'Legal Actions Taken', type: 'textarea' }
                 ]
             }
         ],
-        ordersTabName: "Retainers & Billing",
-        enrollmentsTabName: "Cases",
-        dashboard: {
+        ordersTabName: 'Billable Hours',
+        enrollmentsTabName: 'Retainers',
+         dashboard: {
             kpis: [
-                { key: 'totalContacts', title: 'Active Cases', icon: Briefcase },
-                { key: 'totalBillableHours', title: 'Billable Hours (30d)', icon: DollarSign },
-                { key: 'upcomingDeadlines', title: 'Upcoming Deadlines', icon: FileText },
+                { key: 'totalContacts', title: 'Total Clients', icon: 'Users' },
+                { key: 'newContacts', title: 'New Cases (30d)', icon: 'ScrollText' },
+                { key: 'upcomingAppointments', title: 'Upcoming Meetings', icon: 'Scale' },
             ],
             charts: [
-                { dataKey: 'casesByType', title: 'Cases by Type', type: 'bar' },
-                { dataKey: 'billableHours', title: 'Billable Hours This Year', type: 'line' },
+                { dataKey: 'contactsByStatus', title: 'Clients by Status', type: 'pie' },
+                { dataKey: 'appointmentsByMonth', title: 'Meetings This Year', type: 'bar' },
             ]
         }
     },
@@ -134,35 +127,28 @@ export const industryConfigs: Record<string, IndustryConfig> = {
         contactNamePlural: 'Contacts',
         organizationName: 'Company',
         organizationNamePlural: 'Companies',
-        teamMemberName: 'User',
-        teamMemberNamePlural: 'Users',
+        teamMemberName: 'Team Member',
+        teamMemberNamePlural: 'Team Members',
         customFields: [
-            { id: 'jobTitle', label: 'Job Title', type: 'text' },
-            { id: 'department', label: 'Department', type: 'text' },
+            { id: 'accountId', label: 'Account ID', type: 'text' },
+            { id: 'lastContacted', label: 'Last Contacted', type: 'date' },
         ],
-        interactionTypes: ['Email', 'Call', 'Meeting', 'Note'],
+        interactionTypes: ['Meeting', 'Call', 'Email', 'Note'],
         interactionCustomFields: [],
         structuredRecordTabName: 'Records',
-        structuredRecordTypes: [
-            {
-                id: 'general_note', name: 'General Note', fields: [
-                    { id: 'subject', label: 'Subject', type: 'text' },
-                    { id: 'details', label: 'Details', type: 'textarea' },
-                ]
-            }
-        ],
-        ordersTabName: "Orders",
-        enrollmentsTabName: "Subscriptions",
+        structuredRecordTypes: [],
+        ordersTabName: 'Orders',
+        enrollmentsTabName: 'Programs',
         dashboard: {
             kpis: [
-                { key: 'totalContacts', title: 'Total Contacts', icon: Users },
-                { key: 'totalOrgs', title: 'Total Companies', icon: Briefcase },
-                { key: 'newContacts', title: 'New Contacts (30d)', icon: Users },
+                { key: 'totalContacts', title: 'Total Contacts', icon: 'Users' },
+                { key: 'newContacts', title: 'New Contacts (30d)', icon: 'Building' },
+                { key: 'upcomingAppointments', title: 'Upcoming Meetings', icon: 'Briefcase' },
             ],
             charts: [
-                { dataKey: 'contactsByStatus', title: 'Contacts by Status', type: 'bar' },
-                { dataKey: 'contactsBySource', title: 'Contacts by Lead Source', type: 'bar' },
+                { dataKey: 'contactsByStatus', title: 'Contacts by Status', type: 'pie' },
+                { dataKey: 'appointmentsByMonth', title: 'Meetings This Year', type: 'bar' },
             ]
         }
-    }
+    },
 };

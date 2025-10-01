@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { useData } from '../../contexts/DataContext';
 import PageWrapper from '../layout/PageWrapper';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import { Plus, Mail, Shield } from 'lucide-react';
+import { Plus } from 'lucide-react';
+// FIX: Corrected the import path for DataContext to be a valid relative path.
+import { useData } from '../../contexts/DataContext';
+// FIX: Corrected the import path for types to be a valid relative path.
 import { User } from '../../types';
 import TeamMemberDetailModal from './TeamMemberDetailModal';
-import { useApp } from '../../contexts/AppContext';
 
 interface TeamPageProps {
     isTabbedView?: boolean;
@@ -14,18 +15,16 @@ interface TeamPageProps {
 
 const TeamPage: React.FC<TeamPageProps> = ({ isTabbedView = false }) => {
     const { teamMembersQuery } = useData();
-    // FIX: industryConfig is now correctly provided by useApp hook.
-    const { industryConfig } = useApp();
-    const { data: teamMembers = [], isLoading } = teamMembersQuery;
+    const { data: members = [], isLoading, isError } = teamMembersQuery;
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedMember, setSelectedMember] = useState<User | null>(null);
 
-    const handleViewDetails = (member: User) => {
+    const handleEdit = (member: User) => {
         setSelectedMember(member);
         setIsModalOpen(true);
     };
-    
-    const handleAddMember = () => {
+
+    const handleAdd = () => {
         setSelectedMember(null);
         setIsModalOpen(true);
     };
@@ -34,53 +33,61 @@ const TeamPage: React.FC<TeamPageProps> = ({ isTabbedView = false }) => {
         <>
             {!isTabbedView && (
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Team Management</h1>
-                    <Button onClick={handleAddMember} leftIcon={<Plus size={16}/>}>
-                        Invite {industryConfig.teamMemberName}
+                    <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Team Members</h1>
+                    <Button onClick={handleAdd} leftIcon={<Plus size={16} />}>
+                        Invite Member
                     </Button>
                 </div>
             )}
             <Card>
-                <div className="p-6">
-                    {isLoading ? (
-                        <div>Loading team members...</div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {teamMembers.map((member: User) => (
-                                <div key={member.id} className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border dark:border-dark-border">
-                                    <div className="flex items-center space-x-4">
-                                        <img className="w-12 h-12 rounded-full" src={`https://i.pravatar.cc/150?u=${member.id}`} alt={member.name} />
-                                        <div>
-                                            <h4 className="font-semibold">{member.name}</h4>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">{member.role}</p>
-                                        </div>
-                                    </div>
-                                    <div className="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                                        <p className="flex items-center"><Mail size={14} className="mr-2" /> {member.email}</p>
-
-                                        <p className="flex items-center"><Shield size={14} className="mr-2" /> Permissions Active</p>
-                                    </div>
-                                    <div className="mt-4 text-right">
-                                        <Button size="sm" variant="secondary" onClick={() => handleViewDetails(member)}>View Details</Button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                {isLoading ? (
+                    <div className="p-8 text-center">Loading team members...</div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3">Name</th>
+                                    <th scope="col" className="px-6 py-3">Email</th>
+                                    <th scope="col" className="px-6 py-3">Role</th>
+                                    <th scope="col" className="px-6 py-3"><span className="sr-only">Edit</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {isError && (
+                                     <tr><td colSpan={4} className="text-center p-8 text-red-500">
+                                        Failed to load team members.
+                                    </td></tr>
+                                )}
+                                {!isError && members.map(member => (
+                                    <tr key={member.id} className="bg-white border-b dark:bg-dark-card dark:border-dark-border hover:bg-gray-50 dark:hover:bg-gray-600">
+                                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{member.name}</td>
+                                        <td className="px-6 py-4">{member.email}</td>
+                                        <td className="px-6 py-4">{member.role}</td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button onClick={() => handleEdit(member)} className="font-medium text-primary-600 dark:text-primary-500 hover:underline">Edit</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {!isError && members.length === 0 && (
+                                    <tr><td colSpan={4} className="text-center p-8">No team members found.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </Card>
-            {isModalOpen && (
-                <TeamMemberDetailModal 
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    member={selectedMember}
-                />
-            )}
+            <TeamMemberDetailModal 
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                member={selectedMember}
+            />
         </>
     );
 
+    // FIX: Conditionally render PageWrapper to prevent nesting bugs.
     if (isTabbedView) {
-        return pageContent;
+        return <div className="p-1">{pageContent}</div>;
     }
 
     return (

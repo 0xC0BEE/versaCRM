@@ -1,50 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+// FIX: Corrected the import path for types to be a valid relative path.
 import { Organization, Industry } from '../../types';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import toast from 'react-hot-toast';
+import { Trash2 } from 'lucide-react';
+import { useForm } from '../../hooks/useForm';
 
 interface OrganizationEditModalProps {
     isOpen: boolean;
     onClose: () => void;
     organization: Organization | null;
-    // FIX: Corrected onSave prop to use the Organization type.
-    onSave: (orgData: Pick<Organization, 'name' | 'industry' | 'primaryContactEmail'>) => void;
+    onSave: (orgData: Partial<Organization>) => void;
+    onDelete: (orgId: string) => void;
+    isLoading: boolean;
 }
 
-const OrganizationEditModal: React.FC<OrganizationEditModalProps> = ({ isOpen, onClose, organization, onSave }) => {
-    const [name, setName] = useState('');
-    const [industry, setIndustry] = useState<Industry>('Generic');
-    const [email, setEmail] = useState('');
+const OrganizationEditModal: React.FC<OrganizationEditModalProps> = ({ isOpen, onClose, organization, onSave, onDelete, isLoading }) => {
+    const initialState = {
+        name: '',
+        industry: 'Generic' as Industry,
+        primaryContactEmail: '',
+    };
+    
+    const { formData, handleChange } = useForm(initialState, organization ? { 
+        name: organization.name, 
+        industry: organization.industry, 
+        primaryContactEmail: organization.primaryContactEmail 
+    } : initialState);
 
-    useEffect(() => {
-        if (organization) {
-            setName(organization.name);
-            setIndustry(organization.industry);
-            // FIX: Used correct property name.
-            setEmail(organization.primaryContactEmail);
-        } else {
-            // Reset for new entry
-            setName('');
-            setIndustry('Generic');
-            setEmail('');
-        }
-    }, [organization, isOpen]);
 
     const handleSave = () => {
-        if (!name || !email) {
-            toast.error('Please fill in all required fields.');
+        if (!formData.name.trim() || !formData.primaryContactEmail.trim()) {
+            toast.error('Organization Name and Contact Email are required.');
             return;
         }
-        onSave({
-            name,
-            industry,
-            primaryContactEmail: email,
-        });
-        onClose();
+        if (!/^\S+@\S+\.\S+$/.test(formData.primaryContactEmail)) {
+            toast.error("Please enter a valid email address.");
+            return;
+        }
+
+        onSave(formData);
     };
+
+    const handleDelete = () => {
+        if (organization && window.confirm(`Are you sure you want to delete "${organization.name}"? This action cannot be undone.`)) {
+            onDelete(organization.id);
+        }
+    }
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={organization ? 'Edit Organization' : 'Add New Organization'}>
@@ -52,23 +57,26 @@ const OrganizationEditModal: React.FC<OrganizationEditModalProps> = ({ isOpen, o
                 <Input
                     id="org-name"
                     label="Organization Name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    value={formData.name}
+                    onChange={(e) => handleChange('name', e.target.value)}
                     required
+                    disabled={isLoading}
                 />
                 <Input
                     id="org-email"
                     label="Primary Contact Email"
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={formData.primaryContactEmail}
+                    onChange={(e) => handleChange('primaryContactEmail', e.target.value)}
                     required
+                    disabled={isLoading}
                 />
                 <Select
                     id="org-industry"
                     label="Industry"
-                    value={industry}
-                    onChange={(e) => setIndustry(e.target.value as Industry)}
+                    value={formData.industry}
+                    onChange={(e) => handleChange('industry', e.target.value as Industry)}
+                    disabled={isLoading}
                 >
                     <option value="Health">Health</option>
                     <option value="Finance">Finance</option>
@@ -76,9 +84,20 @@ const OrganizationEditModal: React.FC<OrganizationEditModalProps> = ({ isOpen, o
                     <option value="Generic">Generic</option>
                 </Select>
             </div>
-            <div className="mt-6 flex justify-end space-x-2">
-                <Button variant="secondary" onClick={onClose}>Cancel</Button>
-                <Button onClick={handleSave}>Save</Button>
+            <div className="mt-6 flex justify-between items-center">
+                <div>
+                    {organization && (
+                        <Button variant="danger" onClick={handleDelete} disabled={isLoading} leftIcon={<Trash2 size={16} />}>
+                            {isLoading ? 'Deleting...' : 'Delete'}
+                        </Button>
+                    )}
+                </div>
+                <div className="flex space-x-2">
+                    <Button variant="secondary" onClick={onClose} disabled={isLoading}>Cancel</Button>
+                    <Button onClick={handleSave} disabled={isLoading}>
+                        {isLoading ? 'Saving...' : 'Save'}
+                    </Button>
+                </div>
             </div>
         </Modal>
     );

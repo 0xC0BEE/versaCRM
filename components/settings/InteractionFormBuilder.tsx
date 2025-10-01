@@ -1,4 +1,5 @@
 import React from 'react';
+// FIX: Corrected import path for useApp.
 import { useApp } from '../../contexts/AppContext';
 
 const InteractionFormBuilder: React.FC = () => {

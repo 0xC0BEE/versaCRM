@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-// FIX: Imported correct types.
+// FIX: Corrected the import path for types to be a valid relative path.
 import { AnyContact, Order } from '../../../types';
 import Button from '../../ui/Button';
-import { Plus } from 'lucide-react';
+import { Plus, ShoppingCart } from 'lucide-react';
 import OrderEditModal from './OrderEditModal';
 
 interface OrdersTabProps {
@@ -30,45 +30,48 @@ const OrdersTab: React.FC<OrdersTabProps> = ({ contact, isReadOnly }) => {
             <div className="flex justify-between items-center mb-4">
                 <h4 className="font-semibold">Order History</h4>
                 {!isReadOnly && (
-                    <Button size="sm" variant="secondary" leftIcon={<Plus size={14} />} onClick={handleAdd}>New Order</Button>
+                    <Button size="sm" variant="secondary" leftIcon={<Plus size={14} />} onClick={handleAdd}>Add Order</Button>
                 )}
             </div>
             {orders.length > 0 ? (
-                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" className="px-4 py-3">Order ID</th>
-                                <th scope="col" className="px-4 py-3">Date</th>
-                                <th scope="col" className="px-4 py-3">Status</th>
-                                <th scope="col" className="px-4 py-3">Payment</th>
-                                <th scope="col" className="px-4 py-3 text-right">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {orders.map(order => (
-                                <tr key={order.id} onClick={() => handleEdit(order)} className="bg-white border-b dark:bg-dark-card dark:border-dark-border hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
-                                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">#{order.id.slice(-6)}</td>
-                                    <td className="px-4 py-3">{new Date(order.orderDate).toLocaleDateString()}</td>
-                                    <td className="px-4 py-3">{order.status}</td>
-                                    <td className="px-4 py-3">{order.paymentStatus}</td>
-                                    <td className="px-4 py-3 text-right font-mono">{order.total.toLocaleString('en-US', {style: 'currency', currency: 'USD'})}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div className="space-y-3">
+                    {orders.map(order => (
+                        <div key={order.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md border dark:border-dark-border cursor-pointer hover:bg-gray-100" onClick={() => handleEdit(order)}>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="font-semibold text-gray-800 dark:text-white">Order #{order.id.slice(-6)}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        Date: {new Date(order.orderDate).toLocaleDateString()}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-semibold text-gray-800 dark:text-white">{order.total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                                        order.status === 'Completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                                        order.status === 'Cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
+                                        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                                    }`}>
+                                        {order.status}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             ) : (
                 <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                    <p>No orders found.</p>
+                    <ShoppingCart className="mx-auto h-12 w-12 text-gray-400" />
+                    <p className="mt-2">No orders found.</p>
                 </div>
             )}
-            <OrderEditModal 
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                order={selectedOrder}
-                contact={contact}
-            />
+            {isModalOpen && (
+                <OrderEditModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    contact={contact}
+                    order={selectedOrder}
+                />
+            )}
         </div>
     );
 };

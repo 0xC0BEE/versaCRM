@@ -1,5 +1,5 @@
 import React from 'react';
-// FIX: Imported correct type.
+// FIX: Corrected the import path for types to be a valid relative path.
 import { AnyContact } from '../../../types';
 import Button from '../../ui/Button';
 import { Plus } from 'lucide-react';

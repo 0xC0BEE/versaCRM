@@ -1,33 +1,26 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import Sidebar from '../layout/Sidebar';
 import Header from '../layout/Header';
 import { useApp } from '../../contexts/AppContext';
-import { useAuth } from '../../contexts/AuthContext';
+import LoadingSpinner from '../ui/LoadingSpinner';
 
-// Import all possible pages for this console
-import DashboardPage from '../dashboard/DashboardPage';
-import OrganizationsPage from '../organizations/OrganizationsPage';
-import ContactsPage from '../organizations/ContactsPage';
-import InteractionsPage from '../interactions/InteractionsPage';
-import CalendarPage from '../calendar/CalendarPage';
-import InventoryPage from '../inventory/InventoryPage';
-import ReportsPage from '../reports/ReportsPage';
-import WorkflowsPage from '../workflows/WorkflowsPage';
-import TeamPage from '../team/TeamPage';
-import SettingsPage from '../settings/SettingsPage';
-import OrganizationDetailPage from '../organizations/OrganizationDetailPage';
-
+// Convert all page imports to use React.lazy for code splitting
+const DashboardPage = lazy(() => import('../dashboard/DashboardPage'));
+const OrganizationsPage = lazy(() => import('../organizations/OrganizationsPage'));
+const ContactsPage = lazy(() => import('../organizations/ContactsPage'));
+const InteractionsPage = lazy(() => import('../interactions/InteractionsPage'));
+const CalendarPage = lazy(() => import('../calendar/CalendarPage'));
+const InventoryPage = lazy(() => import('../inventory/InventoryPage'));
+const ReportsPage = lazy(() => import('../reports/ReportsPage'));
+const WorkflowsPage = lazy(() => import('../workflows/WorkflowsPage'));
+const TeamPage = lazy(() => import('../team/TeamPage'));
+const SettingsPage = lazy(() => import('../settings/SettingsPage'));
+const MyTasksPage = lazy(() => import('../tasks/MyTasksPage'));
 
 const OrganizationConsole: React.FC = () => {
     const { currentPage } = useApp();
-    const { authenticatedUser } = useAuth();
 
     const renderPage = () => {
-        // For org admin, "Organizations" page shows their own org details.
-        if (authenticatedUser?.role === 'Organization Admin' && currentPage === 'Organizations') {
-            return <OrganizationDetailPage />;
-        }
-
         switch (currentPage) {
             case 'Dashboard': return <DashboardPage />;
             case 'Organizations': return <OrganizationsPage />;
@@ -39,8 +32,7 @@ const OrganizationConsole: React.FC = () => {
             case 'Workflows': return <WorkflowsPage />;
             case 'Team': return <TeamPage />;
             case 'Settings': return <SettingsPage />;
-            // The 'Profiles' page is now handled by 'Contacts'
-            case 'Profiles': return <ContactsPage />;
+            case 'My Tasks': return <MyTasksPage />;
             default: return <DashboardPage />;
         }
     };
@@ -50,7 +42,9 @@ const OrganizationConsole: React.FC = () => {
             <Sidebar />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <Header />
-                {renderPage()}
+                <Suspense fallback={<LoadingSpinner />}>
+                    {renderPage()}
+                </Suspense>
             </div>
         </div>
     );

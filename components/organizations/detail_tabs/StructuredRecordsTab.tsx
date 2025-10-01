@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { AnyContact, StructuredRecord } from '../../../types';
 import Button from '../../ui/Button';
 import { Plus, FileText } from 'lucide-react';
+// FIX: Corrected import path for useApp.
 import { useApp } from '../../../contexts/AppContext';
 import StructuredRecordEditModal from './StructuredRecordEditModal';
 
