@@ -27,7 +27,8 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({ reportType, setReportType
                     onChange={(e) => setReportType(e.target.value as ReportType)}
                     className="mt-1 block w-full md:w-auto pl-3 pr-10 py-2 text-base border-gray-300 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
                 >
-                    <option value="sales">Sales Report</option>
+                    <option value="deals">Deals Report</option>
+                    <option value="sales">Sales Report (Orders)</option>
                     <option value="inventory">Inventory Report</option>
                     <option value="financial">Financial Report</option>
                     <option value="contacts">Contacts Report</option>

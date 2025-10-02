@@ -1,5 +1,14 @@
-import { AnyContact, Product, User, Task, ReportType, AnyReportData, SalesReportData, InventoryReportData, FinancialReportData, ContactsReportData, TeamReportData, DashboardData, Interaction } from '../types';
-import { isWithinInterval, subDays } from 'date-fns';
+import { AnyContact, Product, User, Task, ReportType, AnyReportData, SalesReportData, InventoryReportData, FinancialReportData, ContactsReportData, TeamReportData, DashboardData, Interaction, Deal, DealStage, DealReportData } from '../types';
+import { isWithinInterval, subDays, differenceInDays } from 'date-fns';
+
+interface ReportDataSources {
+    contacts: AnyContact[];
+    products: Product[];
+    team: User[];
+    tasks: Task[];
+    deals: Deal[];
+    dealStages: DealStage[];
+}
 
 export const generateDashboardData = (
     dateRange: { start: Date; end: Date },
@@ -31,26 +40,71 @@ export const generateDashboardData = (
 export const generateReportData = (
     reportType: ReportType,
     dateRange: { start: Date; end: Date },
-    contacts: AnyContact[],
-    products: Product[],
-    team: User[],
-    tasks: Task[]
+    data: ReportDataSources
 ): AnyReportData => {
     switch (reportType) {
         case 'sales':
-            return generateSalesReport(dateRange, contacts);
+            return generateSalesReport(dateRange, data.contacts);
         case 'inventory':
-            return generateInventoryReport(products);
+            return generateInventoryReport(data.products);
         case 'financial':
-            return generateFinancialReport(dateRange, contacts);
+            return generateFinancialReport(dateRange, data.contacts);
         case 'contacts':
-            return generateContactsReport(dateRange, contacts);
+            return generateContactsReport(dateRange, data.contacts);
         case 'team':
-            return generateTeamReport(dateRange, contacts, team, tasks);
+            return generateTeamReport(dateRange, data.contacts, data.team, data.tasks);
+        case 'deals':
+            return generateDealsReport(dateRange, data.deals, data.dealStages);
         default:
             throw new Error(`Unknown report type: ${reportType}`);
     }
 };
+
+function generateDealsReport(dateRange: { start: Date; end: Date }, deals: Deal[], stages: DealStage[]): DealReportData {
+    const closedWonStageId = stages.find(s => s.name === 'Closed Won')?.id;
+    const closedLostStageId = stages.find(s => s.name === 'Closed Lost')?.id;
+    
+    const dealsInPeriod = deals.filter(d => isWithinInterval(new Date(d.expectedCloseDate), dateRange));
+
+    const wonDeals = dealsInPeriod.filter(d => d.stageId === closedWonStageId);
+    const lostDeals = dealsInPeriod.filter(d => d.stageId === closedLostStageId);
+    
+    const dealsWon = wonDeals.length;
+    const dealsLost = lostDeals.length;
+
+    const winRate = (dealsWon + dealsLost) > 0 ? (dealsWon / (dealsWon + dealsLost)) * 100 : 0;
+    
+    const totalPipelineValue = deals
+        .filter(d => d.stageId !== closedWonStageId && d.stageId !== closedLostStageId)
+        .reduce((sum, deal) => sum + deal.value, 0);
+
+    const revenueFromWonDeals = wonDeals.reduce((sum, deal) => sum + deal.value, 0);
+    const averageDealSize = dealsWon > 0 ? revenueFromWonDeals / dealsWon : 0;
+    
+    const totalSalesCycleDays = wonDeals.reduce((sum, deal) => {
+        const cycle = differenceInDays(new Date(deal.expectedCloseDate), new Date(deal.createdAt));
+        return sum + cycle;
+    }, 0);
+    const averageSalesCycle = dealsWon > 0 ? totalSalesCycleDays / dealsWon : 0;
+    
+    const dealsByStage = stages
+      .map(stage => ({
+        name: stage.name,
+        value: deals.filter(deal => deal.stageId === stage.id).length
+      }))
+      .sort((a,b) => stages.find(s => s.name === a.name)!.order - stages.find(s => s.name === b.name)!.order);
+
+    return {
+        totalPipelineValue,
+        winRate,
+        averageDealSize,
+        averageSalesCycle,
+        dealsWon,
+        dealsLost,
+        dealsByStage,
+    };
+}
+
 
 function generateSalesReport(dateRange: { start: Date; end: Date }, contacts: AnyContact[]): SalesReportData {
     const ordersInPeriod = contacts.flatMap(c => c.orders)

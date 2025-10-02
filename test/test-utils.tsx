@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { AuthProvider } from '../contexts/AuthContext';
 import { AppProvider } from '../contexts/AppContext';
+// FIX: Corrected import path for DataProvider
 import { DataProvider } from '../contexts/DataContext';
 import { NotificationProvider } from '../contexts/NotificationContext';
 

@@ -8,8 +8,9 @@ import InteractionsTimeline from '../common/InteractionsTimeline';
 import { Interaction } from '../../types';
 
 const InteractionsPage: React.FC = () => {
-    const { interactionsQuery } = useData();
-    const { data: interactions = [], isLoading } = interactionsQuery;
+    // FIX: Used the correct query for all interactions and destructured its result.
+    const { allInteractionsQuery } = useData();
+    const { data: interactions = [], isLoading } = allInteractionsQuery;
 
     return (
         <PageWrapper>

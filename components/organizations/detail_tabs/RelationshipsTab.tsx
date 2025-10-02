@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 // FIX: Corrected the import path for types to be a valid relative path.
 import { AnyContact } from '../../../types';
 import Button from '../../ui/Button';
@@ -16,7 +16,7 @@ const RelationshipsTab: React.FC<RelationshipsTabProps> = ({ contact, isReadOnly
     const { data: contacts = [] } = contactsQuery;
     const relationships = contact.relationships || [];
 
-    const contactMap = React.useMemo(() => {
+    const contactMap = useMemo(() => {
         return contacts.reduce((acc: Record<string, AnyContact>, c: AnyContact) => {
             acc[c.id] = c;
             return acc;

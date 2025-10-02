@@ -3,10 +3,11 @@ import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../../test/test-utils';
 import App from '../../App';
-import api from '../../services/api';
+// FIX: Corrected import from 'services/api' to 'services/apiClient'
+import apiClient from '../../services/apiClient';
 
 // Mock the api module
-vi.mock('../../services/api', () => ({
+vi.mock('../../services/apiClient', () => ({
   default: {
     login: vi.fn(),
   },
@@ -15,7 +16,7 @@ vi.mock('../../services/api', () => ({
 describe('Login Flow', () => {
   it('should allow a user to log in and see the dashboard', async () => {
     const mockUser = { id: 'user_admin_1', name: 'Alice Admin', email: 'admin@crm.com', role: 'Organization Admin', organizationId: 'org_1' };
-    (api.login as vi.Mock).mockResolvedValue(mockUser);
+    (apiClient.login as vi.Mock).mockResolvedValue(mockUser);
 
     renderWithProviders(<App />);
 
@@ -40,6 +41,6 @@ describe('Login Flow', () => {
     });
 
     // Check if api.login was called correctly
-    expect(api.login).toHaveBeenCalledWith('admin@crm.com');
+    expect(apiClient.login).toHaveBeenCalledWith('admin@crm.com');
   });
 });

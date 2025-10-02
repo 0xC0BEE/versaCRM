@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // FIX: Corrected the import path for types to be a valid relative path.
-import { ReportType, AnyReportData, CustomReport } from '../../types';
+import { ReportType, AnyReportData, CustomReport, DealReportData } from '../../types';
 // FIX: Corrected import path for useApp.
 import { useApp } from '../../contexts/AppContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -18,6 +18,7 @@ import InventoryReport from './InventoryReport';
 import FinancialReport from './FinancialReport';
 import ContactsReport from './ContactsReport';
 import TeamReport from './TeamReport';
+import DealsReport from './DealsReport';
 // FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
 import CustomReportBuilderPage from './CustomReportBuilderPage';
@@ -37,7 +38,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
     const [selectedCustomReport, setSelectedCustomReport] = useState<CustomReport | null>(null);
 
     // State for pre-built reports
-    const [reportType, setReportType] = useState<ReportType>('sales');
+    const [reportType, setReportType] = useState<ReportType>('deals');
     const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>(() => {
         const end = new Date();
         const start = new Date();
@@ -76,6 +77,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
 
         switch(reportType) {
             case 'sales': return <SalesReport data={data as any} />;
+            case 'deals': return <DealsReport data={data as DealReportData} />;
             case 'inventory': return <InventoryReport data={data as any} />;
             case 'financial': return <FinancialReport data={data as any} />;
             case 'contacts': return <ContactsReport data={data as any} />;

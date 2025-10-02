@@ -1,39 +1,38 @@
-import React, { Suspense, lazy } from 'react';
-import TeamMemberSidebar from '../layout/TeamMemberSidebar';
+import React from 'react';
 import Header from '../layout/Header';
+import TeamMemberSidebar from '../layout/TeamMemberSidebar';
 import { useApp } from '../../contexts/AppContext';
-import LoadingSpinner from '../ui/LoadingSpinner';
+import { Page } from '../../types';
 
-// Convert all page imports to use React.lazy for code splitting
-const MyTasksPage = lazy(() => import('../tasks/MyTasksPage'));
-const ContactsPage = lazy(() => import('../organizations/ContactsPage'));
-const CalendarPage = lazy(() => import('../calendar/CalendarPage'));
-const InteractionsPage = lazy(() => import('../interactions/InteractionsPage'));
-const DashboardPage = lazy(() => import('../dashboard/DashboardPage'));
+import DashboardPage from '../dashboard/DashboardPage';
+import ContactsPage from '../organizations/ContactsPage';
+import InteractionsPage from '../interactions/InteractionsPage';
+import CalendarPage from '../calendar/CalendarPage';
+import MyTasksPage from '../tasks/MyTasksPage';
+import DealsPage from '../deals/DealsPage';
 
+const PageRenderer: React.FC = () => {
+    const { currentPage } = useApp();
+    switch (currentPage) {
+        case 'Dashboard': return <DashboardPage />;
+        case 'Contacts': return <ContactsPage />;
+        case 'Deals': return <DealsPage />;
+        case 'Interactions': return <InteractionsPage />;
+        case 'Calendar': return <CalendarPage />;
+        case 'Tasks': return <MyTasksPage />;
+        default: return <DashboardPage />;
+    }
+};
 
 const TeamMemberConsole: React.FC = () => {
-    const { currentPage } = useApp();
-
-    const renderPage = () => {
-        switch (currentPage) {
-            case 'My Tasks': return <MyTasksPage />;
-            case 'Contacts': return <ContactsPage />;
-            case 'Calendar': return <CalendarPage />;
-            case 'Interactions': return <InteractionsPage />;
-            case 'Dashboard': return <DashboardPage />;
-            default: return <MyTasksPage />;
-        }
-    };
-
     return (
         <div className="flex h-screen bg-gray-100 dark:bg-dark-bg text-gray-800 dark:text-gray-200">
             <TeamMemberSidebar />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <Header />
-                <Suspense fallback={<LoadingSpinner />}>
-                    {renderPage()}
-                </Suspense>
+                 <main className="flex-1 overflow-x-hidden overflow-y-auto">
+                    <PageRenderer />
+                </main>
             </div>
         </div>
     );

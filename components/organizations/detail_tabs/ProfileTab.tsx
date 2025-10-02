@@ -135,7 +135,8 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
                             <input
                                 type="file"
                                 id={field.id}
-                                ref={(el) => fileInputRefs.current[field.id] = el}
+                                // FIX: Wrapped the ref callback assignment in curly braces to ensure a void return type.
+                                ref={(el) => { fileInputRefs.current[field.id] = el; }}
                                 onChange={(e) => {
                                     if (e.target.files && e.target.files[0]) {
                                         handleCustomFieldChange(field.id, e.target.files[0].name);

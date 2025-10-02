@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Modal from '../../ui/Modal';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
@@ -29,11 +29,14 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClo
         relatedChargeId: (chargeToPay && !chargeToPay.orderId) ? chargeToPay.id : undefined,
     });
 
-    const { formData, handleChange, setFormData } = useForm(getInitialState(), chargeToPay);
+    // FIX: Removed the `chargeToPay` dependency argument from `useForm` to resolve a type incompatibility.
+    // The `useEffect` below is the correct pattern for resetting form state in this case.
+    const { formData, handleChange, setFormData } = useForm(getInitialState());
     
-    React.useEffect(() => {
+    // FIX: Corrected the dependency array to include `setFormData`, ensuring the effect runs safely.
+    useEffect(() => {
         setFormData(getInitialState());
-    }, [isOpen, chargeToPay]);
+    }, [isOpen, chargeToPay, setFormData]);
 
     const handleSave = () => {
         if (formData.amount <= 0) {

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useEffect } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { Notification, NotificationContextType } from '../types';
 import { useAuth } from './AuthContext';
@@ -41,7 +41,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     const [allNotifications, setAllNotifications] = useLocalStorage<Notification[]>('notifications', []);
     
     // On first load for a user, populate with mock data
-    React.useEffect(() => {
+    useEffect(() => {
         if (authenticatedUser && !allNotifications.some(n => n.userId === authenticatedUser.id)) {
             const userNotifications = mockNotifications.map(n => ({...n, userId: authenticatedUser.id!}));
              setAllNotifications(prev => [...prev, ...userNotifications]);

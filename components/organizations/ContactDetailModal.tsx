@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 // FIX: Corrected the import path for types to be a valid relative path.
 import { AnyContact } from '../../types';
 import Modal from '../ui/Modal';
@@ -57,7 +57,7 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
 
     const tabs = Object.keys(tabConfig).filter(tab => !isNewContact || tab === 'Profile');
     
-    React.useEffect(() => {
+    useEffect(() => {
         if (isOpen) {
             setActiveTab('Profile');
         }
