@@ -4,12 +4,9 @@ import Button from '../ui/Button';
 import Select from '../ui/Select';
 import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
-// FIX: Corrected the import path for types to be a valid relative path.
 import { AnyContact, Interaction, InteractionType, User } from '../../types';
-// FIX: Corrected import path for useApp.
 import { useApp } from '../../contexts/AppContext';
 import { useAuth } from '../../contexts/AuthContext';
-// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
 import { useForm } from '../../hooks/useForm';
 import toast from 'react-hot-toast';
@@ -26,13 +23,13 @@ const InteractionEditModal: React.FC<InteractionEditModalProps> = ({ isOpen, onC
     const { createInteractionMutation, teamMembersQuery } = useData();
     const { data: teamMembers = [] } = teamMembersQuery;
 
-    const initialState = {
+    const initialState = useMemo(() => ({
         type: industryConfig.interactionTypes[0] as InteractionType,
         date: new Date().toISOString().split('T')[0],
         notes: '',
-    };
+    }), [industryConfig.interactionTypes]);
 
-    const { formData, handleChange, resetForm } = useForm(initialState);
+    const { formData, handleChange, resetForm } = useForm(initialState, isOpen ? initialState : null);
 
     // State for @mentions
     const [mentionQuery, setMentionQuery] = useState('');

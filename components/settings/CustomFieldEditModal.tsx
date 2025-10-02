@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { CustomField } from '../../types';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -17,17 +17,17 @@ interface CustomFieldEditModalProps {
 
 const CustomFieldEditModal: React.FC<CustomFieldEditModalProps> = ({ isOpen, onClose, field, onSave }) => {
     const isNew = !field;
-    
-    const getInitialState = (): CustomField => {
+
+    const initialState = useMemo((): CustomField => {
         return {
             id: field?.id || '',
             label: field?.label || '',
             type: field?.type || 'text',
             options: field?.options || [],
         };
-    };
+    }, [field]);
 
-    const { formData, setFormData, handleChange } = useForm<CustomField>(getInitialState(), field);
+    const { formData, setFormData, handleChange } = useForm<CustomField>(initialState, field);
 
     const handleOptionChange = (index: number, value: string) => {
         const newOptions = [...(formData.options || [])];

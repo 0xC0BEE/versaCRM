@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -20,11 +20,11 @@ const EmailTemplateEditModal: React.FC<EmailTemplateEditModalProps> = ({ isOpen,
     const { authenticatedUser } = useAuth();
     const isNew = !template;
 
-    const initialState = {
+    const initialState = useMemo(() => ({
         name: '',
         subject: '',
         body: '',
-    };
+    }), []);
     
     const { formData, handleChange } = useForm(initialState, template);
 

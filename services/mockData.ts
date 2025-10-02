@@ -1,7 +1,7 @@
 import {
     AnyContact, Organization, User, Task, Product, Supplier, Warehouse,
     Interaction, EmailTemplate, Document, Workflow,
-    Deal, DealStage, CustomReport
+    Deal, DealStage, CustomReport, Campaign
 } from '../types';
 
 export const organizations: Organization[] = [
@@ -145,4 +145,25 @@ export let deals: Deal[] = [
 
 export let customReports: CustomReport[] = [
     { id: 'cr_1', name: 'Active Leads Report', organizationId: 'org_1', config: { dataSource: 'contacts', columns: ['contactName', 'email', 'leadSource'], filters: [{ field: 'status', operator: 'is', value: 'Lead' }] } }
+];
+
+export let campaigns: Campaign[] = [
+    {
+        id: 'camp_1',
+        organizationId: 'org_1',
+        name: 'New Patient Welcome Sequence',
+        status: 'Active',
+        targetAudience: { status: ['Lead'] },
+        steps: [
+            { type: 'sendEmail', emailTemplateId: 'et_1' },
+            { type: 'wait', days: 3 },
+            { type: 'sendEmail', emailTemplateId: 'et_2' },
+        ],
+        stats: {
+            recipients: 1,
+            sent: 2, // Mock: 1 contact, 2 emails sent
+            opened: 1, // Mock
+            clicked: 0, // Mock
+        }
+    }
 ];

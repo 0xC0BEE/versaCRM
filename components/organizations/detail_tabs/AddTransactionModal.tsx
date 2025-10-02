@@ -1,12 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useMemo } from 'react';
 import Modal from '../../ui/Modal';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
 import Select from '../../ui/Select';
 import toast from 'react-hot-toast';
-// FIX: Corrected the import path for types to be a valid relative path.
 import { Transaction } from '../../../types';
-// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../../contexts/DataContext';
 import { useForm } from '../../../hooks/useForm';
 
@@ -20,23 +18,20 @@ interface AddTransactionModalProps {
 const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClose, contactId, chargeToPay }) => {
     const { createTransactionMutation } = useData();
 
-    const getInitialState = () => ({
+    const initialState = useMemo(() => ({
         type: (chargeToPay ? 'Payment' : 'Charge') as Transaction['type'],
         amount: chargeToPay ? chargeToPay.amount : 0,
         date: new Date().toISOString().split('T')[0],
         method: 'Credit Card' as Transaction['method'],
         orderId: chargeToPay ? chargeToPay.orderId : undefined,
         relatedChargeId: (chargeToPay && !chargeToPay.orderId) ? chargeToPay.id : undefined,
-    });
+    }), [chargeToPay]);
 
-    // FIX: Removed the `chargeToPay` dependency argument from `useForm` to resolve a type incompatibility.
-    // The `useEffect` below is the correct pattern for resetting form state in this case.
-    const { formData, handleChange, setFormData } = useForm(getInitialState());
-    
-    // FIX: Corrected the dependency array to include `setFormData`, ensuring the effect runs safely.
-    useEffect(() => {
-        setFormData(getInitialState());
-    }, [isOpen, chargeToPay, setFormData]);
+    // The dependency is now tied to whether the modal is open.
+    // When it opens, the dependency becomes the initialState object, triggering a reset.
+    // When it closes, the dependency becomes null, also triggering a reset for the next open.
+    const formDependency = isOpen ? initialState : null;
+    const { formData, handleChange } = useForm(initialState, formDependency);
 
     const handleSave = () => {
         if (formData.amount <= 0) {

@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Modal from '../../ui/Modal';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
 import Select from '../../ui/Select';
 import toast from 'react-hot-toast';
-// FIX: Corrected the import path for types to be a valid relative path.
 import { AnyContact, Order, OrderLineItem, Product } from '../../../types';
-// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../../contexts/DataContext';
 import { Plus, Trash2 } from 'lucide-react';
 import { useForm } from '../../../hooks/useForm';
@@ -23,22 +21,21 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({ isOpen, onClose, contac
     const { data: products = [] } = productsQuery;
     const isNew = !order;
 
-    const getInitialState = (): Omit<Order, 'id' | 'contactId'> => ({
-        // FIX: Added organizationId to the initial state to satisfy the Order type.
+    const initialState = useMemo(() => ({
         organizationId: contact.organizationId,
         orderDate: new Date().toISOString().split('T')[0],
-        status: 'Pending',
-        total: 0,
-        lineItems: [],
-    });
+        // FIX: The type of `status` was inferred as the literal 'Pending', which is not assignable from the wider `Order['status']` union type.
+        // Asserting the type to `Order['status']` solves the incompatibility. Also explicitly typed lineItems.
+        status: 'Pending' as Order['status'],
+        lineItems: [] as OrderLineItem[],
+    }), [contact.organizationId]);
 
-    const { formData, setFormData } = useForm(getInitialState(), order);
+    const { formData, setFormData } = useForm(initialState, order);
 
-    useEffect(() => {
-        // Recalculate total when line items change
-        const total = formData.lineItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-        setFormData(d => ({ ...d, total }));
-    }, [formData.lineItems, setFormData]);
+    const total = useMemo(() => {
+        if (!formData.lineItems) return 0;
+        return formData.lineItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    }, [formData.lineItems]);
 
     const handleLineItemChange = (index: number, field: keyof OrderLineItem, value: any) => {
         const updatedLineItems = [...formData.lineItems];
@@ -80,13 +77,15 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({ isOpen, onClose, contac
             return;
         }
         
+        const saveData = { ...formData, total };
+
         if (isNew) {
-            const newOrderData = { ...formData, contactId: contact.id };
+            const newOrderData = { ...saveData, contactId: contact.id };
             createOrderMutation.mutate(newOrderData as Omit<Order, 'id'>, {
                 onSuccess: () => onClose()
             });
         } else {
-            updateOrderMutation.mutate({ ...order, ...formData } as Order, {
+            updateOrderMutation.mutate({ ...order, ...saveData } as Order, {
                 onSuccess: () => onClose()
             });
         }
@@ -143,7 +142,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({ isOpen, onClose, contac
                 </div>
                 
                 <div className="text-right pt-4 border-t dark:border-dark-border">
-                    <span className="font-semibold text-lg">Total: {formData.total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                    <span className="font-semibold text-lg">Total: {total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                 </div>
 
             </div>

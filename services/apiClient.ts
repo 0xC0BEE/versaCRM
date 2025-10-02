@@ -6,7 +6,8 @@ import {
     Interaction, Industry, IndustryConfig, DashboardData, EmailTemplate, Document, Workflow,
     Deal, DealStage, CustomReport, ReportType, AnyReportData, ContactStatus, Order, Transaction,
     // FIX: Imported ReportDataSource type.
-    ReportDataSource
+    ReportDataSource,
+    Campaign
 } from '../types';
 import * as mockData from './mockData';
 import { industryConfigs } from '../config/industryConfig';
@@ -464,7 +465,33 @@ const apiClient = {
             contact.transactions.push(newTransaction);
         }
         return newTransaction;
-    }
+    },
+    
+    // CAMPAIGNS
+    getCampaigns: async (orgId: string): Promise<Campaign[]> => {
+        await delay(600);
+        return mockData.campaigns.filter(c => c.organizationId === orgId);
+    },
+    createCampaign: async (campaignData: Omit<Campaign, 'id'>): Promise<Campaign> => {
+        await delay(500);
+        const newCampaign: Campaign = { id: `camp_${Date.now()}`, ...campaignData };
+        mockData.campaigns.push(newCampaign);
+        return newCampaign;
+    },
+    updateCampaign: async (campaignData: Campaign): Promise<Campaign> => {
+        await delay(500);
+        const index = mockData.campaigns.findIndex(c => c.id === campaignData.id);
+        if (index > -1) {
+            mockData.campaigns[index] = campaignData;
+            return campaignData;
+        }
+        throw new Error("Campaign not found");
+    },
+    deleteCampaign: async (campaignId: string): Promise<void> => {
+        await delay(500);
+        const index = mockData.campaigns.findIndex(c => c.id === campaignId);
+        if (index > -1) mockData.campaigns.splice(index, 1);
+    },
 };
 
 export default apiClient;

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useEffect, useCallback } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { Notification, NotificationContextType } from '../types';
 import { useAuth } from './AuthContext';
@@ -46,18 +46,19 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             const userNotifications = mockNotifications.map(n => ({...n, userId: authenticatedUser.id!}));
              setAllNotifications(prev => [...prev, ...userNotifications]);
         }
-    }, [authenticatedUser, setAllNotifications]);
+    }, [authenticatedUser, setAllNotifications, allNotifications]);
 
     // Filter notifications for the currently logged-in user
     const notifications = useMemo(() => {
+        if (!authenticatedUser) return [];
         return allNotifications
-            .filter(n => n.userId === authenticatedUser?.id)
+            .filter(n => n.userId === authenticatedUser.id)
             .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     }, [allNotifications, authenticatedUser]);
     
     const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
 
-    const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
+    const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
         const newNotification: Notification = {
             ...notification,
             id: `notif_${Date.now()}`,
@@ -65,23 +66,25 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             isRead: false,
         };
         setAllNotifications(prev => [newNotification, ...prev]);
-    };
+    }, [setAllNotifications]);
     
-    const markAsRead = (notificationId: string) => {
+    const markAsRead = useCallback((notificationId: string) => {
         setAllNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n));
-    };
+    }, [setAllNotifications]);
 
-    const markAllAsRead = () => {
-        setAllNotifications(prev => prev.map(n => n.userId === authenticatedUser?.id ? { ...n, isRead: true } : n));
-    };
+    const markAllAsRead = useCallback(() => {
+        const userId = authenticatedUser?.id;
+        if (!userId) return;
+        setAllNotifications(prev => prev.map(n => n.userId === userId ? { ...n, isRead: true } : n));
+    }, [setAllNotifications, authenticatedUser?.id]);
 
-    const value: NotificationContextType = {
+    const value: NotificationContextType = useMemo(() => ({
         notifications,
         unreadCount,
         addNotification,
         markAsRead,
         markAllAsRead,
-    };
+    }), [notifications, unreadCount, addNotification, markAsRead, markAllAsRead]);
 
     return (
         <NotificationContext.Provider value={value}>

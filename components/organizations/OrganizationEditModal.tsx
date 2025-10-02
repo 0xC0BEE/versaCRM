@@ -1,5 +1,4 @@
-import React from 'react';
-// FIX: Corrected the import path for types to be a valid relative path.
+import React, { useMemo } from 'react';
 import { Organization, Industry } from '../../types';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -19,18 +18,13 @@ interface OrganizationEditModalProps {
 }
 
 const OrganizationEditModal: React.FC<OrganizationEditModalProps> = ({ isOpen, onClose, organization, onSave, onDelete, isLoading }) => {
-    const initialState = {
+    const initialState = useMemo(() => ({
         name: '',
         industry: 'Generic' as Industry,
         primaryContactEmail: '',
-    };
+    }), []);
     
-    const { formData, handleChange } = useForm(initialState, organization ? { 
-        name: organization.name, 
-        industry: organization.industry, 
-        primaryContactEmail: organization.primaryContactEmail 
-    } : initialState);
-
+    const { formData, handleChange } = useForm(initialState, organization);
 
     const handleSave = () => {
         if (!formData.name.trim() || !formData.primaryContactEmail.trim()) {

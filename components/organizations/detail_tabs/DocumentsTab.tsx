@@ -2,12 +2,11 @@ import React, { useRef, useState } from 'react';
 import { AnyContact, Document as DocType } from '../../../types';
 import Button from '../../ui/Button';
 import { Plus, File, FileImage, FileText, Download, Trash2, Eye } from 'lucide-react';
-import { useData } from '../../../contexts/DataContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import FilePreviewModal from '../../ui/FilePreviewModal';
-import { useQueryClient } from '@tanstack/react-query';
+import { useDocuments } from '../../../hooks/useDocuments';
 
 interface DocumentsTabProps {
     contact: AnyContact;
@@ -34,11 +33,10 @@ const getFileIcon = (fileType: string) => {
 };
 
 const DocumentsTab: React.FC<DocumentsTabProps> = ({ contact, isReadOnly }) => {
-    const { documentsQuery, uploadDocumentMutation, deleteDocumentMutation } = useData();
     const { authenticatedUser } = useAuth();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const queryClient = useQueryClient();
-    const { data: documents = [], isLoading } = documentsQuery(contact.id);
+    const { documentsQuery, uploadDocumentMutation, deleteDocumentMutation } = useDocuments(contact.id);
+    const { data: documents = [], isLoading } = documentsQuery;
 
     const [previewingFile, setPreviewingFile] = useState<DocType | null>(null);
 
@@ -69,13 +67,7 @@ const DocumentsTab: React.FC<DocumentsTabProps> = ({ contact, isReadOnly }) => {
 
     const handleDelete = (doc: DocType) => {
         if (window.confirm(`Are you sure you want to delete "${doc.fileName}"?`)) {
-            deleteDocumentMutation.mutate(doc.id, {
-                onSuccess: () => {
-                    // FIX: Correctly invalidate the specific documents query for this contact.
-                    // The 'queryClient' is now defined and the syntax is correct.
-                    queryClient.invalidateQueries({ queryKey: ['documents', contact.id] });
-                }
-            });
+            deleteDocumentMutation.mutate(doc.id);
         }
     }
 

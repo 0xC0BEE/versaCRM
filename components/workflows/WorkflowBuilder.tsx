@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -35,14 +35,14 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose, or
     const isNew = !workflow;
     const [selectedNode, setSelectedNode] = useState<{ type: 'trigger' | 'action', index?: number } | null>({ type: 'trigger' });
 
-    const getInitialState = (): Omit<Workflow, 'id' | 'organizationId'> => ({
+    const initialState = useMemo((): Omit<Workflow, 'id' | 'organizationId'> => ({
         name: '',
         isActive: true,
         trigger: { type: 'contactCreated' },
         actions: [{ type: 'createTask' }]
-    });
+    }), []);
     
-    const { formData, setFormData, handleChange } = useForm(getInitialState(), workflow);
+    const { formData, setFormData, handleChange } = useForm(initialState, workflow);
 
     const handleTriggerChange = (field: keyof WorkflowTrigger, value: any) => {
         const newTrigger = { ...formData.trigger, [field]: value };

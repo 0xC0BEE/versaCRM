@@ -31,13 +31,24 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
     isOpen, onClose, contact, onSave, onDelete, isSaving, isDeleting
 }) => {
     const { industryConfig } = useApp();
-    const isNewContact = !contact?.id;
-    
-    // Manage active tab state here to allow child components to change it
     const [activeTab, setActiveTab] = useState('Profile');
 
+    // This effect must be called before any early returns to obey the Rules of Hooks.
+    useEffect(() => {
+        if (isOpen) {
+            // Reset the active tab to 'Profile' whenever the modal is opened
+            // or the contact within the modal changes.
+            setActiveTab('Profile');
+        }
+    }, [isOpen, contact]);
+
+    if (!contact) return null;
+
+    const isNewContact = !contact?.id;
+    
     const tabConfig = {
         'Profile': <ProfileTab 
+                        key={contact.id || 'new-contact'}
                         contact={contact!} 
                         onSave={onSave}
                         onDelete={onDelete}
@@ -56,14 +67,6 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
     };
 
     const tabs = Object.keys(tabConfig).filter(tab => !isNewContact || tab === 'Profile');
-    
-    useEffect(() => {
-        if (isOpen) {
-            setActiveTab('Profile');
-        }
-    }, [isOpen, contact]);
-
-    if (!contact) return null;
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={isNewContact ? `New ${industryConfig.contactName}` : `Details for ${contact.contactName}`} size="5xl">

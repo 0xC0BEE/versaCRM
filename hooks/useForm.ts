@@ -11,7 +11,7 @@ export function useForm<T>(initialState: T, dependency?: T | null) {
     // Effect to reset the form state when the dependency changes (e.g., a new item is selected for editing)
     useEffect(() => {
         setFormData(dependency || initialState);
-    }, [dependency]);
+    }, [dependency, initialState]);
 
     const handleChange = useCallback((field: keyof T, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));

@@ -1,10 +1,11 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient, UseQueryResult } from '@tanstack/react-query';
 import apiClient from '../services/apiClient';
 import {
     AnyContact, Organization, User, Task, CalendarEvent, Product, Supplier, Warehouse,
     // FIX: Aliased the imported `Document` type to `AppDocument` to resolve name collision with the global DOM `Document` type.
-    Interaction, DashboardData, EmailTemplate, Document as AppDocument, Workflow, Deal, DealStage, CustomReport, ReportDataSource
+    Interaction, DashboardData, EmailTemplate, Document as AppDocument, Workflow, Deal, DealStage, CustomReport, ReportDataSource,
+    Campaign
 } from '../types';
 import { useAuth } from './AuthContext';
 import { useApp } from './AppContext';
@@ -43,10 +44,6 @@ interface DataContextType {
     allInteractionsQuery: UseQueryResult<Interaction[], Error>;
     dashboardData: DashboardData | undefined;
     isLoading: boolean;
-    // FIX: Used the aliased `AppDocument` type to avoid collision.
-    documentsQuery: (contactId: string) => UseQueryResult<AppDocument[], Error>;
-    uploadDocumentMutation: any;
-    deleteDocumentMutation: any;
     emailTemplatesQuery: UseQueryResult<EmailTemplate[], Error>;
     createEmailTemplateMutation: any;
     updateEmailTemplateMutation: any;
@@ -66,6 +63,10 @@ interface DataContextType {
     updateOrderMutation: any;
     deleteOrderMutation: any;
     createTransactionMutation: any;
+    campaignsQuery: UseQueryResult<Campaign[], Error>;
+    createCampaignMutation: any;
+    updateCampaignMutation: any;
+    deleteCampaignMutation: any;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -351,30 +352,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         queryFn: () => apiClient.getDashboardData(currentIndustry, orgId!),
         enabled: !!orgId,
     });
-
-    // DOCUMENTS
-    // FIX: Used the aliased `AppDocument` type to resolve name collision.
-    const documentsQuery = (contactId: string) => useQuery<AppDocument[], Error>({
-        queryKey: ['documents', contactId],
-        queryFn: () => apiClient.getDocuments(contactId),
-        enabled: !!contactId,
-    });
-    const uploadDocumentMutation = useMutation({
-        mutationFn: apiClient.uploadDocument,
-        onSuccess: (data, variables) => {
-            toast.success('Document uploaded!');
-            queryClient.invalidateQueries({ queryKey: ['documents', variables.contactId] });
-        },
-        onError: () => toast.error('Failed to upload document.'),
-    });
-    const deleteDocumentMutation = useMutation({
-        mutationFn: apiClient.deleteDocument,
-        onSuccess: () => {
-            toast.success('Document deleted!');
-            // Invalidation happens in the component for dynamic query key
-        },
-        onError: () => toast.error('Failed to delete document.'),
-    });
     
     // EMAIL TEMPLATES
     const createEmailTemplateMutation = useMutation({
@@ -489,7 +466,29 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         onError: () => toast.error('Failed to add transaction.'),
     });
 
-    const value: DataContextType = {
+    // CAMPAIGNS
+    const campaignsQuery = useQuery<Campaign[], Error>({
+        queryKey: ['campaigns', orgId],
+        queryFn: () => apiClient.getCampaigns(orgId!),
+        enabled: !!orgId,
+    });
+    const createCampaignMutation = useMutation({
+        mutationFn: apiClient.createCampaign,
+        onSuccess: () => { toast.success('Campaign created!'); queryClient.invalidateQueries({ queryKey: ['campaigns', orgId] }); },
+        onError: () => toast.error('Failed to create campaign.'),
+    });
+    const updateCampaignMutation = useMutation({
+        mutationFn: apiClient.updateCampaign,
+        onSuccess: () => { toast.success('Campaign updated!'); queryClient.invalidateQueries({ queryKey: ['campaigns', orgId] }); },
+        onError: () => toast.error('Failed to update campaign.'),
+    });
+    const deleteCampaignMutation = useMutation({
+        mutationFn: apiClient.deleteCampaign,
+        onSuccess: () => { toast.success('Campaign deleted!'); queryClient.invalidateQueries({ queryKey: ['campaigns', orgId] }); },
+        onError: () => toast.error('Failed to delete campaign.'),
+    });
+
+    const value: DataContextType = useMemo(() => ({
         organizationsQuery, createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation,
         contactsQuery, createContactMutation, updateContactMutation, deleteContactMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation,
         teamMembersQuery, createTeamMemberMutation, updateTeamMemberMutation,
@@ -502,7 +501,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         allInteractionsQuery,
         dashboardData,
         isLoading: organizationsQuery.isLoading || contactsQuery.isLoading,
-        documentsQuery, uploadDocumentMutation, deleteDocumentMutation,
         emailTemplatesQuery, createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation,
         workflowsQuery, createWorkflowMutation, updateWorkflowMutation,
         dealsQuery, dealStagesQuery, createDealMutation, updateDealMutation, deleteDealMutation,
@@ -510,7 +508,28 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateCustomFieldsMutation,
         createOrderMutation, updateOrderMutation, deleteOrderMutation,
         createTransactionMutation,
-    };
+        campaignsQuery, createCampaignMutation, updateCampaignMutation, deleteCampaignMutation,
+    }), [
+        organizationsQuery, createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation,
+        contactsQuery, createContactMutation, updateContactMutation, deleteContactMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation,
+        teamMembersQuery, createTeamMemberMutation, updateTeamMemberMutation,
+        tasksQuery, createTaskMutation, updateTaskMutation, deleteTaskMutation,
+        calendarEventsQuery, createCalendarEventMutation, updateCalendarEventMutation,
+        productsQuery, createProductMutation, updateProductMutation, deleteProductMutation,
+        suppliersQuery,
+        warehousesQuery,
+        createInteractionMutation,
+        allInteractionsQuery,
+        dashboardData,
+        emailTemplatesQuery, createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation,
+        workflowsQuery, createWorkflowMutation, updateWorkflowMutation,
+        dealsQuery, dealStagesQuery, createDealMutation, updateDealMutation, deleteDealMutation,
+        customReportsQuery, createCustomReportMutation,
+        updateCustomFieldsMutation,
+        createOrderMutation, updateOrderMutation, deleteOrderMutation,
+        createTransactionMutation,
+        campaignsQuery, createCampaignMutation, updateCampaignMutation, deleteCampaignMutation,
+    ]);
 
     return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 };

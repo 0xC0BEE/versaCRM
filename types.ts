@@ -407,3 +407,29 @@ export interface Deal {
     expectedCloseDate: string;
     createdAt: string;
 }
+
+// CAMPAIGN TYPES
+export type CampaignStatus = 'Draft' | 'Active' | 'Completed' | 'Archived';
+
+export interface CampaignStep {
+    type: 'sendEmail' | 'wait';
+    emailTemplateId?: string;
+    days?: number;
+}
+
+export interface Campaign {
+    id: string;
+    organizationId: string;
+    name: string;
+    status: CampaignStatus;
+    targetAudience: {
+        status: ContactStatus[];
+    };
+    steps: CampaignStep[];
+    stats: {
+        recipients: number;
+        sent: number;
+        opened: number;
+        clicked: number;
+    };
+}

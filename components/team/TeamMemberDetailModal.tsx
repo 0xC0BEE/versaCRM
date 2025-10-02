@@ -1,11 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Modal from '../ui/Modal';
-// FIX: Corrected the import path for types to be a valid relative path.
 import { User, UserRole } from '../../types';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
-// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -22,18 +20,13 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({ isOpen, o
     const { authenticatedUser } = useAuth();
     const isNew = !member;
 
-    const initialState = {
+    const initialState = useMemo(() => ({
         name: '',
         email: '',
         role: 'Team Member' as UserRole,
-    };
+    }), []);
     
-    const { formData, handleChange } = useForm(initialState, member ? {
-        name: member.name,
-        email: member.email,
-        role: member.role,
-    } : initialState);
-
+    const { formData, handleChange } = useForm(initialState, member);
 
     const handleSave = () => {
         if (!formData.name.trim() || !formData.email.trim()) {

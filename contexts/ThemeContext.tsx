@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { Theme, CustomTheme, ThemeContextType } from '../types';
 import { hexToRgb } from '../utils/color';
@@ -97,12 +97,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         }
     }, [activeCustomThemeId, customThemes]);
 
-
-    const handleSetTheme = (newTheme: Theme) => {
-        setStoredTheme(newTheme);
-        setActiveCustomThemeId(null); // Deactivate custom theme when a standard one is chosen
-    };
-    
     // Listen for system theme changes
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -114,32 +108,40 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         };
         mediaQuery.addEventListener('change', handleChange);
         return () => mediaQuery.removeEventListener('change', handleChange);
-    }, [storedTheme]);
-    
-    // Custom theme management
-    const addCustomTheme = (theme: CustomTheme) => setCustomThemes(prev => [...prev, theme]);
-    const updateCustomTheme = (theme: CustomTheme) => setCustomThemes(prev => prev.map(t => t.id === theme.id ? theme : t));
-    const deleteCustomTheme = (themeId: string) => {
-        if (activeCustomThemeId === themeId) setActiveCustomThemeId(null);
-        setCustomThemes(prev => prev.filter(t => t.id !== themeId));
-    };
-    const applyCustomTheme = (themeId: string | null) => setActiveCustomThemeId(themeId);
+    }, [storedTheme, setStoredTheme]);
 
+    // All functions provided by the context are wrapped in useCallback to ensure they have a stable identity.
+    const setTheme = useCallback((newTheme: Theme) => {
+        setStoredTheme(newTheme);
+        setActiveCustomThemeId(null); // Deactivate custom theme when a standard one is chosen
+    }, [setStoredTheme, setActiveCustomThemeId]);
+    
+    const addCustomTheme = useCallback((theme: CustomTheme) => setCustomThemes(prev => [...prev, theme]), [setCustomThemes]);
+    
+    const updateCustomTheme = useCallback((theme: CustomTheme) => setCustomThemes(prev => prev.map(t => t.id === theme.id ? theme : t)), [setCustomThemes]);
+    
+    const deleteCustomTheme = useCallback((themeId: string) => {
+        setActiveCustomThemeId(currentId => (currentId === themeId ? null : currentId));
+        setCustomThemes(prev => prev.filter(t => t.id !== themeId));
+    }, [setActiveCustomThemeId, setCustomThemes]);
+    
+    const applyCustomTheme = useCallback((themeId: string | null) => setActiveCustomThemeId(themeId), [setActiveCustomThemeId]);
+
+    // The value object is memoized and now includes the stable functions in its dependency array.
     const value: ThemeContextType = useMemo(() => ({
         theme: storedTheme,
-        setTheme: handleSetTheme,
+        setTheme,
         customThemes,
         activeCustomThemeId,
         addCustomTheme,
         updateCustomTheme,
         deleteCustomTheme,
         applyCustomTheme,
-    }), [storedTheme, customThemes, activeCustomThemeId]);
+    }), [storedTheme, setTheme, customThemes, activeCustomThemeId, addCustomTheme, updateCustomTheme, deleteCustomTheme, applyCustomTheme]);
 
     return (
         <ThemeContext.Provider value={value}>
             {children}
-        {/* FIX: Corrected typo in closing tag from Theme-Context.Provider to ThemeContext.Provider */}
         </ThemeContext.Provider>
     );
 };

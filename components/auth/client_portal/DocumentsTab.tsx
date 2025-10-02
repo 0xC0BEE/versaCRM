@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
-import { useData } from '../../../contexts/DataContext';
 import { Document as DocType } from '../../../types';
 import { format } from 'date-fns';
 import Button from '../../ui/Button';
 import FilePreviewModal from '../../ui/FilePreviewModal';
 import { File, FileImage, FileText, Download, Eye } from 'lucide-react';
+import { useDocuments } from '../../../hooks/useDocuments';
 
 const getFileIcon = (fileType: string) => {
     if (fileType.startsWith('image/')) {
@@ -19,10 +19,10 @@ const getFileIcon = (fileType: string) => {
 
 const ClientDocumentsTab: React.FC = () => {
     const { authenticatedUser } = useAuth();
-    const { documentsQuery } = useData();
     const contactId = authenticatedUser?.contactId;
+    const { documentsQuery } = useDocuments(contactId!);
 
-    const { data: documents = [], isLoading } = documentsQuery(contactId!);
+    const { data: documents = [], isLoading } = documentsQuery;
     const [previewingFile, setPreviewingFile] = useState<DocType | null>(null);
 
     const handlePreview = (doc: DocType) => {

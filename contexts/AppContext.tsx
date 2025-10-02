@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import { AppContextType, Industry, Page, IndustryConfig, FilterCondition } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { useAuth } from './AuthContext';
@@ -30,7 +30,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         queryFn: () => apiClient.getIndustryConfig(currentIndustry),
     });
 
-    const value: AppContextType = {
+    const value: AppContextType = useMemo(() => ({
         currentPage,
         setCurrentPage,
         currentIndustry,
@@ -38,7 +38,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         industryConfig,
         contactFilters,
         setContactFilters,
-    };
+    }), [currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, contactFilters, setContactFilters]);
 
     return (
         <AppContext.Provider value={value}>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -30,15 +30,18 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
     const { data: stages = [] } = dealStagesQuery;
     const { data: contacts = [] } = contactsQuery;
 
-    const getInitialState = () => ({
-        name: '',
-        value: 0,
-        stageId: stages.length > 0 ? stages[0].id : '',
-        contactId: '',
-        expectedCloseDate: new Date().toISOString().split('T')[0],
-    });
+    const initialState = useMemo(() => {
+        const sortedStages = [...stages].sort((a, b) => a.order - b.order);
+        return {
+            name: '',
+            value: 0,
+            stageId: sortedStages.length > 0 ? sortedStages[0].id : '',
+            contactId: '',
+            expectedCloseDate: new Date().toISOString().split('T')[0],
+        };
+    }, [stages]);
 
-    const { formData, handleChange, setFormData } = useForm(getInitialState(), deal);
+    const { formData, handleChange, setFormData } = useForm(initialState, deal);
 
     const handleSave = () => {
         if (!formData.name.trim() || !formData.contactId) {

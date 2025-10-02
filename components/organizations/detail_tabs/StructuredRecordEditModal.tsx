@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 // FIX: Imported correct types.
 import { AnyContact, StructuredRecord, CustomField } from '../../../types';
 import Modal from '../../ui/Modal';
@@ -21,7 +21,7 @@ const StructuredRecordEditModal: React.FC<StructuredRecordEditModalProps> = ({ i
     // FIX: industryConfig is now correctly provided by useApp hook.
     const { industryConfig } = useApp();
     
-    const getInitialState = () => {
+    const getInitialState = useCallback(() => {
         if (record) return { ...record };
         
         const defaultType = industryConfig.structuredRecordTypes.length > 0 
@@ -34,16 +34,18 @@ const StructuredRecordEditModal: React.FC<StructuredRecordEditModalProps> = ({ i
             title: '',
             recordDate: new Date().toISOString().split('T')[0],
             fields: {},
-        };
-    };
+        } as StructuredRecord;
+    }, [record, industryConfig.structuredRecordTypes]);
     
-    const [data, setData] = useState(getInitialState());
+    const [data, setData] = useState(getInitialState);
 
     useEffect(() => {
+        // When the modal opens, reset the state to the initial state
+        // derived from the current props (record).
         if (isOpen) {
             setData(getInitialState());
         }
-    }, [isOpen, record]);
+    }, [isOpen, getInitialState]);
 
     const handleFieldChange = (fieldId: string, value: any) => {
         setData(prev => ({

@@ -1,12 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
-// FIX: Corrected the import path for types to be a valid relative path.
 import { Product } from '../../types';
 import toast from 'react-hot-toast';
-// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
 import { Trash2 } from 'lucide-react';
 import { useForm } from '../../hooks/useForm';
@@ -22,7 +20,7 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({ isOpen, onClose, pr
     const { createProductMutation, updateProductMutation, deleteProductMutation } = useData();
     const isNew = !product;
 
-    const initialState = {
+    const initialState = useMemo(() => ({
         name: '',
         sku: '',
         category: '',
@@ -30,9 +28,15 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({ isOpen, onClose, pr
         costPrice: 0,
         salePrice: 0,
         stockLevel: 0,
-    };
+    }), []);
     
-    const { formData, handleChange } = useForm(initialState, product ? { ...product } : initialState);
+    // FIX: The `product` prop can have an optional `description`, which is incompatible with `initialState` where `description` is a required string.
+    // This creates a memoized dependency that merges the product with the initial state to ensure type compatibility with the useForm hook.
+    const formDependency = useMemo(() => {
+        return product ? { ...initialState, ...product } : null;
+    }, [product, initialState]);
+
+    const { formData, handleChange } = useForm(initialState, formDependency);
     
     const handleNumericChange = (field: keyof typeof initialState, value: string) => {
         handleChange(field, parseFloat(value) || 0);

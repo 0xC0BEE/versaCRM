@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-// FIX: Corrected the import path for types to be a valid relative path.
 import { CalendarEvent } from '../../types';
-// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import { useForm } from '../../hooks/useForm';
 
 interface EventModalProps {
     isOpen: boolean;
@@ -18,29 +17,35 @@ interface EventModalProps {
 const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, event }) => {
     const { createCalendarEventMutation, updateCalendarEventMutation } = useData();
 
-    const [title, setTitle] = useState('');
-    const [start, setStart] = useState('');
-    const [end, setEnd] = useState('');
+    const initialState = useMemo(() => ({
+        title: '',
+        start: '',
+        end: '',
+    }), []);
 
-    useEffect(() => {
-        if (event) {
-            setTitle(event.title || '');
-            setStart(event.start ? format(new Date(event.start), "yyyy-MM-dd'T'HH:mm") : '');
-            setEnd(event.end ? format(new Date(event.end), "yyyy-MM-dd'T'HH:mm") : '');
-        }
+    const formDependency = useMemo(() => {
+        if (!event) return null;
+        return {
+            ...event,
+            title: event.title || '',
+            start: event.start ? format(new Date(event.start), "yyyy-MM-dd'T'HH:mm") : '',
+            end: event.end ? format(new Date(event.end), "yyyy-MM-dd'T'HH:mm") : '',
+        };
     }, [event]);
 
+    const { formData, handleChange } = useForm(initialState, formDependency);
+
     const handleSave = () => {
-        if (!title.trim() || !start || !end) {
+        if (!formData.title.trim() || !formData.start || !formData.end) {
             toast.error('Title, start, and end times are required.');
             return;
         }
 
         const eventData = {
             ...event,
-            title,
-            start: new Date(start),
-            end: new Date(end),
+            title: formData.title,
+            start: new Date(formData.start),
+            end: new Date(formData.end),
         };
         
         if (event.id) {
@@ -68,8 +73,8 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, event }) => {
                 <Input
                     id="event-title"
                     label="Event Title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    value={formData.title}
+                    onChange={(e) => handleChange('title', e.target.value)}
                     required
                 />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -77,16 +82,16 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, event }) => {
                         id="event-start"
                         label="Start Time"
                         type="datetime-local"
-                        value={start}
-                        onChange={(e) => setStart(e.target.value)}
+                        value={formData.start}
+                        onChange={(e) => handleChange('start', e.target.value)}
                         required
                     />
                     <Input
                         id="event-end"
                         label="End Time"
                         type="datetime-local"
-                        value={end}
-                        onChange={(e) => setEnd(e.target.value)}
+                        value={formData.end}
+                        onChange={(e) => handleChange('end', e.target.value)}
                         required
                     />
                 </div>
