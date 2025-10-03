@@ -69,16 +69,18 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
         setIsGeneratingSummary(true);
         setSummary('');
         try {
+            // FIX: Initialize GoogleGenAI with named apiKey parameter
             const ai = new GoogleGenAI({apiKey: process.env.API_KEY!});
             const promptContext = {
                 name: contact.contactName,
                 status: contact.status,
                 createdAt: contact.createdAt,
-                interactions: contact.interactions.slice(0, 5).map(i => ({ type: i.type, date: i.date, notes: i.notes.slice(0, 100) })),
-                orders: contact.orders.slice(0, 3).map(o => ({ status: o.status, total: o.total, date: o.orderDate })),
+                interactions: (contact.interactions || []).slice(0, 5).map(i => ({ type: i.type, date: i.date, notes: i.notes.slice(0, 100) })),
+                orders: (contact.orders || []).slice(0, 3).map(o => ({ status: o.status, total: o.total, date: o.orderDate })),
             };
             const prompt = `Generate a concise summary for a CRM team member about the following contact:\n${JSON.stringify(promptContext, null, 2)}`;
             
+            // FIX: Use ai.models.generateContent and await the response text property
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,

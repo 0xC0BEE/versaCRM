@@ -1,40 +1,7 @@
 import React from 'react';
 import Header from '../layout/Header';
 import Sidebar from '../layout/Sidebar';
-import { useApp } from '../../contexts/AppContext';
-import { Page } from '../../types';
-
-import DashboardPage from '../dashboard/DashboardPage';
-import ContactsPage from '../organizations/ContactsPage';
-import OrganizationsPage from '../organizations/OrganizationsPage';
-import InteractionsPage from '../interactions/InteractionsPage';
-import CalendarPage from '../calendar/CalendarPage';
-import MyTasksPage from '../tasks/MyTasksPage';
-import InventoryPage from '../inventory/InventoryPage';
-import ReportsPage from '../reports/ReportsPage';
-import SettingsPage from '../settings/SettingsPage';
-import DealsPage from '../deals/DealsPage';
-import WorkflowsPage from '../workflows/WorkflowsPage';
-import CampaignsPage from '../campaigns/CampaignsPage';
-
-const PageRenderer: React.FC = () => {
-    const { currentPage } = useApp();
-    switch (currentPage) {
-        case 'Dashboard': return <DashboardPage />;
-        case 'Contacts': return <ContactsPage />;
-        case 'Organizations': return <OrganizationsPage />;
-        case 'Deals': return <DealsPage />;
-        case 'Interactions': return <InteractionsPage />;
-        case 'Calendar': return <CalendarPage />;
-        case 'Tasks': return <MyTasksPage />;
-        case 'Inventory': return <InventoryPage />;
-        case 'Reports': return <ReportsPage />;
-        case 'Settings': return <SettingsPage />;
-        case 'Workflows': return <WorkflowsPage />;
-        case 'Campaigns': return <CampaignsPage />;
-        default: return <DashboardPage />;
-    }
-};
+import PageRenderer from '../common/PageRenderer';
 
 const OrganizationConsole: React.FC = () => {
     return (

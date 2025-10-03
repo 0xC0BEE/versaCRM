@@ -53,12 +53,14 @@ const EmailTab: React.FC<EmailTabProps> = ({ contact, setActiveTab, isReadOnly }
         }
         setIsGeneratingDraft(true);
         try {
+            // FIX: Initialize GoogleGenAI with named apiKey parameter
             const ai = new GoogleGenAI({apiKey: process.env.API_KEY!});
             const fullPrompt = `You are a CRM assistant. The user wants to write an email to a contact named ${contact.contactName}.
             User's prompt: "${aiPrompt}".
             Generate a professional and friendly email.
             Return a JSON object with two keys: "subject" (a string) and "body" (a string).`;
             
+            // FIX: Use ai.models.generateContent
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: fullPrompt,
@@ -78,6 +80,7 @@ const EmailTab: React.FC<EmailTabProps> = ({ contact, setActiveTab, isReadOnly }
 
             // FIX: The model can sometimes return the JSON wrapped in markdown.
             // This robustly extracts the JSON string before parsing to prevent errors.
+            // FIX: Access response text via .text property
             let jsonString = response.text.trim();
             const match = jsonString.match(/```json\n([\s\S]*?)\n```/);
             if (match && match[1]) {

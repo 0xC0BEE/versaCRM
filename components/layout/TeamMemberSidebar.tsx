@@ -1,7 +1,8 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
+// FIX: Corrected import path for types.
 import { Page } from '../../types';
-import { BarChart2, Users, Mail, Calendar, CheckSquare, LucideIcon, Handshake } from 'lucide-react';
+import { BarChart2, Users, Mail, Calendar, CheckSquare, LucideIcon, Handshake, LifeBuoy } from 'lucide-react';
 
 interface NavItem {
     page: Page;
@@ -13,6 +14,7 @@ const navItems: NavItem[] = [
     { page: 'Dashboard', label: 'Dashboard', icon: BarChart2 },
     { page: 'Contacts', label: 'My Contacts', icon: Users },
     { page: 'Deals', label: 'Deals', icon: Handshake },
+    { page: 'Tickets', label: 'Tickets', icon: LifeBuoy },
     { page: 'Interactions', label: 'Interactions', icon: Mail },
     { page: 'Calendar', label: 'Calendar', icon: Calendar },
     { page: 'Tasks', label: 'My Tasks', icon: CheckSquare },

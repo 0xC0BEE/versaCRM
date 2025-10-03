@@ -3,6 +3,7 @@ import { GoogleGenAI } from '@google/genai';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import { Bot, Loader } from 'lucide-react';
+// FIX: Corrected import path for types.
 import { DashboardData } from '../../types';
 import toast from 'react-hot-toast';
 
@@ -23,8 +24,10 @@ const AiInsightsCard: React.FC<AiInsightsCardProps> = ({ dashboardData, isLoadin
         setIsGenerating(true);
         setInsight('');
         try {
+            // FIX: Initialize GoogleGenAI with named apiKey parameter
             const ai = new GoogleGenAI({apiKey: process.env.API_KEY!});
             const prompt = `Analyze the following CRM dashboard data and provide a concise, actionable insight for an organization admin. Data: ${JSON.stringify(dashboardData.kpis)}`;
+            // FIX: Use ai.models.generateContent and await the response text property
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,

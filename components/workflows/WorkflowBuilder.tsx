@@ -44,16 +44,18 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose, or
     
     const { formData, setFormData, handleChange } = useForm(initialState, workflow);
 
-    const handleTriggerChange = (field: keyof WorkflowTrigger, value: any) => {
+    // FIX: Changed field type from `keyof WorkflowTrigger` to `string` to allow any property of the union type.
+    const handleTriggerChange = (field: string, value: any) => {
         const newTrigger = { ...formData.trigger, [field]: value };
         if (field === 'type' && value === 'contactCreated') {
-            delete newTrigger.fromStatus;
-            delete newTrigger.toStatus;
+            delete (newTrigger as any).fromStatus;
+            delete (newTrigger as any).toStatus;
         }
         handleChange('trigger', newTrigger);
     };
     
-    const handleActionChange = (index: number, field: keyof WorkflowAction, value: any) => {
+    // FIX: Changed field type from `keyof WorkflowAction` to `string` to allow any property of the union type.
+    const handleActionChange = (index: number, field: string, value: any) => {
         const newActions = [...formData.actions];
         const action = { ...newActions[index] as any };
         action[field] = value;
@@ -109,11 +111,12 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose, or
                     </Select>
                     {formData.trigger.type === 'contactStatusChanged' && (
                         <div className="grid grid-cols-2 gap-2">
-                            <Select id="trigger-from" label="From" value={formData.trigger.fromStatus || ''} onChange={e => handleTriggerChange('fromStatus', e.target.value)}>
+                            {/* FIX: Cast trigger to access `fromStatus` and `toStatus` properties. */}
+                            <Select id="trigger-from" label="From" value={(formData.trigger as any).fromStatus || ''} onChange={e => handleTriggerChange('fromStatus', e.target.value)}>
                                 <option value="">Any</option>
                                 {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
                             </Select>
-                            <Select id="trigger-to" label="To" value={formData.trigger.toStatus || ''} onChange={e => handleTriggerChange('toStatus', e.target.value)}>
+                            <Select id="trigger-to" label="To" value={(formData.trigger as any).toStatus || ''} onChange={e => handleTriggerChange('toStatus', e.target.value)}>
                                 <option value="">Any</option>
                                 {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
                             </Select>
@@ -125,7 +128,7 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose, or
 
         if (selectedNode.type === 'action' && selectedNode.index !== undefined) {
             const index = selectedNode.index;
-            const action = formData.actions[index];
+            const action = formData.actions[index] as any; // FIX: Cast action to any to simplify property access
             if (!action) return null;
 
             return (

@@ -1,17 +1,12 @@
+
+
 import React, { useState } from 'react';
-// FIX: Corrected the import path for types to be a valid relative path.
-import { ReportType, AnyReportData, CustomReport, DealReportData } from '../../types';
-// FIX: Corrected import path for useApp.
-import { useApp } from '../../contexts/AppContext';
-import { useAuth } from '../../contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
 import PageWrapper from '../layout/PageWrapper';
 import Card from '../ui/Card';
-import Button from '../ui/Button';
-import { Download, Plus, FileText } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { exportToCSV } from '../../utils/export';
-import apiClient from '../../services/apiClient';
+// FIX: Corrected the import path for types to be a valid relative path.
+import { ReportType, AnyReportData, CustomReport } from '../../types';
+// FIX: Corrected the import path for DataContext to be a valid relative path.
+import { useData } from '../../contexts/DataContext';
 import ReportFilters from './ReportFilters';
 import SalesReport from './SalesReport';
 import InventoryReport from './InventoryReport';
@@ -19,152 +14,162 @@ import FinancialReport from './FinancialReport';
 import ContactsReport from './ContactsReport';
 import TeamReport from './TeamReport';
 import DealsReport from './DealsReport';
-// FIX: Corrected the import path for DataContext to be a valid relative path.
-import { useData } from '../../contexts/DataContext';
+import { useQuery } from '@tanstack/react-query';
+// FIX: Corrected the import path for apiClient to be a valid relative path.
+import apiClient from '../../services/apiClient';
+import { useAuth } from '../../contexts/AuthContext';
+import { AlertTriangle, BarChart, Download, Plus, Trash2, Eye } from 'lucide-react';
+import Button from '../ui/Button';
+import { exportToCSV } from '../../utils/export';
+import { useApp } from '../../contexts/AppContext';
 import CustomReportBuilderPage from './CustomReportBuilderPage';
+import Modal from '../ui/Modal';
+import CustomReportDataTable from './CustomReportDataTable';
+// FIX: Imported toast to handle notifications.
+import toast from 'react-hot-toast';
 
-// FIX: Added props interface to accept isTabbedView
 interface ReportsPageProps {
     isTabbedView?: boolean;
 }
 
 const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
-    const { currentIndustry } = useApp();
     const { authenticatedUser } = useAuth();
-    const { customReportsQuery } = useData();
-    const orgId = authenticatedUser?.organizationId;
-    
-    const [view, setView] = useState<'list' | 'builder' | 'run_prebuilt' | 'run_custom'>('list');
-    const [selectedCustomReport, setSelectedCustomReport] = useState<CustomReport | null>(null);
-
-    // State for pre-built reports
+    const { setCurrentPage } = useApp(); // Not really router, but works for this app structure
     const [reportType, setReportType] = useState<ReportType>('deals');
-    const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>(() => {
-        const end = new Date();
-        const start = new Date();
-        start.setDate(end.getDate() - 30);
-        return { start, end };
+    const [dateRange, setDateRange] = useState({
+        start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+        end: new Date(),
     });
 
-    const { data, isLoading, isError, error } = useQuery<AnyReportData, Error>({
-        queryKey: ['reportData', currentIndustry, reportType, dateRange, orgId],
-        // FIX: Removed extra 'currentIndustry' argument to match function signature.
-        queryFn: () => apiClient.getReportData(reportType, dateRange, orgId!),
-        enabled: view === 'run_prebuilt', // Only run this query when viewing a pre-built report
+    const { data: reportData, isLoading } = useQuery<AnyReportData, Error>({
+        queryKey: ['reportData', reportType, dateRange, authenticatedUser?.organizationId],
+        queryFn: () => apiClient.getReportData(reportType, dateRange, authenticatedUser!.organizationId!),
+        enabled: !!authenticatedUser?.organizationId,
     });
-    
-    const { data: customReports = [], isLoading: customReportsLoading } = customReportsQuery;
 
-    const handleExport = () => {
-        // This function will need to be adapted for custom reports as well
-        if (!data) {
-            toast.error("No data available to export.");
-            return;
-        }
-        const key = Object.keys(data)[0];
-        const dataToExport = (data as any)[key];
-        if (Array.isArray(dataToExport) && dataToExport.length > 0) {
-            exportToCSV(dataToExport, `${currentIndustry}_${reportType}_report.csv`);
-        } else {
-            toast.error("No data to export for this report section.");
+    const { customReportsQuery, deleteCustomReportMutation, addDashboardWidgetMutation, dashboardWidgetsQuery } = useData();
+    const { data: customReports = [] } = customReportsQuery;
+    const { data: dashboardWidgets = [] } = dashboardWidgetsQuery;
+
+    const [view, setView] = useState<'list' | 'builder'>('list');
+    const [viewingReport, setViewingReport] = useState<CustomReport | null>(null);
+
+    const { data: customReportData, isLoading: isCustomReportDataLoading } = useQuery({
+        queryKey: ['customReportData', viewingReport?.id],
+        queryFn: () => apiClient.generateCustomReport(viewingReport!.config, viewingReport!.organizationId),
+        enabled: !!viewingReport,
+    });
+
+    const renderReport = () => {
+        if (!reportData) return null;
+        switch (reportType) {
+            case 'sales': return <SalesReport data={reportData as any} />;
+            case 'inventory': return <InventoryReport data={reportData as any} />;
+            case 'financial': return <FinancialReport data={reportData as any} />;
+            case 'contacts': return <ContactsReport data={reportData as any} />;
+            case 'team': return <TeamReport data={reportData as any} />;
+            case 'deals': return <DealsReport data={reportData as any} />;
+            default: return null;
         }
     };
 
-    const renderPrebuiltReport = () => {
-        if (isLoading) return <div className="text-center py-16">Generating report...</div>;
-        if (isError) return <div className="text-center py-16 text-red-500">Error generating report: {error.message}</div>;
-        if (!data) return <div className="text-center py-16">No data available for this report.</div>;
-
-        switch(reportType) {
-            case 'sales': return <SalesReport data={data as any} />;
-            case 'deals': return <DealsReport data={data as DealReportData} />;
-            case 'inventory': return <InventoryReport data={data as any} />;
-            case 'financial': return <FinancialReport data={data as any} />;
-            case 'contacts': return <ContactsReport data={data as any} />;
-            case 'team': return <TeamReport data={data as any} />;
-            default: return null;
+    const handleExport = () => {
+        if (reportData) {
+            // This is a simplification. A real export would need to flatten the data.
+            const dataToExport = (reportData as any)[Object.keys(reportData)[0]];
+            if (Array.isArray(dataToExport) && dataToExport.length > 0) {
+                 exportToCSV(dataToExport, `${reportType}_report_${new Date().toISOString().split('T')[0]}.csv`);
+            } else {
+                toast.error("Export is not available for this report's data structure.");
+            }
         }
     };
     
     if (view === 'builder') {
-        return <CustomReportBuilderPage onFinish={() => setView('list')} />;
+        return <CustomReportBuilderPage onClose={() => setView('list')} />;
     }
 
     const pageContent = (
         <>
-            {!isTabbedView && (
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Reports</h1>
-                    <Button onClick={() => setView('builder')} leftIcon={<Plus size={16}/>}>
-                        Build New Report
-                    </Button>
-                </div>
+             {!isTabbedView && (
+                <h1 className="text-2xl font-semibold text-gray-800 dark:text-white mb-6">Reports</h1>
             )}
-
-            {/* My Custom Reports */}
-            <Card className="mb-8">
-                 <h2 className="text-lg font-semibold mb-4">My Custom Reports</h2>
-                 {customReportsLoading ? <p>Loading custom reports...</p> : (
-                    customReports.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {customReports.map(report => (
-                                <div key={report.id} className="p-4 border dark:border-dark-border rounded-lg flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                    <div>
-                                        <p className="font-semibold">{report.name}</p>
-                                        <p className="text-xs text-gray-500">Source: {report.config.dataSource}</p>
-                                    </div>
-                                    <Button size="sm" variant="secondary">Run</Button>
-                                </div>
-                            ))}
+            <div className="space-y-6">
+                <Card>
+                    <div className="p-6">
+                        <ReportFilters
+                            reportType={reportType}
+                            setReportType={setReportType}
+                            dateRange={dateRange}
+                            setDateRange={setDateRange}
+                        />
+                         <div className="mt-4 flex justify-end">
+                            <Button variant="secondary" onClick={handleExport} leftIcon={<Download size={16} />} disabled={isLoading}>
+                                Export Data
+                            </Button>
                         </div>
-                    ) : (
-                         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                            <FileText className="mx-auto h-10 w-10 text-gray-400" />
-                            <p className="mt-2 font-semibold">No custom reports created yet.</p>
-                            <p className="text-sm">Click "Build New Report" to get started.</p>
-                        </div>
-                    )
-                 )}
-            </Card>
-
-
-            {/* Pre-built Reports */}
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Standard Reports</h2>
-            <Card className="mb-6">
-                <ReportFilters
-                    reportType={reportType}
-                    setReportType={setReportType}
-                    dateRange={dateRange}
-                    setDateRange={setDateRange}
-                />
-                 <div className="p-4 flex justify-end">
-                     <Button onClick={() => setView('run_prebuilt')} disabled={isLoading}>Generate Report</Button>
-                 </div>
-            </Card>
-
-            {view === 'run_prebuilt' && (
-                <>
-                    <div className="flex justify-between items-center mb-6">
-                        <Button onClick={() => setView('list')}>Back to Reports List</Button>
-                        <Button onClick={handleExport} leftIcon={<Download size={16}/>} disabled={isLoading || !data}>
-                            Export CSV
-                        </Button>
                     </div>
-                    {renderPrebuiltReport()}
-                </>
+                </Card>
+                
+                {isLoading ? (
+                    <Card><div className="p-12 text-center">Generating report...</div></Card>
+                ) : reportData ? (
+                    renderReport()
+                ) : (
+                    <Card><div className="p-12 text-center text-red-500 flex items-center justify-center"><AlertTriangle className="mr-2"/> Could not load report data.</div></Card>
+                )}
+
+                <Card>
+                    <div className="p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-semibold">Custom Reports</h2>
+                            <Button onClick={() => setView('builder')} leftIcon={<Plus size={16} />}>
+                                New Custom Report
+                            </Button>
+                        </div>
+                        {customReports.length > 0 ? (
+                            <div className="divide-y dark:divide-dark-border">
+                                {customReports.map(report => {
+                                    const isOnDashboard = dashboardWidgets.some(w => w.reportId === report.id);
+                                    return (
+                                        <div key={report.id} className="p-3 flex justify-between items-center">
+                                            <p className="font-medium">{report.name}</p>
+                                            <div className="space-x-2">
+                                                <Button size="sm" variant="secondary" onClick={() => setViewingReport(report)} leftIcon={<Eye size={14} />}>View</Button>
+                                                <Button size="sm" variant="secondary" onClick={() => addDashboardWidgetMutation.mutate(report.id)} disabled={isOnDashboard || addDashboardWidgetMutation.isPending} leftIcon={<BarChart size={14} />}>
+                                                    {isOnDashboard ? 'On Dashboard' : 'Add to Dashboard'}
+                                                </Button>
+                                                <Button size="sm" variant="danger" onClick={() => {if(window.confirm('Are you sure?')) deleteCustomReportMutation.mutate(report.id)}} leftIcon={<Trash2 size={14} />} disabled={deleteCustomReportMutation.isPending}>Delete</Button>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                             <p className="text-sm text-center text-gray-500 py-8">No custom reports created yet.</p>
+                        )}
+                    </div>
+                </Card>
+            </div>
+            {viewingReport && (
+                <Modal isOpen={!!viewingReport} onClose={() => setViewingReport(null)} title={viewingReport.name} size="5xl">
+                    {isCustomReportDataLoading ? (
+                        <p>Loading report data...</p>
+                    ) : customReportData ? (
+                        <CustomReportDataTable data={customReportData} />
+                    ) : (
+                        <p>Could not load data for this report.</p>
+                    )}
+                </Modal>
             )}
         </>
     );
-    
+
     if (isTabbedView) {
-        return <div className="p-1">{pageContent}</div>
+        return <div className="p-1">{pageContent}</div>;
     }
 
-    return (
-        <PageWrapper>
-            {pageContent}
-        </PageWrapper>
-    );
+    return <PageWrapper>{pageContent}</PageWrapper>;
 };
 
 export default ReportsPage;

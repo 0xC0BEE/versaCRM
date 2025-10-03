@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
-import { Search, Bell, LogOut } from 'lucide-react';
+import { Search, Bell, LogOut, ChevronDown } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
+// FIX: Corrected import path for NotificationsPanel.
 import NotificationsPanel from './NotificationsPanel';
 import SmartSearchModal from '../search/SmartSearchModal';
 
@@ -13,6 +14,10 @@ const Header: React.FC = () => {
     
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const profileRef = useRef<HTMLDivElement>(null);
+    const notificationsRef = useRef<HTMLDivElement>(null);
+
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -21,11 +26,22 @@ const Header: React.FC = () => {
                 setIsSearchOpen(true);
             }
         };
-
         window.addEventListener('keydown', handleKeyDown);
+
+        const handleClickOutside = (event: MouseEvent) => {
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+                setIsProfileOpen(false);
+            }
+             if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+                setIsNotificationsOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
 
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
+            document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
 
@@ -49,7 +65,7 @@ const Header: React.FC = () => {
                 </div>
                 
                 <div className="flex items-center space-x-4">
-                    <div className="relative">
+                    <div className="relative" ref={notificationsRef}>
                          <button
                             onClick={() => setIsNotificationsOpen(prev => !prev)}
                             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -65,18 +81,28 @@ const Header: React.FC = () => {
 
                     <div className="w-px h-6 bg-gray-200 dark:bg-gray-700"></div>
 
-                    <div className="flex items-center space-x-3">
-                        <div className="text-right">
-                            <p className="text-sm font-semibold">{authenticatedUser?.name}</p>
-                            <p className="text-xs text-gray-500">{authenticatedUser?.role}</p>
-                        </div>
+                    <div className="relative" ref={profileRef}>
                         <button
-                            onClick={logout}
-                            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-                            aria-label="Logout"
+                            onClick={() => setIsProfileOpen(prev => !prev)}
+                            className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
-                            <LogOut size={20} className="text-red-500" />
+                            <div className="text-right">
+                                <p className="text-sm font-semibold">{authenticatedUser?.name}</p>
+                                <p className="text-xs text-gray-500">{authenticatedUser?.role}</p>
+                            </div>
+                            <ChevronDown size={16} className={`transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                         </button>
+                        {isProfileOpen && (
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-dark-card rounded-lg shadow-lg border dark:border-dark-border z-20 py-1">
+                                <button
+                                    onClick={logout}
+                                    className="w-full flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                >
+                                    <LogOut size={16} className="mr-2" />
+                                    Logout
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </header>

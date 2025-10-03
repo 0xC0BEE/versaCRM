@@ -1,8 +1,9 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useAuth } from '../../contexts/AuthContext';
+// FIX: Corrected import path for types.
 import { Page } from '../../types';
-import { BarChart2, Users, Building2, Handshake, Mail, Calendar, CheckSquare, Package, FileText, Settings, Bot, LucideIcon } from 'lucide-react';
+import { BarChart2, Users, Building2, Handshake, Mail, Calendar, CheckSquare, Package, FileText, Settings, Bot, LucideIcon, LifeBuoy } from 'lucide-react';
 
 interface NavItem {
     page: Page;
@@ -15,6 +16,7 @@ const navItems: NavItem[] = [
     { page: 'Dashboard', label: 'Dashboard', icon: BarChart2 },
     { page: 'Contacts', label: 'Contacts', icon: Users, permission: 'isOrgAdmin' },
     { page: 'Deals', label: 'Deals', icon: Handshake, permission: 'isOrgAdmin' },
+    { page: 'Tickets', label: 'Tickets', icon: LifeBuoy, permission: 'isOrgAdmin' },
     { page: 'Organizations', label: 'Organizations', icon: Building2, permission: 'isSuperAdmin' },
     { page: 'Interactions', label: 'Interactions', icon: Mail },
     { page: 'Calendar', label: 'Calendar', icon: Calendar },

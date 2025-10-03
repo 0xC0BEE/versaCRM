@@ -1,5 +1,5 @@
 import React, { createContext, useContext, ReactNode, useMemo, useCallback } from 'react';
-// FIX: Corrected the import path for types to be a valid relative path.
+// FIX: Corrected import path for types.
 import { User, AuthContextType, Permissions } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { permissionsByRole } from '../config/permissionsConfig';

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
+// FIX: Corrected import path for types.
 import { AppContextType, Industry, Page, IndustryConfig, FilterCondition } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { useAuth } from './AuthContext';

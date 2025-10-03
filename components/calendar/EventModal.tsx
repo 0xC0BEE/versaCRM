@@ -2,7 +2,9 @@ import React, { useMemo } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+// FIX: Corrected import path for types.
 import { CalendarEvent } from '../../types';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';

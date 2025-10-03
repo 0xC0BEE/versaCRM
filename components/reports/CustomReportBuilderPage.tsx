@@ -1,203 +1,167 @@
+
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import PageWrapper from '../layout/PageWrapper';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import { ArrowLeft, Plus, Trash2, FileText } from 'lucide-react';
-import { ReportDataSource, FilterCondition, AnyContact, Product } from '../../types';
-import { useData } from '../../contexts/DataContext';
-import { useAuth } from '../../contexts/AuthContext';
-import apiClient from '../../services/apiClient';
-import toast from 'react-hot-toast';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
+import MultiSelect from '../ui/MultiSelect';
+import { ArrowLeft, Plus, Trash2, BarChart, Table, PieChart as PieIcon, LineChart as LineIcon } from 'lucide-react';
+import { useData } from '../../contexts/DataContext';
+import { ReportDataSource, FilterCondition, ReportVisualization, CustomReport } from '../../types';
+import toast from 'react-hot-toast';
+import { useAuth } from '../../contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import apiClient from '../../services/apiClient';
 import CustomReportDataTable from './CustomReportDataTable';
+import { processReportData } from '../../utils/reportProcessor';
+import CustomReportChart from './CustomReportChart';
 
-interface CustomReportBuilderPageProps {
-    onFinish: () => void;
-}
-
-const dataSources: { id: ReportDataSource, name: string }[] = [
-    { id: 'contacts', name: 'Contacts' },
-    { id: 'products', name: 'Products' },
+const dataSourceOptions: { value: ReportDataSource; label: string }[] = [
+    { value: 'contacts', label: 'Contacts' },
+    { value: 'products', label: 'Products' },
 ];
+
+const contactColumns = ['id', 'contactName', 'email', 'phone', 'status', 'leadSource', 'createdAt'];
+const productColumns = ['id', 'name', 'sku', 'category', 'costPrice', 'salePrice', 'stockLevel'];
 
 const operatorOptions = [
-    { id: 'is', name: 'Is' },
-    { id: 'is_not', name: 'Is Not' },
-    { id: 'contains', name: 'Contains' },
-    { id: 'does_not_contain', name: 'Does Not Contain' },
+    { id: 'is', name: 'Is' }, { id: 'is_not', name: 'Is Not' },
+    { id: 'contains', name: 'Contains' }, { id: 'does_not_contain', name: 'Does Not Contain' },
 ];
 
-const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ onFinish }) => {
+interface CustomReportBuilderPageProps {
+    onClose: () => void;
+}
+
+const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ onClose }) => {
     const { authenticatedUser } = useAuth();
-    const { contactsQuery, productsQuery, createCustomReportMutation } = useData();
-    const orgId = authenticatedUser!.organizationId!;
+    const { createCustomReportMutation } = useData();
 
-    const [step, setStep] = useState(1);
-    const [reportName, setReportName] = useState('');
+    const [name, setName] = useState('');
     const [dataSource, setDataSource] = useState<ReportDataSource>('contacts');
-    const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+    const [columns, setColumns] = useState<string[]>(['id', 'contactName', 'status']);
     const [filters, setFilters] = useState<FilterCondition[]>([]);
-    const [generatedData, setGeneratedData] = useState<any[] | null>(null);
+    const [visualization, setVisualization] = useState<ReportVisualization>({
+        type: 'table',
+        metric: { type: 'count' },
+    });
+    
+    const availableColumns = useMemo(() => {
+        return dataSource === 'contacts' ? contactColumns : productColumns;
+    }, [dataSource]);
 
-    const { data: reportData, isLoading: isGenerating, refetch } = useQuery({
-        queryKey: ['customReportPreview', dataSource, selectedColumns, filters],
-        queryFn: () => apiClient.generateCustomReport({ dataSource, columns: selectedColumns, filters }, orgId),
-        enabled: false, // Only run manually
+    const { data: previewData, isLoading: isPreviewLoading } = useQuery({
+        queryKey: ['reportPreview', dataSource, columns, filters, visualization, authenticatedUser?.organizationId],
+        queryFn: () => apiClient.generateCustomReport({ dataSource, columns, filters, visualization }, authenticatedUser!.organizationId!),
+        enabled: !!authenticatedUser?.organizationId,
     });
 
-    const availableColumns = useMemo(() => {
-        if (dataSource === 'contacts' && contactsQuery.data) return Object.keys(contactsQuery.data[0] || {});
-        if (dataSource === 'products' && productsQuery.data) return Object.keys(productsQuery.data[0] || {});
-        return [];
-    }, [dataSource, contactsQuery.data, productsQuery.data]);
-
-    const handleDataSourceChange = (ds: ReportDataSource) => {
-        setDataSource(ds);
-        setSelectedColumns([]);
-        setFilters([]);
-    };
-
-    const handleColumnToggle = (column: string) => {
-        setSelectedColumns(prev => 
-            prev.includes(column) ? prev.filter(c => c !== column) : [...prev, column]
-        );
-    };
-
-    const addFilter = () => {
-        if (availableColumns.length > 0) {
-            setFilters([...filters, { field: availableColumns[0], operator: 'is', value: '' }]);
-        }
-    };
+    const chartPreviewData = useMemo(() => {
+        if (!previewData || visualization.type === 'table') return [];
+        return processReportData(previewData, visualization);
+    }, [previewData, visualization]);
     
+    const addFilter = () => setFilters([...filters, { field: availableColumns[0], operator: 'contains', value: '' }]);
     const updateFilter = (index: number, field: keyof FilterCondition, value: string) => {
         const newFilters = [...filters];
         (newFilters[index] as any)[field] = value;
         setFilters(newFilters);
     };
+    const removeFilter = (index: number) => setFilters(filters.filter((_, i) => i !== index));
 
-    const removeFilter = (index: number) => {
-        setFilters(filters.filter((_, i) => i !== index));
-    };
-
-    const handleGenerateReport = async () => {
-        if (selectedColumns.length === 0) {
-            toast.error("Please select at least one column.");
-            return;
-        }
-        const { data } = await refetch();
-        setGeneratedData(data || []);
-    };
-    
-    const handleSaveReport = () => {
-        if (!reportName.trim()) {
-            toast.error("Please enter a name for your report.");
-            return;
-        }
-         if (selectedColumns.length === 0) {
-            toast.error("Cannot save a report with no columns.");
-            return;
-        }
+    const handleSave = () => {
+        if (!name.trim()) return toast.error("Report name is required.");
         createCustomReportMutation.mutate({
-            name: reportName,
-            organizationId: orgId,
-            config: { dataSource, columns: selectedColumns, filters }
-        }, {
-            onSuccess: onFinish
-        });
-    };
-
-    const renderStep = () => {
-        switch (step) {
-            case 1: // Data Source & Columns
-                return (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="md:col-span-1">
-                            <h3 className="font-semibold mb-2">1. Select Data Source</h3>
-                            <div className="space-y-2">
-                                {dataSources.map(ds => (
-                                    <button key={ds.id} onClick={() => handleDataSourceChange(ds.id)} className={`w-full text-left p-3 rounded-md border ${dataSource === ds.id ? 'bg-primary-100 dark:bg-primary-900/50 border-primary-500' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}>
-                                        {ds.name}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="md:col-span-2">
-                            <h3 className="font-semibold mb-2">2. Choose Columns</h3>
-                            <div className="max-h-60 overflow-y-auto p-3 border rounded-md dark:border-dark-border grid grid-cols-2 gap-2">
-                                {availableColumns.map(col => (
-                                    <label key={col} className="flex items-center space-x-2 p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700/50">
-                                        <input type="checkbox" checked={selectedColumns.includes(col)} onChange={() => handleColumnToggle(col)} className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"/>
-                                        <span>{col}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                );
-            case 2: // Filters
-                return (
-                     <div>
-                        <h3 className="font-semibold mb-4">3. Add Filters (Optional)</h3>
-                        <div className="space-y-3">
-                            {filters.map((filter, index) => (
-                                <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md">
-                                    <Select id={`filter-field-${index}`} label="" value={filter.field} onChange={e => updateFilter(index, 'field', e.target.value)}>
-                                        {availableColumns.map(col => <option key={col} value={col}>{col}</option>)}
-                                    </Select>
-                                    <Select id={`filter-op-${index}`} label="" value={filter.operator} onChange={e => updateFilter(index, 'operator', e.target.value as any)}>
-                                        {operatorOptions.map(op => <option key={op.id} value={op.id}>{op.name}</option>)}
-                                    </Select>
-                                    <Input id={`filter-val-${index}`} label="" value={filter.value} onChange={e => updateFilter(index, 'value', e.target.value)} className="flex-grow" />
-                                    <Button variant="danger" size="sm" onClick={() => removeFilter(index)}><Trash2 size={14}/></Button>
-                                </div>
-                            ))}
-                        </div>
-                        <Button variant="secondary" size="sm" onClick={addFilter} leftIcon={<Plus size={14} />} className="mt-3">Add Filter</Button>
-                    </div>
-                );
-            default: return null;
-        }
+            name,
+            organizationId: authenticatedUser!.organizationId!,
+            config: { dataSource, columns, filters, visualization },
+        }, { onSuccess: onClose });
     };
 
     return (
         <PageWrapper>
-             <div className="flex items-center mb-6">
-                <Button variant="secondary" onClick={onFinish} leftIcon={<ArrowLeft size={16} />}>Back to Reports</Button>
-            </div>
-            <Card title="Custom Report Builder">
-                {renderStep()}
-                <div className="mt-6 pt-4 border-t dark:border-dark-border flex justify-between">
-                    <Button variant="secondary" onClick={() => setStep(s => Math.max(1, s-1))} disabled={step === 1}>Previous</Button>
-                    {step < 2 ? (
-                        <Button onClick={() => setStep(s => Math.min(2, s+1))}>Next</Button>
-                    ) : (
-                        <Button onClick={handleGenerateReport} disabled={isGenerating}>
-                            {isGenerating ? "Generating..." : "Generate Report"}
-                        </Button>
-                    )}
+            <div className="flex justify-between items-center mb-4">
+                <Button variant="secondary" onClick={onClose} leftIcon={<ArrowLeft size={16} />}>Back to Reports</Button>
+                <div className="flex items-center gap-4">
+                    <Input id="report-name" label="" placeholder="Enter Report Name..." value={name} onChange={e => setName(e.target.value)} className="w-72" />
+                    <Button onClick={handleSave} disabled={createCustomReportMutation.isPending}>
+                        {createCustomReportMutation.isPending ? 'Saving...' : 'Save Report'}
+                    </Button>
                 </div>
-            </Card>
+            </div>
 
-            {generatedData && (
-                <Card className="mt-8" title="Report Preview">
-                    {generatedData.length > 0 ? (
-                         <CustomReportDataTable data={generatedData} />
-                    ) : (
-                         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                            <FileText className="mx-auto h-12 w-12 text-gray-400" />
-                            <p className="mt-2">Your report returned no results.</p>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Config Panel */}
+                <div className="lg:col-span-1 space-y-4">
+                    <Card title="1. Data Source">
+                        <Select id="data-source" label="Select data to report on" value={dataSource} onChange={e => setDataSource(e.target.value as ReportDataSource)}>
+                            {dataSourceOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </Select>
+                    </Card>
+                    <Card title="2. Columns">
+                        <MultiSelect label="Select columns to display" options={availableColumns.map(c => ({ value: c, label: c }))} selectedValues={columns} onChange={setColumns} />
+                    </Card>
+                     <Card title="3. Filters">
+                        <div className="space-y-2">
+                             {filters.map((filter, index) => (
+                                <div key={index} className="flex items-end gap-1">
+                                    <Select id={`filter-field-${index}`} label="" value={filter.field} onChange={e => updateFilter(index, 'field', e.target.value)} className="w-1/3">
+                                        {availableColumns.map(col => <option key={col} value={col}>{col}</option>)}
+                                    </Select>
+                                    <Select id={`filter-op-${index}`} label="" value={filter.operator} onChange={e => updateFilter(index, 'operator', e.target.value as any)} className="w-1/4">
+                                        {operatorOptions.map(op => <option key={op.id} value={op.id}>{op.name}</option>)}
+                                    </Select>
+                                    <Input id={`filter-val-${index}`} label="" value={filter.value} onChange={e => updateFilter(index, 'value', e.target.value)} className="flex-grow" />
+                                    <Button variant="secondary" size="sm" onClick={() => removeFilter(index)}><Trash2 size={14}/></Button>
+                                </div>
+                            ))}
                         </div>
-                    )}
-                    <div className="mt-6 p-4 border-t dark:border-dark-border flex items-center gap-4">
-                        <Input id="report-name" label="" placeholder="Enter report name to save..." value={reportName} onChange={e => setReportName(e.target.value)} className="flex-grow" />
-                        <Button onClick={handleSaveReport} disabled={!reportName || createCustomReportMutation.isPending}>
-                           {createCustomReportMutation.isPending ? "Saving..." : "Save Report"}
-                        </Button>
-                    </div>
-                </Card>
-            )}
+                        <Button variant="secondary" size="sm" onClick={addFilter} leftIcon={<Plus size={14} />} className="mt-2">Add Filter</Button>
+                    </Card>
+                    <Card title="4. Visualization">
+                        <div className="flex justify-around">
+                            <Button variant={visualization.type === 'table' ? 'primary' : 'secondary'} onClick={() => setVisualization({ type: 'table', metric: { type: 'count' } })}><Table/></Button>
+                            <Button variant={visualization.type === 'bar' ? 'primary' : 'secondary'} onClick={() => setVisualization({ ...visualization, type: 'bar' })}><BarChart/></Button>
+                            <Button variant={visualization.type === 'pie' ? 'primary' : 'secondary'} onClick={() => setVisualization({ ...visualization, type: 'pie' })}><PieIcon/></Button>
+                            <Button variant={visualization.type === 'line' ? 'primary' : 'secondary'} onClick={() => setVisualization({ ...visualization, type: 'line' })}><LineIcon/></Button>
+                        </div>
+                        {visualization.type !== 'table' && (
+                             <div className="mt-4 grid grid-cols-2 gap-2">
+                                <Select id="group-by" label="Group By" value={visualization.groupByKey || ''} onChange={e => setVisualization(v => ({...v, groupByKey: e.target.value}))}>
+                                    <option value="">Select column...</option>
+                                    {columns.map(c => <option key={c} value={c}>{c}</option>)}
+                                </Select>
+                                 <Select id="metric-type" label="Metric" value={visualization.metric.type} onChange={e => setVisualization(v => ({...v, metric: {...v.metric, type: e.target.value as any}}))}>
+                                     <option value="count">Count of Records</option>
+                                     <option value="sum">Sum of</option>
+                                     <option value="average">Average of</option>
+                                </Select>
+                                {(visualization.metric.type === 'sum' || visualization.metric.type === 'average') && (
+                                     <Select id="metric-col" label="Metric Column" value={visualization.metric.column || ''} onChange={e => setVisualization(v => ({...v, metric: {...v.metric, column: e.target.value}}))}>
+                                        <option value="">Select column...</option>
+                                        {columns.filter(c => typeof(productColumns.find(pc => pc === c)) !== 'undefined' || typeof(contactColumns.find(cc => cc === c)) !== 'undefined' ).map(c => <option key={c} value={c}>{c}</option>)}
+                                    </Select>
+                                )}
+                            </div>
+                        )}
+                    </Card>
+                </div>
+                {/* Preview */}
+                <div className="lg:col-span-2">
+                    <Card title="Live Preview">
+                        {isPreviewLoading ? (
+                            <p>Loading preview...</p>
+                        ) : previewData ? (
+                            visualization.type === 'table' ? (
+                                <CustomReportDataTable data={previewData} />
+                            ) : (
+                                <CustomReportChart data={chartPreviewData} visualizationType={visualization.type} />
+                            )
+                        ) : <p>No data to display.</p>}
+                    </Card>
+                </div>
+            </div>
         </PageWrapper>
     );
 };

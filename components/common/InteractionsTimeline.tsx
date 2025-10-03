@@ -1,7 +1,9 @@
 import React from 'react';
+// FIX: Corrected import path for types.
 import { Interaction } from '../../types';
 import { Mail, Phone, Users, FileText, Calendar, MapPin, Wrench } from 'lucide-react';
 import { format } from 'date-fns';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 
 interface InteractionsTimelineProps {
@@ -11,6 +13,7 @@ interface InteractionsTimelineProps {
 const interactionIcons: Record<Interaction['type'], React.ReactNode> = {
     Email: <Mail className="h-4 w-4 text-white" />,
     Call: <Phone className="h-4 w-4 text-white" />,
+    // FIX: Add 'Meeting' to the record.
     Meeting: <Users className="h-4 w-4 text-white" />,
     Note: <FileText className="h-4 w-4 text-white" />,
     Appointment: <Calendar className="h-4 w-4 text-white" />,
@@ -21,6 +24,7 @@ const interactionIcons: Record<Interaction['type'], React.ReactNode> = {
 const interactionColors: Record<Interaction['type'], string> = {
     Email: 'bg-blue-500',
     Call: 'bg-green-500',
+    // FIX: Add 'Meeting' to the record.
     Meeting: 'bg-purple-500',
     Note: 'bg-gray-500',
     Appointment: 'bg-indigo-500',

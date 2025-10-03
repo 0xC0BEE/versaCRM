@@ -1,3 +1,4 @@
+// FIX: Corrected import path for types.
 import { AnyContact, Workflow, EmailTemplate, ContactStatus, Interaction, Task } from '../types';
 
 type CreateTaskFn = (task: Omit<Task, 'id' | 'isCompleted'>) => void;

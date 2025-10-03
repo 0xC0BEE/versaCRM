@@ -11,6 +11,7 @@ import TeamPage from '../team/TeamPage';
 import OrganizationSettings from './OrganizationSettings';
 import OrganizationWorkflowsTab from './detail_tabs/OrganizationWorkflowsTab';
 import OrganizationReportsTab from './detail_tabs/OrganizationReportsTab';
+import { Organization } from '../../types';
 
 const OrganizationDetailPage: React.FC = () => {
     const { authenticatedUser } = useAuth();

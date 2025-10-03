@@ -32,6 +32,7 @@ const SmartSearchModal: React.FC<SmartSearchModalProps> = ({ isOpen, onClose }) 
         setResult(null);
 
         try {
+            // FIX: Initialize GoogleGenAI with named apiKey parameter
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
             const contactsContext = contacts.slice(0, 5).map((c: AnyContact) => ({ id: c.id, contactName: c.contactName, email: c.email, status: c.status, leadSource: c.leadSource }));
@@ -57,6 +58,7 @@ Contacts Sample: ${JSON.stringify(contactsContext)}
 Inventory Data: ${JSON.stringify(productsContext)}
 `;
 
+            // FIX: Use ai.models.generateContent with responseSchema
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,
@@ -87,6 +89,7 @@ Inventory Data: ${JSON.stringify(productsContext)}
                 }
             });
 
+            // FIX: Access response text via .text property
             const parsedResult = JSON.parse(response.text);
             setResult(parsedResult);
 

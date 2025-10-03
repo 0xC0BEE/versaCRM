@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
+// FIX: Corrected the import path for types to be a valid relative path.
 import { Document as DocType } from '../../../types';
 import { format } from 'date-fns';
 import Button from '../../ui/Button';

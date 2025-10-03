@@ -4,9 +4,11 @@ import Button from '../ui/Button';
 import Select from '../ui/Select';
 import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
+// FIX: Corrected import path for types.
 import { AnyContact, Interaction, InteractionType, User } from '../../types';
 import { useApp } from '../../contexts/AppContext';
 import { useAuth } from '../../contexts/AuthContext';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import { useForm } from '../../hooks/useForm';
 import toast from 'react-hot-toast';

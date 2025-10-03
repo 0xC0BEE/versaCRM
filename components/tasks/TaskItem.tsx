@@ -1,7 +1,7 @@
 import React from 'react';
-// FIX: Corrected the import path for types to be a valid relative path.
+// FIX: Corrected import path for types.
 import { Task } from '../../types';
-// FIX: Corrected the import path for DataContext to be a valid relative path.
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import { Trash2 } from 'lucide-react';
 import { format, isPast } from 'date-fns';

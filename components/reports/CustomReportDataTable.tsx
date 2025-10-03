@@ -11,6 +11,26 @@ const CustomReportDataTable: React.FC<CustomReportDataTableProps> = ({ data }) =
 
     const headers = Object.keys(data[0]);
 
+    const renderCell = (value: any) => {
+        if (value === null || value === undefined) {
+            return <span className="text-gray-400">N/A</span>;
+        }
+        if (typeof value === 'boolean') {
+            return value ? 'Yes' : 'No';
+        }
+        if (typeof value === 'object') {
+            // Stringify arrays or objects for display.
+            const jsonString = JSON.stringify(value);
+            // Show a truncated version and the full version in a tooltip for complex objects
+            return (
+                <span title={jsonString} className="cursor-help">
+                    {jsonString.length > 50 ? `${jsonString.substring(0, 50)}...` : jsonString}
+                </span>
+            );
+        }
+        return String(value);
+    };
+
     return (
         <div className="overflow-x-auto max-h-[60vh]">
             <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -26,7 +46,7 @@ const CustomReportDataTable: React.FC<CustomReportDataTableProps> = ({ data }) =
                         <tr key={rowIndex} className="bg-white border-b dark:bg-dark-card dark:border-dark-border hover:bg-gray-50 dark:hover:bg-gray-600">
                             {headers.map(header => (
                                 <td key={`${rowIndex}-${header}`} className="px-6 py-4">
-                                    {typeof row[header] === 'boolean' ? row[header] ? 'Yes' : 'No' : row[header]}
+                                    {renderCell(row[header])}
                                 </td>
                             ))}
                         </tr>

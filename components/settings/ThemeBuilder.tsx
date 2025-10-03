@@ -91,12 +91,13 @@ const ThemeBuilder: React.FC = () => {
                         className="w-full p-2 rounded-md bg-white dark:bg-gray-800 border dark:border-dark-border"
                     />
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        {(Object.keys(editingTheme.colors!) as Array<keyof CustomTheme['colors']>).map(key => (
+                        {/* FIX: Switched to Object.entries for safer key/value iteration */}
+                        {(Object.entries(editingTheme.colors!) as [keyof CustomTheme['colors'], string][]).map(([key, value]) => (
                             <div key={key}>
                                 <label className="block text-sm font-medium capitalize mb-1">{key}</label>
                                 <input 
                                     type="color" 
-                                    value={editingTheme.colors![key]}
+                                    value={value}
                                     onChange={e => handleColorChange(key, e.target.value)}
                                     className="w-full h-10 p-1 bg-white dark:bg-gray-800 border rounded-md cursor-pointer"
                                 />

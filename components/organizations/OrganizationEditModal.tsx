@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+// FIX: Corrected the import path for types to be a valid relative path.
 import { Organization, Industry } from '../../types';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';

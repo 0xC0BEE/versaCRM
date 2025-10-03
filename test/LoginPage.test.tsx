@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { renderWithProviders } from '../../test/test-utils';
-import App from '../../App';
-import apiClient from '../../services/apiClient';
+import { renderWithProviders } from './test-utils';
+import App from '../App';
+import apiClient from '../services/apiClient';
 
 // Mock the apiClient module
-vi.mock('../../services/apiClient', () => ({
+vi.mock('../services/apiClient', () => ({
   default: {
     login: vi.fn(),
   },

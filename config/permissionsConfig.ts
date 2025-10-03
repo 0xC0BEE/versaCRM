@@ -1,3 +1,4 @@
+// FIX: Corrected import path for types.
 import { UserRole, Permissions } from '../types';
 
 export const permissionsByRole: Record<UserRole, Permissions> = {

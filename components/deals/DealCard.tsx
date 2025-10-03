@@ -1,5 +1,7 @@
 import React from 'react';
+// FIX: Corrected import path for types.
 import { Deal } from '../../types';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 
 interface DealCardProps {

@@ -1,3 +1,4 @@
+// FIX: Corrected import path for types.
 import { AnyContact, Product, User, Task, ReportType, AnyReportData, SalesReportData, InventoryReportData, FinancialReportData, ContactsReportData, TeamReportData, DashboardData, Interaction, Deal, DealStage, DealReportData } from '../types';
 import { isWithinInterval, subDays, differenceInDays } from 'date-fns';
 
@@ -107,7 +108,7 @@ function generateDealsReport(dateRange: { start: Date; end: Date }, deals: Deal[
 
 
 function generateSalesReport(dateRange: { start: Date; end: Date }, contacts: AnyContact[]): SalesReportData {
-    const ordersInPeriod = contacts.flatMap(c => c.orders)
+    const ordersInPeriod = contacts.flatMap(c => c.orders || [])
         .filter(o => o.status === 'Completed' && isWithinInterval(new Date(o.orderDate), dateRange));
 
     const totalRevenue = ordersInPeriod.reduce((sum, order) => sum + order.total, 0);
@@ -156,7 +157,7 @@ function generateInventoryReport(products: Product[]): InventoryReportData {
 }
 
 function generateFinancialReport(dateRange: { start: Date; end: Date }, contacts: AnyContact[]): FinancialReportData {
-    const transactionsInPeriod = contacts.flatMap(c => c.transactions)
+    const transactionsInPeriod = contacts.flatMap(c => c.transactions || [])
         .filter(t => isWithinInterval(new Date(t.date), dateRange));
 
     const totalCharges = transactionsInPeriod
@@ -219,7 +220,7 @@ function generateContactsReport(dateRange: { start: Date; end: Date }, contacts:
 
 function generateTeamReport(dateRange: { start: Date; end: Date }, contacts: AnyContact[], team: User[], tasks: Task[]): TeamReportData {
     const teamPerformance = team.map(member => {
-        const interactionsInPeriod = contacts.flatMap(c => c.interactions).filter(i => i.userId === member.id && isWithinInterval(new Date(i.date), dateRange));
+        const interactionsInPeriod = contacts.flatMap(c => c.interactions || []).filter(i => i.userId === member.id && isWithinInterval(new Date(i.date), dateRange));
         const appointments = interactionsInPeriod.filter(i => i.type === 'Appointment' || i.type === 'Meeting').length;
         const completedTasks = tasks.filter(t => t.userId === member.id && isWithinInterval(new Date(t.dueDate), dateRange) && t.isCompleted).length;
         // Mock revenue generation - in real app this would be complex

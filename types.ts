@@ -1,59 +1,9 @@
-import { ReactNode } from 'react';
+// --- Core Entities ---
 
-// FIX: Added 'Workflows' to the Page type.
-export type Page = 'Dashboard' | 'Contacts' | 'Organizations' | 'Deals' | 'Interactions' | 'Calendar' | 'Tasks' | 'Inventory' | 'Reports' | 'Settings' | 'Campaigns' | 'Workflows';
 export type Industry = 'Health' | 'Finance' | 'Legal' | 'Generic';
-export type Theme = 'light' | 'dark' | 'system';
-
-export interface CustomField {
-    id: string;
-    label: string;
-    type: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'checkbox' | 'file';
-    options?: string[];
-}
-
-export interface IndustryConfig {
-    name: Industry;
-    contactName: string;
-    contactNamePlural: string;
-    organizationName: string;
-    organizationNamePlural: string;
-    teamMemberName: string;
-    teamMemberNamePlural: string;
-    customFields: CustomField[];
-    interactionTypes: InteractionType[];
-    interactionCustomFields: CustomField[];
-    structuredRecordTabName: string;
-    structuredRecordTypes: {
-        id: string;
-        name: string;
-        fields: CustomField[];
-    }[];
-    ordersTabName: string;
-    enrollmentsTabName: string;
-    dashboard: {
-        kpis: { key: string, title: string, icon: string }[];
-        charts: { dataKey: string, title: string, type: 'bar' | 'line' | 'pie' }[];
-    };
-}
-
-export interface FilterCondition {
-    field: string;
-    operator: 'is' | 'is_not' | 'contains' | 'does_not_contain';
-    value: string;
-}
-
-export interface AppContextType {
-    currentPage: Page;
-    setCurrentPage: (page: Page) => void;
-    currentIndustry: Industry;
-    setCurrentIndustry: (industry: Industry) => void;
-    industryConfig: IndustryConfig;
-    contactFilters: FilterCondition[];
-    setContactFilters: (filters: FilterCondition[]) => void;
-}
-
-export type UserRole = 'Super Admin' | 'Organization Admin' | 'Team Member' | 'Client';
+export type Page = 
+    'Dashboard' | 'Contacts' | 'Organizations' | 'Deals' | 'Tickets' | 'Interactions' | 
+    'Calendar' | 'Tasks' | 'Inventory' | 'Campaigns' | 'Workflows' | 'Reports' | 'Settings';
 
 export interface User {
     id: string;
@@ -61,19 +11,265 @@ export interface User {
     email: string;
     role: UserRole;
     organizationId?: string;
+    contactId?: string; // For Client role
+}
+
+export interface Organization {
+    id: string;
+    name: string;
+    industry: Industry;
+    primaryContactEmail: string;
+    createdAt: string;
+}
+
+// --- Contact & CRM Specific ---
+
+export type ContactStatus = 'Lead' | 'Active' | 'Inactive' | 'Do Not Contact';
+
+export interface AnyContact {
+    id: string;
+    organizationId: string;
+    contactName: string;
+    email: string;
+    phone: string;
+    status: ContactStatus;
+    leadSource: string;
+    createdAt: string;
+    avatar?: string;
+    customFields: Record<string, any>;
+    interactions?: Interaction[];
+    orders?: Order[];
+    transactions?: Transaction[];
+    enrollments?: Enrollment[];
+    relationships?: Relationship[];
+    structuredRecords?: StructuredRecord[];
+    auditLogs?: AuditLogEntry[];
+}
+
+export type InteractionType = 'Appointment' | 'Call' | 'Email' | 'Note' | 'Site Visit' | 'Meeting' | 'Maintenance Request';
+
+export interface Interaction {
+    id: string;
+    contactId: string;
+    organizationId: string;
+    userId: string;
+    type: InteractionType;
+    date: string;
+    notes: string;
+}
+
+export interface OrderLineItem {
+    productId: string;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+}
+
+export interface Order {
+    id: string;
+    contactId: string;
+    organizationId: string;
+    orderDate: string;
+    status: 'Pending' | 'Completed' | 'Cancelled';
+    total: number;
+    lineItems: OrderLineItem[];
+}
+
+export interface Transaction {
+    id: string;
+    type: 'Charge' | 'Payment' | 'Refund' | 'Credit';
+    amount: number;
+    date: string;
+    method: 'Credit Card' | 'Bank Transfer' | 'Cash' | 'Insurance' | 'Other';
+    orderId?: string;
+    relatedChargeId?: string; // For payments not linked to an order
+}
+
+export interface Enrollment {
+    id: string;
+    programName: string;
+    startDate: string;
+    endDate?: string;
+    status: 'Active' | 'Completed' | 'Cancelled';
+}
+
+export interface Relationship {
+    relatedContactId: string;
+    relationshipType: string;
+}
+
+export interface StructuredRecord {
+    id: string;
+    type: string; // e.g., 'soap_note', 'portfolio_review'
+    title: string;
+    recordDate: string;
+    fields: Record<string, any>;
+}
+
+export interface AuditLogEntry {
+    id: string;
+    timestamp: string;
+    userId: string;
+    userName: string;
+    change: string;
+}
+
+export interface DealStage {
+    id: string;
+    organizationId: string;
+    name: string;
+    order: number;
+}
+
+export interface Deal {
+    id: string;
+    organizationId: string;
+    name: string;
+    value: number;
+    stageId: string;
+    contactId: string;
+    expectedCloseDate: string;
+    createdAt: string;
+}
+
+// --- Inventory ---
+
+export interface Product {
+    id: string;
+    organizationId: string;
+    name: string;
+    sku: string;
+    category: string;
+    description?: string;
+    costPrice: number;
+    salePrice: number;
+    stockLevel: number;
+}
+
+export interface Supplier {
+    id: string;
+    organizationId: string;
+    name: string;
+    contactPerson: string;
+    email: string;
+    phone: string;
+}
+
+export interface Warehouse {
+    id: string;
+    organizationId: string;
+    name: string;
+    location: string;
+}
+
+// --- Scheduling & Tasks ---
+
+export interface CalendarEvent {
+    id: string;
+    organizationId: string;
+    title: string;
+    start: Date;
+    end: Date;
+    userIds: string[];
     contactId?: string;
 }
 
-export interface Permissions {
-    [key: string]: boolean;
+export interface Task {
+    id: string;
+    organizationId: string;
+    title: string;
+    dueDate: string;
+    isCompleted: boolean;
+    userId: string;
+    contactId?: string;
 }
 
-export interface AuthContextType {
-    authenticatedUser: User | null;
-    login: (user: User) => void;
-    logout: () => void;
-    permissions: Permissions | null;
+// --- Marketing & Automation ---
+
+export interface EmailTemplate {
+    id: string;
+    organizationId: string;
+    name: string;
+    subject: string;
+    body: string;
 }
+
+export type WorkflowTrigger =
+    | { type: 'contactCreated' }
+    | { type: 'contactStatusChanged'; fromStatus?: ContactStatus; toStatus?: ContactStatus };
+
+export type WorkflowAction =
+    | { type: 'createTask'; taskTitle?: string; assigneeId?: string }
+    | { type: 'sendEmail'; emailTemplateId?: string }
+    | { type: 'updateContactField'; fieldId?: string; newValue?: any }
+    | { type: 'sendWebhook'; webhookUrl?: string; payloadTemplate?: string };
+    
+export interface Workflow {
+    id: string;
+    organizationId: string;
+    name: string;
+    isActive: boolean;
+    trigger: WorkflowTrigger;
+    actions: WorkflowAction[];
+}
+
+export interface CampaignStep {
+    type: 'sendEmail' | 'wait';
+    emailTemplateId?: string;
+    days?: number;
+}
+
+export interface Campaign {
+    id: string;
+    organizationId: string;
+    name: string;
+    status: 'Draft' | 'Active' | 'Completed';
+    targetAudience: {
+        status: ContactStatus[];
+    };
+    steps: CampaignStep[];
+    stats: {
+        recipients: number;
+        sent: number;
+        opened: number;
+        clicked: number;
+    };
+}
+
+
+// --- Support ---
+
+export interface TicketAttachment {
+    name: string;
+    type: string;
+    dataUrl: string;
+}
+
+export interface TicketReply {
+    id: string;
+    userId: string;
+    userName: string;
+    message: string;
+    timestamp: string;
+    isInternal: boolean;
+    attachment?: TicketAttachment;
+}
+
+export interface Ticket {
+    id: string;
+    organizationId: string;
+    contactId: string;
+    subject: string;
+    description: string;
+    status: 'New' | 'Open' | 'Pending' | 'Closed';
+    priority: 'Low' | 'Medium' | 'High';
+    assignedToId?: string;
+    createdAt: string;
+    updatedAt: string;
+    replies: TicketReply[];
+}
+
+// --- Reports ---
 
 export type ReportType = 'sales' | 'inventory' | 'financial' | 'contacts' | 'team' | 'deals';
 
@@ -130,176 +326,123 @@ export type AnyReportData = SalesReportData | InventoryReportData | FinancialRep
 
 export interface CustomReport {
     id: string;
-    name: string;
     organizationId: string;
+    name: string;
     config: {
         dataSource: ReportDataSource;
         columns: string[];
         filters: FilterCondition[];
+        visualization: ReportVisualization;
     };
 }
 
 export type ReportDataSource = 'contacts' | 'products';
 
-
-export type ContactStatus = 'Lead' | 'Active' | 'Inactive' | 'Do Not Contact';
-export type InteractionType = 'Appointment' | 'Call' | 'Email' | 'Note' | 'Site Visit' | 'Meeting' | 'Maintenance Request';
-
-export interface Interaction {
-    id: string;
-    contactId: string;
-    organizationId: string;
-    userId: string;
-    type: InteractionType;
-    date: string;
-    notes: string;
+export interface ReportVisualization {
+    type: 'table' | 'bar' | 'line' | 'pie';
+    groupByKey?: string;
+    metric: {
+        type: 'count' | 'sum' | 'average';
+        column?: string;
+    };
 }
 
-export interface OrderLineItem {
-    productId: string;
-    description: string;
-    quantity: number;
-    unitPrice: number;
-}
 
-export interface Order {
-    id: string;
-    organizationId: string;
-    contactId: string;
-    orderDate: string;
-    status: 'Pending' | 'Completed' | 'Cancelled';
-    total: number;
-    lineItems: OrderLineItem[];
-}
-
-export interface Enrollment {
-    id: string;
-    programName: string;
-    startDate: string;
-    endDate?: string;
-    status: 'Active' | 'Completed' | 'Dropped';
-}
-
-export interface Transaction {
-    id: string;
-    type: 'Charge' | 'Payment' | 'Refund' | 'Credit';
-    amount: number;
-    date: string;
-    method: 'Credit Card' | 'Bank Transfer' | 'Cash' | 'Insurance' | 'Other';
-    orderId?: string;
-    relatedChargeId?: string;
-}
-
-export interface StructuredRecord {
-    id: string;
-    type: string;
-    title: string;
-    recordDate: string;
-    fields: Record<string, any>;
-}
-
-export interface Relationship {
-    relatedContactId: string;
-    relationshipType: string;
-}
-
-export interface AuditLogEntry {
-    id: string;
-    timestamp: string;
-    userId: string;
-    userName: string;
-    change: string;
-}
-
-export interface AnyContact {
-    id: string;
-    organizationId: string;
-    contactName: string;
-    email: string;
-    phone: string;
-    status: ContactStatus;
-    leadSource: string;
-    createdAt: string;
-    avatar?: string;
-    customFields: Record<string, any>;
-    interactions: Interaction[];
-    orders: Order[];
-    enrollments: Enrollment[];
-    transactions: Transaction[];
-    structuredRecords: StructuredRecord[];
-    relationships: Relationship[];
-    auditLogs: AuditLogEntry[];
-}
-
-export interface CalendarEvent {
-    id: string;
-    title: string;
-    start: Date;
-    end: Date;
-    allDay?: boolean;
-    userIds: string[];
-    contactId?: string;
-}
-
-export interface Task {
-    id: string;
-    title: string;
-    dueDate: string;
-    isCompleted: boolean;
-    userId: string;
-    contactId?: string;
-    organizationId: string;
-}
-
-export interface Organization {
-    id: string;
-    name: string;
-    industry: Industry;
-    primaryContactEmail: string;
-    createdAt: string;
-}
-
-export interface Product {
-    id: string;
-    organizationId: string;
-    name: string;
-    sku: string;
-    category: string;
-    description?: string;
-    costPrice: number;
-    salePrice: number;
-    stockLevel: number;
-}
-
-export interface Supplier {
-    id: string;
-    organizationId: string;
-    name: string;
-    contactPerson: string;
-    email: string;
-    phone: string;
-}
-
-export interface Warehouse {
-    id: string;
-    organizationId: string;
-    name: string;
-    location: string;
-}
+// --- Dashboard ---
 
 export interface DashboardData {
     kpis: {
         totalContacts: number;
         newContacts: number;
         upcomingAppointments: number;
-        [key: string]: any; 
     };
     charts: {
         contactsByStatus: { name: string; value: number }[];
         appointmentsByMonth: { name: string; value: number }[];
-        [key: string]: any[];
     };
 }
+
+export interface DashboardWidget {
+    id: string;
+    reportId: string;
+}
+
+// --- Config & Settings ---
+
+export interface CustomField {
+    id: string;
+    label: string;
+    type: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'checkbox' | 'file';
+    options?: string[];
+}
+
+export interface IndustryConfig {
+    name: Industry;
+    contactName: string;
+    contactNamePlural: string;
+    organizationName: string;
+    organizationNamePlural: string;
+    teamMemberName: string;
+    teamMemberNamePlural: string;
+    customFields: CustomField[];
+    interactionTypes: InteractionType[];
+    interactionCustomFields: CustomField[];
+    structuredRecordTabName: string;
+    structuredRecordTypes: {
+        id: string;
+        name: string;
+        fields: CustomField[];
+    }[];
+    ordersTabName: string;
+    enrollmentsTabName: string;
+    dashboard: {
+        kpis: { key: string; title: string; icon: string }[];
+        charts: { dataKey: string; title: string; type: 'bar' | 'pie' | 'line' }[];
+    }
+}
+
+export interface FilterCondition {
+    field: string;
+    operator: 'is' | 'is_not' | 'contains' | 'does_not_contain';
+    value: string;
+}
+
+export interface Document {
+    id: string;
+    organizationId: string;
+    contactId: string;
+    fileName: string;
+    fileType: string;
+    uploadDate: string;
+    dataUrl: string; // Base64 encoded file
+}
+
+export interface SLAPolicy {
+    responseTime: { high: number, medium: number, low: number };
+    resolutionTime: { high: number, medium: number, low: number };
+}
+
+export interface OrganizationSettings {
+    organizationId: string;
+    ticketSla: SLAPolicy;
+}
+
+
+// --- Auth & Permissions ---
+
+export type UserRole = 'Super Admin' | 'Organization Admin' | 'Team Member' | 'Client';
+
+export interface Permissions {
+    canViewOrganizations: boolean;
+    canEditOrganizations: boolean;
+    canViewAllContacts: boolean;
+    canViewAllReports: boolean;
+    canAccessSettings: boolean;
+}
+
+// --- Theme ---
+
+export type Theme = 'light' | 'dark' | 'system';
 
 export interface CustomTheme {
     id: string;
@@ -313,16 +456,26 @@ export interface CustomTheme {
     };
 }
 
-export interface ThemeContextType {
-    theme: Theme;
-    setTheme: (theme: Theme) => void;
-    customThemes: CustomTheme[];
-    activeCustomThemeId: string | null;
-    addCustomTheme: (theme: CustomTheme) => void;
-    updateCustomTheme: (theme: CustomTheme) => void;
-    deleteCustomTheme: (themeId: string) => void;
-    applyCustomTheme: (themeId: string | null) => void;
+// --- Contexts ---
+
+export interface AppContextType {
+    currentPage: Page;
+    setCurrentPage: (page: Page) => void;
+    currentIndustry: Industry;
+    setCurrentIndustry: (industry: Industry) => void;
+    industryConfig: IndustryConfig;
+    contactFilters: FilterCondition[];
+    setContactFilters: (filters: FilterCondition[]) => void;
 }
+
+export interface AuthContextType {
+    authenticatedUser: User | null;
+    login: (user: User) => void;
+    logout: () => void;
+    permissions: Permissions | null;
+}
+
+export type NotificationType = 'mention' | 'task_assigned' | 'deal_won' | 'ticket_assigned' | 'ticket_reply';
 
 export interface Notification {
     id: string;
@@ -334,8 +487,6 @@ export interface Notification {
     linkTo?: string;
 }
 
-export type NotificationType = 'mention' | 'task_assigned';
-
 export interface NotificationContextType {
     notifications: Notification[];
     unreadCount: number;
@@ -344,92 +495,14 @@ export interface NotificationContextType {
     markAllAsRead: () => void;
 }
 
-export interface Document {
-    id: string;
-    contactId: string;
-    organizationId: string;
-    fileName: string;
-    fileType: string;
-    fileSize: number;
-    uploadDate: string;
-    uploadedByUserId: string;
-    dataUrl: string; // Base64 encoded string
-}
 
-export interface EmailTemplate {
-    id: string;
-    organizationId: string;
-    name: string;
-    subject: string;
-    body: string;
-}
-
-export interface WorkflowTrigger {
-    type: 'contactCreated' | 'contactStatusChanged';
-    fromStatus?: ContactStatus;
-    toStatus?: ContactStatus;
-}
-
-export interface WorkflowAction {
-    type: 'createTask' | 'sendEmail' | 'updateContactField' | 'sendWebhook';
-    taskTitle?: string;
-    assigneeId?: string;
-    emailTemplateId?: string;
-    fieldId?: string;
-    newValue?: any;
-    webhookUrl?: string;
-    payloadTemplate?: string;
-}
-
-export interface Workflow {
-    id: string;
-    organizationId: string;
-    name: string;
-    isActive: boolean;
-    trigger: WorkflowTrigger;
-    actions: WorkflowAction[];
-}
-
-export interface DealStage {
-    id: string;
-    name: string;
-    order: number;
-    organizationId: string;
-}
-
-export interface Deal {
-    id: string;
-    organizationId: string;
-    name: string;
-    value: number;
-    stageId: string;
-    contactId: string;
-    expectedCloseDate: string;
-    createdAt: string;
-}
-
-// CAMPAIGN TYPES
-export type CampaignStatus = 'Draft' | 'Active' | 'Completed' | 'Archived';
-
-export interface CampaignStep {
-    type: 'sendEmail' | 'wait';
-    emailTemplateId?: string;
-    days?: number;
-}
-
-export interface Campaign {
-    id: string;
-    organizationId: string;
-    name: string;
-    status: CampaignStatus;
-    targetAudience: {
-        status: ContactStatus[];
-    };
-    steps: CampaignStep[];
-    stats: {
-        recipients: number;
-        sent: number;
-        opened: number;
-        clicked: number;
-    };
+export interface ThemeContextType {
+    theme: Theme;
+    setTheme: (theme: Theme) => void;
+    customThemes: CustomTheme[];
+    activeCustomThemeId: string | null;
+    addCustomTheme: (theme: CustomTheme) => void;
+    updateCustomTheme: (theme: CustomTheme) => void;
+    deleteCustomTheme: (themeId: string) => void;
+    applyCustomTheme: (themeId: string | null) => void;
 }

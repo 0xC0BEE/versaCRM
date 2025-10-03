@@ -3,8 +3,10 @@ import PageWrapper from '../layout/PageWrapper';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import { Bot, Plus, Mail, Eye, BarChart2 } from 'lucide-react';
+// FIX: Corrected import path for useData.
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
+// FIX: Corrected import path for types.
 import { Campaign } from '../../types';
 import CampaignBuilderPage from './CampaignBuilderPage';
 

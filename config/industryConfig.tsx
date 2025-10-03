@@ -1,3 +1,4 @@
+// FIX: Corrected import path for types.
 import { IndustryConfig, Industry } from '../types';
 
 export let industryConfigs: Record<Industry, IndustryConfig> = {

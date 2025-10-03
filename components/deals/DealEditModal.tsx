@@ -4,7 +4,9 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import toast from 'react-hot-toast';
+// FIX: Corrected import path for types.
 import { Deal, DealStage, AnyContact } from '../../types';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from '../../hooks/useForm';
@@ -111,7 +113,7 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
                         id="deal-close-date"
                         label="Expected Close Date"
                         type="date"
-                        value={formData.expectedCloseDate}
+                        value={formData.expectedCloseDate.split('T')[0]}
                         onChange={e => handleChange('expectedCloseDate', e.target.value)}
                         disabled={isPending}
                     />

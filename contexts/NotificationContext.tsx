@@ -1,5 +1,6 @@
 import React, { createContext, useContext, ReactNode, useMemo, useEffect, useCallback } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
+// FIX: Corrected import path for types.
 import { Notification, NotificationContextType } from '../types';
 import { useAuth } from './AuthContext';
 

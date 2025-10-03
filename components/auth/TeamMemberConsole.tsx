@@ -1,28 +1,7 @@
 import React from 'react';
 import Header from '../layout/Header';
 import TeamMemberSidebar from '../layout/TeamMemberSidebar';
-import { useApp } from '../../contexts/AppContext';
-import { Page } from '../../types';
-
-import DashboardPage from '../dashboard/DashboardPage';
-import ContactsPage from '../organizations/ContactsPage';
-import InteractionsPage from '../interactions/InteractionsPage';
-import CalendarPage from '../calendar/CalendarPage';
-import MyTasksPage from '../tasks/MyTasksPage';
-import DealsPage from '../deals/DealsPage';
-
-const PageRenderer: React.FC = () => {
-    const { currentPage } = useApp();
-    switch (currentPage) {
-        case 'Dashboard': return <DashboardPage />;
-        case 'Contacts': return <ContactsPage />;
-        case 'Deals': return <DealsPage />;
-        case 'Interactions': return <InteractionsPage />;
-        case 'Calendar': return <CalendarPage />;
-        case 'Tasks': return <MyTasksPage />;
-        default: return <DashboardPage />;
-    }
-};
+import PageRenderer from '../common/PageRenderer';
 
 const TeamMemberConsole: React.FC = () => {
     return (

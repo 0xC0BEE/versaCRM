@@ -64,11 +64,14 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
     const handleAdd = () => {
         // Provide a default empty structure for a new contact
         setSelectedContact({
+            id: '',
+            organizationId: '',
             contactName: '',
             email: '',
             phone: '',
             status: 'Lead',
             leadSource: 'Manual',
+            createdAt: new Date().toISOString(),
             customFields: {},
         } as AnyContact); 
         setIsDetailModalOpen(true);

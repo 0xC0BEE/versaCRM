@@ -1,5 +1,6 @@
 import React from 'react';
 // FIX: Imported correct type.
+// FIX: Corrected the import path for types to be a valid relative path.
 import { TeamReportData } from '../../types';
 import Card from '../ui/Card';
 import { User, DollarSign, CheckSquare, Calendar } from 'lucide-react';

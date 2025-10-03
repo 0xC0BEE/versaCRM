@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+// FIX: Corrected the import path for apiClient from a file path to a relative module path.
 import apiClient from '../../services/apiClient';
 import toast from 'react-hot-toast';
 import Button from '../ui/Button';

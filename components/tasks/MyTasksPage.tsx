@@ -1,18 +1,20 @@
 import React, { useState, useMemo } from 'react';
 import PageWrapper from '../layout/PageWrapper';
-// FIX: Corrected the import path for DataContext to be a valid relative path.
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import TaskItem from './TaskItem';
 import Card from '../ui/Card';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { Plus } from 'lucide-react';
-// FIX: Corrected the import path for types to be a valid relative path.
+// FIX: Corrected import path for types.
 import { Task } from '../../types';
 import { addDays } from 'date-fns';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../contexts/AuthContext';
 
 const MyTasksPage: React.FC = () => {
+    const { authenticatedUser } = useAuth();
     const { tasksQuery, createTaskMutation } = useData();
     const { data: tasks = [], isLoading } = tasksQuery;
     const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -24,9 +26,12 @@ const MyTasksPage: React.FC = () => {
             return;
         }
 
+        // FIX: The `createTaskMutation` requires the `userId` of the user to whom the task is assigned.
         createTaskMutation.mutate({
             title: newTaskTitle,
             dueDate: addDays(new Date(), 1).toISOString(),
+            userId: authenticatedUser!.id,
+            organizationId: authenticatedUser!.organizationId!,
         }, {
             onSuccess: () => {
                 setNewTaskTitle('');

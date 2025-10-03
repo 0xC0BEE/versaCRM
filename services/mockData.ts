@@ -1,169 +1,133 @@
-import {
-    AnyContact, Organization, User, Task, Product, Supplier, Warehouse,
-    Interaction, EmailTemplate, Document, Workflow,
-    Deal, DealStage, CustomReport, Campaign
-} from '../types';
+// FIX: Corrected import path for types.
+import { User, Organization, AnyContact, Product, Supplier, Warehouse, CalendarEvent, Task, Interaction, Deal, DealStage, EmailTemplate, Workflow, Campaign, Ticket, CustomReport, DashboardWidget, Document, SLAPolicy, OrganizationSettings } from '../types';
+import { addDays, subDays } from 'date-fns';
 
-export const organizations: Organization[] = [
-    { id: 'org_1', name: 'HealWell Clinic', industry: 'Health', primaryContactEmail: 'contact@healwell.com', createdAt: '2023-01-15T09:00:00Z' },
-    { id: 'org_2', name: 'Capital Investments', industry: 'Finance', primaryContactEmail: 'info@capitalinvest.com', createdAt: '2023-02-20T14:30:00Z' },
-];
-
-export let users: User[] = [
-    { id: 'user_super_1', name: 'Sam Super', email: 'super@crm.com', role: 'Super Admin' },
+// --- Users ---
+let users: User[] = [
+    { id: 'user_super_1', name: 'Super Admin', email: 'super@crm.com', role: 'Super Admin' },
     { id: 'user_admin_1', name: 'Alice Admin', email: 'admin@crm.com', role: 'Organization Admin', organizationId: 'org_1' },
-    { id: 'user_team_1', name: 'Bob Builder', email: 'team@crm.com', role: 'Team Member', organizationId: 'org_1' },
+    { id: 'user_team_1', name: 'Bob Team', email: 'team@crm.com', role: 'Team Member', organizationId: 'org_1' },
     { id: 'user_client_1', name: 'Charlie Client', email: 'client@crm.com', role: 'Client', organizationId: 'org_1', contactId: 'contact_1' },
-    { id: 'user_admin_2', name: 'Diana Director', email: 'diana@capital.com', role: 'Organization Admin', organizationId: 'org_2' },
-    { id: 'user_team_2', name: 'Ethan Analyst', email: 'ethan@capital.com', role: 'Team Member', organizationId: 'org_2' },
 ];
 
-export let interactions: Interaction[] = [
-    { id: 'int_1', contactId: 'contact_1', organizationId: 'org_1', userId: 'user_admin_1', type: 'Appointment', date: '2023-10-10T10:00:00Z', notes: 'Initial consultation. Discussed treatment plan. @Bob Builder to follow up.' },
-    { id: 'int_2', contactId: 'contact_1', organizationId: 'org_1', userId: 'user_team_1', type: 'Call', date: '2023-10-12T15:30:00Z', notes: 'Follow-up call. Patient confirmed next appointment.' },
-    { id: 'int_3', contactId: 'contact_2', organizationId: 'org_1', userId: 'user_admin_1', type: 'Email', date: '2023-10-11T11:00:00Z', notes: 'Sent new patient forms.' },
-    { id: 'int_4', contactId: 'contact_3', organizationId: 'org_2', userId: 'user_admin_2', type: 'Meeting', date: '2023-09-05T14:00:00Z', notes: 'Reviewed Q3 portfolio. Client is happy with the performance.' },
+// --- Organizations ---
+let organizations: Organization[] = [
+    { id: 'org_1', name: 'VersaHealth Clinic', industry: 'Health', primaryContactEmail: 'contact@versahealth.com', createdAt: subDays(new Date(), 90).toISOString() },
+    { id: 'org_2', name: 'Finance Solutions Inc.', industry: 'Finance', primaryContactEmail: 'contact@financesolutions.com', createdAt: subDays(new Date(), 180).toISOString() },
 ];
 
-export let contacts: AnyContact[] = [
-    {
-        id: 'contact_1',
-        organizationId: 'org_1',
-        contactName: 'John Patient',
-        email: 'john.patient@example.com',
-        phone: '555-0101',
-        status: 'Active',
-        leadSource: 'Referral',
-        createdAt: '2023-10-01T08:00:00Z',
-        avatar: 'https://i.pravatar.cc/150?u=contact_1',
-        customFields: { patientId: 'HW-1001', insuranceProvider: 'BlueCross', dateOfBirth: '1980-05-20' },
-        interactions: [interactions[0], interactions[1]],
-        orders: [],
-        enrollments: [{ id: 'en_1', programName: 'Physical Therapy Plan', startDate: '2023-10-10', status: 'Active' }],
+// --- Products (for Inventory) ---
+let products: Product[] = [
+    { id: 'prod_1', organizationId: 'org_1', name: 'Stethoscope', sku: 'ST-001', category: 'Medical Equipment', costPrice: 50, salePrice: 120, stockLevel: 150 },
+    { id: 'prod_2', organizationId: 'org_1', name: 'Band-Aids (Box of 100)', sku: 'BA-100', category: 'Consumables', costPrice: 5, salePrice: 15, stockLevel: 80 },
+    { id: 'prod_3', organizationId: 'org_1', name: 'Aspirin (100mg)', sku: 'ASP-100', category: 'Pharmaceuticals', costPrice: 2, salePrice: 8, stockLevel: 2000 },
+];
+
+// --- Contacts ---
+let contacts: AnyContact[] = [
+    { 
+        id: 'contact_1', organizationId: 'org_1', contactName: 'John Patient', email: 'john.patient@example.com', phone: '555-0101', status: 'Active', leadSource: 'Referral', createdAt: subDays(new Date(), 45).toISOString(), customFields: { patientId: 'P12345', insuranceProvider: 'MediCare', dateOfBirth: '1980-05-20' },
+        orders: [
+            { id: 'order_1', contactId: 'contact_1', organizationId: 'org_1', orderDate: subDays(new Date(), 10).toISOString(), status: 'Completed', total: 135, lineItems: [{productId: 'prod_1', description: 'Stethoscope', quantity: 1, unitPrice: 120}, {productId: 'prod_2', description: 'Band-Aids (Box of 100)', quantity: 1, unitPrice: 15}] }
+        ],
         transactions: [
-            { id: 'trn_1', type: 'Charge', amount: 150, date: '2023-10-10', method: 'Insurance' },
-            { id: 'trn_2', type: 'Payment', amount: 20, date: '2023-10-10', method: 'Credit Card', relatedChargeId: 'trn_1' }
+             { id: 'trans_1', type: 'Charge', amount: 135, date: subDays(new Date(), 10).toISOString(), method: 'Insurance', orderId: 'order_1' }
         ],
-        structuredRecords: [],
-        relationships: [],
-        auditLogs: [{ id: 'log_1', timestamp: '2023-10-01T08:00:00Z', userId: 'user_admin_1', userName: 'Alice Admin', change: 'created the contact.' }]
+        auditLogs: [{ id: 'log_1', timestamp: new Date().toISOString(), userId: 'user_admin_1', userName: 'Alice Admin', change: 'updated status to Active.' }]
     },
-    {
-        id: 'contact_2',
-        organizationId: 'org_1',
-        contactName: 'Jane Doe',
-        email: 'jane.doe@example.com',
-        phone: '555-0102',
-        status: 'Lead',
-        leadSource: 'Web',
-        createdAt: '2023-10-05T11:00:00Z',
-        customFields: {},
-        interactions: [interactions[2]],
-        orders: [],
-        enrollments: [],
-        transactions: [],
-        structuredRecords: [],
-        relationships: [],
-        auditLogs: []
-    },
-    {
-        id: 'contact_3',
-        organizationId: 'org_2',
-        contactName: 'Peter Investor',
-        email: 'peter.investor@example.com',
-        phone: '555-0201',
-        status: 'Active',
-        leadSource: 'Event',
-        createdAt: '2023-08-15T16:00:00Z',
-        customFields: { clientId: 'CI-2001', riskProfile: 'Moderate' },
-        interactions: [interactions[3]],
-        orders: [],
-        enrollments: [],
-        transactions: [],
-        structuredRecords: [],
-        relationships: [],
-        auditLogs: []
-    }
+    { id: 'contact_2', organizationId: 'org_1', contactName: 'Jane Doe', email: 'jane.doe@example.com', phone: '555-0102', status: 'Lead', leadSource: 'Web', createdAt: subDays(new Date(), 5).toISOString(), customFields: {} },
 ];
 
-export let tasks: Task[] = [
-    { id: 'task_1', title: 'Follow up with John Patient', dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), isCompleted: false, userId: 'user_team_1', contactId: 'contact_1', organizationId: 'org_1' },
-    { id: 'task_2', title: 'Prepare onboarding for Jane Doe', dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(), isCompleted: false, userId: 'user_admin_1', contactId: 'contact_2', organizationId: 'org_1' },
-    { id: 'task_3', title: 'Review Q3 report for Peter Investor', dueDate: '2023-09-30T09:00:00Z', isCompleted: true, userId: 'user_admin_2', contactId: 'contact_3', organizationId: 'org_2' },
+// --- Suppliers ---
+let suppliers: Supplier[] = [
+    { id: 'sup_1', organizationId: 'org_1', name: 'MedSupply Co.', contactPerson: 'Sarah Chen', email: 'sarah@medsupply.com', phone: '555-0201' },
 ];
 
-export const products: Product[] = [
-    { id: 'prod_1', organizationId: 'org_1', name: 'Standard Consultation', sku: 'CONS-STD', category: 'Services', costPrice: 0, salePrice: 150, stockLevel: 9999 },
-    { id: 'prod_2', organizationId: 'org_1', name: 'Ortho Brace', sku: 'BR-ORTHO-M', category: 'Medical Supplies', costPrice: 45, salePrice: 120, stockLevel: 50 },
-    { id: 'prod_3', organizationId: 'org_2', name: 'Wealth Management Fee', sku: 'FEE-WM', category: 'Fees', costPrice: 0, salePrice: 1000, stockLevel: 9999 },
+// --- Warehouses ---
+let warehouses: Warehouse[] = [
+    { id: 'wh_1', organizationId: 'org_1', name: 'Main Warehouse', location: '123 Storage Rd, Cityville' },
 ];
 
-export const suppliers: Supplier[] = [
-    { id: 'sup_1', organizationId: 'org_1', name: 'MedSupply Co.', contactPerson: 'Sarah Jones', email: 'sarah@medsupply.com', phone: '555-1111' }
+// --- Calendar Events ---
+let calendarEvents: CalendarEvent[] = [
+    { id: 'cal_1', organizationId: 'org_1', title: 'Follow-up with John Patient', start: addDays(new Date(), 2), end: addDays(new Date(), 2), userIds: ['user_team_1'], contactId: 'contact_1' },
 ];
 
-export const warehouses: Warehouse[] = [
-    { id: 'wh_1', organizationId: 'org_1', name: 'Main Clinic Storage', location: '123 Health St.' }
+// --- Tasks ---
+let tasks: Task[] = [
+    { id: 'task_1', organizationId: 'org_1', title: 'Prepare quarterly report', dueDate: addDays(new Date(), 5).toISOString(), isCompleted: false, userId: 'user_admin_1' },
+    { id: 'task_2', organizationId: 'org_1', title: 'Call Jane Doe', dueDate: subDays(new Date(), 1).toISOString(), isCompleted: false, userId: 'user_team_1', contactId: 'contact_2' },
 ];
 
-export let documents: Document[] = [
-    { id: 'doc_1', contactId: 'contact_1', organizationId: 'org_1', fileName: 'intake_form.pdf', fileType: 'application/pdf', fileSize: 102400, uploadDate: '2023-10-01T08:05:00Z', uploadedByUserId: 'user_admin_1', dataUrl: '' },
+// --- Interactions ---
+let interactions: Interaction[] = [
+    { id: 'int_1', contactId: 'contact_1', organizationId: 'org_1', userId: 'user_team_1', type: 'Appointment', date: subDays(new Date(), 15).toISOString(), notes: 'Discussed treatment plan.' },
+];
+// Add interactions to contacts
+contacts.forEach(c => {
+    c.interactions = interactions.filter(i => i.contactId === c.id);
+})
+
+
+// --- Deals ---
+let dealStages: DealStage[] = [
+    { id: 'stage_1', organizationId: 'org_1', name: 'Qualification', order: 1 },
+    { id: 'stage_2', organizationId: 'org_1', name: 'Needs Analysis', order: 2 },
+    { id: 'stage_3', organizationId: 'org_1', name: 'Proposal Sent', order: 3 },
+    { id: 'stage_4', organizationId: 'org_1', name: 'Negotiation', order: 4 },
+    { id: 'stage_5', organizationId: 'org_1', name: 'Closed Won', order: 5 },
+    { id: 'stage_6', organizationId: 'org_1', name: 'Closed Lost', order: 6 },
+];
+let deals: Deal[] = [
+    { id: 'deal_1', organizationId: 'org_1', name: 'Service Contract for Jane Doe', value: 5000, stageId: 'stage_2', contactId: 'contact_2', expectedCloseDate: addDays(new Date(), 30).toISOString(), createdAt: new Date().toISOString() },
 ];
 
-export let emailTemplates: EmailTemplate[] = [
-    { id: 'et_1', organizationId: 'org_1', name: 'Welcome New Patient', subject: 'Welcome to HealWell Clinic, {{contactName}}!', body: 'Dear {{contactName}},\n\nWe are delighted to welcome you to our clinic. Your health is our top priority.\n\nSincerely,\nThe HealWell Team' },
-    { id: 'et_2', organizationId: 'org_1', name: 'Appointment Reminder', subject: 'Your Upcoming Appointment', body: 'Hi {{contactName}},\n\nThis is a reminder for your upcoming appointment with us. We look forward to seeing you.\n\nBest,\n{{userName}}' },
+// --- Email Templates & Workflows ---
+let emailTemplates: EmailTemplate[] = [
+    { id: 'et_1', organizationId: 'org_1', name: 'Welcome Email', subject: 'Welcome to VersaHealth!', body: 'Hi {{contactName}},\n\nWelcome! We are excited to have you.\n\nBest,\n{{userName}}' },
+];
+let workflows: Workflow[] = [];
+
+// --- Campaigns ---
+let campaigns: Campaign[] = [];
+
+// --- Tickets ---
+let tickets: Ticket[] = [
+    { id: 'ticket_1', organizationId: 'org_1', contactId: 'contact_1', subject: 'Billing question', description: 'I have a question about my last invoice.', status: 'Open', priority: 'Medium', assignedToId: 'user_team_1', createdAt: subDays(new Date(), 2).toISOString(), updatedAt: new Date().toISOString(), replies: [] },
 ];
 
-export let workflows: Workflow[] = [
-    {
-        id: 'wf_1',
-        organizationId: 'org_1',
-        name: 'New Lead Follow-up',
-        isActive: true,
-        trigger: { type: 'contactCreated' },
-        actions: [
-            { type: 'createTask', taskTitle: 'Initial follow-up call with {{contactName}}', assigneeId: 'user_admin_1' },
-            { type: 'sendEmail', emailTemplateId: 'et_1' }
-        ]
-    }
+// --- Custom Reports & Widgets ---
+let customReports: CustomReport[] = [];
+let dashboardWidgets: DashboardWidget[] = [];
+
+// --- Documents ---
+let documents: Document[] = [];
+
+// --- Org Settings ---
+let organizationSettings: OrganizationSettings[] = [
+    { organizationId: 'org_1', ticketSla: { responseTime: { high: 2, medium: 4, low: 8 }, resolutionTime: { high: 24, medium: 48, low: 72 } } }
 ];
 
-export let dealStages: DealStage[] = [
-    { id: 'stage_1', name: 'Prospect', order: 1, organizationId: 'org_1' },
-    { id: 'stage_2', name: 'Qualification', order: 2, organizationId: 'org_1' },
-    { id: 'stage_3', name: 'Proposal', order: 3, organizationId: 'org_1' },
-    { id: 'stage_4', name: 'Negotiation', order: 4, organizationId: 'org_1' },
-    { id: 'stage_5', name: 'Closed Won', order: 5, organizationId: 'org_1' },
-    { id: 'stage_6', name: 'Closed Lost', order: 6, organizationId: 'org_1' },
-];
-
-export let deals: Deal[] = [
-    { id: 'deal_1', organizationId: 'org_1', name: 'Corporate Wellness Program', value: 15000, stageId: 'stage_3', contactId: 'contact_2', expectedCloseDate: '2024-07-30T00:00:00Z', createdAt: '2024-06-01T00:00:00Z' },
-    { id: 'deal_2', organizationId: 'org_1', name: 'New Equipment Purchase', value: 5000, stageId: 'stage_1', contactId: 'contact_1', expectedCloseDate: '2024-08-15T00:00:00Z', createdAt: '2024-06-10T00:00:00Z' }
-];
-
-export let customReports: CustomReport[] = [
-    { id: 'cr_1', name: 'Active Leads Report', organizationId: 'org_1', config: { dataSource: 'contacts', columns: ['contactName', 'email', 'leadSource'], filters: [{ field: 'status', operator: 'is', value: 'Lead' }] } }
-];
-
-export let campaigns: Campaign[] = [
-    {
-        id: 'camp_1',
-        organizationId: 'org_1',
-        name: 'New Patient Welcome Sequence',
-        status: 'Active',
-        targetAudience: { status: ['Lead'] },
-        steps: [
-            { type: 'sendEmail', emailTemplateId: 'et_1' },
-            { type: 'wait', days: 3 },
-            { type: 'sendEmail', emailTemplateId: 'et_2' },
-        ],
-        stats: {
-            recipients: 1,
-            sent: 2, // Mock: 1 contact, 2 emails sent
-            opened: 1, // Mock
-            clicked: 0, // Mock
-        }
-    }
-];
+// FIX: To resolve read-only assignment errors in `apiClient.ts`, mock data arrays are no longer exported directly.
+// Instead, they are wrapped in a single mutable `mockDataStore` object.
+export const mockDataStore = {
+  users,
+  organizations,
+  products,
+  contacts,
+  suppliers,
+  warehouses,
+  calendarEvents,
+  tasks,
+  interactions,
+  dealStages,
+  deals,
+  emailTemplates,
+  workflows,
+  campaigns,
+  tickets,
+  customReports,
+  dashboardWidgets,
+  documents,
+  organizationSettings,
+};

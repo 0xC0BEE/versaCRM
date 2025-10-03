@@ -1,4 +1,5 @@
 import React from 'react';
+// FIX: Corrected the import path for types to be a valid relative path.
 import { InventoryReportData } from '../../types';
 import Card from '../ui/Card';
 import KpiCard from '../dashboard/KpiCard';

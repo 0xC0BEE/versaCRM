@@ -1,10 +1,10 @@
 import React from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import Card from '../ui/Card';
-// FIX: Corrected the import path for DataContext to be a valid relative path.
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import InteractionsTimeline from '../common/InteractionsTimeline';
-// FIX: Corrected the import path for types to be a valid relative path.
+// FIX: Corrected import path for types.
 import { Interaction } from '../../types';
 
 const InteractionsPage: React.FC = () => {

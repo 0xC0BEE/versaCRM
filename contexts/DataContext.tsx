@@ -1,72 +1,17 @@
-import React, { createContext, useContext, ReactNode, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient, UseQueryResult } from '@tanstack/react-query';
+import React, { createContext, useContext, ReactNode } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../services/apiClient';
-import {
-    AnyContact, Organization, User, Task, CalendarEvent, Product, Supplier, Warehouse,
-    // FIX: Aliased the imported `Document` type to `AppDocument` to resolve name collision with the global DOM `Document` type.
-    Interaction, DashboardData, EmailTemplate, Document as AppDocument, Workflow, Deal, DealStage, CustomReport, ReportDataSource,
-    Campaign
-} from '../types';
 import { useAuth } from './AuthContext';
-import { useApp } from './AppContext';
 import toast from 'react-hot-toast';
-import { checkAndTriggerWorkflows } from '../services/workflowService';
+import {
+    AnyContact, CalendarEvent, Campaign, ContactStatus, CustomReport, DashboardWidget, Deal, DealStage, EmailTemplate,
+    Industry, Interaction, Order, Organization, Product, Supplier, Task, Ticket, TicketReply, User, Warehouse, Workflow, OrganizationSettings as OrgSettingsType, CustomField
+} from '../types';
+import { useNotifications } from './NotificationContext';
 
+// Define the shape of the context
 interface DataContextType {
-    organizationsQuery: UseQueryResult<Organization[], Error>;
-    createOrganizationMutation: any;
-    updateOrganizationMutation: any;
-    deleteOrganizationMutation: any;
-    contactsQuery: UseQueryResult<AnyContact[], Error>;
-    createContactMutation: any;
-    updateContactMutation: any;
-    deleteContactMutation: any;
-    bulkDeleteContactsMutation: any;
-    bulkUpdateContactStatusMutation: any;
-    teamMembersQuery: UseQueryResult<User[], Error>;
-    createTeamMemberMutation: any;
-    updateTeamMemberMutation: any;
-    tasksQuery: UseQueryResult<Task[], Error>;
-    createTaskMutation: any;
-    updateTaskMutation: any;
-    deleteTaskMutation: any;
-    calendarEventsQuery: UseQueryResult<CalendarEvent[], Error>;
-    createCalendarEventMutation: any;
-    updateCalendarEventMutation: any;
-    productsQuery: UseQueryResult<Product[], Error>;
-    createProductMutation: any;
-    updateProductMutation: any;
-    deleteProductMutation: any;
-    suppliersQuery: UseQueryResult<Supplier[], Error>;
-    warehousesQuery: UseQueryResult<Warehouse[], Error>;
-    createInteractionMutation: any;
-    // FIX: Added a query to fetch all interactions for the organization.
-    allInteractionsQuery: UseQueryResult<Interaction[], Error>;
-    dashboardData: DashboardData | undefined;
-    isLoading: boolean;
-    emailTemplatesQuery: UseQueryResult<EmailTemplate[], Error>;
-    createEmailTemplateMutation: any;
-    updateEmailTemplateMutation: any;
-    deleteEmailTemplateMutation: any;
-    workflowsQuery: UseQueryResult<Workflow[], Error>;
-    createWorkflowMutation: any;
-    updateWorkflowMutation: any;
-    dealsQuery: UseQueryResult<Deal[], Error>;
-    dealStagesQuery: UseQueryResult<DealStage[], Error>;
-    createDealMutation: any;
-    updateDealMutation: any;
-    deleteDealMutation: any;
-    customReportsQuery: UseQueryResult<CustomReport[], Error>;
-    createCustomReportMutation: any;
-    updateCustomFieldsMutation: any;
-    createOrderMutation: any;
-    updateOrderMutation: any;
-    deleteOrderMutation: any;
-    createTransactionMutation: any;
-    campaignsQuery: UseQueryResult<Campaign[], Error>;
-    createCampaignMutation: any;
-    updateCampaignMutation: any;
-    deleteCampaignMutation: any;
+    [key: string]: any;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -74,462 +19,202 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const queryClient = useQueryClient();
     const { authenticatedUser } = useAuth();
-    const { currentIndustry } = useApp();
-    const orgId = authenticatedUser?.organizationId;
-    const userId = authenticatedUser?.id;
+    const { addNotification } = useNotifications();
+    const organizationId = authenticatedUser?.organizationId || '';
 
-    // WORKFLOW DEPENDENCIES
-    const workflowsQuery = useQuery<Workflow[], Error>({
-        queryKey: ['workflows', orgId],
-        queryFn: () => apiClient.getWorkflows(orgId!),
-        enabled: !!orgId,
-    });
-    const emailTemplatesQuery = useQuery<EmailTemplate[], Error>({
-        queryKey: ['emailTemplates', orgId],
-        queryFn: () => apiClient.getEmailTemplates(orgId!),
-        enabled: !!orgId,
-    });
+    // --- GENERIC MUTATION HANDLERS ---
+    const genericOnSuccessWithToast = (queryKey: string | string[], message: string) => () => {
+        toast.success(message);
+        queryClient.invalidateQueries({ queryKey: Array.isArray(queryKey) ? queryKey : [queryKey] });
+    };
+
+    // --- QUERIES (simplified for brevity) ---
+    const teamMembersQuery = useQuery({ queryKey: ['teamMembers', organizationId], queryFn: () => apiClient.getTeamMembers(organizationId), enabled: !!organizationId });
+    const contactsQuery = useQuery({ queryKey: ['contacts', organizationId], queryFn: () => apiClient.getContacts(organizationId), enabled: !!organizationId });
+    const ticketsQuery = useQuery({ queryKey: ['tickets', organizationId], queryFn: () => apiClient.getTickets(organizationId), enabled: !!organizationId });
+    const emailTemplatesQuery = useQuery({ queryKey: ['emailTemplates', organizationId], queryFn: () => apiClient.getEmailTemplates(organizationId), enabled: !!organizationId });
+    const organizationsQuery = useQuery({ queryKey: ['organizations'], queryFn: apiClient.getOrganizations, enabled: authenticatedUser?.role === 'Super Admin' });
+    const productsQuery = useQuery({ queryKey: ['products', organizationId], queryFn: () => apiClient.getProducts(organizationId), enabled: !!organizationId });
+    const suppliersQuery = useQuery({ queryKey: ['suppliers', organizationId], queryFn: () => apiClient.getSuppliers(organizationId), enabled: !!organizationId });
+    const warehousesQuery = useQuery({ queryKey: ['warehouses', organizationId], queryFn: () => apiClient.getWarehouses(organizationId), enabled: !!organizationId });
+    const calendarEventsQuery = useQuery({ queryKey: ['calendarEvents', organizationId], queryFn: () => apiClient.getCalendarEvents(organizationId), enabled: !!organizationId });
+    const tasksQuery = useQuery({ queryKey: ['tasks', organizationId], queryFn: () => apiClient.getTasks(organizationId), enabled: !!organizationId });
+    const allInteractionsQuery = useQuery({ queryKey: ['allInteractions', organizationId], queryFn: () => apiClient.getAllInteractions(organizationId), enabled: !!organizationId });
+    const dealStagesQuery = useQuery({ queryKey: ['dealStages', organizationId], queryFn: () => apiClient.getDealStages(organizationId), enabled: !!organizationId });
+    const dealsQuery = useQuery({ queryKey: ['deals', organizationId], queryFn: () => apiClient.getDeals(organizationId), enabled: !!organizationId });
+    const workflowsQuery = useQuery({ queryKey: ['workflows', organizationId], queryFn: () => apiClient.getWorkflows(organizationId), enabled: !!organizationId });
+    const campaignsQuery = useQuery({ queryKey: ['campaigns', organizationId], queryFn: () => apiClient.getCampaigns(organizationId), enabled: !!organizationId });
+    const customReportsQuery = useQuery({ queryKey: ['customReports', organizationId], queryFn: () => apiClient.getCustomReports(organizationId), enabled: !!organizationId });
+    const dashboardWidgetsQuery = useQuery({ queryKey: ['dashboardWidgets', organizationId], queryFn: () => apiClient.getDashboardWidgets(organizationId), enabled: !!organizationId });
+    const dashboardDataQuery = useQuery({ queryKey: ['dashboardData', organizationId], queryFn: () => apiClient.getDashboardData(organizationId), enabled: !!organizationId });
+    const organizationSettingsQuery = useQuery({ queryKey: ['organizationSettings', organizationId], queryFn: () => apiClient.getOrganizationSettings(organizationId), enabled: !!organizationId });
+
+
+    // --- MUTATIONS ---
+
+    // Organizations
+    const createOrganizationMutation = useMutation({ mutationFn: apiClient.createOrganization, onSuccess: genericOnSuccessWithToast('organizations', 'Organization created!') });
+    const updateOrganizationMutation = useMutation({ mutationFn: apiClient.updateOrganization, onSuccess: genericOnSuccessWithToast('organizations', 'Organization updated!') });
+    const deleteOrganizationMutation = useMutation({ mutationFn: apiClient.deleteOrganization, onSuccess: genericOnSuccessWithToast('organizations', 'Organization deleted!') });
+
+    // Contacts
+    const createContactMutation = useMutation({ mutationFn: apiClient.createContact, onSuccess: genericOnSuccessWithToast('contacts', 'Contact created!') });
+    const updateContactMutation = useMutation({ mutationFn: apiClient.updateContact, onSuccess: genericOnSuccessWithToast(['contacts', 'allInteractions'], 'Contact updated!') });
+    const deleteContactMutation = useMutation({ mutationFn: apiClient.deleteContact, onSuccess: genericOnSuccessWithToast('contacts', 'Contact deleted!') });
+    const bulkDeleteContactsMutation = useMutation({ mutationFn: (ids: string[]) => apiClient.bulkDeleteContacts(ids, organizationId), onSuccess: genericOnSuccessWithToast('contacts', 'Contacts deleted!') });
+    const bulkUpdateContactStatusMutation = useMutation({ mutationFn: ({ ids, status }: { ids: string[]; status: ContactStatus; }) => apiClient.bulkUpdateContactStatus(ids, status, organizationId), onSuccess: genericOnSuccessWithToast('contacts', 'Contacts updated!') });
+
+    // Interactions
+    const createInteractionMutation = useMutation({ mutationFn: apiClient.createInteraction, onSuccess: genericOnSuccessWithToast(['contactInteractions', 'allInteractions'], 'Interaction logged!') });
+    const createTransactionMutation = useMutation({ mutationFn: apiClient.createTransaction, onSuccess: genericOnSuccessWithToast(['contacts'], 'Transaction added!') });
+
+    // Orders
+    const createOrderMutation = useMutation({ mutationFn: apiClient.createOrder, onSuccess: genericOnSuccessWithToast(['contacts'], 'Order created!') });
+    const updateOrderMutation = useMutation({ mutationFn: apiClient.updateOrder, onSuccess: genericOnSuccessWithToast(['contacts'], 'Order updated!') });
+    const deleteOrderMutation = useMutation({ mutationFn: apiClient.deleteOrder, onSuccess: genericOnSuccessWithToast(['contacts'], 'Order deleted!') });
     
-    // ORGANIZATIONS
-    const organizationsQuery = useQuery<Organization[], Error>({
-        queryKey: ['organizations'],
-        queryFn: apiClient.getOrganizations,
-    });
+    // Inventory
+    const createProductMutation = useMutation({ mutationFn: apiClient.createProduct, onSuccess: genericOnSuccessWithToast('products', 'Product created!') });
+    const updateProductMutation = useMutation({ mutationFn: apiClient.updateProduct, onSuccess: genericOnSuccessWithToast('products', 'Product updated!') });
+    const deleteProductMutation = useMutation({ mutationFn: apiClient.deleteProduct, onSuccess: genericOnSuccessWithToast('products', 'Product deleted!') });
 
-    const createOrganizationMutation = useMutation({
-        mutationFn: apiClient.createOrganization,
-        onSuccess: () => {
-            toast.success('Organization created!');
-            queryClient.invalidateQueries({ queryKey: ['organizations'] });
+    // Calendar
+    const createCalendarEventMutation = useMutation({ mutationFn: apiClient.createCalendarEvent, onSuccess: genericOnSuccessWithToast('calendarEvents', 'Event created!') });
+    const updateCalendarEventMutation = useMutation({ mutationFn: apiClient.updateCalendarEvent, onSuccess: genericOnSuccessWithToast('calendarEvents', 'Event updated!') });
+
+    // Tasks
+    const createTaskMutation = useMutation({ mutationFn: apiClient.createTask, onSuccess: genericOnSuccessWithToast('tasks', 'Task created!') });
+    const updateTaskMutation = useMutation({ mutationFn: apiClient.updateTask, onSuccess: genericOnSuccessWithToast('tasks', 'Task updated!') });
+    const deleteTaskMutation = useMutation({ mutationFn: apiClient.deleteTask, onSuccess: genericOnSuccessWithToast('tasks', 'Task deleted!') });
+
+    // Team
+    const createTeamMemberMutation = useMutation({ mutationFn: apiClient.createTeamMember, onSuccess: genericOnSuccessWithToast('teamMembers', 'Team member invited!') });
+    const updateTeamMemberMutation = useMutation({ mutationFn: apiClient.updateTeamMember, onSuccess: genericOnSuccessWithToast('teamMembers', 'Team member updated!') });
+
+    // Deals
+    const createDealMutation = useMutation({ mutationFn: apiClient.createDeal, onSuccess: genericOnSuccessWithToast('deals', 'Deal created!') });
+    const updateDealMutation = useMutation({ mutationFn: apiClient.updateDeal, onSuccess: genericOnSuccessWithToast('deals', 'Deal updated!') });
+    const deleteDealMutation = useMutation({ mutationFn: apiClient.deleteDeal, onSuccess: genericOnSuccessWithToast('deals', 'Deal deleted!') });
+
+    // Marketing
+    const createEmailTemplateMutation = useMutation({ mutationFn: apiClient.createEmailTemplate, onSuccess: genericOnSuccessWithToast('emailTemplates', 'Template created!') });
+    const updateEmailTemplateMutation = useMutation({ mutationFn: apiClient.updateEmailTemplate, onSuccess: genericOnSuccessWithToast('emailTemplates', 'Template updated!') });
+    const deleteEmailTemplateMutation = useMutation({ mutationFn: apiClient.deleteEmailTemplate, onSuccess: genericOnSuccessWithToast('emailTemplates', 'Template deleted!') });
+    const createWorkflowMutation = useMutation({ mutationFn: apiClient.createWorkflow, onSuccess: genericOnSuccessWithToast('workflows', 'Workflow created!') });
+    const updateWorkflowMutation = useMutation({ mutationFn: apiClient.updateWorkflow, onSuccess: genericOnSuccessWithToast('workflows', 'Workflow updated!') });
+    const createCampaignMutation = useMutation({ mutationFn: apiClient.createCampaign, onSuccess: genericOnSuccessWithToast('campaigns', 'Campaign created!') });
+    const updateCampaignMutation = useMutation({ mutationFn: apiClient.updateCampaign, onSuccess: genericOnSuccessWithToast('campaigns', 'Campaign updated!') });
+
+    // Reports & Widgets
+    const createCustomReportMutation = useMutation({ mutationFn: apiClient.createCustomReport, onSuccess: genericOnSuccessWithToast('customReports', 'Custom report saved!') });
+    const deleteCustomReportMutation = useMutation({ mutationFn: apiClient.deleteCustomReport, onSuccess: genericOnSuccessWithToast(['customReports', 'dashboardWidgets'], 'Custom report deleted!') });
+    const addDashboardWidgetMutation = useMutation({ mutationFn: (reportId: string) => apiClient.addDashboardWidget(reportId, organizationId), onSuccess: genericOnSuccessWithToast('dashboardWidgets', 'Widget added to dashboard!') });
+    const removeDashboardWidgetMutation = useMutation({ mutationFn: (widgetId: string) => apiClient.removeDashboardWidget(widgetId, organizationId), onSuccess: genericOnSuccessWithToast('dashboardWidgets', 'Widget removed from dashboard!') });
+
+    // Settings
+    const updateOrganizationSettingsMutation = useMutation({ mutationFn: (settings: Partial<OrgSettingsType>) => apiClient.updateOrganizationSettings({ ...settings, organizationId } as OrgSettingsType), onSuccess: genericOnSuccessWithToast('organizationSettings', 'Settings updated!') });
+    const updateCustomFieldsMutation = useMutation({ mutationFn: apiClient.updateCustomFields, onSuccess: genericOnSuccessWithToast('industryConfig', 'Custom fields updated!') });
+
+    // Tickets
+    const createTicketMutation = useMutation({
+        mutationFn: apiClient.createTicket,
+// FIX: Add explicit type `Ticket` to the `newTicket` parameter to resolve property access errors.
+        onSuccess: (newTicket: Ticket) => {
+            toast.success('Ticket created!');
+            queryClient.invalidateQueries({ queryKey: ['tickets', organizationId] });
+            if (newTicket.assignedToId && newTicket.assignedToId !== authenticatedUser?.id) {
+                addNotification({
+                    userId: newTicket.assignedToId,
+                    type: 'ticket_assigned',
+                    message: `${authenticatedUser?.name} assigned you a new ticket: "${newTicket.subject.substring(0, 30)}..."`,
+                });
+            }
         },
-        onError: () => toast.error('Failed to create organization.'),
     });
 
-    const updateOrganizationMutation = useMutation({
-        mutationFn: apiClient.updateOrganization,
-        onSuccess: () => {
-            toast.success('Organization updated!');
-            queryClient.invalidateQueries({ queryKey: ['organizations'] });
+    const updateTicketMutation = useMutation({
+        onMutate: async (updatedTicket: Ticket) => {
+            await queryClient.cancelQueries({ queryKey: ['tickets', organizationId] });
+            const previousTickets = queryClient.getQueryData<Ticket[]>(['tickets', organizationId]);
+            const oldTicket = previousTickets?.find(t => t.id === updatedTicket.id);
+            return { oldTicket, updatedTicket };
         },
-        onError: () => toast.error('Failed to update organization.'),
-    });
-    
-    const deleteOrganizationMutation = useMutation({
-        mutationFn: apiClient.deleteOrganization,
-        onSuccess: () => {
-            toast.success('Organization deleted!');
-            queryClient.invalidateQueries({ queryKey: ['organizations'] });
+        mutationFn: apiClient.updateTicket,
+// FIX: Add explicit type `Ticket` to the `updatedTicket` parameter to resolve property access errors.
+        onSuccess: (updatedTicket: Ticket, variables, context) => {
+            toast.success('Ticket updated!');
+            const oldAssignee = context?.oldTicket?.assignedToId;
+            const newAssignee = updatedTicket.assignedToId;
+            if (newAssignee && newAssignee !== oldAssignee) {
+                 addNotification({
+                    userId: newAssignee,
+                    type: 'ticket_assigned',
+                    message: `${authenticatedUser?.name} assigned you ticket #${updatedTicket.id.slice(-6)}.`,
+                });
+            }
         },
-        onError: () => toast.error('Failed to delete organization.'),
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['tickets', organizationId] });
+        }
     });
 
-    // CONTACTS
-    const contactsQuery = useQuery<AnyContact[], Error>({
-        queryKey: ['contacts', orgId],
-        queryFn: () => apiClient.getContacts(orgId!),
-        enabled: !!orgId,
-    });
-    
-    // Mutations for workflows
-    const updateContactForWorkflow = (contact: AnyContact) => {
-        apiClient.updateContact(contact).then(() => {
-            queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
-        });
-    }
-
-    const createContactMutation = useMutation({
-        mutationFn: (contactData: Omit<AnyContact, 'id'>) => apiClient.createContact({ ...contactData, organizationId: orgId! }),
-        onSuccess: (newContact) => {
-            toast.success('Contact created!');
-            queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
-            checkAndTriggerWorkflows({
-                event: 'contactCreated',
-                contact: newContact,
-                dependencies: {
-                    workflows: workflowsQuery.data || [],
-                    emailTemplates: emailTemplatesQuery.data || [],
-                    createTask: (task) => createTaskMutation.mutate(task),
-                    createInteraction: (interaction) => createInteractionMutation.mutate(interaction),
-                    updateContact: updateContactForWorkflow,
-                }
-            })
-        },
-        onError: () => toast.error('Failed to create contact.'),
-    });
-
-    const updateContactMutation = useMutation({
-        mutationFn: apiClient.updateContact,
-        onSuccess: (updatedContact, originalContact) => {
-            toast.success('Contact updated!');
-            const original = queryClient.getQueryData<AnyContact[]>(['contacts', orgId])?.find(c => c.id === originalContact.id);
-
-            queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
-            queryClient.invalidateQueries({ queryKey: ['contactProfile', updatedContact.id]});
+    const addTicketReplyMutation = useMutation({
+        mutationFn: ({ ticketId, reply }: { ticketId: string, reply: Omit<TicketReply, 'id' | 'timestamp'> }) => apiClient.addTicketReply(ticketId, reply),
+// FIX: Add explicit type `Ticket` to the `updatedTicket` parameter to resolve property access errors.
+        onSuccess: (updatedTicket: Ticket, variables) => {
+            toast.success('Reply added!');
+            queryClient.invalidateQueries({ queryKey: ['tickets', organizationId] });
             
-            if (original && original.status !== updatedContact.status) {
-                checkAndTriggerWorkflows({
-                    event: 'contactStatusChanged',
-                    contact: updatedContact,
-                    fromStatus: original.status,
-                    toStatus: updatedContact.status,
-                    dependencies: {
-                        workflows: workflowsQuery.data || [],
-                        emailTemplates: emailTemplatesQuery.data || [],
-                        createTask: (task) => createTaskMutation.mutate(task),
-                        createInteraction: (interaction) => createInteractionMutation.mutate(interaction),
-                        updateContact: updateContactForWorkflow,
+            const originalTicket = ticketsQuery.data?.find((t: Ticket) => t.id === updatedTicket.id);
+            if (!originalTicket) return;
+
+            // Notify assigned team member when a client replies
+            if (authenticatedUser?.role === 'Client' && originalTicket.assignedToId) {
+                addNotification({
+                    userId: originalTicket.assignedToId,
+                    type: 'ticket_reply',
+                    message: `Client ${authenticatedUser.name} replied to ticket #${originalTicket.id.slice(-6)}.`,
+                });
+            }
+
+            // Handle @mentions in internal notes
+            if (variables.reply.isInternal && variables.reply.message.includes('@')) {
+                const members = teamMembersQuery.data || [];
+                members.forEach((member: User) => {
+                    if (variables.reply.message.includes(`@${member.name}`) && member.id !== authenticatedUser?.id) {
+                         addNotification({
+                            userId: member.id,
+                            type: 'mention',
+                            message: `${authenticatedUser?.name} mentioned you in ticket #${originalTicket.id.slice(-6)}.`,
+                        });
                     }
                 });
             }
         },
-        onError: () => toast.error('Failed to update contact.'),
     });
 
-    const deleteContactMutation = useMutation({
-        mutationFn: apiClient.deleteContact,
-        onSuccess: () => {
-            toast.success('Contact deleted!');
-            queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
-        },
-        onError: () => toast.error('Failed to delete contact.'),
-    });
-    
-    const bulkDeleteContactsMutation = useMutation({
-        mutationFn: (ids: string[]) => apiClient.bulkDeleteContacts(ids, orgId!),
-        onSuccess: () => {
-            toast.success('Contacts deleted!');
-            queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
-        },
-        onError: () => toast.error('Failed to delete contacts.'),
-    });
-
-    const bulkUpdateContactStatusMutation = useMutation({
-        mutationFn: apiClient.bulkUpdateContactStatus,
-        onSuccess: () => {
-            toast.success('Contact statuses updated!');
-            queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
-        },
-        onError: () => toast.error('Failed to update statuses.'),
-    });
-
-    // TEAM
-    const teamMembersQuery = useQuery<User[], Error>({
-        queryKey: ['teamMembers', orgId],
-        queryFn: () => apiClient.getTeamMembers(orgId!),
-        enabled: !!orgId,
-    });
-    
-    const createTeamMemberMutation = useMutation({
-        mutationFn: apiClient.createTeamMember,
-        onSuccess: () => {
-            toast.success('Team member invited!');
-            queryClient.invalidateQueries({ queryKey: ['teamMembers', orgId] });
-        },
-        onError: () => toast.error('Failed to invite team member.'),
-    });
-
-    const updateTeamMemberMutation = useMutation({
-        mutationFn: apiClient.updateTeamMember,
-        onSuccess: () => {
-            toast.success('Team member updated!');
-            queryClient.invalidateQueries({ queryKey: ['teamMembers', orgId] });
-        },
-        onError: () => toast.error('Failed to update team member.'),
-    });
-
-    // TASKS
-    const tasksQuery = useQuery<Task[], Error>({
-        queryKey: ['tasks', userId],
-        queryFn: () => apiClient.getTasks(userId!),
-        enabled: !!userId,
-    });
-    
-    const createTaskMutation = useMutation({
-        mutationFn: (taskData: Omit<Task, 'id' | 'isCompleted'>) => apiClient.createTask({...taskData, userId: userId!, organizationId: orgId!}),
-        onSuccess: () => {
-            toast.success('Task created!');
-            queryClient.invalidateQueries({ queryKey: ['tasks', userId] });
-        },
-        onError: () => toast.error('Failed to create task.'),
-    });
-    
-    const updateTaskMutation = useMutation({
-        mutationFn: apiClient.updateTask,
-        onSuccess: () => {
-            toast.success('Task updated!');
-            queryClient.invalidateQueries({ queryKey: ['tasks', userId] });
-        },
-        onError: () => toast.error('Failed to update task.'),
-    });
-    
-    const deleteTaskMutation = useMutation({
-        mutationFn: apiClient.deleteTask,
-        onSuccess: () => {
-            toast.success('Task deleted!');
-            queryClient.invalidateQueries({ queryKey: ['tasks', userId] });
-        },
-        onError: () => toast.error('Failed to delete task.'),
-    });
-
-    // CALENDAR
-    const calendarEventsQuery = useQuery<CalendarEvent[], Error>({
-        queryKey: ['calendarEvents', orgId],
-        queryFn: () => apiClient.getCalendarEvents(orgId!),
-        enabled: !!orgId,
-    });
-    
-    const createCalendarEventMutation = useMutation({
-        mutationFn: apiClient.createCalendarEvent,
-        onSuccess: () => {
-            toast.success('Event created!');
-            queryClient.invalidateQueries({ queryKey: ['calendarEvents', orgId] });
-        },
-        onError: () => toast.error('Failed to create event.'),
-    });
-    
-    const updateCalendarEventMutation = useMutation({
-        mutationFn: apiClient.updateCalendarEvent,
-        onSuccess: () => {
-            toast.success('Event updated!');
-            queryClient.invalidateQueries({ queryKey: ['calendarEvents', orgId] });
-        },
-        onError: () => toast.error('Failed to update event.'),
-    });
-    
-    // INVENTORY
-    const productsQuery = useQuery<Product[], Error>({
-        queryKey: ['products', orgId],
-        queryFn: () => apiClient.getProducts(orgId!),
-        enabled: !!orgId,
-    });
-    const suppliersQuery = useQuery<Supplier[], Error>({
-        queryKey: ['suppliers', orgId],
-        queryFn: () => apiClient.getSuppliers(orgId!),
-        enabled: !!orgId,
-    });
-    const warehousesQuery = useQuery<Warehouse[], Error>({
-        queryKey: ['warehouses', orgId],
-        queryFn: () => apiClient.getWarehouses(orgId!),
-        enabled: !!orgId,
-    });
-     const createProductMutation = useMutation({
-        mutationFn: apiClient.createProduct,
-        onSuccess: () => { toast.success('Product created!'); queryClient.invalidateQueries({ queryKey: ['products', orgId] }); },
-        onError: () => toast.error('Failed to create product.'),
-    });
-    const updateProductMutation = useMutation({
-        mutationFn: apiClient.updateProduct,
-        onSuccess: () => { toast.success('Product updated!'); queryClient.invalidateQueries({ queryKey: ['products', orgId] }); },
-        onError: () => toast.error('Failed to update product.'),
-    });
-    const deleteProductMutation = useMutation({
-        mutationFn: apiClient.deleteProduct,
-        onSuccess: () => { toast.success('Product deleted!'); queryClient.invalidateQueries({ queryKey: ['products', orgId] }); },
-        onError: () => toast.error('Failed to delete product.'),
-    });
-
-    // INTERACTIONS
-    const createInteractionMutation = useMutation({
-        mutationFn: apiClient.createInteraction,
-        onSuccess: (_, variables) => {
-            toast.success('Interaction logged!');
-            queryClient.invalidateQueries({ queryKey: ['contactInteractions', variables.contactId] });
-            queryClient.invalidateQueries({ queryKey: ['interactions', orgId] });
-        },
-        onError: () => toast.error('Failed to log interaction.'),
-    });
-    
-    // FIX: Added a query for all interactions within an organization.
-    const allInteractionsQuery = useQuery<Interaction[], Error>({
-        queryKey: ['interactions', orgId],
-        queryFn: () => apiClient.getInteractions(orgId!),
-        enabled: !!orgId,
-    });
-
-    // DASHBOARD
-    const { data: dashboardData, isLoading: dashboardLoading } = useQuery<DashboardData, Error>({
-        queryKey: ['dashboardData', currentIndustry, orgId],
-        queryFn: () => apiClient.getDashboardData(currentIndustry, orgId!),
-        enabled: !!orgId,
-    });
-    
-    // EMAIL TEMPLATES
-    const createEmailTemplateMutation = useMutation({
-        mutationFn: (templateData: Omit<EmailTemplate, 'id'>) => apiClient.createEmailTemplate({...templateData, organizationId: orgId!}),
-        onSuccess: () => {
-            toast.success('Email template created!');
-            queryClient.invalidateQueries({ queryKey: ['emailTemplates', orgId] });
-        },
-        onError: () => toast.error('Failed to create email template.'),
-    });
-
-    const updateEmailTemplateMutation = useMutation({
-        mutationFn: apiClient.updateEmailTemplate,
-        onSuccess: () => {
-            toast.success('Email template updated!');
-            queryClient.invalidateQueries({ queryKey: ['emailTemplates', orgId] });
-        },
-        onError: () => toast.error('Failed to update email template.'),
-    });
-
-    const deleteEmailTemplateMutation = useMutation({
-        mutationFn: apiClient.deleteEmailTemplate,
-        onSuccess: () => {
-            toast.success('Email template deleted!');
-            queryClient.invalidateQueries({ queryKey: ['emailTemplates', orgId] });
-        },
-        onError: () => toast.error('Failed to delete email template.'),
-    });
-
-    // WORKFLOWS
-     const createWorkflowMutation = useMutation({
-        mutationFn: apiClient.createWorkflow,
-        onSuccess: () => { toast.success('Workflow created!'); queryClient.invalidateQueries({ queryKey: ['workflows', orgId] }); },
-        onError: () => toast.error('Failed to create workflow.'),
-    });
-     const updateWorkflowMutation = useMutation({
-        mutationFn: apiClient.updateWorkflow,
-        onSuccess: () => { toast.success('Workflow updated!'); queryClient.invalidateQueries({ queryKey: ['workflows', orgId] }); },
-        onError: () => toast.error('Failed to update workflow.'),
-    });
-
-    // DEALS
-    const dealsQuery = useQuery<Deal[], Error>({
-        queryKey: ['deals', orgId],
-        queryFn: () => apiClient.getDeals(orgId!),
-        enabled: !!orgId,
-    });
-    const dealStagesQuery = useQuery<DealStage[], Error>({
-        queryKey: ['dealStages', orgId],
-        queryFn: () => apiClient.getDealStages(orgId!),
-        enabled: !!orgId,
-    });
-    const createDealMutation = useMutation({
-        mutationFn: (deal: Omit<Deal, 'id'>) => apiClient.createDeal({...deal, organizationId: orgId!}),
-        onSuccess: () => { toast.success('Deal created!'); queryClient.invalidateQueries({ queryKey: ['deals', orgId] }); },
-        onError: () => toast.error('Failed to create deal.'),
-    });
-    const updateDealMutation = useMutation({
-        mutationFn: apiClient.updateDeal,
-        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['deals', orgId] }); },
-        onError: () => toast.error('Failed to update deal.'),
-    });
-     const deleteDealMutation = useMutation({
-        mutationFn: apiClient.deleteDeal,
-        onSuccess: () => { toast.success('Deal deleted!'); queryClient.invalidateQueries({ queryKey: ['deals', orgId] }); },
-        onError: () => toast.error('Failed to delete deal.'),
-    });
-    
-    // CUSTOM REPORTS
-    const customReportsQuery = useQuery<CustomReport[], Error>({
-        queryKey: ['customReports', orgId],
-        queryFn: () => apiClient.getCustomReports(orgId!),
-        enabled: !!orgId,
-    });
-    const createCustomReportMutation = useMutation({
-        mutationFn: (report: Omit<CustomReport, 'id'>) => apiClient.createCustomReport({...report, organizationId: orgId!}),
-        onSuccess: () => { toast.success('Report saved!'); queryClient.invalidateQueries({ queryKey: ['customReports', orgId] }); },
-        onError: () => toast.error('Failed to save report.'),
-    });
-    
-    // FORM BUILDER
-    const updateCustomFieldsMutation = useMutation({
-        mutationFn: apiClient.updateCustomFields,
-        onSuccess: () => {
-            toast.success('Custom fields updated!');
-            queryClient.invalidateQueries({ queryKey: ['industryConfig', currentIndustry] });
-        },
-        onError: () => toast.error('Failed to update custom fields.'),
-    });
-    
-    // ORDERS
-    const createOrderMutation = useMutation({
-        mutationFn: apiClient.createOrder,
-        onSuccess: (data, variables) => { toast.success('Order created!'); queryClient.invalidateQueries({ queryKey: ['contacts', orgId]}); },
-        onError: () => toast.error('Failed to create order.'),
-    });
-     const updateOrderMutation = useMutation({
-        mutationFn: apiClient.updateOrder,
-        onSuccess: () => { toast.success('Order updated!'); queryClient.invalidateQueries({ queryKey: ['contacts', orgId]}); },
-        onError: () => toast.error('Failed to update order.'),
-    });
-     const deleteOrderMutation = useMutation({
-        mutationFn: apiClient.deleteOrder,
-        onSuccess: () => { toast.success('Order deleted!'); queryClient.invalidateQueries({ queryKey: ['contacts', orgId]}); },
-        onError: () => toast.error('Failed to delete order.'),
-    });
-    
-    // TRANSACTIONS
-    const createTransactionMutation = useMutation({
-        mutationFn: apiClient.createTransaction,
-        onSuccess: () => { toast.success('Transaction added!'); queryClient.invalidateQueries({ queryKey: ['contacts', orgId]}); },
-        onError: () => toast.error('Failed to add transaction.'),
-    });
-
-    // CAMPAIGNS
-    const campaignsQuery = useQuery<Campaign[], Error>({
-        queryKey: ['campaigns', orgId],
-        queryFn: () => apiClient.getCampaigns(orgId!),
-        enabled: !!orgId,
-    });
-    const createCampaignMutation = useMutation({
-        mutationFn: apiClient.createCampaign,
-        onSuccess: () => { toast.success('Campaign created!'); queryClient.invalidateQueries({ queryKey: ['campaigns', orgId] }); },
-        onError: () => toast.error('Failed to create campaign.'),
-    });
-    const updateCampaignMutation = useMutation({
-        mutationFn: apiClient.updateCampaign,
-        onSuccess: () => { toast.success('Campaign updated!'); queryClient.invalidateQueries({ queryKey: ['campaigns', orgId] }); },
-        onError: () => toast.error('Failed to update campaign.'),
-    });
-    const deleteCampaignMutation = useMutation({
-        mutationFn: apiClient.deleteCampaign,
-        onSuccess: () => { toast.success('Campaign deleted!'); queryClient.invalidateQueries({ queryKey: ['campaigns', orgId] }); },
-        onError: () => toast.error('Failed to delete campaign.'),
-    });
-
-    const value: DataContextType = useMemo(() => ({
+    const value = {
         organizationsQuery, createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation,
         contactsQuery, createContactMutation, updateContactMutation, deleteContactMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation,
-        teamMembersQuery, createTeamMemberMutation, updateTeamMemberMutation,
-        tasksQuery, createTaskMutation, updateTaskMutation, deleteTaskMutation,
-        calendarEventsQuery, createCalendarEventMutation, updateCalendarEventMutation,
+        createInteractionMutation, createTransactionMutation,
+        createOrderMutation, updateOrderMutation, deleteOrderMutation,
         productsQuery, createProductMutation, updateProductMutation, deleteProductMutation,
-        suppliersQuery,
-        warehousesQuery,
-        createInteractionMutation,
+        suppliersQuery, warehousesQuery,
+        calendarEventsQuery, createCalendarEventMutation, updateCalendarEventMutation,
+        tasksQuery, createTaskMutation, updateTaskMutation, deleteTaskMutation,
+        teamMembersQuery, createTeamMemberMutation, updateTeamMemberMutation,
         allInteractionsQuery,
-        dashboardData,
-        isLoading: organizationsQuery.isLoading || contactsQuery.isLoading,
+        dealStagesQuery, dealsQuery, createDealMutation, updateDealMutation, deleteDealMutation,
         emailTemplatesQuery, createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation,
         workflowsQuery, createWorkflowMutation, updateWorkflowMutation,
-        dealsQuery, dealStagesQuery, createDealMutation, updateDealMutation, deleteDealMutation,
-        customReportsQuery, createCustomReportMutation,
+        campaignsQuery, createCampaignMutation, updateCampaignMutation,
+        ticketsQuery, createTicketMutation, updateTicketMutation, addTicketReplyMutation,
+        customReportsQuery, createCustomReportMutation, deleteCustomReportMutation,
+        dashboardWidgetsQuery, addDashboardWidgetMutation, removeDashboardWidgetMutation,
+        dashboardDataQuery,
+        organizationSettingsQuery, updateOrganizationSettingsMutation,
         updateCustomFieldsMutation,
-        createOrderMutation, updateOrderMutation, deleteOrderMutation,
-        createTransactionMutation,
-        campaignsQuery, createCampaignMutation, updateCampaignMutation, deleteCampaignMutation,
-    }), [
-        organizationsQuery, createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation,
-        contactsQuery, createContactMutation, updateContactMutation, deleteContactMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation,
-        teamMembersQuery, createTeamMemberMutation, updateTeamMemberMutation,
-        tasksQuery, createTaskMutation, updateTaskMutation, deleteTaskMutation,
-        calendarEventsQuery, createCalendarEventMutation, updateCalendarEventMutation,
-        productsQuery, createProductMutation, updateProductMutation, deleteProductMutation,
-        suppliersQuery,
-        warehousesQuery,
-        createInteractionMutation,
-        allInteractionsQuery,
-        dashboardData,
-        emailTemplatesQuery, createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation,
-        workflowsQuery, createWorkflowMutation, updateWorkflowMutation,
-        dealsQuery, dealStagesQuery, createDealMutation, updateDealMutation, deleteDealMutation,
-        customReportsQuery, createCustomReportMutation,
-        updateCustomFieldsMutation,
-        createOrderMutation, updateOrderMutation, deleteOrderMutation,
-        createTransactionMutation,
-        campaignsQuery, createCampaignMutation, updateCampaignMutation, deleteCampaignMutation,
-    ]);
+    };
 
     return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 };

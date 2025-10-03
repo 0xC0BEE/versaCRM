@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { AnyContact, Interaction } from '../../../types';
 import InteractionsTimeline from '../../common/InteractionsTimeline';
 import { useQuery } from '@tanstack/react-query';
+// FIX: Corrected the import path for apiClient from a file path to a relative module path.
 import apiClient from '../../../services/apiClient';
 import Button from '../../ui/Button';
 import { Plus } from 'lucide-react';

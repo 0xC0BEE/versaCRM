@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import * as React from 'react';
 
 /**
  * A generic hook to manage form state.
@@ -6,18 +6,18 @@ import { useState, useEffect, useCallback } from 'react';
  * @param dependency A prop (like a selected item to edit) that should cause the form state to reset.
  */
 export function useForm<T>(initialState: T, dependency?: T | null) {
-    const [formData, setFormData] = useState<T>(initialState);
+    const [formData, setFormData] = React.useState<T>(initialState);
 
     // Effect to reset the form state when the dependency changes (e.g., a new item is selected for editing)
-    useEffect(() => {
+    React.useEffect(() => {
         setFormData(dependency || initialState);
     }, [dependency, initialState]);
 
-    const handleChange = useCallback((field: keyof T, value: any) => {
+    const handleChange = React.useCallback((field: keyof T, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     }, []);
 
-    const handleCustomFieldChange = useCallback((fieldId: string, value: any) => {
+    const handleCustomFieldChange = React.useCallback((fieldId: string, value: any) => {
         setFormData(prev => ({
             ...prev,
             customFields: {
@@ -27,7 +27,7 @@ export function useForm<T>(initialState: T, dependency?: T | null) {
         }));
     }, []);
 
-    const resetForm = useCallback(() => {
+    const resetForm = React.useCallback(() => {
         setFormData(initialState);
     }, [initialState]);
 

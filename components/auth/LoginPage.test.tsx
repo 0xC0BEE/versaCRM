@@ -1,9 +1,7 @@
-
 import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../../test/test-utils';
 import App from '../../App';
-// FIX: Corrected import from 'services/api' to 'services/apiClient'
 import apiClient from '../../services/apiClient';
 
 // Mock the api module

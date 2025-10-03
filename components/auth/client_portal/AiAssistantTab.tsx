@@ -22,7 +22,9 @@ const AiAssistantTab: React.FC = () => {
 
     useEffect(() => {
         try {
+            // FIX: Initialize GoogleGenAI with named apiKey parameter
             const ai = new GoogleGenAI({apiKey: process.env.API_KEY!});
+            // FIX: Use ai.chats.create
             const chat = ai.chats.create({
                 model: 'gemini-2.5-flash',
                 config: {
@@ -46,6 +48,7 @@ const AiAssistantTab: React.FC = () => {
         setIsLoading(true);
         
         try {
+            // FIX: Use chat.sendMessage and get text from response
             const response = await chatRef.current.sendMessage({ message: currentInput });
             const botMessage: Message = { sender: 'bot', text: response.text };
             setMessages(prev => [...prev, botMessage]);

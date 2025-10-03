@@ -3,8 +3,10 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
+// FIX: Corrected the import path for types to be a valid relative path.
 import { Product } from '../../types';
 import toast from 'react-hot-toast';
+// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
 import { Trash2 } from 'lucide-react';
 import { useForm } from '../../hooks/useForm';

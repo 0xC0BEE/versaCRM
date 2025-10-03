@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../services/apiClient';
+// FIX: Corrected import path for types.
 import { Document as AppDocument } from '../types';
 import toast from 'react-hot-toast';
 
@@ -13,7 +14,7 @@ export const useDocuments = (contactId: string) => {
     });
 
     const uploadDocumentMutation = useMutation({
-        mutationFn: apiClient.uploadDocument,
+        mutationFn: (docData: Omit<AppDocument, 'id'|'uploadDate'>) => apiClient.uploadDocument(docData),
         onSuccess: () => {
             toast.success('Document uploaded!');
             queryClient.invalidateQueries({ queryKey: ['documents', contactId] });
@@ -22,7 +23,7 @@ export const useDocuments = (contactId: string) => {
     });
 
     const deleteDocumentMutation = useMutation({
-        mutationFn: apiClient.deleteDocument,
+        mutationFn: (docId: string) => apiClient.deleteDocument(docId),
         onSuccess: () => {
             toast.success('Document deleted!');
             queryClient.invalidateQueries({ queryKey: ['documents', contactId] });

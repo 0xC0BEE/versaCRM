@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
+// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
+// FIX: Corrected the import path for types to be a valid relative path.
 import { CustomField } from '../../types';
 import Button from '../ui/Button';
 import { Plus, Edit, Trash2 } from 'lucide-react';

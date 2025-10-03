@@ -1,3 +1,4 @@
+// FIX: Corrected import path for types.
 import { UserRole } from '../types';
 
 export const USER_ROLES: UserRole[] = ['Super Admin', 'Organization Admin', 'Team Member', 'Client'];

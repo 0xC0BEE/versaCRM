@@ -1,497 +1,596 @@
-// This is a mock API client to simulate network requests.
-// In a real application, this would make HTTP requests to a backend server.
-
-import {
-    AnyContact, Organization, User, Task, CalendarEvent, Product, Supplier, Warehouse,
-    Interaction, Industry, IndustryConfig, DashboardData, EmailTemplate, Document, Workflow,
-    Deal, DealStage, CustomReport, ReportType, AnyReportData, ContactStatus, Order, Transaction,
-    // FIX: Imported ReportDataSource type.
-    ReportDataSource,
-    Campaign
-} from '../types';
-import * as mockData from './mockData';
+// FIX: Import the mutable `mockDataStore` to allow modification of mock data arrays, resolving read-only assignment errors.
+import { mockDataStore as mock } from './mockData';
 import { industryConfigs } from '../config/industryConfig';
+import {
+  User, Organization, AnyContact, Product, Supplier, Warehouse, CalendarEvent, Task, Interaction, Deal, DealStage,
+  EmailTemplate, Workflow, Campaign, Ticket, CustomReport, DashboardWidget, Document, OrganizationSettings,
+  Industry, ReportType, AnyReportData, ContactStatus, CustomField, TicketReply, Order, Transaction, IndustryConfig
+} from '../types';
 import { generateReportData, generateDashboardData } from './reportGenerator';
+import { subDays } from 'date-fns';
+import { checkAndTriggerWorkflows } from './workflowService';
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Helper to get all data for a given organization
-const getOrgData = (orgId: string) => {
-    const contacts = mockData.contacts.filter(c => c.organizationId === orgId);
-    const products = mockData.products.filter(p => p.organizationId === orgId);
-    const team = mockData.users.filter(u => u.organizationId === orgId);
-    const tasks = mockData.tasks.filter(t => t.organizationId === orgId);
-    const deals = mockData.deals.filter(d => d.organizationId === orgId);
-    const dealStages = mockData.dealStages.filter(s => s.organizationId === orgId);
-    return { contacts, products, team, tasks, deals, dealStages };
-}
+// Simulate network delay
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 const apiClient = {
-    login: async (email: string): Promise<User | null> => {
-        await delay(500);
-        const user = mockData.users.find(u => u.email === email);
-        return user || null;
-    },
+  // AUTH
+  async login(email: string): Promise<User | null> {
+    await delay(500);
+    const user = mock.users.find(u => u.email === email);
+    return user || null;
+  },
 
-    getOrganizations: async (): Promise<Organization[]> => {
-        await delay(500);
-        return mockData.organizations;
-    },
+  // CONFIG
+  async getIndustryConfig(industry: Industry): Promise<IndustryConfig> {
+    await delay(200);
+    return industryConfigs[industry];
+  },
+
+  // ORGANIZATIONS
+  async getOrganizations(): Promise<Organization[]> {
+    await delay(500);
+    return mock.organizations;
+  },
+  async createOrganization(orgData: Omit<Organization, 'id' | 'createdAt'>): Promise<Organization> {
+    await delay(500);
+    const newOrg: Organization = {
+      ...orgData,
+      id: `org_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    mock.organizations.push(newOrg);
+    return newOrg;
+  },
+  async updateOrganization(orgData: Organization): Promise<Organization> {
+    await delay(500);
+    mock.organizations = mock.organizations.map(o => o.id === orgData.id ? orgData : o);
+    return orgData;
+  },
+  async deleteOrganization(orgId: string): Promise<string> {
+    await delay(500);
+    mock.organizations = mock.organizations.filter(o => o.id !== orgId);
+    return orgId;
+  },
+
+  // CONTACTS
+  async getContacts(organizationId: string): Promise<AnyContact[]> {
+    await delay(800);
+    return mock.contacts.filter(c => c.organizationId === organizationId);
+  },
+  async getContactById(contactId: string): Promise<AnyContact | null> {
+    await delay(300);
+    return mock.contacts.find(c => c.id === contactId) || null;
+  },
+  async createContact(contactData: Omit<AnyContact, 'id'>): Promise<AnyContact> {
+    await delay(500);
+    const newContact: AnyContact = {
+      ...contactData,
+      id: `contact_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    mock.contacts.push(newContact);
     
-    createOrganization: async (orgData: Omit<Organization, 'id' | 'createdAt'>): Promise<Organization> => {
-        await delay(500);
-        const newOrg: Organization = {
-            id: `org_${Date.now()}`,
-            createdAt: new Date().toISOString(),
-            ...orgData,
+    // Trigger workflow
+    checkAndTriggerWorkflows({
+        event: 'contactCreated',
+        contact: newContact,
+        dependencies: {
+            workflows: mock.workflows,
+            emailTemplates: mock.emailTemplates,
+            createTask: this.createTask,
+            createInteraction: this.createInteraction,
+            updateContact: this.updateContact,
+        }
+    });
+
+    return newContact;
+  },
+  async updateContact(contactData: AnyContact): Promise<AnyContact> {
+    await delay(500);
+    const oldContact = mock.contacts.find(c => c.id === contactData.id);
+    mock.contacts = mock.contacts.map(c => c.id === contactData.id ? contactData : c);
+
+    if (oldContact && oldContact.status !== contactData.status) {
+        checkAndTriggerWorkflows({
+            event: 'contactStatusChanged',
+            contact: contactData,
+            fromStatus: oldContact.status,
+            toStatus: contactData.status,
+            dependencies: {
+                workflows: mock.workflows,
+                emailTemplates: mock.emailTemplates,
+                createTask: this.createTask,
+                createInteraction: this.createInteraction,
+                updateContact: this.updateContact,
+            }
+        });
+    }
+
+    return contactData;
+  },
+  async deleteContact(contactId: string): Promise<string> {
+    await delay(500);
+    mock.contacts = mock.contacts.filter(c => c.id !== contactId);
+    return contactId;
+  },
+  async bulkDeleteContacts(ids: string[], organizationId: string): Promise<string[]> {
+      await delay(1000);
+      mock.contacts = mock.contacts.filter(c => !ids.includes(c.id));
+      return ids;
+  },
+  async bulkUpdateContactStatus(ids: string[], status: ContactStatus, organizationId: string): Promise<AnyContact[]> {
+      await delay(1000);
+      const updatedContacts: AnyContact[] = [];
+      mock.contacts = mock.contacts.map(c => {
+          if (ids.includes(c.id)) {
+              const updated = { ...c, status };
+              updatedContacts.push(updated);
+              return updated;
+          }
+          return c;
+      });
+      return updatedContacts;
+  },
+
+  // INTERACTIONS
+  async getInteractionsByContact(contactId: string): Promise<Interaction[]> {
+    await delay(400);
+    return mock.interactions.filter(i => i.contactId === contactId);
+  },
+  async getAllInteractions(organizationId: string): Promise<Interaction[]> {
+    await delay(600);
+    return mock.interactions.filter(i => i.organizationId === organizationId);
+  },
+  async createInteraction(interactionData: Omit<Interaction, 'id'>): Promise<Interaction> {
+    await delay(300);
+    const newInteraction: Interaction = {
+      ...interactionData,
+      id: `int_${Date.now()}`,
+    };
+    mock.interactions.push(newInteraction);
+    // Also add to contact object
+    mock.contacts = mock.contacts.map(c => {
+      if (c.id === newInteraction.contactId) {
+        return {
+          ...c,
+          interactions: [...(c.interactions || []), newInteraction]
         };
-        mockData.organizations.push(newOrg);
-        return newOrg;
-    },
-    
-    updateOrganization: async (orgData: Organization): Promise<Organization> => {
-        await delay(500);
-        const index = mockData.organizations.findIndex(o => o.id === orgData.id);
-        if (index === -1) throw new Error("Organization not found");
-        mockData.organizations[index] = orgData;
-        return orgData;
-    },
-    
-    deleteOrganization: async (orgId: string): Promise<void> => {
-        await delay(500);
-        const index = mockData.organizations.findIndex(o => o.id === orgId);
-        if (index > -1) {
-            mockData.organizations.splice(index, 1);
-        }
-    },
+      }
+      return c;
+    });
+    return newInteraction;
+  },
 
-    getContacts: async (orgId: string): Promise<AnyContact[]> => {
-        await delay(800);
-        return mockData.contacts.filter(c => c.organizationId === orgId);
-    },
-
-    getContactById: async (contactId: string): Promise<AnyContact | null> => {
-        await delay(300);
-        return mockData.contacts.find(c => c.id === contactId) || null;
-    },
-    
-    createContact: async (contactData: Omit<AnyContact, 'id'>): Promise<AnyContact> => {
-        await delay(500);
-        const newContact: AnyContact = {
-            id: `contact_${Date.now()}`,
-            createdAt: new Date().toISOString(),
-            interactions: [],
-            orders: [],
-            enrollments: [],
-            transactions: [],
-            structuredRecords: [],
-            relationships: [],
-            auditLogs: [],
-            ...contactData,
+  // TRANSACTIONS (part of Contact)
+  async createTransaction({ contactId, data }: { contactId: string, data: Omit<Transaction, 'id'> }): Promise<AnyContact> {
+    await delay(400);
+    const newTransaction: Transaction = {
+      ...data,
+      id: `trans_${Date.now()}`,
+    };
+    let updatedContact: AnyContact | undefined;
+    mock.contacts = mock.contacts.map(c => {
+      if (c.id === contactId) {
+        updatedContact = {
+          ...c,
+          transactions: [...(c.transactions || []), newTransaction],
         };
-        mockData.contacts.push(newContact);
-        return newContact;
-    },
-    
-    updateContact: async (contactData: AnyContact): Promise<AnyContact> => {
-        await delay(500);
-        const index = mockData.contacts.findIndex(c => c.id === contactData.id);
-        if (index === -1) throw new Error("Contact not found");
-        mockData.contacts[index] = contactData;
-        return contactData;
-    },
-    
-    deleteContact: async (contactId: string): Promise<void> => {
-        await delay(500);
-        const index = mockData.contacts.findIndex(c => c.id === contactId);
-        if (index > -1) {
-            mockData.contacts.splice(index, 1);
-        }
-    },
+        return updatedContact;
+      }
+      return c;
+    });
+    if (!updatedContact) throw new Error("Contact not found");
+    return updatedContact;
+  },
 
-    bulkDeleteContacts: async (ids: string[], orgId: string): Promise<void> => {
-        await delay(1000);
-        ids.forEach(id => {
-            const index = mockData.contacts.findIndex(c => c.id === id && c.organizationId === orgId);
-            if (index > -1) mockData.contacts.splice(index, 1);
+  // ORDERS (part of Contact)
+  async createOrder(orderData: Omit<Order, 'id'>): Promise<AnyContact> {
+    await delay(500);
+    const newOrder: Order = {
+      ...orderData,
+      id: `order_${Date.now()}`,
+    };
+    let updatedContact: AnyContact | undefined;
+    mock.contacts = mock.contacts.map(c => {
+      if (c.id === orderData.contactId) {
+        updatedContact = {
+          ...c,
+          orders: [...(c.orders || []), newOrder],
+        };
+        return updatedContact;
+      }
+      return c;
+    });
+    if (!updatedContact) throw new Error("Contact not found");
+    return updatedContact;
+  },
+  async updateOrder(orderData: Order): Promise<AnyContact> {
+    await delay(500);
+    let updatedContact: AnyContact | undefined;
+    mock.contacts = mock.contacts.map(c => {
+      if (c.id === orderData.contactId) {
+        updatedContact = {
+          ...c,
+          orders: (c.orders || []).map(o => o.id === orderData.id ? orderData : o),
+        };
+        return updatedContact;
+      }
+      return c;
+    });
+    if (!updatedContact) throw new Error("Contact not found");
+    return updatedContact;
+  },
+  async deleteOrder({ contactId, orderId }: { contactId: string, orderId: string }): Promise<AnyContact> {
+    await delay(500);
+     let updatedContact: AnyContact | undefined;
+    mock.contacts = mock.contacts.map(c => {
+      if (c.id === contactId) {
+        updatedContact = {
+          ...c,
+          orders: (c.orders || []).filter(o => o.id !== orderId),
+        };
+        return updatedContact;
+      }
+      return c;
+    });
+    if (!updatedContact) throw new Error("Contact not found");
+    return updatedContact;
+  },
+
+  // INVENTORY
+  async getProducts(organizationId: string): Promise<Product[]> {
+    await delay(600);
+    return mock.products.filter(p => p.organizationId === organizationId);
+  },
+  async createProduct(productData: Omit<Product, 'id'>): Promise<Product> {
+    await delay(500);
+    const newProduct: Product = {
+      ...productData,
+      id: `prod_${Date.now()}`,
+    };
+    mock.products.push(newProduct);
+    return newProduct;
+  },
+  async updateProduct(productData: Product): Promise<Product> {
+    await delay(500);
+    mock.products = mock.products.map(p => p.id === productData.id ? productData : p);
+    return productData;
+  },
+  async deleteProduct(productId: string): Promise<string> {
+    await delay(500);
+    mock.products = mock.products.filter(p => p.id !== productId);
+    return productId;
+  },
+  async getSuppliers(organizationId: string): Promise<Supplier[]> {
+    await delay(400);
+    return mock.suppliers.filter(s => s.organizationId === organizationId);
+  },
+  async getWarehouses(organizationId: string): Promise<Warehouse[]> {
+    await delay(400);
+    return mock.warehouses.filter(w => w.organizationId === organizationId);
+  },
+
+  // CALENDAR
+  async getCalendarEvents(organizationId: string): Promise<CalendarEvent[]> {
+    await delay(700);
+    return mock.calendarEvents.filter(e => e.organizationId === organizationId);
+  },
+  async createCalendarEvent(eventData: Omit<CalendarEvent, 'id'>): Promise<CalendarEvent> {
+    await delay(400);
+    const newEvent: CalendarEvent = {
+      ...eventData,
+      id: `cal_${Date.now()}`,
+    };
+    mock.calendarEvents.push(newEvent);
+    return newEvent;
+  },
+  async updateCalendarEvent(eventData: CalendarEvent): Promise<CalendarEvent> {
+    await delay(400);
+    mock.calendarEvents = mock.calendarEvents.map(e => e.id === eventData.id ? eventData : e);
+    return eventData;
+  },
+
+  // TASKS
+  async getTasks(organizationId: string): Promise<Task[]> {
+    await delay(500);
+    return mock.tasks.filter(t => t.organizationId === organizationId);
+  },
+  async createTask(taskData: Omit<Task, 'id' | 'isCompleted'>): Promise<Task> {
+    await delay(300);
+    const newTask: Task = {
+      ...taskData,
+      id: `task_${Date.now()}`,
+      isCompleted: false,
+    };
+    mock.tasks.push(newTask);
+    return newTask;
+  },
+  async updateTask(taskData: Task): Promise<Task> {
+    await delay(200);
+    mock.tasks = mock.tasks.map(t => t.id === taskData.id ? taskData : t);
+    return taskData;
+  },
+  async deleteTask(taskId: string): Promise<string> {
+    await delay(200);
+    mock.tasks = mock.tasks.filter(t => t.id !== taskId);
+    return taskId;
+  },
+
+  // TEAM
+  async getTeamMembers(organizationId: string): Promise<User[]> {
+    await delay(400);
+    return mock.users.filter(u => u.organizationId === organizationId && (u.role === 'Organization Admin' || u.role === 'Team Member'));
+  },
+  async createTeamMember(memberData: Omit<User, 'id'>): Promise<User> {
+    await delay(500);
+    const newUser: User = {
+      ...memberData,
+      id: `user_${Date.now()}`,
+    };
+    mock.users.push(newUser);
+    return newUser;
+  },
+  async updateTeamMember(memberData: User): Promise<User> {
+    await delay(500);
+    mock.users = mock.users.map(u => u.id === memberData.id ? memberData : u);
+    return memberData;
+  },
+
+  // DEALS
+  async getDealStages(organizationId: string): Promise<DealStage[]> {
+      await delay(300);
+      return mock.dealStages.filter(ds => ds.organizationId === organizationId);
+  },
+  async getDeals(organizationId: string): Promise<Deal[]> {
+      await delay(600);
+      return mock.deals.filter(d => d.organizationId === organizationId);
+  },
+  async createDeal(dealData: Omit<Deal, 'id' | 'createdAt'>): Promise<Deal> {
+      await delay(500);
+      const newDeal: Deal = {
+          ...dealData,
+          id: `deal_${Date.now()}`,
+          createdAt: new Date().toISOString(),
+      };
+      mock.deals.push(newDeal);
+      return newDeal;
+  },
+  async updateDeal(dealData: Deal): Promise<Deal> {
+      await delay(200);
+      mock.deals = mock.deals.map(d => d.id === dealData.id ? dealData : d);
+      return dealData;
+  },
+  async deleteDeal(dealId: string): Promise<string> {
+      await delay(500);
+      mock.deals = mock.deals.filter(d => d.id !== dealId);
+      return dealId;
+  },
+
+  // EMAIL TEMPLATES & WORKFLOWS
+  async getEmailTemplates(organizationId: string): Promise<EmailTemplate[]> {
+      await delay(300);
+      return mock.emailTemplates.filter(et => et.organizationId === organizationId);
+  },
+  async createEmailTemplate(templateData: Omit<EmailTemplate, 'id'>): Promise<EmailTemplate> {
+      await delay(400);
+      const newTemplate: EmailTemplate = { ...templateData, id: `et_${Date.now()}` };
+      mock.emailTemplates.push(newTemplate);
+      return newTemplate;
+  },
+  async updateEmailTemplate(templateData: EmailTemplate): Promise<EmailTemplate> {
+      await delay(400);
+      mock.emailTemplates = mock.emailTemplates.map(t => t.id === templateData.id ? templateData : t);
+      return templateData;
+  },
+  async deleteEmailTemplate(templateId: string): Promise<string> {
+      await delay(400);
+      mock.emailTemplates = mock.emailTemplates.filter(t => t.id !== templateId);
+      return templateId;
+  },
+  async getWorkflows(organizationId: string): Promise<Workflow[]> {
+      await delay(300);
+      return mock.workflows.filter(wf => wf.organizationId === organizationId);
+  },
+  async createWorkflow(workflowData: Omit<Workflow, 'id'>): Promise<Workflow> {
+      await delay(500);
+      const newWorkflow: Workflow = { ...workflowData, id: `wf_${Date.now()}` };
+      mock.workflows.push(newWorkflow);
+      return newWorkflow;
+  },
+  async updateWorkflow(workflowData: Workflow): Promise<Workflow> {
+      await delay(500);
+      mock.workflows = mock.workflows.map(wf => wf.id === workflowData.id ? workflowData : wf);
+      return workflowData;
+  },
+
+  // CAMPAIGNS
+  async getCampaigns(organizationId: string): Promise<Campaign[]> {
+      await delay(400);
+      return mock.campaigns.filter(c => c.organizationId === organizationId);
+  },
+  async createCampaign(campaignData: Omit<Campaign, 'id'>): Promise<Campaign> {
+      await delay(500);
+      const newCampaign: Campaign = { ...campaignData, id: `camp_${Date.now()}` };
+      mock.campaigns.push(newCampaign);
+      return newCampaign;
+  },
+  async updateCampaign(campaignData: Campaign): Promise<Campaign> {
+      await delay(500);
+      mock.campaigns = mock.campaigns.map(c => c.id === campaignData.id ? campaignData : c);
+      return campaignData;
+  },
+
+  // TICKETS
+  async getTickets(organizationId: string): Promise<Ticket[]> {
+      await delay(700);
+      return mock.tickets.filter(t => t.organizationId === organizationId);
+  },
+  async createTicket(ticketData: Omit<Ticket, 'id'|'createdAt'|'updatedAt'|'replies'>): Promise<Ticket> {
+      await delay(500);
+      const newTicket: Ticket = {
+          ...ticketData,
+          id: `ticket_${Date.now()}`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          replies: [],
+      };
+      mock.tickets.push(newTicket);
+      return newTicket;
+  },
+  async updateTicket(ticketData: Ticket): Promise<Ticket> {
+      await delay(300);
+      const updatedTicket = { ...ticketData, updatedAt: new Date().toISOString() };
+      mock.tickets = mock.tickets.map(t => t.id === ticketData.id ? updatedTicket : t);
+      return updatedTicket;
+  },
+  async addTicketReply(ticketId: string, reply: Omit<TicketReply, 'id' | 'timestamp'>): Promise<Ticket> {
+      await delay(300);
+      const newReply: TicketReply = {
+          ...reply,
+          id: `reply_${Date.now()}`,
+          timestamp: new Date().toISOString(),
+      };
+      let updatedTicket: Ticket | undefined;
+      mock.tickets = mock.tickets.map(t => {
+          if (t.id === ticketId) {
+              updatedTicket = { ...t, replies: [...t.replies, newReply], updatedAt: new Date().toISOString() };
+              return updatedTicket;
+          }
+          return t;
+      });
+      if (!updatedTicket) throw new Error("Ticket not found");
+      return updatedTicket;
+  },
+
+  // REPORTS & DASHBOARD
+  async getReportData(reportType: ReportType, dateRange: { start: Date; end: Date }, organizationId: string): Promise<AnyReportData> {
+      await delay(1200);
+      const dataSources = {
+          contacts: mock.contacts.filter(c => c.organizationId === organizationId),
+          products: mock.products.filter(p => p.organizationId === organizationId),
+          team: mock.users.filter(u => u.organizationId === organizationId),
+          tasks: mock.tasks.filter(t => t.organizationId === organizationId),
+          deals: mock.deals.filter(d => d.organizationId === organizationId),
+          dealStages: mock.dealStages.filter(ds => ds.organizationId === organizationId),
+      };
+      return generateReportData(reportType, dateRange, dataSources);
+  },
+  async getDashboardData(organizationId: string) {
+      await delay(1000);
+      const dateRange = { start: subDays(new Date(), 30), end: new Date() };
+      const contacts = mock.contacts.filter(c => c.organizationId === organizationId);
+      const interactions = mock.interactions.filter(i => i.organizationId === organizationId);
+      return generateDashboardData(dateRange, contacts, interactions);
+  },
+  async getCustomReports(organizationId: string): Promise<CustomReport[]> {
+      await delay(400);
+      return mock.customReports.filter(cr => cr.organizationId === organizationId);
+  },
+  async createCustomReport(reportData: Omit<CustomReport, 'id'>): Promise<CustomReport> {
+      await delay(500);
+      const newReport: CustomReport = { ...reportData, id: `cr_${Date.now()}` };
+      mock.customReports.push(newReport);
+      return newReport;
+  },
+  async deleteCustomReport(reportId: string): Promise<string> {
+      await delay(500);
+      mock.customReports = mock.customReports.filter(cr => cr.id !== reportId);
+      // Also remove any widgets associated with it
+      mock.dashboardWidgets = mock.dashboardWidgets.filter(w => w.reportId !== reportId);
+      return reportId;
+  },
+  async generateCustomReport(config: CustomReport['config'], organizationId: string): Promise<any[]> {
+    await delay(1000);
+    let rawData: any[] = [];
+    if (config.dataSource === 'contacts') {
+        rawData = mock.contacts.filter(c => c.organizationId === organizationId);
+    } else if (config.dataSource === 'products') {
+        rawData = mock.products.filter(p => p.organizationId === organizationId);
+    }
+
+    const filteredData = rawData.filter(item => {
+        return config.filters.every(filter => {
+            const itemValue = String(item[filter.field] || '').toLowerCase();
+            const filterValue = filter.value.toLowerCase();
+            switch (filter.operator) {
+                case 'is': return itemValue === filterValue;
+                case 'is_not': return itemValue !== filterValue;
+                case 'contains': return itemValue.includes(filterValue);
+                case 'does_not_contain': return !itemValue.includes(filterValue);
+                default: return true;
+            }
         });
-    },
+    });
 
-    bulkUpdateContactStatus: async ({ ids, status }: { ids: string[]; status: ContactStatus }): Promise<void> => {
-        await delay(1000);
-        ids.forEach(id => {
-            const contact = mockData.contacts.find(c => c.id === id);
-            if (contact) contact.status = status;
+    return filteredData.map(item => {
+        const selectedColumns: any = {};
+        config.columns.forEach(col => {
+            selectedColumns[col] = item[col];
         });
-    },
+        return selectedColumns;
+    });
+  },
 
-    getTeamMembers: async (orgId: string): Promise<User[]> => {
-        await delay(500);
-        return mockData.users.filter(u => u.organizationId === orgId);
-    },
-    
-    createTeamMember: async (userData: Omit<User, 'id'>): Promise<User> => {
-        await delay(500);
-        const newUser: User = { id: `user_${Date.now()}`, ...userData };
-        mockData.users.push(newUser);
-        return newUser;
-    },
+  // WIDGETS
+  async getDashboardWidgets(organizationId: string): Promise<DashboardWidget[]> {
+      await delay(300);
+      return mock.dashboardWidgets.filter(w => mock.customReports.find(cr => cr.id === w.reportId)?.organizationId === organizationId);
+  },
+  async addDashboardWidget(reportId: string, organizationId: string): Promise<DashboardWidget> {
+      await delay(400);
+      const newWidget: DashboardWidget = { id: `widget_${Date.now()}`, reportId };
+      mock.dashboardWidgets.push(newWidget);
+      return newWidget;
+  },
+  async removeDashboardWidget(widgetId: string, organizationId: string): Promise<string> {
+      await delay(400);
+      mock.dashboardWidgets = mock.dashboardWidgets.filter(w => w.id !== widgetId);
+      return widgetId;
+  },
 
-    updateTeamMember: async (userData: User): Promise<User> => {
-        await delay(500);
-        const index = mockData.users.findIndex(u => u.id === userData.id);
-        if (index === -1) throw new Error("User not found");
-        mockData.users[index] = userData;
-        return userData;
-    },
+  // DOCUMENTS
+  async getDocuments(contactId: string): Promise<Document[]> {
+      await delay(500);
+      return mock.documents.filter(d => d.contactId === contactId);
+  },
+  async uploadDocument(docData: Omit<Document, 'id'|'uploadDate'>): Promise<Document> {
+      await delay(800);
+      const newDoc: Document = {
+          ...docData,
+          id: `doc_${Date.now()}`,
+          uploadDate: new Date().toISOString(),
+      };
+      mock.documents.push(newDoc);
+      return newDoc;
+  },
+  async deleteDocument(docId: string): Promise<string> {
+      await delay(500);
+      mock.documents = mock.documents.filter(d => d.id !== docId);
+      return docId;
+  },
+  
+  // SETTINGS
+  async getOrganizationSettings(organizationId: string): Promise<OrganizationSettings | null> {
+      await delay(300);
+      return mock.organizationSettings.find(s => s.organizationId === organizationId) || null;
+  },
+  async updateOrganizationSettings(settingsData: OrganizationSettings): Promise<OrganizationSettings> {
+      await delay(500);
+      const index = mock.organizationSettings.findIndex(s => s.organizationId === settingsData.organizationId);
+      if (index > -1) {
+          mock.organizationSettings[index] = settingsData;
+      } else {
+          mock.organizationSettings.push(settingsData);
+      }
+      return settingsData;
+  },
+  async updateCustomFields({ industry, fields }: { industry: Industry, fields: CustomField[] }): Promise<IndustryConfig> {
+      await delay(500);
+      industryConfigs[industry].customFields = fields;
+      return industryConfigs[industry];
+  },
 
-    getTasks: async (userId: string): Promise<Task[]> => {
-        await delay(600);
-        return mockData.tasks.filter(t => t.userId === userId);
-    },
-    
-    createTask: async (taskData: Omit<Task, 'id' | 'isCompleted'>): Promise<Task> => {
-        await delay(300);
-        const newTask: Task = { id: `task_${Date.now()}`, isCompleted: false, ...taskData };
-        mockData.tasks.push(newTask);
-        return newTask;
-    },
-    
-    updateTask: async (taskData: Task): Promise<Task> => {
-        await delay(200);
-        const index = mockData.tasks.findIndex(t => t.id === taskData.id);
-        if (index === -1) throw new Error("Task not found");
-        mockData.tasks[index] = taskData;
-        return taskData;
-    },
-    
-    deleteTask: async (taskId: string): Promise<void> => {
-        await delay(200);
-        const index = mockData.tasks.findIndex(t => t.id === taskId);
-        if (index > -1) mockData.tasks.splice(index, 1);
-    },
-
-    getCalendarEvents: async (orgId: string): Promise<CalendarEvent[]> => {
-        await delay(700);
-        const orgInteractions = mockData.interactions.filter(i => i.organizationId === orgId);
-        const events: CalendarEvent[] = orgInteractions
-            .filter(i => i.type === 'Appointment' || i.type === 'Meeting')
-            .map(i => ({
-                id: i.id,
-                title: `${i.type} with ${mockData.contacts.find(c=>c.id === i.contactId)?.contactName || 'Unknown'}`,
-                start: new Date(i.date),
-                end: new Date(new Date(i.date).getTime() + 60 * 60 * 1000), // Assume 1 hour
-                userIds: [i.userId],
-                contactId: i.contactId,
-            }));
-        return events;
-    },
-    
-    createCalendarEvent: async (eventData: Omit<CalendarEvent, 'id'>): Promise<CalendarEvent> => {
-        await delay(400);
-        // This is a mock; in a real app, this would likely create an Interaction
-        const newEvent: CalendarEvent = { id: `event_${Date.now()}`, ...eventData };
-        return newEvent;
-    },
-
-    updateCalendarEvent: async (eventData: CalendarEvent): Promise<CalendarEvent> => {
-        await delay(400);
-        return eventData;
-    },
-    
-    getProducts: async (orgId: string): Promise<Product[]> => {
-        await delay(500);
-        return mockData.products.filter(p => p.organizationId === orgId);
-    },
-    
-    createProduct: async (productData: Omit<Product, 'id'>): Promise<Product> => {
-        await delay(500);
-        const newProduct: Product = { id: `prod_${Date.now()}`, ...productData };
-        mockData.products.push(newProduct);
-        return newProduct;
-    },
-    
-    updateProduct: async (productData: Product): Promise<Product> => {
-        await delay(500);
-        const index = mockData.products.findIndex(p => p.id === productData.id);
-        if (index === -1) throw new Error("Product not found");
-        mockData.products[index] = productData;
-        return productData;
-    },
-
-    deleteProduct: async (productId: string): Promise<void> => {
-        await delay(500);
-        const index = mockData.products.findIndex(p => p.id === productId);
-        if (index > -1) mockData.products.splice(index, 1);
-    },
-    
-    getSuppliers: async (orgId: string): Promise<Supplier[]> => {
-        await delay(500);
-        return mockData.suppliers.filter(s => s.organizationId === orgId);
-    },
-    
-    getWarehouses: async (orgId: string): Promise<Warehouse[]> => {
-        await delay(500);
-        return mockData.warehouses.filter(w => w.organizationId === orgId);
-    },
-    
-    // FIX: Added a function to get all interactions for an organization.
-    getInteractions: async (orgId: string): Promise<Interaction[]> => {
-        await delay(400);
-        return mockData.interactions.filter(i => i.organizationId === orgId);
-    },
-
-    getInteractionsByContact: async (contactId: string): Promise<Interaction[]> => {
-        await delay(400);
-        return mockData.interactions.filter(i => i.contactId === contactId);
-    },
-    
-    createInteraction: async (interactionData: Omit<Interaction, 'id'>): Promise<Interaction> => {
-        await delay(400);
-        const newInteraction: Interaction = { id: `int_${Date.now()}`, ...interactionData };
-        mockData.interactions.push(newInteraction);
-        
-        // Also add to contact's interactions array
-        const contact = mockData.contacts.find(c => c.id === interactionData.contactId);
-        if (contact) {
-            contact.interactions.unshift(newInteraction);
-        }
-        
-        return newInteraction;
-    },
-
-    getIndustryConfig: async (industry: Industry): Promise<IndustryConfig> => {
-        await delay(200);
-        return industryConfigs[industry];
-    },
-    
-    getDashboardData: async (industry: Industry, orgId: string): Promise<DashboardData> => {
-        await delay(1000);
-        const dateRange = { start: new Date(new Date().setDate(new Date().getDate() - 30)), end: new Date() };
-        const contacts = mockData.contacts.filter(c => c.organizationId === orgId);
-        const interactions = mockData.interactions.filter(i => i.organizationId === orgId);
-        return generateDashboardData(dateRange, contacts, interactions);
-    },
-    
-    getReportData: async (reportType: ReportType, dateRange: {start: Date, end: Date}, orgId: string): Promise<AnyReportData> => {
-        await delay(1500);
-        const data = getOrgData(orgId);
-        return generateReportData(reportType, dateRange, data);
-    },
-
-    getDocuments: async (contactId: string): Promise<Document[]> => {
-        await delay(500);
-        return mockData.documents.filter(d => d.contactId === contactId);
-    },
-
-    uploadDocument: async (docData: Omit<Document, 'id'>): Promise<Document> => {
-        await delay(1000);
-        const newDoc: Document = { id: `doc_${Date.now()}`, ...docData };
-        mockData.documents.push(newDoc);
-        return newDoc;
-    },
-
-    deleteDocument: async (docId: string): Promise<void> => {
-        await delay(500);
-        const index = mockData.documents.findIndex(d => d.id === docId);
-        if (index > -1) mockData.documents.splice(index, 1);
-    },
-    
-    getEmailTemplates: async (orgId: string): Promise<EmailTemplate[]> => {
-        await delay(300);
-        return mockData.emailTemplates.filter(t => t.organizationId === orgId);
-    },
-    
-    createEmailTemplate: async (templateData: Omit<EmailTemplate, 'id'>): Promise<EmailTemplate> => {
-        await delay(300);
-        const newTemplate: EmailTemplate = { id: `et_${Date.now()}`, ...templateData };
-        mockData.emailTemplates.push(newTemplate);
-        return newTemplate;
-    },
-    
-    updateEmailTemplate: async (templateData: EmailTemplate): Promise<EmailTemplate> => {
-        await delay(300);
-        const index = mockData.emailTemplates.findIndex(t => t.id === templateData.id);
-        if (index === -1) throw new Error("Template not found");
-        mockData.emailTemplates[index] = templateData;
-        return templateData;
-    },
-
-    deleteEmailTemplate: async (templateId: string): Promise<void> => {
-        await delay(300);
-        const index = mockData.emailTemplates.findIndex(t => t.id === templateId);
-        if (index > -1) mockData.emailTemplates.splice(index, 1);
-    },
-    
-    getWorkflows: async (orgId: string): Promise<Workflow[]> => {
-        await delay(400);
-        return mockData.workflows.filter(w => w.organizationId === orgId);
-    },
-
-    createWorkflow: async (workflowData: Omit<Workflow, 'id'>): Promise<Workflow> => {
-        await delay(500);
-        const newWorkflow: Workflow = { id: `wf_${Date.now()}`, ...workflowData };
-        mockData.workflows.push(newWorkflow);
-        return newWorkflow;
-    },
-    
-    updateWorkflow: async (workflowData: Workflow): Promise<Workflow> => {
-        await delay(500);
-        const index = mockData.workflows.findIndex(w => w.id === workflowData.id);
-        if (index > -1) {
-            mockData.workflows[index] = workflowData;
-            return workflowData;
-        }
-        throw new Error("Workflow not found");
-    },
-    
-    getDeals: async (orgId: string): Promise<Deal[]> => {
-        await delay(800);
-        return mockData.deals.filter(d => d.organizationId === orgId);
-    },
-    
-    getDealStages: async (orgId: string): Promise<DealStage[]> => {
-        await delay(300);
-        return mockData.dealStages.filter(s => s.organizationId === orgId);
-    },
-    
-    createDeal: async (dealData: Omit<Deal, 'id' | 'createdAt'>): Promise<Deal> => {
-        await delay(500);
-        const newDeal: Deal = { id: `deal_${Date.now()}`, createdAt: new Date().toISOString(), ...dealData };
-        mockData.deals.push(newDeal);
-        return newDeal;
-    },
-
-    updateDeal: async (dealData: Deal): Promise<Deal> => {
-        await delay(200); // quick update for drag-drop
-        const index = mockData.deals.findIndex(d => d.id === dealData.id);
-        if (index > -1) {
-            mockData.deals[index] = dealData;
-            return dealData;
-        }
-        throw new Error("Deal not found");
-    },
-    
-    deleteDeal: async (dealId: string): Promise<void> => {
-        await delay(500);
-        const index = mockData.deals.findIndex(d => d.id === dealId);
-        if (index > -1) mockData.deals.splice(index, 1);
-    },
-    
-    getCustomReports: async (orgId: string): Promise<CustomReport[]> => {
-        await delay(400);
-        return mockData.customReports.filter(r => r.organizationId === orgId);
-    },
-    
-    createCustomReport: async (reportData: Omit<CustomReport, 'id'>): Promise<CustomReport> => {
-        await delay(500);
-        const newReport: CustomReport = { id: `cr_${Date.now()}`, ...reportData };
-        mockData.customReports.push(newReport);
-        return newReport;
-    },
-    
-    generateCustomReport: async (config: { dataSource: ReportDataSource, columns: string[], filters: any[] }, orgId: string): Promise<any[]> => {
-        await delay(1200);
-        let sourceData: any[] = [];
-        if (config.dataSource === 'contacts') {
-            sourceData = mockData.contacts.filter(c => c.organizationId === orgId);
-        } else if (config.dataSource === 'products') {
-            sourceData = mockData.products.filter(p => p.organizationId === orgId);
-        }
-        // Apply filters (simple version)
-        const filteredData = sourceData.filter(row => {
-            return config.filters.every(filter => {
-                const rowValue = String(row[filter.field] || '').toLowerCase();
-                const filterValue = filter.value.toLowerCase();
-                switch (filter.operator) {
-                    case 'is': return rowValue === filterValue;
-                    case 'is_not': return rowValue !== filterValue;
-                    case 'contains': return rowValue.includes(filterValue);
-                    case 'does_not_contain': return !rowValue.includes(filterValue);
-                    default: return true;
-                }
-            });
-        });
-        // Select columns
-        return filteredData.map(row => {
-            const newRow: any = {};
-            config.columns.forEach(col => {
-                newRow[col] = row[col];
-            });
-            return newRow;
-        });
-    },
-
-    updateCustomFields: async ({ industry, fields }: { industry: Industry, fields: any[] }): Promise<void> => {
-        await delay(500);
-        if (industryConfigs[industry]) {
-            industryConfigs[industry].customFields = fields;
-        }
-    },
-    
-    createOrder: async(orderData: Omit<Order, 'id'>): Promise<Order> => {
-        await delay(500);
-        const newOrder: Order = { id: `ord_${Date.now()}`, ...orderData };
-        const contact = mockData.contacts.find(c => c.id === orderData.contactId);
-        if (contact) {
-            contact.orders.push(newOrder);
-        }
-        return newOrder;
-    },
-    
-    updateOrder: async(orderData: Order): Promise<Order> => {
-        await delay(500);
-        const contact = mockData.contacts.find(c => c.id === orderData.contactId);
-        if (contact) {
-            const index = contact.orders.findIndex(o => o.id === orderData.id);
-            if (index > -1) contact.orders[index] = orderData;
-        }
-        return orderData;
-    },
-    
-    deleteOrder: async({ contactId, orderId }: { contactId: string, orderId: string }): Promise<void> => {
-        await delay(500);
-        const contact = mockData.contacts.find(c => c.id === contactId);
-        if (contact) {
-            contact.orders = contact.orders.filter(o => o.id !== orderId);
-        }
-    },
-    
-    createTransaction: async({ contactId, data }: { contactId: string, data: Omit<Transaction, 'id'> }): Promise<Transaction> => {
-        await delay(500);
-        const newTransaction: Transaction = { id: `trn_${Date.now()}`, ...data };
-        const contact = mockData.contacts.find(c => c.id === contactId);
-        if (contact) {
-            contact.transactions.push(newTransaction);
-        }
-        return newTransaction;
-    },
-    
-    // CAMPAIGNS
-    getCampaigns: async (orgId: string): Promise<Campaign[]> => {
-        await delay(600);
-        return mockData.campaigns.filter(c => c.organizationId === orgId);
-    },
-    createCampaign: async (campaignData: Omit<Campaign, 'id'>): Promise<Campaign> => {
-        await delay(500);
-        const newCampaign: Campaign = { id: `camp_${Date.now()}`, ...campaignData };
-        mockData.campaigns.push(newCampaign);
-        return newCampaign;
-    },
-    updateCampaign: async (campaignData: Campaign): Promise<Campaign> => {
-        await delay(500);
-        const index = mockData.campaigns.findIndex(c => c.id === campaignData.id);
-        if (index > -1) {
-            mockData.campaigns[index] = campaignData;
-            return campaignData;
-        }
-        throw new Error("Campaign not found");
-    },
-    deleteCampaign: async (campaignId: string): Promise<void> => {
-        await delay(500);
-        const index = mockData.campaigns.findIndex(c => c.id === campaignId);
-        if (index > -1) mockData.campaigns.splice(index, 1);
-    },
 };
 
 export default apiClient;

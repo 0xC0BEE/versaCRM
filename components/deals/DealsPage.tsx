@@ -2,7 +2,9 @@ import React, { useState, useMemo } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import Button from '../ui/Button';
 import { Plus } from 'lucide-react';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
+// FIX: Corrected import path for types.
 import { Deal, DealStage } from '../../types';
 import DealColumn from './DealColumn';
 import DealEditModal from './DealEditModal';
