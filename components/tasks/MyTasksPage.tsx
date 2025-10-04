@@ -73,7 +73,7 @@ const MyTasksPage: React.FC = () => {
                             <h3 className="font-semibold mb-2">Pending ({pendingTasks.length})</h3>
                             <div className="space-y-2">
                                 {pendingTasks.length > 0 ? (
-                                    pendingTasks.map((task: Task) => <TaskItem key={task.id} task={task} />)
+                                    pendingTasks.map((task: Task, index) => <TaskItem key={task.id} task={task} animationDelay={index * 50} />)
                                 ) : (
                                     <p className="text-sm text-gray-500 p-3">No pending tasks. Well done!</p>
                                 )}
@@ -84,7 +84,7 @@ const MyTasksPage: React.FC = () => {
                             <div className="pt-4 border-t dark:border-dark-border">
                                 <h3 className="font-semibold mb-2">Completed ({completedTasks.length})</h3>
                                 <div className="space-y-2">
-                                    {completedTasks.map((task: Task) => <TaskItem key={task.id} task={task} />)}
+                                    {completedTasks.map((task: Task, index) => <TaskItem key={task.id} task={task} animationDelay={index * 50} />)}
                                 </div>
                             </div>
                         )}

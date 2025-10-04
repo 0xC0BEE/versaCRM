@@ -36,7 +36,7 @@ const DealColumn: React.FC<DealColumnProps> = ({ stage, deals, onCardClick, onDr
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`w-80 flex-shrink-0 bg-gray-100 dark:bg-dark-bg rounded-lg p-3 transition-colors ${isOver ? 'bg-primary-100 dark:bg-primary-900/50' : ''}`}
+            className={`w-80 flex-shrink-0 bg-gray-100/50 dark:bg-dark-bg/50 rounded-lg p-3 transition-colors ${isOver ? 'bg-primary-100 dark:bg-primary-900/50' : ''}`}
         >
             <div className="flex justify-between items-center mb-3">
                 <h3 className="font-semibold text-gray-800 dark:text-white">{stage.name}</h3>
@@ -46,12 +46,13 @@ const DealColumn: React.FC<DealColumnProps> = ({ stage, deals, onCardClick, onDr
                 {totalValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
             </p>
             <div className="space-y-3 h-full">
-                {deals.map(deal => (
+                {deals.map((deal, index) => (
                     <DealCard 
                         key={deal.id} 
                         deal={deal} 
                         onClick={() => onCardClick(deal)}
                         onDragStart={(e) => onDragStart(e, deal.id)}
+                        animationDelay={index * 50}
                     />
                 ))}
             </div>

@@ -3,10 +3,9 @@ import React from 'react';
 import { InventoryReportData } from '../../types';
 import Card from '../ui/Card';
 import KpiCard from '../dashboard/KpiCard';
-import { Package, Archive, AlertTriangle } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF1943'];
+const COLORS = ['#3b82f6', '#10b981', '#f97316', '#a855f7', '#ec4899'];
 
 interface InventoryReportProps {
     data: InventoryReportData;
@@ -16,9 +15,9 @@ const InventoryReport: React.FC<InventoryReportProps> = ({ data }) => {
     return (
         <div className="space-y-6">
              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <KpiCard title="Total Products" value={data.totalProducts} icon={<Package className="h-6 w-6 text-blue-500" />} />
-                <KpiCard title="Total Inventory Value" value={data.totalValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} icon={<Archive className="h-6 w-6 text-green-500" />} />
-                 <KpiCard title="Low Stock Items" value={data.lowStockItems.length} icon={<AlertTriangle className="h-6 w-6 text-red-500" />} />
+                <KpiCard title="Total Products" value={data.totalProducts} iconName="Package" />
+                <KpiCard title="Total Inventory Value" value={data.totalValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} iconName="Archive" />
+                 <KpiCard title="Low Stock Items" value={data.lowStockItems.length} iconName="AlertTriangle" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

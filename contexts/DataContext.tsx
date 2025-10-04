@@ -125,6 +125,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const updateWorkflowMutation = useMutation({ mutationFn: apiClient.updateWorkflow, onSuccess: genericOnSuccess('workflows', 'Workflow updated!'), onError: genericOnError });
     const createCampaignMutation = useMutation({ mutationFn: apiClient.createCampaign, onSuccess: genericOnSuccess('campaigns', 'Campaign created!'), onError: genericOnError });
     const updateCampaignMutation = useMutation({ mutationFn: apiClient.updateCampaign, onSuccess: genericOnSuccess('campaigns', 'Campaign updated!'), onError: genericOnError });
+    const launchCampaignMutation = useMutation({ mutationFn: apiClient.launchCampaign, onSuccess: genericOnSuccess(['campaigns', 'allInteractions'], 'Campaign launched successfully!'), onError: genericOnError });
 
     // Reports & Widgets
     const createCustomReportMutation = useMutation({ mutationFn: apiClient.createCustomReport, onSuccess: genericOnSuccess('customReports', 'Custom report saved!'), onError: genericOnError });
@@ -233,7 +234,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         dealStagesQuery, dealsQuery, createDealMutation, updateDealMutation, deleteDealMutation,
         emailTemplatesQuery, createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation,
         workflowsQuery, createWorkflowMutation, updateWorkflowMutation,
-        campaignsQuery, createCampaignMutation, updateCampaignMutation,
+        campaignsQuery, createCampaignMutation, updateCampaignMutation, launchCampaignMutation,
         ticketsQuery, createTicketMutation, updateTicketMutation, addTicketReplyMutation,
         customReportsQuery, createCustomReportMutation, deleteCustomReportMutation,
         dashboardWidgetsQuery, addDashboardWidgetMutation, removeDashboardWidgetMutation,

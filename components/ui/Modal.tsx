@@ -33,11 +33,15 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" onClick={onClose}>
-            <div className={`bg-white dark:bg-dark-card rounded-lg shadow-xl w-full ${sizeClasses[size]} max-h-full flex flex-col`} onClick={(e) => e.stopPropagation()}>
-                <div className="flex-shrink-0 flex justify-between items-center p-5 border-b dark:border-dark-border">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-50 flex justify-center items-center p-4 animate-fadeInUp" style={{animationDuration: '0.3s'}} onClick={onClose}>
+            <div 
+                className={`bg-light-card/80 dark:bg-dark-card/80 backdrop-blur-2xl border dark:border-dark-border/50 rounded-card shadow-xl w-full ${sizeClasses[size]} max-h-full flex flex-col animate-fadeInUp`} 
+                style={{animationDuration: '0.4s', animationTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)'}}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex-shrink-0 flex justify-between items-center p-5 border-b border-light-border dark:border-dark-border">
                     <h3 className="text-xl font-semibold">{title}</h3>
-                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-transform hover:rotate-90">
                         <X className="h-5 w-5" />
                     </button>
                 </div>

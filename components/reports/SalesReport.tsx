@@ -3,7 +3,6 @@ import React from 'react';
 import { SalesReportData } from '../../types';
 import Card from '../ui/Card';
 import KpiCard from '../dashboard/KpiCard';
-import { DollarSign, ShoppingCart, Percent } from 'lucide-react';
 
 interface SalesReportProps {
     data: SalesReportData;
@@ -13,9 +12,9 @@ const SalesReport: React.FC<SalesReportProps> = ({ data }) => {
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <KpiCard title="Total Revenue" value={data.totalRevenue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} icon={<DollarSign className="h-6 w-6 text-green-500" />} />
-                <KpiCard title="Total Orders" value={data.totalOrders} icon={<ShoppingCart className="h-6 w-6 text-blue-500" />} />
-                <KpiCard title="Average Order Value" value={data.averageOrderValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} icon={<Percent className="h-6 w-6 text-indigo-500" />} />
+                <KpiCard title="Total Revenue" value={data.totalRevenue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} iconName="DollarSign" />
+                <KpiCard title="Total Orders" value={data.totalOrders} iconName="ShoppingCart" />
+                <KpiCard title="Average Order Value" value={data.averageOrderValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} iconName="Percent" />
             </div>
 
             <Card title="Sales by Product" className="overflow-x-auto">

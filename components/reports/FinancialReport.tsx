@@ -3,10 +3,9 @@ import React from 'react';
 import { FinancialReportData } from '../../types';
 import Card from '../ui/Card';
 import KpiCard from '../dashboard/KpiCard';
-import { TrendingUp, TrendingDown, Scale } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+const COLORS = ['#3b82f6', '#10b981', '#f97316', '#a855f7'];
 
 interface FinancialReportProps {
     data: FinancialReportData;
@@ -16,9 +15,9 @@ const FinancialReport: React.FC<FinancialReportProps> = ({ data }) => {
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <KpiCard title="Total Charges" value={data.totalCharges.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} icon={<TrendingUp className="h-6 w-6 text-red-500" />} />
-                <KpiCard title="Total Payments Received" value={data.totalPayments.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} icon={<TrendingDown className="h-6 w-6 text-green-500" />} />
-                <KpiCard title="Net Balance" value={data.netBalance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} icon={<Scale className="h-6 w-6 text-blue-500" />} />
+                <KpiCard title="Total Charges" value={data.totalCharges.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} iconName="TrendingUp" />
+                <KpiCard title="Total Payments Received" value={data.totalPayments.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} iconName="TrendingDown" />
+                <KpiCard title="Net Balance" value={data.netBalance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} iconName="Scale" />
             </div>
 
              <Card title="Payments by Method">

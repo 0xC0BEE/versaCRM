@@ -6,7 +6,7 @@ import { useData } from '../../contexts/DataContext';
 import { useApp } from '../../contexts/AppContext';
 import KpiCard from './KpiCard';
 import Card from '../ui/Card';
-import { CheckSquare, LifeBuoy, TrendingUp, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 // FIX: Corrected import path for types.
 import { Task, Ticket } from '../../types';
 import { isPast, format } from 'date-fns';
@@ -56,13 +56,13 @@ const TeamMemberDashboard: React.FC<TeamMemberDashboardProps> = ({ isTabbedView 
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div className="cursor-pointer" onClick={() => setCurrentPage('Tasks')}>
-                    <KpiCard title="My Open Tasks" value={openTasksCount} icon={<CheckSquare className="h-6 w-6 text-blue-500" />} />
+                    <KpiCard title="My Open Tasks" value={openTasksCount} iconName="CheckSquare" />
                 </div>
                 <div className="cursor-pointer" onClick={() => setCurrentPage('Tickets')}>
-                    <KpiCard title="My Open Tickets" value={openTicketsCount} icon={<LifeBuoy className="h-6 w-6 text-green-500" />} />
+                    <KpiCard title="My Open Tickets" value={openTicketsCount} iconName="LifeBuoy" />
                 </div>
                  <div className="cursor-pointer" onClick={() => setCurrentPage('Tasks')}>
-                    <KpiCard title="Total Completed Tasks" value={performanceMetric} icon={<TrendingUp className="h-6 w-6 text-indigo-500" />} />
+                    <KpiCard title="Total Completed Tasks" value={performanceMetric} iconName="TrendingUp" />
                 </div>
             </div>
 

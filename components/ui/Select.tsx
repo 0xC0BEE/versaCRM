@@ -7,12 +7,12 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 const Select: React.FC<SelectProps> = ({ label, id, className, children, ...props }) => {
-    const baseClasses = "mt-1 block w-full pl-3 pr-10 py-2 text-base bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md";
+    const baseClasses = "mt-1 block w-full pl-3 pr-10 py-2 text-base bg-light-card/50 dark:bg-dark-card/50 border border-light-border dark:border-dark-border focus:outline-none focus:ring-2 focus:ring-accent-blue/50 focus:border-accent-blue/80 sm:text-sm rounded-input transition-all";
 
     return (
         <div className={className}>
             {label && (
-                <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label htmlFor={id} className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                     {label} {props.required && <span className="text-red-500">*</span>}
                 </label>
             )}

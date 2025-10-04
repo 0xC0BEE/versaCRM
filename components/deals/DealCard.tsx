@@ -8,9 +8,10 @@ interface DealCardProps {
     deal: Deal;
     onClick: () => void;
     onDragStart: (e: React.DragEvent<HTMLDivElement>) => void;
+    animationDelay?: number;
 }
 
-const DealCard: React.FC<DealCardProps> = ({ deal, onClick, onDragStart }) => {
+const DealCard: React.FC<DealCardProps> = ({ deal, onClick, onDragStart, animationDelay = 0 }) => {
     const { contactsQuery } = useData();
     const { data: contacts = [] } = contactsQuery;
     const contact = contacts.find((c: any) => c.id === deal.contactId);
@@ -20,7 +21,8 @@ const DealCard: React.FC<DealCardProps> = ({ deal, onClick, onDragStart }) => {
             draggable
             onDragStart={onDragStart}
             onClick={onClick}
-            className="p-4 bg-white dark:bg-dark-card rounded-md shadow-sm cursor-pointer border dark:border-dark-border hover:shadow-md"
+            className="p-4 bg-white dark:bg-dark-card rounded-md shadow-sm cursor-pointer border dark:border-dark-border hover:shadow-md hover:-translate-y-0.5 transition-all smooth-enter-stagger"
+            style={{ animationDelay: `${animationDelay}ms` }}
         >
             <h4 className="font-semibold text-sm text-gray-900 dark:text-white mb-1">{deal.name}</h4>
             <p className="text-sm font-bold text-primary-600 dark:text-primary-400">

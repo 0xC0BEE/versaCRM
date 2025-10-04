@@ -6,7 +6,7 @@ interface PageWrapperProps {
 
 const PageWrapper: React.FC<PageWrapperProps> = ({ children }) => {
     return (
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-dark-bg p-6">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-6">
             <div className="container mx-auto">
                 {children}
             </div>

@@ -8,9 +8,10 @@ import { format, isPast } from 'date-fns';
 
 interface TaskItemProps {
     task: Task;
+    animationDelay?: number;
 }
 
-const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
+const TaskItem: React.FC<TaskItemProps> = ({ task, animationDelay = 0 }) => {
     const { updateTaskMutation, deleteTaskMutation } = useData();
 
     const handleToggleComplete = () => {
@@ -27,7 +28,10 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
     const isOverdue = !task.isCompleted && isPast(new Date(task.dueDate));
 
     return (
-        <div className={`flex items-center p-3 rounded-md transition-colors duration-200 ${task.isCompleted ? 'bg-gray-100 dark:bg-gray-800' : 'bg-white dark:bg-dark-card border dark:border-dark-border'}`}>
+        <div 
+            className={`flex items-center p-3 rounded-md transition-colors duration-200 smooth-enter-stagger ${task.isCompleted ? 'bg-gray-100 dark:bg-gray-800' : 'bg-white dark:bg-dark-card border dark:border-dark-border'}`}
+            style={{ animationDelay: `${animationDelay}ms` }}
+        >
             <input
                 type="checkbox"
                 checked={task.isCompleted}

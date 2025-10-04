@@ -8,17 +8,17 @@ interface TabsProps {
 
 const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, setActiveTab }) => {
     return (
-        <div className="border-b border-gray-200 dark:border-gray-700">
+        <div className="border-b border-light-border dark:border-dark-border">
             <nav className="-mb-px flex space-x-8" aria-label="Tabs">
                 {tabs.map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`${
+                        className={`whitespace-nowrap pb-4 px-1 border-b-2 font-semibold text-sm transition-colors ${
                             tab === activeTab
-                                ? 'border-primary-500 text-primary-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
-                        } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                                ? 'border-accent-blue text-accent-blue'
+                                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:border-slate-600'
+                        }`}
                     >
                         {tab}
                     </button>

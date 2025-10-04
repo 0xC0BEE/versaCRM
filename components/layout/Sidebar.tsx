@@ -1,7 +1,6 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useAuth } from '../../contexts/AuthContext';
-// FIX: Corrected import path for types.
 import { Page } from '../../types';
 import { BarChart2, Users, Building2, Handshake, Mail, Calendar, CheckSquare, Package, FileText, Settings, Bot, LucideIcon, LifeBuoy } from 'lucide-react';
 
@@ -42,22 +41,22 @@ const Sidebar: React.FC = () => {
     });
 
     return (
-        <aside className="w-64 flex-shrink-0 bg-white dark:bg-dark-card border-r dark:border-dark-border flex flex-col">
-            <div className="h-16 flex-shrink-0 flex items-center justify-center px-4 border-b dark:border-dark-border">
-                <h1 className="text-xl font-bold">VersaCRM</h1>
+        <aside className="w-64 flex-shrink-0 bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-lg border-r border-light-border/80 dark:border-dark-border/80 flex flex-col">
+            <div className="h-20 flex-shrink-0 flex items-center justify-center px-4">
+                <h1 className="text-2xl font-bold text-light-text dark:text-dark-text">VersaCRM</h1>
             </div>
             <nav className="flex-1 overflow-y-auto p-4 space-y-2">
                 {filteredNavItems.map(({ page, label, icon: Icon }) => (
                     <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                        className={`w-full flex items-center px-4 py-3 text-sm font-semibold rounded-lg group transition-all duration-200 ${
                             currentPage === page
-                                ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-white'
-                                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                ? 'bg-accent-blue/10 text-accent-blue dark:bg-accent-blue/20 dark:text-white'
+                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-dark-card/50 hover:text-light-text dark:hover:text-dark-text'
                         }`}
                     >
-                        <Icon className="h-5 w-5 mr-3" />
+                        <Icon className="h-5 w-5 mr-4 transition-transform group-hover:scale-110" />
                         <span>{label}</span>
                     </button>
                 ))}

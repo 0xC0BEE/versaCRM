@@ -4,27 +4,49 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VersaCRM - Foundation</title>
+    <title>VersaCRM - Clay Inspired</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-      /* Default theme variables. These will be overridden by custom themes. */
       :root {
-        --color-primary-50: 239 246 255;
-        --color-primary-100: 219 234 254;
-        --color-primary-200: 191 219 254;
-        --color-primary-300: 147 197 253;
-        --color-primary-400: 96 165 250;
-        --color-primary-500: 59 130 246;
-        --color-primary-600: 37 99 235;
-        --color-primary-700: 29 78 216;
-        --color-primary-800: 30 64 175;
-        --color-primary-900: 30 58 138;
-        --color-primary-950: 23 37 84;
-        
-        --color-dark-bg: 26 32 44;
-        --color-dark-card: 45 55 72;
-        --color-dark-text: 226 232 240;
-        --color-dark-border: 74 85 104;
+        /* Color Palette - Light Mode */
+        --color-light-bg: 248 250 252; /* slate-50 */
+        --color-light-card: 255 255 255;
+        --color-light-text: 30 41 59; /* slate-800 */
+        --color-light-border: 226 232 240; /* slate-200 */
+        --color-accent-blue: 59 130 246;
+        --color-accent-green: 16 185 129;
+
+        /* Color Palette - Dark Mode */
+        --color-dark-bg: 17 24 39; /* gray-900 */
+        --color-dark-card: 31 41 55; /* gray-800 */
+        --color-dark-text: 243 244 246; /* gray-100 */
+        --color-dark-border: 55 65 81; /* gray-700 */
+        --color-dark-accent-glow: rgba(59, 130, 246, 0.3);
+
+        /* Shapes & Borders */
+        --radius-card: 16px;
+        --radius-input: 8px;
+        --radius-button: 8px;
+
+        /* Shadows (Layered) */
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        --shadow-glow: 0 0 8px var(--color-dark-accent-glow);
+
+        /* Transitions */
+        --transition-soft: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-spring: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+        letter-spacing: -0.025em;
+      }
+      html {
+        scroll-behavior: smooth;
       }
     </style>
     <script>
@@ -33,23 +55,29 @@
         theme: {
           extend: {
             colors: {
-              primary: {
-                50: 'rgb(var(--color-primary-50) / <alpha-value>)',
-                100: 'rgb(var(--color-primary-100) / <alpha-value>)',
-                200: 'rgb(var(--color-primary-200) / <alpha-value>)',
-                300: 'rgb(var(--color-primary-300) / <alpha-value>)',
-                400: 'rgb(var(--color-primary-400) / <alpha-value>)',
-                500: 'rgb(var(--color-primary-500) / <alpha-value>)',
-                600: 'rgb(var(--color-primary-600) / <alpha-value>)',
-                700: 'rgb(var(--color-primary-700) / <alpha-value>)',
-                800: 'rgb(var(--color-primary-800) / <alpha-value>)',
-                900: 'rgb(var(--color-primary-900) / <alpha-value>)',
-                950: 'rgb(var(--color-primary-950) / <alpha-value>)',
-              },
+              'light-bg': 'rgb(var(--color-light-bg) / <alpha-value>)',
+              'light-card': 'rgb(var(--color-light-card) / <alpha-value>)',
+              'light-text': 'rgb(var(--color-light-text) / <alpha-value>)',
+              'light-border': 'rgb(var(--color-light-border) / <alpha-value>)',
               'dark-bg': 'rgb(var(--color-dark-bg) / <alpha-value>)',
               'dark-card': 'rgb(var(--color-dark-card) / <alpha-value>)',
               'dark-text': 'rgb(var(--color-dark-text) / <alpha-value>)',
               'dark-border': 'rgb(var(--color-dark-border) / <alpha-value>)',
+              accent: {
+                blue: 'rgb(var(--color-accent-blue) / <alpha-value>)',
+                green: 'rgb(var(--color-accent-green) / <alpha-value>)',
+              }
+            },
+            borderRadius: {
+              'card': 'var(--radius-card)',
+              'input': 'var(--radius-input)',
+              'button': 'var(--radius-button)',
+            },
+            boxShadow: {
+                'sm': 'var(--shadow-sm)',
+                'md': 'var(--shadow-md)',
+                'lg': 'var(--shadow-lg)',
+                'glow': 'var(--shadow-glow)',
             }
           }
         }
@@ -84,7 +112,7 @@
 }
 </script>
 </head>
-  <body class="bg-gray-100 dark:bg-dark-bg">
+  <body class="bg-light-bg dark:bg-dark-bg bg-gradient-to-b from-slate-50 to-slate-200 dark:from-gray-900 dark:to-gray-800">
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
   </body>

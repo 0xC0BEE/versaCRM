@@ -7,9 +7,10 @@ import {
   Industry, ReportType, AnyReportData, ContactStatus, CustomField, TicketReply, Order, Transaction, IndustryConfig
 } from '../types';
 import { generateReportData, generateDashboardData } from './reportGenerator';
-// FIX: Replaced `subDays` with `sub` from `date-fns` to resolve module export error.
+// FIX: Reverted to sub() from subDays() to resolve module export error.
 import { sub } from 'date-fns';
 import { checkAndTriggerWorkflows } from './workflowService';
+import { replacePlaceholders } from '../utils/textUtils';
 
 // Simulate network delay
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
@@ -476,6 +477,48 @@ const apiClient = {
       }
       return campaignData;
   },
+  async launchCampaign(campaignId: string): Promise<Campaign> {
+    await delay(1500);
+    const campaignIndex = mock.campaigns.findIndex(c => c.id === campaignId);
+    if (campaignIndex === -1) throw new Error("Campaign not found");
+
+    const campaign = mock.campaigns[campaignIndex];
+    if (campaign.status !== 'Draft') throw new Error("Only draft campaigns can be launched.");
+
+    const targetContacts = mock.contacts.filter(c =>
+        c.organizationId === campaign.organizationId &&
+        campaign.targetAudience.status.includes(c.status)
+    );
+
+    campaign.status = 'Active';
+    campaign.stats.recipients = targetContacts.length;
+
+    const emailSteps = campaign.steps.filter(step => step.type === 'sendEmail');
+    for (const step of emailSteps) {
+        const template = mock.emailTemplates.find(t => t.id === step.emailTemplateId);
+        if (template) {
+            for (const contact of targetContacts) {
+                const body = replacePlaceholders(template.body, contact).replace('{{userName}}', 'Campaign Automator');
+                await this.createInteraction({
+                    contactId: contact.id,
+                    organizationId: contact.organizationId,
+                    userId: 'system-campaign',
+                    type: 'Email',
+                    date: new Date().toISOString(),
+                    notes: `(Automated Campaign: ${campaign.name})\nSubject: ${replacePlaceholders(template.subject, contact)}\n\n${body}`,
+                });
+            }
+        }
+    }
+    
+    campaign.stats.sent = targetContacts.length * emailSteps.length;
+    campaign.stats.opened = Math.floor(campaign.stats.sent * (Math.random() * 0.3 + 0.2)); // 20-50%
+    campaign.stats.clicked = Math.floor(campaign.stats.opened * (Math.random() * 0.2 + 0.05)); // 5-25% of opens
+
+    campaign.status = 'Completed';
+    
+    return campaign;
+  },
 
   // TICKETS
   async getTickets(organizationId: string): Promise<Ticket[]> {
@@ -575,6 +618,7 @@ const apiClient = {
   },
   async getDashboardData(organizationId: string) {
       await delay(1000);
+// FIX: Reverted to sub() from subDays() to resolve module export error.
       const dateRange = { start: sub(new Date(), { days: 30 }), end: new Date() };
       const contacts = mock.contacts.filter(c => c.organizationId === organizationId);
       const interactions = mock.interactions.filter(i => i.organizationId === organizationId);

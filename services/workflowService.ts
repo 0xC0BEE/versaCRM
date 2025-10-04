@@ -1,6 +1,7 @@
 // FIX: Corrected import path for types.
 import { AnyContact, Workflow, EmailTemplate, ContactStatus, Interaction, Task, WorkflowTrigger, Deal, Ticket } from '../types';
 import toast from 'react-hot-toast';
+import { replacePlaceholders } from '../utils/textUtils';
 
 type CreateTaskFn = (task: Omit<Task, 'id' | 'isCompleted'>) => void;
 type CreateInteractionFn = (interaction: Omit<Interaction, 'id'>) => void;
@@ -24,27 +25,6 @@ export interface TriggerPayload {
     to?: any;   // toStatus, toStageId, etc.
     dependencies: WorkflowDependencies;
 }
-
-const replacePlaceholders = (template: string, contact: AnyContact, deal?: Deal, ticket?: Ticket): string => {
-    let result = template
-        .replace(/\{\{contactName\}\}/g, contact.contactName)
-        .replace(/\{\{contactEmail\}\}/g, contact.email)
-        .replace(/\{\{contactId\}\}/g, contact.id)
-        .replace(/\{\{contactStatus\}\}/g, contact.status);
-
-    if (deal) {
-        result = result
-            .replace(/\{\{dealName\}\}/g, deal.name)
-            .replace(/\{\{dealValue\}\}/g, String(deal.value));
-    }
-    if (ticket) {
-        result = result
-            .replace(/\{\{ticketSubject\}\}/g, ticket.subject)
-            .replace(/\{\{ticketStatus\}\}/g, ticket.status)
-            .replace(/\{\{ticketPriority\}\}/g, ticket.priority);
-    }
-    return result;
-};
 
 export const checkAndTriggerWorkflows = (payload: TriggerPayload) => {
     const { event, contact, deal, ticket, from, to, dependencies } = payload;
