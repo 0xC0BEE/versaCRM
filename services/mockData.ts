@@ -1,7 +1,7 @@
 // FIX: Corrected import path for types.
 import { User, Organization, AnyContact, Product, Supplier, Warehouse, CalendarEvent, Task, Interaction, Deal, DealStage, EmailTemplate, Workflow, Campaign, Ticket, CustomReport, DashboardWidget, Document, SLAPolicy, OrganizationSettings } from '../types';
-// FIX: Reverted from subDays to sub as subDays is not an exported member in the project's date-fns version.
-import { addDays, sub } from 'date-fns';
+// FIX: Switched to subDays as sub is not an exported member.
+import { addDays, subDays } from 'date-fns';
 
 // To prevent subtle module-caching issues where updates don't appear,
 // we now define all data arrays directly inside the exported object.
@@ -15,10 +15,10 @@ export const mockDataStore = {
     ] as User[],
 
     organizations: [
-// FIX: Reverted to sub() from subDays() to resolve module export error.
-        { id: 'org_1', name: 'VersaHealth Clinic', industry: 'Health', primaryContactEmail: 'contact@versahealth.com', createdAt: sub(new Date(), { days: 90 }).toISOString() },
-// FIX: Reverted to sub() from subDays() to resolve module export error.
-        { id: 'org_2', name: 'Finance Solutions Inc.', industry: 'Finance', primaryContactEmail: 'contact@financesolutions.com', createdAt: sub(new Date(), { days: 180 }).toISOString() },
+// FIX: Use subDays for date calculations.
+        { id: 'org_1', name: 'VersaHealth Clinic', industry: 'Health', primaryContactEmail: 'contact@versahealth.com', createdAt: subDays(new Date(), 90).toISOString() },
+// FIX: Use subDays for date calculations.
+        { id: 'org_2', name: 'Finance Solutions Inc.', industry: 'Finance', primaryContactEmail: 'contact@financesolutions.com', createdAt: subDays(new Date(), 180).toISOString() },
     ] as Organization[],
     
     products: [
@@ -29,20 +29,20 @@ export const mockDataStore = {
     
     contacts: [
         { 
-// FIX: Reverted to sub() from subDays() to resolve module export error.
-            id: 'contact_1', organizationId: 'org_1', contactName: 'John Patient', email: 'john.patient@example.com', phone: '555-0101', status: 'Active', leadSource: 'Referral', createdAt: sub(new Date(), { days: 45 }).toISOString(), customFields: { patientId: 'P12345', insuranceProvider: 'MediCare', dateOfBirth: '1980-05-20' },
+// FIX: Use subDays for date calculations.
+            id: 'contact_1', organizationId: 'org_1', contactName: 'John Patient', email: 'john.patient@example.com', phone: '555-0101', status: 'Active', leadSource: 'Referral', createdAt: subDays(new Date(), 45).toISOString(), customFields: { patientId: 'P12345', insuranceProvider: 'MediCare', dateOfBirth: '1980-05-20' },
             orders: [
-// FIX: Reverted to sub() from subDays() to resolve module export error.
-                { id: 'order_1', contactId: 'contact_1', organizationId: 'org_1', orderDate: sub(new Date(), { days: 10 }).toISOString(), status: 'Completed', total: 135, lineItems: [{productId: 'prod_1', description: 'Stethoscope', quantity: 1, unitPrice: 120}, {productId: 'prod_2', description: 'Band-Aids (Box of 100)', quantity: 1, unitPrice: 15}] }
+// FIX: Use subDays for date calculations.
+                { id: 'order_1', contactId: 'contact_1', organizationId: 'org_1', orderDate: subDays(new Date(), 10).toISOString(), status: 'Completed', total: 135, lineItems: [{productId: 'prod_1', description: 'Stethoscope', quantity: 1, unitPrice: 120}, {productId: 'prod_2', description: 'Band-Aids (Box of 100)', quantity: 1, unitPrice: 15}] }
             ],
             transactions: [
-// FIX: Reverted to sub() from subDays() to resolve module export error.
-                 { id: 'trans_1', type: 'Charge', amount: 135, date: sub(new Date(), { days: 10 }).toISOString(), method: 'Insurance', orderId: 'order_1' }
+// FIX: Use subDays for date calculations.
+                 { id: 'trans_1', type: 'Charge', amount: 135, date: subDays(new Date(), 10).toISOString(), method: 'Insurance', orderId: 'order_1' }
             ],
             auditLogs: [{ id: 'log_1', timestamp: new Date().toISOString(), userId: 'user_admin_1', userName: 'Alice Admin', change: 'updated status to Active.' }]
         },
-// FIX: Reverted to sub() from subDays() to resolve module export error.
-        { id: 'contact_2', organizationId: 'org_1', contactName: 'Jane Doe', email: 'jane.doe@example.com', phone: '555-0102', status: 'Lead', leadSource: 'Web', createdAt: sub(new Date(), { days: 5 }).toISOString(), customFields: {} },
+// FIX: Use subDays for date calculations.
+        { id: 'contact_2', organizationId: 'org_1', contactName: 'Jane Doe', email: 'jane.doe@example.com', phone: '555-0102', status: 'Lead', leadSource: 'Web', createdAt: subDays(new Date(), 5).toISOString(), customFields: {} },
     ] as AnyContact[],
 
     suppliers: [
@@ -59,13 +59,13 @@ export const mockDataStore = {
 
     tasks: [
         { id: 'task_1', organizationId: 'org_1', title: 'Prepare quarterly report', dueDate: addDays(new Date(), 5).toISOString(), isCompleted: false, userId: 'user_admin_1' },
-// FIX: Reverted to sub() from subDays() to resolve module export error.
-        { id: 'task_2', organizationId: 'org_1', title: 'Call Jane Doe', dueDate: sub(new Date(), { days: 1 }).toISOString(), isCompleted: false, userId: 'user_team_1', contactId: 'contact_2' },
+// FIX: Use subDays for date calculations.
+        { id: 'task_2', organizationId: 'org_1', title: 'Call Jane Doe', dueDate: subDays(new Date(), 1).toISOString(), isCompleted: false, userId: 'user_team_1', contactId: 'contact_2' },
     ] as Task[],
 
     interactions: [
-// FIX: Reverted to sub() from subDays() to resolve module export error.
-        { id: 'int_1', contactId: 'contact_1', organizationId: 'org_1', userId: 'user_team_1', type: 'Appointment', date: sub(new Date(), { days: 15 }).toISOString(), notes: 'Discussed treatment plan.' },
+// FIX: Use subDays for date calculations.
+        { id: 'int_1', contactId: 'contact_1', organizationId: 'org_1', userId: 'user_team_1', type: 'Appointment', date: subDays(new Date(), 15).toISOString(), notes: 'Discussed treatment plan.' },
     ] as Interaction[],
 
     dealStages: [
@@ -89,8 +89,8 @@ export const mockDataStore = {
     campaigns: [] as Campaign[],
 
     tickets: [
-// FIX: Reverted to sub() from subDays() to resolve module export error.
-        { id: 'ticket_1', organizationId: 'org_1', contactId: 'contact_1', subject: 'Billing question', description: 'I have a question about my last invoice.', status: 'Open', priority: 'Medium', assignedToId: 'user_team_1', createdAt: sub(new Date(), { days: 2 }).toISOString(), updatedAt: new Date().toISOString(), replies: [] },
+// FIX: Use subDays for date calculations.
+        { id: 'ticket_1', organizationId: 'org_1', contactId: 'contact_1', subject: 'Billing question', description: 'I have a question about my last invoice.', status: 'Open', priority: 'Medium', assignedToId: 'user_team_1', createdAt: subDays(new Date(), 2).toISOString(), updatedAt: new Date().toISOString(), replies: [] },
     ] as Ticket[],
 
     customReports: [] as CustomReport[],

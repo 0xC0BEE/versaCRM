@@ -7,8 +7,8 @@ import {
   Industry, ReportType, AnyReportData, ContactStatus, CustomField, TicketReply, Order, Transaction, IndustryConfig
 } from '../types';
 import { generateReportData, generateDashboardData } from './reportGenerator';
-// FIX: Reverted to sub() from subDays() to resolve module export error.
-import { sub } from 'date-fns';
+// FIX: Switched to subDays as sub is not an exported member.
+import { subDays } from 'date-fns';
 import { checkAndTriggerWorkflows } from './workflowService';
 import { replacePlaceholders } from '../utils/textUtils';
 
@@ -618,8 +618,8 @@ const apiClient = {
   },
   async getDashboardData(organizationId: string) {
       await delay(1000);
-// FIX: Reverted to sub() from subDays() to resolve module export error.
-      const dateRange = { start: sub(new Date(), { days: 30 }), end: new Date() };
+// FIX: Use subDays for date calculations.
+      const dateRange = { start: subDays(new Date(), 30), end: new Date() };
       const contacts = mock.contacts.filter(c => c.organizationId === organizationId);
       const interactions = mock.interactions.filter(i => i.organizationId === organizationId);
       return generateDashboardData(dateRange, contacts, interactions);

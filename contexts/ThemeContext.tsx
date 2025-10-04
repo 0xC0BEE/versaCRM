@@ -80,6 +80,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
                 if (primaryShades && bgRgb && cardRgb && textRgb && borderRgb) {
                      styleTag.innerHTML = `
                         :root {
+                            /* FIX: Explicitly override the main accent color variable */
+                            --color-accent-blue: ${primaryShades['500']};
+                            
                             ${Object.entries(primaryShades).map(([key, value]) => `--color-primary-${key}: ${value};`).join('\n')}
                             
                             --color-dark-bg: ${bgRgb.r} ${bgRgb.g} ${bgRgb.b};
