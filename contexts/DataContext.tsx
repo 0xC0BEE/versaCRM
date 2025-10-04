@@ -181,9 +181,16 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const addTicketReplyMutation = useMutation({
         mutationFn: ({ ticketId, reply }: { ticketId: string, reply: Omit<TicketReply, 'id' | 'timestamp'> }) => apiClient.addTicketReply(ticketId, reply),
         onSuccess: (updatedTicket: Ticket, variables) => {
-            genericOnSuccess('tickets', 'Reply added!')(updatedTicket, variables, null);
+            toast.success('Reply added!');
+
+            // Immediately update the tickets list in the cache to trigger a UI refresh
+            const previousTickets = queryClient.getQueryData<Ticket[]>(['tickets', organizationId]) || [];
+            const originalTicket = previousTickets.find((t: Ticket) => t.id === updatedTicket.id);
             
-            const originalTicket = ticketsQuery.data?.find((t: Ticket) => t.id === updatedTicket.id);
+            queryClient.setQueryData<Ticket[]>(['tickets', organizationId], 
+                previousTickets.map(ticket => ticket.id === updatedTicket.id ? updatedTicket : ticket)
+            );
+            
             if (!originalTicket) return;
 
             // Notify assigned team member when a client replies
