@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { AnyContact, CustomField } from '../../../types';
 // FIX: Corrected import path for useApp.
 import { useApp } from '../../../contexts/AppContext';
@@ -35,6 +35,10 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
     const [summary, setSummary] = useState('');
     const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
     const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+    useEffect(() => {
+        setFormData(contact);
+    }, [contact]);
 
     const handleChange = (field: keyof AnyContact, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));

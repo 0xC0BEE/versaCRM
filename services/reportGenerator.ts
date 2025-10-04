@@ -1,6 +1,7 @@
 // FIX: Corrected import path for types.
 import { AnyContact, Product, User, Task, ReportType, AnyReportData, SalesReportData, InventoryReportData, FinancialReportData, ContactsReportData, TeamReportData, DashboardData, Interaction, Deal, DealStage, DealReportData } from '../types';
-import { isWithinInterval, subDays, differenceInDays } from 'date-fns';
+// FIX: Removed unused `subDays` import to resolve module export error.
+import { isWithinInterval, differenceInDays } from 'date-fns';
 
 interface ReportDataSources {
     contacts: AnyContact[];

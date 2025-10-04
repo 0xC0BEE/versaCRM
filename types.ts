@@ -196,7 +196,10 @@ export interface EmailTemplate {
 
 export type WorkflowTrigger =
     | { type: 'contactCreated' }
-    | { type: 'contactStatusChanged'; fromStatus?: ContactStatus; toStatus?: ContactStatus };
+    | { type: 'contactStatusChanged'; fromStatus?: ContactStatus; toStatus?: ContactStatus }
+    | { type: 'dealStageChanged'; fromStageId?: string; toStageId?: string }
+    | { type: 'ticketCreated' }
+    | { type: 'ticketStatusChanged'; fromStatus?: Ticket['status']; toStatus?: Ticket['status'] };
 
 export type WorkflowAction =
     | { type: 'createTask'; taskTitle?: string; assigneeId?: string }

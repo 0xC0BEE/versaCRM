@@ -3,7 +3,7 @@ import PageWrapper from '../layout/PageWrapper';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
-import { Workflow, WorkflowTrigger, WorkflowAction, ContactStatus, User } from '../../types';
+import { Workflow, WorkflowTrigger, WorkflowAction, ContactStatus, User, DealStage, Ticket } from '../../types';
 import { ArrowLeft, Plus, Trash2, Send, CheckSquare, Zap, Edit2, Webhook } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useForm } from '../../hooks/useForm';
@@ -18,6 +18,7 @@ interface WorkflowBuilderProps {
 }
 
 const statusOptions: ContactStatus[] = ['Lead', 'Active', 'Inactive', 'Do Not Contact'];
+const ticketStatusOptions: Ticket['status'][] = ['New', 'Open', 'Pending', 'Closed'];
 
 const defaultWebhookPayload = `{
   "contactName": "{{contactName}}",
@@ -27,10 +28,12 @@ const defaultWebhookPayload = `{
 }`;
 
 const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose, organizationId }) => {
-    const { createWorkflowMutation, updateWorkflowMutation, emailTemplatesQuery, teamMembersQuery } = useData();
+    const { createWorkflowMutation, updateWorkflowMutation, emailTemplatesQuery, teamMembersQuery, dealStagesQuery } = useData();
     const { industryConfig } = useApp();
     const { data: emailTemplates = [] } = emailTemplatesQuery;
     const { data: teamMembers = [] } = teamMembersQuery;
+    const { data: stages = [] } = dealStagesQuery;
+
 
     const isNew = !workflow;
     const [selectedNode, setSelectedNode] = useState<{ type: 'trigger' | 'action', index?: number } | null>({ type: 'trigger' });
@@ -44,13 +47,14 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose, or
     
     const { formData, setFormData, handleChange } = useForm(initialState, workflow);
 
-    // FIX: Changed field type from `keyof WorkflowTrigger` to `string` to allow any property of the union type.
     const handleTriggerChange = (field: string, value: any) => {
-        const newTrigger = { ...formData.trigger, [field]: value };
-        if (field === 'type' && value === 'contactCreated') {
-            delete (newTrigger as any).fromStatus;
-            delete (newTrigger as any).toStatus;
+        let newTrigger: WorkflowTrigger = { ...formData.trigger, [field]: value } as any; 
+        
+        if (field === 'type') {
+            const type = value as WorkflowTrigger['type'];
+            newTrigger = { type } as WorkflowTrigger;
         }
+        
         handleChange('trigger', newTrigger);
     };
     
@@ -108,6 +112,9 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose, or
                     <Select id="trigger-type" label="Event" value={formData.trigger.type} onChange={e => handleTriggerChange('type', e.target.value)}>
                         <option value="contactCreated">Contact is Created</option>
                         <option value="contactStatusChanged">Contact Status is Changed</option>
+                        <option value="dealStageChanged">Deal Stage is Changed</option>
+                        <option value="ticketCreated">Ticket is Created</option>
+                        <option value="ticketStatusChanged">Ticket Status is Changed</option>
                     </Select>
                     {formData.trigger.type === 'contactStatusChanged' && (
                         <div className="grid grid-cols-2 gap-2">
@@ -119,6 +126,30 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose, or
                             <Select id="trigger-to" label="To" value={(formData.trigger as any).toStatus || ''} onChange={e => handleTriggerChange('toStatus', e.target.value)}>
                                 <option value="">Any</option>
                                 {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                            </Select>
+                        </div>
+                    )}
+                    {formData.trigger.type === 'dealStageChanged' && (
+                        <div className="grid grid-cols-2 gap-2">
+                            <Select id="trigger-from" label="From Stage" value={(formData.trigger as any).fromStageId || ''} onChange={e => handleTriggerChange('fromStageId', e.target.value)}>
+                                <option value="">Any Stage</option>
+                                {(stages as DealStage[]).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                            </Select>
+                            <Select id="trigger-to" label="To Stage" value={(formData.trigger as any).toStageId || ''} onChange={e => handleTriggerChange('toStageId', e.target.value)}>
+                                <option value="">Any Stage</option>
+                                {(stages as DealStage[]).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                            </Select>
+                        </div>
+                    )}
+                    {formData.trigger.type === 'ticketStatusChanged' && (
+                        <div className="grid grid-cols-2 gap-2">
+                            <Select id="trigger-from" label="From Status" value={(formData.trigger as any).fromStatus || ''} onChange={e => handleTriggerChange('fromStatus', e.target.value)}>
+                                <option value="">Any Status</option>
+                                {ticketStatusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                            </Select>
+                            <Select id="trigger-to" label="To Status" value={(formData.trigger as any).toStatus || ''} onChange={e => handleTriggerChange('toStatus', e.target.value)}>
+                                <option value="">Any Status</option>
+                                {ticketStatusOptions.map(s => <option key={s} value={s}>{s}</option>)}
                             </Select>
                         </div>
                     )}
@@ -148,6 +179,7 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose, or
                                 <option value="">Select a team member...</option>
                                 {teamMembers.map((m: User) => <option key={m.id} value={m.id}>{m.name}</option>)}
                             </Select>
+                             <p className="text-xs text-gray-500">Available placeholders: <code>&#123;&#123;contactName&#125;&#125;</code>, <code>&#123;&#123;dealName&#125;&#125;</code>, <code>&#123;&#123;ticketSubject&#125;&#125;</code></p>
                         </>
                     )}
                     {action.type === 'sendEmail' && (
@@ -169,7 +201,7 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose, or
                          <>
                             <Input id={`action-url-${index}`} label="Webhook URL" value={action.webhookUrl || ''} onChange={e => handleActionChange(index, 'webhookUrl', e.target.value)} placeholder="https://yourapi.com/hook" />
                             <Textarea id={`action-payload-${index}`} label="Payload Template (JSON)" value={action.payloadTemplate || ''} onChange={e => handleActionChange(index, 'payloadTemplate', e.target.value)} rows={8} />
-                             <p className="text-xs text-gray-500">Use placeholders like <code>&#123;&#123;contactName&#125;&#125;</code>, <code>&#123;&#123;contactEmail&#125;&#125;</code>, etc.</p>
+                             <p className="text-xs text-gray-500">Use placeholders like <code>&#123;&#123;contactName&#125;&#125;</code>, <code>&#123;&#123;dealName&#125;&#125;</code>, etc.</p>
                         </>
                     )}
                 </div>
@@ -189,6 +221,17 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose, or
         updateContactField: <Edit2 className="text-orange-500" />,
         sendWebhook: <Webhook className="text-indigo-500" />,
     };
+
+    const getTriggerLabel = (trigger: WorkflowTrigger) => {
+        switch(trigger.type) {
+            case 'contactCreated': return 'Contact Created';
+            case 'contactStatusChanged': return 'Contact Status Changed';
+            case 'dealStageChanged': return 'Deal Stage Changed';
+            case 'ticketCreated': return 'Ticket Created';
+            case 'ticketStatusChanged': return 'Ticket Status Changed';
+            default: return 'Trigger';
+        }
+    }
 
     return (
         <PageWrapper>
@@ -214,7 +257,7 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose, or
                                 <Zap className="text-yellow-500" />
                                 <div>
                                     <p className="font-semibold">Trigger</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">{formData.trigger.type}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">{getTriggerLabel(formData.trigger)}</p>
                                 </div>
                             </div>
                         </div>

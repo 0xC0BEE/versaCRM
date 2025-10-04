@@ -1,5 +1,6 @@
 // FIX: Corrected import path for types.
-import { AnyContact, Workflow, EmailTemplate, ContactStatus, Interaction, Task } from '../types';
+import { AnyContact, Workflow, EmailTemplate, ContactStatus, Interaction, Task, WorkflowTrigger, Deal, Ticket } from '../types';
+import toast from 'react-hot-toast';
 
 type CreateTaskFn = (task: Omit<Task, 'id' | 'isCompleted'>) => void;
 type CreateInteractionFn = (interaction: Omit<Interaction, 'id'>) => void;
@@ -14,24 +15,39 @@ interface WorkflowDependencies {
     updateContact: UpdateContactFn;
 }
 
-interface TriggerPayload {
-    event: 'contactCreated' | 'contactStatusChanged';
-    contact: AnyContact;
-    fromStatus?: ContactStatus;
-    toStatus?: ContactStatus;
+export interface TriggerPayload {
+    event: WorkflowTrigger['type'];
+    contact: AnyContact; // The contact associated with the event, for actions
+    deal?: Deal;
+    ticket?: Ticket;
+    from?: any; // fromStatus, fromStageId, etc.
+    to?: any;   // toStatus, toStageId, etc.
     dependencies: WorkflowDependencies;
 }
 
-const replacePlaceholders = (template: string, contact: AnyContact): string => {
-    return template
+const replacePlaceholders = (template: string, contact: AnyContact, deal?: Deal, ticket?: Ticket): string => {
+    let result = template
         .replace(/\{\{contactName\}\}/g, contact.contactName)
         .replace(/\{\{contactEmail\}\}/g, contact.email)
         .replace(/\{\{contactId\}\}/g, contact.id)
         .replace(/\{\{contactStatus\}\}/g, contact.status);
+
+    if (deal) {
+        result = result
+            .replace(/\{\{dealName\}\}/g, deal.name)
+            .replace(/\{\{dealValue\}\}/g, String(deal.value));
+    }
+    if (ticket) {
+        result = result
+            .replace(/\{\{ticketSubject\}\}/g, ticket.subject)
+            .replace(/\{\{ticketStatus\}\}/g, ticket.status)
+            .replace(/\{\{ticketPriority\}\}/g, ticket.priority);
+    }
+    return result;
 };
 
 export const checkAndTriggerWorkflows = (payload: TriggerPayload) => {
-    const { event, contact, fromStatus, toStatus, dependencies } = payload;
+    const { event, contact, deal, ticket, from, to, dependencies } = payload;
     const { workflows } = dependencies;
 
     console.log(`Checking workflows for event: ${event}`);
@@ -39,29 +55,40 @@ export const checkAndTriggerWorkflows = (payload: TriggerPayload) => {
     const matchingWorkflows = workflows.filter(workflow => {
         if (!workflow.isActive) return false;
 
-        if (workflow.trigger.type === 'contactCreated' && event === 'contactCreated') {
-            return true;
-        }
+        const trigger = workflow.trigger;
+        if (trigger.type !== event) return false;
 
-        if (workflow.trigger.type === 'contactStatusChanged' && event === 'contactStatusChanged') {
-            const trigger = workflow.trigger;
-            // If trigger specifies from/to, match it. Otherwise, any status change matches.
-            const fromMatch = !trigger.fromStatus || trigger.fromStatus === fromStatus;
-            const toMatch = !trigger.toStatus || trigger.toStatus === toStatus;
-            return fromMatch && toMatch;
+        switch (trigger.type) {
+            case 'contactCreated':
+                return true;
+            case 'contactStatusChanged':
+                const fromMatch = !trigger.fromStatus || trigger.fromStatus === from;
+                const toMatch = !trigger.toStatus || trigger.toStatus === to;
+                return fromMatch && toMatch;
+            case 'dealStageChanged':
+                const fromStageMatch = !trigger.fromStageId || trigger.fromStageId === from;
+                const toStageMatch = !trigger.toStageId || trigger.toStageId === to;
+                return fromStageMatch && toStageMatch;
+            case 'ticketCreated':
+                return true;
+            case 'ticketStatusChanged':
+                const fromTicketStatusMatch = !trigger.fromStatus || trigger.fromStatus === from;
+                const toTicketStatusMatch = !trigger.toStatus || trigger.toStatus === to;
+                return fromTicketStatusMatch && toTicketStatusMatch;
+            default:
+                return false;
         }
-
-        return false;
     });
+
 
     console.log(`Found ${matchingWorkflows.length} matching workflows.`);
 
     matchingWorkflows.forEach(workflow => {
-        executeWorkflowActions(workflow, contact, dependencies);
+        executeWorkflowActions(workflow, contact, deal, ticket, dependencies);
     });
 };
 
-const executeWorkflowActions = (workflow: Workflow, contact: AnyContact, dependencies: WorkflowDependencies) => {
+const executeWorkflowActions = (workflow: Workflow, contact: AnyContact, deal: Deal | undefined, ticket: Ticket | undefined, dependencies: WorkflowDependencies) => {
     console.log(`Executing actions for workflow: ${workflow.name}`);
     let updatedContact = { ...contact };
 
@@ -69,20 +96,20 @@ const executeWorkflowActions = (workflow: Workflow, contact: AnyContact, depende
         if (action.type === 'createTask') {
             if (action.taskTitle && action.assigneeId) {
                 dependencies.createTask({
-                    title: replacePlaceholders(action.taskTitle, contact),
+                    title: replacePlaceholders(action.taskTitle, contact, deal, ticket),
                     dueDate: new Date().toISOString(),
                     userId: action.assigneeId,
                     contactId: contact.id,
                     organizationId: contact.organizationId,
                 });
                 console.log(`Action: Created task "${action.taskTitle}"`);
+                toast.success(`Workflow "${workflow.name}" triggered: Task created.`);
             }
         } else if (action.type === 'sendEmail') {
             if (action.emailTemplateId) {
                 const template = dependencies.emailTemplates.find(t => t.id === action.emailTemplateId);
                 if (template) {
-                    const body = template.body
-                        .replace('{{contactName}}', contact.contactName)
+                    const body = replacePlaceholders(template.body, contact, deal, ticket)
                         .replace('{{userName}}', 'System'); // Assuming system sends it
                     
                     dependencies.createInteraction({
@@ -91,9 +118,10 @@ const executeWorkflowActions = (workflow: Workflow, contact: AnyContact, depende
                         userId: 'system', // Indicates an automated action
                         type: 'Email',
                         date: new Date().toISOString(),
-                        notes: `Subject: ${template.subject}\n\n${body}`,
+                        notes: `Subject: ${replacePlaceholders(template.subject, contact, deal, ticket)}\n\n${body}`,
                     });
                     console.log(`Action: Sent email using template "${template.name}"`);
+                    toast.success(`Workflow "${workflow.name}" triggered: Email sent.`);
                 }
             }
         } else if (action.type === 'updateContactField') {
@@ -105,10 +133,11 @@ const executeWorkflowActions = (workflow: Workflow, contact: AnyContact, depende
                 updatedContact = { ...updatedContact, customFields: newCustomFields };
                 dependencies.updateContact(updatedContact);
                 console.log(`Action: Updated field "${action.fieldId}" to "${action.newValue}"`);
+                toast.success(`Workflow "${workflow.name}" triggered: Contact field updated.`);
             }
         } else if (action.type === 'sendWebhook') {
             if (action.webhookUrl && action.payloadTemplate) {
-                const payload = replacePlaceholders(action.payloadTemplate, contact);
+                const payload = replacePlaceholders(action.payloadTemplate, contact, deal, ticket);
                 try {
                     console.log(`Action: Sending webhook to ${action.webhookUrl}`);
                     const response = await fetch(action.webhookUrl, {
@@ -118,11 +147,14 @@ const executeWorkflowActions = (workflow: Workflow, contact: AnyContact, depende
                     });
                     if (response.ok) {
                         console.log(`Webhook sent successfully. Status: ${response.status}`);
+                        toast.success(`Workflow "${workflow.name}" triggered: Webhook sent.`);
                     } else {
                         console.error(`Webhook failed with status: ${response.status}`);
+                        toast.error(`Workflow "${workflow.name}" webhook failed.`);
                     }
                 } catch (error) {
                     console.error('Error sending webhook:', error);
+                    toast.error(`Workflow "${workflow.name}" webhook failed.`);
                 }
             }
         }

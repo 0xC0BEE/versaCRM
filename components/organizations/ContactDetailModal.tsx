@@ -32,6 +32,7 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
 }) => {
     const { industryConfig } = useApp();
     const [activeTab, setActiveTab] = useState('Profile');
+    const [newContactKey, setNewContactKey] = useState(0);
 
     // This effect must be called before any early returns to obey the Rules of Hooks.
     useEffect(() => {
@@ -39,6 +40,11 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
             // Reset the active tab to 'Profile' whenever the modal is opened
             // or the contact within the modal changes.
             setActiveTab('Profile');
+            // If it's a new contact, create a unique key for this instance of the modal
+            // This forces the ProfileTab to remount and reset its state completely.
+            if (!contact?.id) {
+                setNewContactKey(prev => prev + 1);
+            }
         }
     }, [isOpen, contact]);
 
@@ -48,7 +54,7 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
     
     const tabConfig = {
         'Profile': <ProfileTab 
-                        key={contact.id || 'new-contact'}
+                        key={contact.id || `new-${newContactKey}`}
                         contact={contact!} 
                         onSave={onSave}
                         onDelete={onDelete}

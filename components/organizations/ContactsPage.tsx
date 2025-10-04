@@ -14,6 +14,7 @@ import ContactDetailModal from './ContactDetailModal';
 import ContactFilterBar from './ContactFilterBar';
 import BulkActionsToolbar from './BulkActionsToolbar';
 import BulkStatusUpdateModal from './BulkStatusUpdateModal';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ContactsPageProps {
     isTabbedView?: boolean;
@@ -21,6 +22,7 @@ interface ContactsPageProps {
 
 const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => {
     const { industryConfig, contactFilters } = useApp();
+    const { authenticatedUser } = useAuth();
     const { 
         contactsQuery,
         createContactMutation,
@@ -65,7 +67,7 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
         // Provide a default empty structure for a new contact
         setSelectedContact({
             id: '',
-            organizationId: '',
+            organizationId: authenticatedUser!.organizationId!,
             contactName: '',
             email: '',
             phone: '',
