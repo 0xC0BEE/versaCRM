@@ -27,11 +27,12 @@ describe('Button component', () => {
 
   it('applies the correct classes for the primary variant', () => {
     const { getByText } = render(<Button variant="primary">Primary Button</Button>);
-    expect(getByText('Primary Button')).toHaveClass('bg-primary-600');
+    // FIX: Check for a class from the gradient instead of a solid color.
+    expect(getByText('Primary Button')).toHaveClass('from-accent-blue');
   });
 
   it('applies the correct classes for the secondary variant', () => {
     const { getByText } = render(<Button variant="secondary">Secondary Button</Button>);
-    expect(getByText('Secondary Button')).toHaveClass('bg-gray-200');
+    expect(getByText('Secondary Button')).toHaveClass('bg-slate-200');
   });
 });

@@ -82,6 +82,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
 
     return (
         <PageWrapper>
+            {/* FIX: Added H1 for page title */}
+            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white mb-6">Dashboard</h1>
             {pageContent}
         </PageWrapper>
     );

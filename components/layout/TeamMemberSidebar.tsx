@@ -1,50 +1,57 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
-// FIX: Corrected import path for types.
 import { Page } from '../../types';
-import { BarChart2, Users, Mail, Calendar, CheckSquare, LucideIcon, Handshake, LifeBuoy } from 'lucide-react';
+import { Calendar, Handshake, Home, Inbox, LifeBuoy, Ticket, Users } from 'lucide-react';
 
-interface NavItem {
-    page: Page;
-    label: string;
-    icon: LucideIcon;
+interface TeamMemberSidebarProps {
+    isOpen: boolean;
+    setIsOpen: (isOpen: boolean) => void;
 }
 
-const navItems: NavItem[] = [
-    { page: 'Dashboard', label: 'Dashboard', icon: BarChart2 },
-    { page: 'Contacts', label: 'My Contacts', icon: Users },
-    { page: 'Deals', label: 'Deals', icon: Handshake },
-    { page: 'Tickets', label: 'Tickets', icon: LifeBuoy },
-    { page: 'Interactions', label: 'Interactions', icon: Mail },
-    { page: 'Calendar', label: 'Calendar', icon: Calendar },
-    { page: 'Tasks', label: 'My Tasks', icon: CheckSquare },
-];
+const TeamMemberSidebar: React.FC<TeamMemberSidebarProps> = ({ isOpen, setIsOpen }) => {
+    const { currentPage, setCurrentPage, industryConfig } = useApp();
 
-const TeamMemberSidebar: React.FC = () => {
-    const { currentPage, setCurrentPage } = useApp();
+    const handleNavigation = (page: Page) => {
+        setCurrentPage(page);
+        if (window.innerWidth < 1024) { // Close sidebar on mobile after navigation
+            setIsOpen(false);
+        }
+    };
+
+    const navItems: { page: Page; icon: React.ElementType; label?: string }[] = [
+        { page: 'Dashboard', icon: Home },
+        { page: 'Contacts', icon: Users, label: industryConfig.contactNamePlural },
+        { page: 'Deals', icon: Handshake },
+        { page: 'Tickets', icon: LifeBuoy },
+        { page: 'Interactions', icon: Inbox },
+        { page: 'Calendar', icon: Calendar },
+        { page: 'Tasks', icon: Ticket },
+    ];
 
     return (
-        <aside className="w-64 flex-shrink-0 bg-white dark:bg-dark-card border-r dark:border-dark-border flex flex-col">
-            <div className="h-16 flex-shrink-0 flex items-center justify-center px-4 border-b dark:border-dark-border">
-                <h1 className="text-xl font-bold">VersaCRM</h1>
+        <div className="flex flex-col flex-shrink-0 w-64 bg-light-card dark:bg-dark-card border-r border-light-border dark:border-dark-border">
+            <div className="h-16 flex items-center justify-center flex-shrink-0 px-4 shadow-sm">
+                 <h1 className="text-2xl font-bold text-light-text dark:text-dark-text">VersaCRM</h1>
             </div>
-            <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-                {navItems.map(({ page, label, icon: Icon }) => (
-                    <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                            currentPage === page
-                                ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-white'
-                                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                        }`}
-                    >
-                        <Icon className="h-5 w-5 mr-3" />
-                        <span>{label}</span>
-                    </button>
-                ))}
+            <nav className="flex-1 min-h-0 overflow-y-auto" aria-label="Sidebar">
+                <div className="p-2 space-y-1">
+                    {navItems.map(item => (
+                        <button
+                            key={item.page}
+                            onClick={() => handleNavigation(item.page)}
+                            className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md w-full text-left ${
+                                currentPage === item.page
+                                    ? 'bg-accent-blue/10 text-accent-blue'
+                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                            }`}
+                        >
+                            <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${currentPage === item.page ? 'text-accent-blue' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-400'}`} aria-hidden="true" />
+                            {item.label || item.page}
+                        </button>
+                    ))}
+                </div>
             </nav>
-        </aside>
+        </div>
     );
 };
 

@@ -2,66 +2,66 @@ import React from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Page } from '../../types';
-import { BarChart2, Users, Building2, Handshake, Mail, Calendar, CheckSquare, Package, FileText, Settings, Bot, LucideIcon, LifeBuoy } from 'lucide-react';
+import { BarChart2, Building2, Calendar, Handshake, Home, Inbox, LifeBuoy, Megaphone, Package, Settings, Ticket, Users, Zap } from 'lucide-react';
 
-interface NavItem {
-    page: Page;
-    label: string;
-    icon: LucideIcon;
-    permission?: 'isSuperAdmin' | 'isOrgAdmin';
+interface SidebarProps {
+    isOpen: boolean;
+    setIsOpen: (isOpen: boolean) => void;
 }
 
-const navItems: NavItem[] = [
-    { page: 'Dashboard', label: 'Dashboard', icon: BarChart2 },
-    { page: 'Contacts', label: 'Contacts', icon: Users, permission: 'isOrgAdmin' },
-    { page: 'Deals', label: 'Deals', icon: Handshake, permission: 'isOrgAdmin' },
-    { page: 'Tickets', label: 'Tickets', icon: LifeBuoy, permission: 'isOrgAdmin' },
-    { page: 'Organizations', label: 'Organizations', icon: Building2, permission: 'isSuperAdmin' },
-    { page: 'Interactions', label: 'Interactions', icon: Mail },
-    { page: 'Calendar', label: 'Calendar', icon: Calendar },
-    { page: 'Tasks', label: 'Tasks', icon: CheckSquare },
-    { page: 'Inventory', label: 'Inventory', icon: Package, permission: 'isOrgAdmin' },
-    { page: 'Campaigns', label: 'Campaigns', icon: Bot, permission: 'isOrgAdmin' },
-    { page: 'Workflows', label: 'Workflows', icon: Bot, permission: 'isOrgAdmin' },
-    { page: 'Reports', label: 'Reports', icon: FileText, permission: 'isOrgAdmin' },
-    { page: 'Settings', label: 'Settings', icon: Settings },
-];
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
+    const { currentPage, setCurrentPage, industryConfig } = useApp();
+    const { permissions } = useAuth();
 
-const Sidebar: React.FC = () => {
-    const { currentPage, setCurrentPage } = useApp();
-    const { authenticatedUser } = useAuth();
-    const isSuperAdmin = authenticatedUser?.role === 'Super Admin';
-    const isOrgAdmin = authenticatedUser?.role === 'Organization Admin';
+    const handleNavigation = (page: Page) => {
+        setCurrentPage(page);
+        if (window.innerWidth < 1024) { // Close sidebar on mobile after navigation
+            setIsOpen(false);
+        }
+    };
 
-    const filteredNavItems = navItems.filter(item => {
-        if (!item.permission) return true;
-        if (item.permission === 'isSuperAdmin' && isSuperAdmin) return true;
-        if (item.permission === 'isOrgAdmin' && (isSuperAdmin || isOrgAdmin)) return true;
-        return false;
-    });
+    const navItems: { page: Page; icon: React.ElementType; label?: string; permission?: keyof typeof permissions }[] = [
+        { page: 'Dashboard', icon: Home },
+        { page: 'Contacts', icon: Users, label: industryConfig.contactNamePlural },
+        { page: 'Deals', icon: Handshake },
+        { page: 'Tickets', icon: LifeBuoy },
+        { page: 'Interactions', icon: Inbox },
+        { page: 'Organizations', icon: Building2, permission: 'canViewOrganizations' },
+        { page: 'Calendar', icon: Calendar },
+        { page: 'Tasks', icon: Ticket },
+        { page: 'Inventory', icon: Package },
+        { page: 'Campaigns', icon: Megaphone },
+        { page: 'Workflows', icon: Zap },
+        { page: 'Reports', icon: BarChart2, permission: 'canViewAllReports' },
+        { page: 'Settings', icon: Settings, permission: 'canAccessSettings' },
+    ];
 
     return (
-        <aside className="w-64 flex-shrink-0 bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-lg border-r border-light-border/80 dark:border-dark-border/80 flex flex-col">
-            <div className="h-20 flex-shrink-0 flex items-center justify-center px-4">
+        <div className={`flex flex-col flex-shrink-0 w-64 bg-light-card dark:bg-dark-card border-r border-light-border dark:border-dark-border transition-all duration-300`}>
+            <div className="h-16 flex items-center justify-center flex-shrink-0 px-4 shadow-sm">
                 <h1 className="text-2xl font-bold text-light-text dark:text-dark-text">VersaCRM</h1>
             </div>
-            <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-                {filteredNavItems.map(({ page, label, icon: Icon }) => (
-                    <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-full flex items-center px-4 py-3 text-sm font-semibold rounded-lg group transition-all duration-200 ${
-                            currentPage === page
-                                ? 'bg-accent-blue/10 text-accent-blue dark:bg-accent-blue/20 dark:text-white'
-                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-dark-card/50 hover:text-light-text dark:hover:text-dark-text'
-                        }`}
-                    >
-                        <Icon className="h-5 w-5 mr-4 transition-transform group-hover:scale-110" />
-                        <span>{label}</span>
-                    </button>
-                ))}
+            <nav className="flex-1 min-h-0 overflow-y-auto" aria-label="Sidebar">
+                <div className="p-2 space-y-1">
+                    {navItems.map(item =>
+                        !item.permission || (permissions && permissions[item.permission]) ? (
+                            <button
+                                key={item.page}
+                                onClick={() => handleNavigation(item.page)}
+                                className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md w-full text-left ${
+                                    currentPage === item.page
+                                        ? 'bg-accent-blue/10 text-accent-blue'
+                                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                }`}
+                            >
+                                <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${currentPage === item.page ? 'text-accent-blue' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-400'}`} aria-hidden="true" />
+                                {item.label || item.page}
+                            </button>
+                        ) : null
+                    )}
+                </div>
             </nav>
-        </aside>
+        </div>
     );
 };
 
