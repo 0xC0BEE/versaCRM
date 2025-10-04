@@ -1,4 +1,4 @@
-import React, { useState, Dispatch, SetStateAction, useCallback } from 'react';
+import { useState, useCallback, Dispatch, SetStateAction } from 'react';
 
 /**
  * A custom hook that persists state to localStorage.
