@@ -23,10 +23,29 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const organizationId = authenticatedUser?.organizationId || '';
 
     // --- GENERIC MUTATION HANDLERS ---
-    const genericOnSuccessWithToast = (queryKey: string | string[], message: string) => () => {
+    // FIX: This function has been rewritten to accept the (data, variables, context) arguments from useMutation's onSuccess callback.
+    // The previous implementation had a signature mismatch which caused a silent failure in the callback chain,
+    // preventing both query invalidation and component-level onSuccess handlers (like closing a modal) from running.
+    const genericOnSuccess = (baseQueryKey: string | string[], message: string) => (data: any, variables: any, context: any) => {
         toast.success(message);
-        queryClient.invalidateQueries({ queryKey: Array.isArray(queryKey) ? queryKey : [queryKey] });
+
+        const invalidate = (key: string) => {
+            const isGlobalQuery = key === 'organizations' || key === 'industryConfig';
+            const queryKey = isGlobalQuery ? [key] : [key, organizationId];
+            queryClient.invalidateQueries({ queryKey });
+        };
+
+        if (Array.isArray(baseQueryKey)) {
+            baseQueryKey.forEach(key => invalidate(key));
+        } else {
+            invalidate(baseQueryKey);
+        }
     };
+    
+    const genericOnError = (error: any) => {
+        toast.error(error.message || 'An error occurred.');
+    };
+
 
     // --- QUERIES (simplified for brevity) ---
     const teamMembersQuery = useQuery({ queryKey: ['teamMembers', organizationId], queryFn: () => apiClient.getTeamMembers(organizationId), enabled: !!organizationId });
@@ -51,77 +70,77 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
 
     // --- MUTATIONS ---
+    // FIX: All mutations now use the corrected genericOnSuccess and a new genericOnError handler.
+    // This ensures that query invalidation, toasts, and subsequent component-level callbacks fire reliably.
 
     // Organizations
-    const createOrganizationMutation = useMutation({ mutationFn: apiClient.createOrganization, onSuccess: genericOnSuccessWithToast('organizations', 'Organization created!') });
-    const updateOrganizationMutation = useMutation({ mutationFn: apiClient.updateOrganization, onSuccess: genericOnSuccessWithToast('organizations', 'Organization updated!') });
-    const deleteOrganizationMutation = useMutation({ mutationFn: apiClient.deleteOrganization, onSuccess: genericOnSuccessWithToast('organizations', 'Organization deleted!') });
+    const createOrganizationMutation = useMutation({ mutationFn: apiClient.createOrganization, onSuccess: genericOnSuccess('organizations', 'Organization created!'), onError: genericOnError });
+    const updateOrganizationMutation = useMutation({ mutationFn: apiClient.updateOrganization, onSuccess: genericOnSuccess('organizations', 'Organization updated!'), onError: genericOnError });
+    const deleteOrganizationMutation = useMutation({ mutationFn: apiClient.deleteOrganization, onSuccess: genericOnSuccess('organizations', 'Organization deleted!'), onError: genericOnError });
 
     // Contacts
-    const createContactMutation = useMutation({ mutationFn: apiClient.createContact, onSuccess: genericOnSuccessWithToast('contacts', 'Contact created!') });
-    const updateContactMutation = useMutation({ mutationFn: apiClient.updateContact, onSuccess: genericOnSuccessWithToast(['contacts', 'allInteractions'], 'Contact updated!') });
-    const deleteContactMutation = useMutation({ mutationFn: apiClient.deleteContact, onSuccess: genericOnSuccessWithToast('contacts', 'Contact deleted!') });
-    const bulkDeleteContactsMutation = useMutation({ mutationFn: (ids: string[]) => apiClient.bulkDeleteContacts(ids, organizationId), onSuccess: genericOnSuccessWithToast('contacts', 'Contacts deleted!') });
-    const bulkUpdateContactStatusMutation = useMutation({ mutationFn: ({ ids, status }: { ids: string[]; status: ContactStatus; }) => apiClient.bulkUpdateContactStatus(ids, status, organizationId), onSuccess: genericOnSuccessWithToast('contacts', 'Contacts updated!') });
+    const createContactMutation = useMutation({ mutationFn: (data: Omit<AnyContact, 'id'>) => apiClient.createContact(data), onSuccess: genericOnSuccess('contacts', 'Contact created!'), onError: genericOnError });
+    const updateContactMutation = useMutation({ mutationFn: (data: AnyContact) => apiClient.updateContact(data), onSuccess: genericOnSuccess(['contacts', 'allInteractions'], 'Contact updated!'), onError: genericOnError });
+    const deleteContactMutation = useMutation({ mutationFn: apiClient.deleteContact, onSuccess: genericOnSuccess('contacts', 'Contact deleted!'), onError: genericOnError });
+    const bulkDeleteContactsMutation = useMutation({ mutationFn: (ids: string[]) => apiClient.bulkDeleteContacts(ids, organizationId), onSuccess: genericOnSuccess('contacts', 'Contacts deleted!'), onError: genericOnError });
+    const bulkUpdateContactStatusMutation = useMutation({ mutationFn: ({ ids, status }: { ids: string[]; status: ContactStatus; }) => apiClient.bulkUpdateContactStatus(ids, status, organizationId), onSuccess: genericOnSuccess('contacts', 'Contacts updated!'), onError: genericOnError });
 
     // Interactions
-    const createInteractionMutation = useMutation({ mutationFn: apiClient.createInteraction, onSuccess: genericOnSuccessWithToast(['contactInteractions', 'allInteractions'], 'Interaction logged!') });
-    const createTransactionMutation = useMutation({ mutationFn: apiClient.createTransaction, onSuccess: genericOnSuccessWithToast(['contacts'], 'Transaction added!') });
+    const createInteractionMutation = useMutation({ mutationFn: apiClient.createInteraction, onSuccess: genericOnSuccess(['contactInteractions', 'allInteractions'], 'Interaction logged!'), onError: genericOnError });
+    const createTransactionMutation = useMutation({ mutationFn: apiClient.createTransaction, onSuccess: genericOnSuccess(['contacts'], 'Transaction added!'), onError: genericOnError });
 
     // Orders
-    const createOrderMutation = useMutation({ mutationFn: apiClient.createOrder, onSuccess: genericOnSuccessWithToast(['contacts'], 'Order created!') });
-    const updateOrderMutation = useMutation({ mutationFn: apiClient.updateOrder, onSuccess: genericOnSuccessWithToast(['contacts'], 'Order updated!') });
-    const deleteOrderMutation = useMutation({ mutationFn: apiClient.deleteOrder, onSuccess: genericOnSuccessWithToast(['contacts'], 'Order deleted!') });
+    const createOrderMutation = useMutation({ mutationFn: apiClient.createOrder, onSuccess: genericOnSuccess(['contacts'], 'Order created!'), onError: genericOnError });
+    const updateOrderMutation = useMutation({ mutationFn: apiClient.updateOrder, onSuccess: genericOnSuccess(['contacts'], 'Order updated!'), onError: genericOnError });
+    const deleteOrderMutation = useMutation({ mutationFn: apiClient.deleteOrder, onSuccess: genericOnSuccess(['contacts'], 'Order deleted!'), onError: genericOnError });
     
     // Inventory
-    const createProductMutation = useMutation({ mutationFn: apiClient.createProduct, onSuccess: genericOnSuccessWithToast('products', 'Product created!') });
-    const updateProductMutation = useMutation({ mutationFn: apiClient.updateProduct, onSuccess: genericOnSuccessWithToast('products', 'Product updated!') });
-    const deleteProductMutation = useMutation({ mutationFn: apiClient.deleteProduct, onSuccess: genericOnSuccessWithToast('products', 'Product deleted!') });
+    const createProductMutation = useMutation({ mutationFn: apiClient.createProduct, onSuccess: genericOnSuccess('products', 'Product created!'), onError: genericOnError });
+    const updateProductMutation = useMutation({ mutationFn: apiClient.updateProduct, onSuccess: genericOnSuccess('products', 'Product updated!'), onError: genericOnError });
+    const deleteProductMutation = useMutation({ mutationFn: apiClient.deleteProduct, onSuccess: genericOnSuccess('products', 'Product deleted!'), onError: genericOnError });
 
     // Calendar
-    const createCalendarEventMutation = useMutation({ mutationFn: apiClient.createCalendarEvent, onSuccess: genericOnSuccessWithToast('calendarEvents', 'Event created!') });
-    const updateCalendarEventMutation = useMutation({ mutationFn: apiClient.updateCalendarEvent, onSuccess: genericOnSuccessWithToast('calendarEvents', 'Event updated!') });
+    const createCalendarEventMutation = useMutation({ mutationFn: apiClient.createCalendarEvent, onSuccess: genericOnSuccess('calendarEvents', 'Event created!'), onError: genericOnError });
+    const updateCalendarEventMutation = useMutation({ mutationFn: apiClient.updateCalendarEvent, onSuccess: genericOnSuccess('calendarEvents', 'Event updated!'), onError: genericOnError });
 
     // Tasks
-    const createTaskMutation = useMutation({ mutationFn: apiClient.createTask, onSuccess: genericOnSuccessWithToast('tasks', 'Task created!') });
-    const updateTaskMutation = useMutation({ mutationFn: apiClient.updateTask, onSuccess: genericOnSuccessWithToast('tasks', 'Task updated!') });
-    const deleteTaskMutation = useMutation({ mutationFn: apiClient.deleteTask, onSuccess: genericOnSuccessWithToast('tasks', 'Task deleted!') });
+    const createTaskMutation = useMutation({ mutationFn: apiClient.createTask, onSuccess: genericOnSuccess('tasks', 'Task created!'), onError: genericOnError });
+    const updateTaskMutation = useMutation({ mutationFn: apiClient.updateTask, onSuccess: genericOnSuccess('tasks', 'Task updated!'), onError: genericOnError });
+    const deleteTaskMutation = useMutation({ mutationFn: apiClient.deleteTask, onSuccess: genericOnSuccess('tasks', 'Task deleted!'), onError: genericOnError });
 
     // Team
-    const createTeamMemberMutation = useMutation({ mutationFn: apiClient.createTeamMember, onSuccess: genericOnSuccessWithToast('teamMembers', 'Team member invited!') });
-    const updateTeamMemberMutation = useMutation({ mutationFn: apiClient.updateTeamMember, onSuccess: genericOnSuccessWithToast('teamMembers', 'Team member updated!') });
+    const createTeamMemberMutation = useMutation({ mutationFn: apiClient.createTeamMember, onSuccess: genericOnSuccess('teamMembers', 'Team member invited!'), onError: genericOnError });
+    const updateTeamMemberMutation = useMutation({ mutationFn: apiClient.updateTeamMember, onSuccess: genericOnSuccess('teamMembers', 'Team member updated!'), onError: genericOnError });
 
     // Deals
-    const createDealMutation = useMutation({ mutationFn: apiClient.createDeal, onSuccess: genericOnSuccessWithToast('deals', 'Deal created!') });
-    const updateDealMutation = useMutation({ mutationFn: apiClient.updateDeal, onSuccess: genericOnSuccessWithToast('deals', 'Deal updated!') });
-    const deleteDealMutation = useMutation({ mutationFn: apiClient.deleteDeal, onSuccess: genericOnSuccessWithToast('deals', 'Deal deleted!') });
+    const createDealMutation = useMutation({ mutationFn: apiClient.createDeal, onSuccess: genericOnSuccess('deals', 'Deal created!'), onError: genericOnError });
+    const updateDealMutation = useMutation({ mutationFn: (data: Deal) => apiClient.updateDeal(data), onSuccess: genericOnSuccess('deals', 'Deal updated!'), onError: genericOnError });
+    const deleteDealMutation = useMutation({ mutationFn: apiClient.deleteDeal, onSuccess: genericOnSuccess('deals', 'Deal deleted!'), onError: genericOnError });
 
     // Marketing
-    const createEmailTemplateMutation = useMutation({ mutationFn: apiClient.createEmailTemplate, onSuccess: genericOnSuccessWithToast('emailTemplates', 'Template created!') });
-    const updateEmailTemplateMutation = useMutation({ mutationFn: apiClient.updateEmailTemplate, onSuccess: genericOnSuccessWithToast('emailTemplates', 'Template updated!') });
-    const deleteEmailTemplateMutation = useMutation({ mutationFn: apiClient.deleteEmailTemplate, onSuccess: genericOnSuccessWithToast('emailTemplates', 'Template deleted!') });
-    const createWorkflowMutation = useMutation({ mutationFn: apiClient.createWorkflow, onSuccess: genericOnSuccessWithToast('workflows', 'Workflow created!') });
-    const updateWorkflowMutation = useMutation({ mutationFn: apiClient.updateWorkflow, onSuccess: genericOnSuccessWithToast('workflows', 'Workflow updated!') });
-    const createCampaignMutation = useMutation({ mutationFn: apiClient.createCampaign, onSuccess: genericOnSuccessWithToast('campaigns', 'Campaign created!') });
-    const updateCampaignMutation = useMutation({ mutationFn: apiClient.updateCampaign, onSuccess: genericOnSuccessWithToast('campaigns', 'Campaign updated!') });
+    const createEmailTemplateMutation = useMutation({ mutationFn: apiClient.createEmailTemplate, onSuccess: genericOnSuccess('emailTemplates', 'Template created!'), onError: genericOnError });
+    const updateEmailTemplateMutation = useMutation({ mutationFn: apiClient.updateEmailTemplate, onSuccess: genericOnSuccess('emailTemplates', 'Template updated!'), onError: genericOnError });
+    const deleteEmailTemplateMutation = useMutation({ mutationFn: apiClient.deleteEmailTemplate, onSuccess: genericOnSuccess('emailTemplates', 'Template deleted!'), onError: genericOnError });
+    const createWorkflowMutation = useMutation({ mutationFn: apiClient.createWorkflow, onSuccess: genericOnSuccess('workflows', 'Workflow created!'), onError: genericOnError });
+    const updateWorkflowMutation = useMutation({ mutationFn: apiClient.updateWorkflow, onSuccess: genericOnSuccess('workflows', 'Workflow updated!'), onError: genericOnError });
+    const createCampaignMutation = useMutation({ mutationFn: apiClient.createCampaign, onSuccess: genericOnSuccess('campaigns', 'Campaign created!'), onError: genericOnError });
+    const updateCampaignMutation = useMutation({ mutationFn: apiClient.updateCampaign, onSuccess: genericOnSuccess('campaigns', 'Campaign updated!'), onError: genericOnError });
 
     // Reports & Widgets
-    const createCustomReportMutation = useMutation({ mutationFn: apiClient.createCustomReport, onSuccess: genericOnSuccessWithToast('customReports', 'Custom report saved!') });
-    const deleteCustomReportMutation = useMutation({ mutationFn: apiClient.deleteCustomReport, onSuccess: genericOnSuccessWithToast(['customReports', 'dashboardWidgets'], 'Custom report deleted!') });
-    const addDashboardWidgetMutation = useMutation({ mutationFn: (reportId: string) => apiClient.addDashboardWidget(reportId, organizationId), onSuccess: genericOnSuccessWithToast('dashboardWidgets', 'Widget added to dashboard!') });
-    const removeDashboardWidgetMutation = useMutation({ mutationFn: (widgetId: string) => apiClient.removeDashboardWidget(widgetId, organizationId), onSuccess: genericOnSuccessWithToast('dashboardWidgets', 'Widget removed from dashboard!') });
+    const createCustomReportMutation = useMutation({ mutationFn: apiClient.createCustomReport, onSuccess: genericOnSuccess('customReports', 'Custom report saved!'), onError: genericOnError });
+    const deleteCustomReportMutation = useMutation({ mutationFn: apiClient.deleteCustomReport, onSuccess: genericOnSuccess(['customReports', 'dashboardWidgets'], 'Custom report deleted!'), onError: genericOnError });
+    const addDashboardWidgetMutation = useMutation({ mutationFn: (reportId: string) => apiClient.addDashboardWidget(reportId, organizationId), onSuccess: genericOnSuccess('dashboardWidgets', 'Widget added to dashboard!'), onError: genericOnError });
+    const removeDashboardWidgetMutation = useMutation({ mutationFn: (widgetId: string) => apiClient.removeDashboardWidget(widgetId, organizationId), onSuccess: genericOnSuccess('dashboardWidgets', 'Widget removed from dashboard!'), onError: genericOnError });
 
     // Settings
-    const updateOrganizationSettingsMutation = useMutation({ mutationFn: (settings: Partial<OrgSettingsType>) => apiClient.updateOrganizationSettings({ ...settings, organizationId } as OrgSettingsType), onSuccess: genericOnSuccessWithToast('organizationSettings', 'Settings updated!') });
-    const updateCustomFieldsMutation = useMutation({ mutationFn: apiClient.updateCustomFields, onSuccess: genericOnSuccessWithToast('industryConfig', 'Custom fields updated!') });
+    const updateOrganizationSettingsMutation = useMutation({ mutationFn: (settings: Partial<OrgSettingsType>) => apiClient.updateOrganizationSettings({ ...settings, organizationId } as OrgSettingsType), onSuccess: genericOnSuccess('organizationSettings', 'Settings updated!'), onError: genericOnError });
+    const updateCustomFieldsMutation = useMutation({ mutationFn: apiClient.updateCustomFields, onSuccess: genericOnSuccess('industryConfig', 'Custom fields updated!'), onError: genericOnError });
 
     // Tickets
     const createTicketMutation = useMutation({
-        mutationFn: apiClient.createTicket,
-// FIX: Add explicit type `Ticket` to the `newTicket` parameter to resolve property access errors.
+        mutationFn: (data: Omit<Ticket, 'id'|'createdAt'|'updatedAt'|'replies'>) => apiClient.createTicket(data),
         onSuccess: (newTicket: Ticket) => {
-            toast.success('Ticket created!');
-            queryClient.invalidateQueries({ queryKey: ['tickets', organizationId] });
+            genericOnSuccess('tickets', 'Ticket created!')(newTicket, null, null);
             if (newTicket.assignedToId && newTicket.assignedToId !== authenticatedUser?.id) {
                 addNotification({
                     userId: newTicket.assignedToId,
@@ -130,6 +149,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 });
             }
         },
+        onError: genericOnError,
     });
 
     const updateTicketMutation = useMutation({
@@ -139,8 +159,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const oldTicket = previousTickets?.find(t => t.id === updatedTicket.id);
             return { oldTicket, updatedTicket };
         },
-        mutationFn: apiClient.updateTicket,
-// FIX: Add explicit type `Ticket` to the `updatedTicket` parameter to resolve property access errors.
+        mutationFn: (data: Ticket) => apiClient.updateTicket(data),
         onSuccess: (updatedTicket: Ticket, variables, context) => {
             toast.success('Ticket updated!');
             const oldAssignee = context?.oldTicket?.assignedToId;
@@ -155,15 +174,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ['tickets', organizationId] });
-        }
+        },
+        onError: genericOnError,
     });
 
     const addTicketReplyMutation = useMutation({
         mutationFn: ({ ticketId, reply }: { ticketId: string, reply: Omit<TicketReply, 'id' | 'timestamp'> }) => apiClient.addTicketReply(ticketId, reply),
-// FIX: Add explicit type `Ticket` to the `updatedTicket` parameter to resolve property access errors.
         onSuccess: (updatedTicket: Ticket, variables) => {
-            toast.success('Reply added!');
-            queryClient.invalidateQueries({ queryKey: ['tickets', organizationId] });
+            genericOnSuccess('tickets', 'Reply added!')(updatedTicket, variables, null);
             
             const originalTicket = ticketsQuery.data?.find((t: Ticket) => t.id === updatedTicket.id);
             if (!originalTicket) return;
@@ -191,6 +209,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 });
             }
         },
+        onError: genericOnError,
     });
 
     const value = {
