@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 const getFileIcon = (fileType: string) => {
     if (fileType.startsWith('image/')) return <FileImage className="h-6 w-6 text-purple-500" />;
     if (fileType === 'application/pdf') return <FileText className="h-6 w-6 text-red-500" />;
-    return <File className="h-6 w-6 text-gray-500" />;
+    return <File className="h-6 w-6 text-text-secondary" />;
 };
 
 interface DocumentsTabProps {
@@ -42,7 +42,6 @@ const DocumentsTab: React.FC<DocumentsTabProps> = ({ contact, isReadOnly }) => {
                 toast.error("Failed to read file.");
             }
         }
-        // Reset file input to allow uploading the same file again
         if(fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -88,14 +87,14 @@ const DocumentsTab: React.FC<DocumentsTabProps> = ({ contact, isReadOnly }) => {
             {isLoading ? (
                 <p>Loading documents...</p>
             ) : documents.length > 0 ? (
-                <div className="divide-y dark:divide-dark-border border dark:border-dark-border rounded-lg">
+                <div className="divide-y divide-border-subtle border border-border-subtle rounded-lg">
                     {documents.map((doc: DocType) => (
                         <div key={doc.id} className="p-3 flex justify-between items-center">
                             <div className="flex items-center gap-3 flex-grow min-w-0">
                                 {getFileIcon(doc.fileType)}
                                 <div className="min-w-0">
-                                    <p className="font-medium text-gray-800 dark:text-white truncate">{doc.fileName}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    <p className="font-medium text-text-primary truncate">{doc.fileName}</p>
+                                    <p className="text-xs text-text-secondary">
                                         Uploaded on {format(new Date(doc.uploadDate), 'PP')}
                                     </p>
                                 </div>
@@ -111,8 +110,8 @@ const DocumentsTab: React.FC<DocumentsTabProps> = ({ contact, isReadOnly }) => {
                     ))}
                 </div>
             ) : (
-                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                    <File className="mx-auto h-12 w-12 text-gray-400" />
+                <div className="text-center py-12 text-text-secondary">
+                    <File className="mx-auto h-12 w-12 text-text-secondary/50" />
                     <p className="mt-2">No documents have been uploaded for this contact yet.</p>
                 </div>
             )}

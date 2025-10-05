@@ -1,5 +1,4 @@
 import React from 'react';
-// FIX: Corrected the import path for types to be a valid relative path.
 import { AnyContact } from '../../../types';
 import Button from '../../ui/Button';
 import { Plus } from 'lucide-react';
@@ -23,18 +22,18 @@ const EnrollmentsTab: React.FC<EnrollmentsTabProps> = ({ contact, isReadOnly }) 
             {enrollments.length > 0 ? (
                 <div className="space-y-3">
                     {enrollments.map(enrollment => (
-                        <div key={enrollment.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md border dark:border-dark-border">
+                        <div key={enrollment.id} className="p-3 bg-card-bg/50 rounded-md border border-border-subtle">
                              <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="font-semibold text-gray-800 dark:text-white">{enrollment.programName}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    <p className="font-semibold text-text-primary">{enrollment.programName}</p>
+                                    <p className="text-xs text-text-secondary">
                                         Start Date: {new Date(enrollment.startDate).toLocaleDateString()}
                                         {enrollment.endDate && ` - End Date: ${new Date(enrollment.endDate).toLocaleDateString()}`}
                                     </p>
                                 </div>
-                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                                    enrollment.status === 'Active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
-                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                                <span className={`text-xs font-medium px-2 py-0.5 rounded-micro ${
+                                    enrollment.status === 'Active' ? 'bg-success/10 text-success' 
+                                    : 'bg-slate-400/10 text-text-secondary'
                                 }`}>
                                     {enrollment.status}
                                 </span>
@@ -43,7 +42,7 @@ const EnrollmentsTab: React.FC<EnrollmentsTabProps> = ({ contact, isReadOnly }) 
                     ))}
                 </div>
             ) : (
-                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-12 text-text-secondary">
                     <p>No enrollments found.</p>
                 </div>
             )}

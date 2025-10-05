@@ -22,7 +22,7 @@ const getFileIcon = (fileType: string) => {
     if (fileType === 'application/pdf') {
         return <FileText className="h-6 w-6 text-red-500" />;
     }
-    return <File className="h-6 w-6 text-gray-500" />;
+    return <File className="h-6 w-6 text-text-secondary" />;
 };
 
 
@@ -163,10 +163,10 @@ const TicketReplies: React.FC<TicketRepliesProps> = ({ ticket, showInternalNotes
                      <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 flex items-center justify-center text-sm font-bold">
                         {contact?.contactName?.charAt(0) || '?'}
                     </div>
-                    <div className="flex-grow p-3 rounded-lg bg-gray-100 dark:bg-gray-800">
-                        <p className="text-sm font-semibold">{contact?.contactName || 'Customer'}</p>
-                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap mt-1">{ticket.description}</p>
-                         <p className="text-xs text-gray-500 mt-2">{formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}</p>
+                    <div className="flex-grow p-3 rounded-lg bg-hover-bg">
+                        <p className="text-sm font-semibold text-text-primary">{contact?.contactName || 'Customer'}</p>
+                        <p className="text-sm text-text-primary whitespace-pre-wrap mt-1">{ticket.description}</p>
+                         <p className="text-xs text-text-secondary mt-2">{formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}</p>
                     </div>
                 </div>
 
@@ -175,22 +175,31 @@ const TicketReplies: React.FC<TicketRepliesProps> = ({ ticket, showInternalNotes
                     const isTeamMember = teamMembers.some((m: User) => m.id === reply.userId) || reply.userId === 'system';
                     const userInitial = reply.userName.charAt(0);
 
+                    let bubbleClass = '';
+                    if (reply.isInternal) {
+                        bubbleClass = 'bg-warning/10 border border-warning/20';
+                    } else if (isTeamMember) {
+                        bubbleClass = 'bg-primary/10';
+                    } else {
+                        bubbleClass = 'bg-hover-bg';
+                    }
+
                     return (
                         <div key={reply.id} className={`flex gap-3`}>
-                             <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold text-white ${isTeamMember ? 'bg-indigo-500' : 'bg-green-500'}`}>
+                             <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold text-white ${isTeamMember ? 'bg-primary' : 'bg-success'}`}>
                                 {userInitial}
                             </div>
-                            <div className={`flex-grow p-3 rounded-lg ${reply.isInternal ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/50' : 'bg-white dark:bg-dark-card border dark:border-dark-border'}`}>
+                            <div className={`flex-grow p-3 rounded-lg ${bubbleClass}`}>
                                 <div className="flex justify-between items-center">
-                                    <p className="text-sm font-semibold">{reply.userName} {reply.isInternal && <span className="text-xs font-normal text-yellow-600 flex items-center gap-1"><Lock size={10}/>Internal Note</span>}</p>
-                                    <p className="text-xs text-gray-500">{formatDistanceToNow(new Date(reply.timestamp), { addSuffix: true })}</p>
+                                    <p className="text-sm font-semibold text-text-primary">{reply.userName} {reply.isInternal && <span className="text-xs font-normal text-warning flex items-center gap-1"><Lock size={10}/>Internal Note</span>}</p>
+                                    <p className="text-xs text-text-secondary">{formatDistanceToNow(new Date(reply.timestamp), { addSuffix: true })}</p>
                                 </div>
-                                <p className="text-sm text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">{reply.message}</p>
+                                <p className="text-sm text-text-primary mt-1 whitespace-pre-wrap">{reply.message}</p>
                                 {reply.attachment && (
-                                    <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-700/50 rounded-md flex items-center justify-between">
+                                    <div className="mt-2 p-2 bg-bg-primary rounded-md flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             {getFileIcon(reply.attachment.type)}
-                                            <span className="text-xs font-medium">{reply.attachment.name}</span>
+                                            <span className="text-xs font-medium text-text-primary">{reply.attachment.name}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <Button size="sm" variant="secondary" onClick={() => handlePreview(reply.attachment!)}><Eye size={14} /></Button>
@@ -204,7 +213,7 @@ const TicketReplies: React.FC<TicketRepliesProps> = ({ ticket, showInternalNotes
                 })}
             </div>
 
-            <div className="flex-shrink-0 pt-4 mt-4 border-t dark:border-dark-border relative">
+            <div className="flex-shrink-0 pt-4 mt-4 border-t border-border-subtle relative">
                 <Textarea 
                     id="reply-message" 
                     label="Your Reply" 
@@ -214,13 +223,13 @@ const TicketReplies: React.FC<TicketRepliesProps> = ({ ticket, showInternalNotes
                     disabled={addTicketReplyMutation.isPending}
                 />
                  {showSuggestions && filteredSuggestions.length > 0 && (
-                    <div className="absolute z-10 w-full bottom-full mb-1 bg-white dark:bg-dark-card border dark:border-dark-border rounded-md shadow-lg max-h-40 overflow-y-auto">
+                    <div className="absolute z-10 w-full bottom-full mb-1 bg-card-bg border border-border-subtle rounded-md shadow-lg max-h-40 overflow-y-auto">
                         <ul>
                             {filteredSuggestions.map((user: User) => (
                                 <li key={user.id}>
                                     <button
                                         onClick={() => handleMentionSelect(user)}
-                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-hover-bg"
                                     >
                                         {user.name}
                                     </button>
@@ -236,18 +245,18 @@ const TicketReplies: React.FC<TicketRepliesProps> = ({ ticket, showInternalNotes
                             Attach
                         </Button>
                         {attachment && (
-                            <div className="text-xs flex items-center gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded">
-                                <span>{attachment.name}</span>
-                                <button onClick={() => { setAttachment(null); if(fileInputRef.current) fileInputRef.current.value = ''; }} className="p-0.5 hover:bg-red-200 rounded-full"><Trash2 size={12} /></button>
+                            <div className="text-xs flex items-center gap-1 bg-hover-bg p-1 rounded">
+                                <span className="text-text-secondary">{attachment.name}</span>
+                                <button onClick={() => { setAttachment(null); if(fileInputRef.current) fileInputRef.current.value = ''; }} className="p-0.5 hover:bg-error/20 rounded-full text-text-secondary"><Trash2 size={12} /></button>
                             </div>
                         )}
                         {showInternalNotes && (
-                            <label className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <label className="flex items-center text-sm text-text-secondary">
                                 <input 
                                     type="checkbox" 
                                     checked={isInternal}
                                     onChange={e => setIsInternal(e.target.checked)}
-                                    className="h-4 w-4 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                                    className="h-4 w-4 rounded border-border-subtle text-warning focus:ring-warning"
                                 />
                                 <span className="ml-2">Internal note only</span>
                             </label>

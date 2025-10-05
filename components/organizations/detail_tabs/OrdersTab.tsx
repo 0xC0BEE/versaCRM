@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-// FIX: Corrected the import path for types to be a valid relative path.
 import { AnyContact, Order } from '../../../types';
 import Button from '../../ui/Button';
 import { Plus, ShoppingCart } from 'lucide-react';
@@ -36,20 +35,20 @@ const OrdersTab: React.FC<OrdersTabProps> = ({ contact, isReadOnly }) => {
             {orders.length > 0 ? (
                 <div className="space-y-3">
                     {orders.map(order => (
-                        <div key={order.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md border dark:border-dark-border cursor-pointer hover:bg-gray-100" onClick={() => handleEdit(order)}>
+                        <div key={order.id} className="p-3 bg-card-bg/50 rounded-md border border-border-subtle cursor-pointer hover:bg-hover-bg" onClick={() => handleEdit(order)}>
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="font-semibold text-gray-800 dark:text-white">Order #{order.id.slice(-6)}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    <p className="font-semibold text-text-primary">Order #{order.id.slice(-6)}</p>
+                                    <p className="text-xs text-text-secondary">
                                         Date: {new Date(order.orderDate).toLocaleDateString()}
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-semibold text-gray-800 dark:text-white">{order.total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
-                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                                        order.status === 'Completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                                        order.status === 'Cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
-                                        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                                    <p className="font-semibold text-text-primary">{order.total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-micro ${
+                                        order.status === 'Completed' ? 'bg-success/10 text-success' :
+                                        order.status === 'Cancelled' ? 'bg-error/10 text-error' :
+                                        'bg-warning/10 text-warning'
                                     }`}>
                                         {order.status}
                                     </span>
@@ -59,8 +58,8 @@ const OrdersTab: React.FC<OrdersTabProps> = ({ contact, isReadOnly }) => {
                     ))}
                 </div>
             ) : (
-                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                    <ShoppingCart className="mx-auto h-12 w-12 text-gray-400" />
+                <div className="text-center py-12 text-text-secondary">
+                    <ShoppingCart className="mx-auto h-12 w-12 text-text-secondary/50" />
                     <p className="mt-2">No orders found.</p>
                 </div>
             )}

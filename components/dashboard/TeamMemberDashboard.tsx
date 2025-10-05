@@ -1,130 +1,108 @@
 import React from 'react';
-import PageWrapper from '../layout/PageWrapper';
-import { useAuth } from '../../contexts/AuthContext';
-// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
-import { useApp } from '../../contexts/AppContext';
+import { useAuth } from '../../contexts/AuthContext';
 import KpiCard from './KpiCard';
 import Card from '../ui/Card';
-import { AlertTriangle } from 'lucide-react';
-// FIX: Corrected import path for types.
-import { Task, Ticket } from '../../types';
-import { isPast, format } from 'date-fns';
-// FIX: Corrected import path for types.
-import { AnyContact } from '../../types';
 import LoadingSpinner from '../ui/LoadingSpinner';
+import { Task, CalendarEvent, Deal } from '../../types';
+import { format } from 'date-fns';
+import { useApp } from '../../contexts/AppContext';
+import PageWrapper from '../layout/PageWrapper';
+import Button from '../ui/Button';
 
-// FIX: Add props interface to handle tabbed view
 interface TeamMemberDashboardProps {
     isTabbedView?: boolean;
 }
 
 const TeamMemberDashboard: React.FC<TeamMemberDashboardProps> = ({ isTabbedView = false }) => {
     const { authenticatedUser } = useAuth();
-    const { tasksQuery, ticketsQuery, contactsQuery } = useData();
     const { setCurrentPage } = useApp();
+    const { tasksQuery, calendarEventsQuery, dealsQuery } = useData();
 
-    const { data: tasks = [], isLoading: tasksLoading } = tasksQuery;
-    const { data: tickets = [], isLoading: ticketsLoading } = ticketsQuery;
-    const { data: contacts = [], isLoading: contactsLoading } = contactsQuery;
+    const { data: allTasks = [], isLoading: tasksLoading } = tasksQuery;
+    const { data: allEvents = [], isLoading: eventsLoading } = calendarEventsQuery;
+    const { data: allDeals = [], isLoading: dealsLoading } = dealsQuery;
 
-    const myTasks = React.useMemo(() => tasks.filter((t: Task) => t.userId === authenticatedUser?.id), [tasks, authenticatedUser]);
-    const myTickets = React.useMemo(() => tickets.filter((t: Ticket) => t.assignedToId === authenticatedUser?.id), [tickets, authenticatedUser]);
-    const contactMap = React.useMemo(() => new Map<string, string>(contacts.map((c: AnyContact) => [c.id, c.contactName])), [contacts]);
+    if (!authenticatedUser) return null;
 
-    const isLoading = tasksLoading || ticketsLoading || contactsLoading;
+    const myTasks = allTasks.filter((task: Task) => task.userId === authenticatedUser.id && !task.isCompleted);
+    const myUpcomingEvents = allEvents
+        .filter((event: CalendarEvent) => event.userIds.includes(authenticatedUser.id) && new Date(event.start) > new Date())
+        .sort((a: CalendarEvent, b: CalendarEvent) => new Date(a.start).getTime() - new Date(b.start).getTime());
+    
+    // This is a simplification as deals are not directly assigned to users in the current data model.
+    // We'll show KPIs for all open deals in the organization as a team-relevant metric.
+    const openDeals = allDeals.filter((deal: Deal) => deal.stageId !== 'stage_5' && deal.stageId !== 'stage_6'); // Closed Won/Lost
+    const openDealsValue = openDeals.reduce((sum: number, deal: Deal) => sum + deal.value, 0);
 
-    if (isLoading) {
-        return <LoadingSpinner />;
-    }
+    const isLoading = tasksLoading || eventsLoading || dealsLoading;
 
-    // Calculate KPIs
-    const openTasksCount = myTasks.filter(t => !t.isCompleted).length;
-    const openTicketsCount = myTickets.filter(t => t.status !== 'Closed').length;
-    const performanceMetric = myTasks.filter(t => t.isCompleted).length;
-
-    // Filter data for lists
-    const overdueTasks = myTasks.filter(t => !t.isCompleted && isPast(new Date(t.dueDate))).sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-    const openTickets = myTickets.filter(t => t.status !== 'Closed').slice(0, 5);
-
-    // FIX: Extracted page content to conditionally render wrappers
-    const pageContent = (
-        <>
-            {!isTabbedView && (
-                <h1 className="text-2xl font-semibold text-gray-800 dark:text-white mb-6">My Dashboard</h1>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="cursor-pointer" onClick={() => setCurrentPage('Tasks')}>
-                    <KpiCard title="My Open Tasks" value={openTasksCount} iconName="CheckSquare" />
-                </div>
-                <div className="cursor-pointer" onClick={() => setCurrentPage('Tickets')}>
-                    <KpiCard title="My Open Tickets" value={openTicketsCount} iconName="LifeBuoy" />
-                </div>
-                 <div className="cursor-pointer" onClick={() => setCurrentPage('Tasks')}>
-                    <KpiCard title="Total Completed Tasks" value={performanceMetric} iconName="TrendingUp" />
-                </div>
+    if (isLoading && !isTabbedView) return <PageWrapper><LoadingSpinner /></PageWrapper>;
+    if (isLoading && isTabbedView) return <LoadingSpinner />;
+    
+    const dashboardContent = (
+        <div className="space-y-6">
+            {/* KPIs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <KpiCard title="My Pending Tasks" value={myTasks.length} iconName="Ticket" />
+                <KpiCard title="My Upcoming Appointments" value={myUpcomingEvents.length} iconName="Calendar" />
+                <KpiCard title="Org. Open Deal Value" value={openDealsValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} iconName="Handshake" />
             </div>
 
+            {/* Tasks and Appointments */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card title="Overdue Tasks">
-                    {overdueTasks.length > 0 ? (
-                        <div className="space-y-2 max-h-96 overflow-y-auto">
-                            {overdueTasks.map(task => (
-                                <div key={task.id} className="p-3 rounded-lg border dark:border-dark-border bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 cursor-pointer" onClick={() => setCurrentPage('Tasks')}>
-                                    <p className="font-semibold text-red-800 dark:text-red-200 flex items-center gap-2">
-                                        <AlertTriangle size={16} />
-                                        {task.title}
-                                    </p>
-                                    <p className="text-sm text-red-600 dark:text-red-300">Due: {format(new Date(task.dueDate), 'PP')}</p>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-12 text-gray-500">
-                            <p>No overdue tasks. Great job!</p>
-                        </div>
-                    )}
-                </Card>
-                <Card title="My Open Tickets">
-                    {openTickets.length > 0 ? (
-                         <div className="space-y-2 max-h-96 overflow-y-auto">
-                            {openTickets.map(ticket => (
-                                <div key={ticket.id} className="p-3 rounded-lg border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer" onClick={() => setCurrentPage('Tickets')}>
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="font-medium text-gray-800 dark:text-white">{ticket.subject}</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">For: {contactMap.get(ticket.contactId) || 'Unknown'}</p>
-                                        </div>
-                                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                                            ticket.priority === 'High' ? 'bg-red-100 text-red-800' : 
-                                            ticket.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                                            'bg-gray-100 text-gray-800'
-                                        }`}>
-                                            {ticket.priority}
-                                        </span>
+                <Card title="My Pending Tasks">
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                        {myTasks.length > 0 ? (
+                            myTasks.slice(0, 5).map((task: Task) => (
+                                <div key={task.id} className="p-2 border-b border-border-subtle flex justify-between items-center">
+                                    <div>
+                                        <p className="text-sm font-medium">{task.title}</p>
+                                        <p className="text-xs text-text-secondary">Due {format(new Date(task.dueDate), 'MMM d')}</p>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-12 text-gray-500">
-                            <p>No open tickets assigned to you.</p>
-                        </div>
-                    )}
+                            ))
+                        ) : (
+                            <p className="text-sm text-text-secondary p-4 text-center">No pending tasks. Great job!</p>
+                        )}
+                        {myTasks.length > 5 && (
+                            <div className="text-center mt-2 p-2">
+                                <Button size="sm" variant="secondary" onClick={() => setCurrentPage('Tasks')}>View All Tasks</Button>
+                            </div>
+                        )}
+                    </div>
+                </Card>
+                <Card title="My Upcoming Appointments">
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                        {myUpcomingEvents.length > 0 ? (
+                            myUpcomingEvents.slice(0, 5).map((event: CalendarEvent) => (
+                                <div key={event.id} className="p-2 border-b border-border-subtle">
+                                    <p className="text-sm font-medium">{event.title}</p>
+                                    <p className="text-xs text-text-secondary">{format(new Date(event.start), 'MMM d, h:mm a')}</p>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-sm text-text-secondary p-4 text-center">No upcoming appointments.</p>
+                        )}
+                        {myUpcomingEvents.length > 5 && (
+                            <div className="text-center mt-2 p-2">
+                                <Button size="sm" variant="secondary" onClick={() => setCurrentPage('Calendar')}>View Calendar</Button>
+                            </div>
+                        )}
+                    </div>
                 </Card>
             </div>
-        </>
+        </div>
     );
 
-    // FIX: Conditionally render PageWrapper based on isTabbedView prop
     if (isTabbedView) {
-        return pageContent;
+        return dashboardContent;
     }
 
     return (
         <PageWrapper>
-            {pageContent}
+            <h1 className="text-3xl font-bold text-text-heading mb-6">My Dashboard</h1>
+            {dashboardContent}
         </PageWrapper>
     );
 };

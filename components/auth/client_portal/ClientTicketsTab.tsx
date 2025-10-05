@@ -1,97 +1,96 @@
 import React, { useState, useMemo } from 'react';
-import { useAuth } from '../../../contexts/AuthContext';
-import { useData } from '../../../contexts/DataContext';
+import { useQuery } from '@tanstack/react-query';
+import apiClient from '../../../services/apiClient';
 import { Ticket } from '../../../types';
+import { useAuth } from '../../../contexts/AuthContext';
 import Button from '../../ui/Button';
-import { Plus, LifeBuoy } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import ClientTicketDetailModal from './ClientTicketDetailModal';
 import { format } from 'date-fns';
 
 const ClientTicketsTab: React.FC = () => {
     const { authenticatedUser } = useAuth();
-    const { ticketsQuery } = useData();
-    const { data: allTickets = [], isLoading } = ticketsQuery;
-    
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    // State now holds only the ID, not the stale object
-    const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+    const contactId = authenticatedUser?.contactId;
+
+    const { data: allTickets = [], isLoading } = useQuery<Ticket[], Error>({
+        queryKey: ['tickets', authenticatedUser?.organizationId],
+        queryFn: () => apiClient.getTickets(authenticatedUser!.organizationId!),
+        enabled: !!authenticatedUser?.organizationId,
+    });
 
     const myTickets = useMemo(() => {
-        if (!authenticatedUser?.contactId) return [];
-        return (allTickets as Ticket[])
-            .filter((t: Ticket) => t.contactId === authenticatedUser.contactId)
-            .sort((a: Ticket, b: Ticket) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }, [allTickets, authenticatedUser]);
-    
-    // Derive the selected ticket object from the live query data
-    const selectedTicket = useMemo(() => {
-        if (!selectedTicketId) return null;
-        return myTickets.find(t => t.id === selectedTicketId) || null;
-    }, [myTickets, selectedTicketId]);
+        return allTickets.filter(t => t.contactId === contactId).sort((a,b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    }, [allTickets, contactId]);
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 
     const handleAdd = () => {
-        setSelectedTicketId(null);
+        setSelectedTicket(null);
         setIsModalOpen(true);
     };
 
-    const handleView = (ticket: Ticket) => {
-        setSelectedTicketId(ticket.id);
+    const handleRowClick = (ticket: Ticket) => {
+        setSelectedTicket(ticket);
         setIsModalOpen(true);
     };
     
     const handleCloseModal = () => {
         setIsModalOpen(false);
-        setSelectedTicketId(null);
+        setSelectedTicket(null);
     };
-
+    
     const getStatusColor = (status: Ticket['status']) => {
         switch (status) {
-            case 'Open': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-            case 'New': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-            case 'Pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-            case 'Closed': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-            default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+            case 'Open': return 'bg-success/10 text-success';
+            case 'New': return 'bg-primary/10 text-primary';
+            case 'Pending': return 'bg-warning/10 text-warning';
+            case 'Closed': return 'bg-slate-400/10 text-text-secondary';
+            default: return 'bg-slate-400/10 text-text-secondary';
         }
     };
 
     return (
         <div>
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">My Support Tickets</h3>
+                <h3 className="text-lg font-semibold">Your Support Tickets</h3>
                 <Button onClick={handleAdd} leftIcon={<Plus size={16} />}>
                     New Ticket
                 </Button>
             </div>
-
-            {isLoading ? (
-                <p>Loading your tickets...</p>
+             {isLoading ? (
+                <div className="p-8 text-center">Loading tickets...</div>
             ) : myTickets.length > 0 ? (
-                <div className="space-y-3">
-                    {myTickets.map(ticket => (
-                        <div key={ticket.id} className="p-4 border dark:border-dark-border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50" onClick={() => handleView(ticket)}>
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="font-semibold text-gray-800 dark:text-white">{ticket.subject}</p>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        Opened on {format(new Date(ticket.createdAt), 'PP')}
-                                    </p>
-                                </div>
-                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getStatusColor(ticket.status)}`}>
-                                    {ticket.status}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
+                <div className="overflow-x-auto border border-border-subtle rounded-lg">
+                    <table className="w-full text-sm text-left text-text-secondary">
+                        <thead className="text-xs uppercase bg-card-bg/50 text-text-secondary">
+                            <tr>
+                                <th scope="col" className="px-6 py-3 font-medium">Subject</th>
+                                <th scope="col" className="px-6 py-3 font-medium">Status</th>
+                                <th scope="col" className="px-6 py-3 font-medium">Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {myTickets.map(ticket => (
+                                <tr key={ticket.id} className="border-b border-border-subtle hover:bg-hover-bg cursor-pointer" onClick={() => handleRowClick(ticket)}>
+                                    <td className="px-6 py-4 font-medium text-text-primary">{ticket.subject}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`text-xs font-medium px-2 py-0.5 rounded-micro ${getStatusColor(ticket.status)}`}>
+                                            {ticket.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">{format(new Date(ticket.updatedAt), 'PP')}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             ) : (
-                <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-                    <LifeBuoy className="mx-auto h-12 w-12 text-gray-400" />
-                    <p className="mt-2 font-semibold">No tickets found.</p>
-                    <p className="text-sm">Click 'New Ticket' to get help.</p>
+                <div className="text-center py-20 text-text-secondary">
+                    <p>You haven't submitted any support tickets yet.</p>
                 </div>
             )}
-            
-            <ClientTicketDetailModal 
+             <ClientTicketDetailModal
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
                 ticket={selectedTicket}

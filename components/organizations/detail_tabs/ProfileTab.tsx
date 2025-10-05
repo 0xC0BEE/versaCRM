@@ -202,8 +202,14 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
                                         {isGeneratingSummary ? <Loader size={14} className="animate-spin" /> : "Generate"}
                                     </Button>
                                 </div>
-                                <div className="mt-2 p-2 min-h-[4rem] bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-300">
-                                    {isGeneratingSummary ? 'Generating...' : (summary || 'Click generate to get an AI-powered summary.')}
+                                <div className="mt-2 p-2 min-h-[4rem] bg-bg-primary rounded text-xs">
+                                    {isGeneratingSummary ? (
+                                        <span className="text-text-secondary">Generating...</span>
+                                    ) : summary ? (
+                                        <p className="text-text-primary whitespace-pre-wrap">{summary}</p>
+                                    ) : (
+                                        <span className="text-text-secondary">Click generate to get an AI-powered summary.</span>
+                                    )}
                                 </div>
                             </div>
                         </Card>

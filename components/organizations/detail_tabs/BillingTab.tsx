@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-// FIX: Corrected the import path for types to be a valid relative path.
 import { AnyContact, Transaction } from '../../../types';
 import Button from '../../ui/Button';
 import { Plus, TrendingUp, TrendingDown, Link as LinkIcon } from 'lucide-react';
@@ -37,9 +36,9 @@ const BillingTab: React.FC<BillingTabProps> = ({ contact, isReadOnly }) => {
                 )}
             </div>
             
-            <div className="p-4 mb-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                <p className="text-sm text-gray-500 dark:text-gray-400">Current Balance</p>
-                <p className={`text-2xl font-bold ${balance > 0 ? 'text-red-500' : 'text-green-500'}`}>
+            <div className="p-4 mb-4 bg-hover-bg rounded-lg">
+                <p className="text-sm text-text-secondary">Current Balance</p>
+                <p className={`text-2xl font-bold ${balance > 0 ? 'text-error' : 'text-success'}`}>
                     {balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                 </p>
             </div>
@@ -60,21 +59,21 @@ const BillingTab: React.FC<BillingTabProps> = ({ contact, isReadOnly }) => {
 
 
                         return (
-                            <div key={t.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md border dark:border-dark-border flex justify-between items-center">
+                            <div key={t.id} className="p-3 bg-card-bg/50 rounded-md border border-border-subtle flex justify-between items-center">
                                 <div className="flex items-center space-x-3">
-                                    <div className={`p-1.5 rounded-full ${isCredit ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'}`}>
-                                        {isCredit ? <TrendingDown className="h-4 w-4 text-green-600" /> : <TrendingUp className="h-4 w-4 text-red-600" />}
+                                    <div className={`p-1.5 rounded-full ${isCredit ? 'bg-success/10' : 'bg-error/10'}`}>
+                                        {isCredit ? <TrendingDown className="h-4 w-4 text-success" /> : <TrendingUp className="h-4 w-4 text-error" />}
                                     </div>
                                     <div>
                                         <p className="font-semibold text-sm flex items-center">
                                             {t.type}
                                             {isChargeFromOrder && (
                                                 <span title={`From Order #${t.orderId?.slice(-6)}`}>
-                                                    <LinkIcon size={12} className="ml-2 text-gray-400" />
+                                                    <LinkIcon size={12} className="ml-2 text-text-secondary" />
                                                 </span>
                                             )}
                                         </p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        <p className="text-xs text-text-secondary">
                                             {new Date(t.date).toLocaleDateString()} via {t.method}
                                         </p>
                                     </div>
@@ -83,7 +82,7 @@ const BillingTab: React.FC<BillingTabProps> = ({ contact, isReadOnly }) => {
                                      {isPendingCharge && !isReadOnly && (
                                         <Button size="sm" variant="secondary" onClick={() => handleAddTransaction(t)}>Log Payment</Button>
                                      )}
-                                    <p className={`font-semibold text-sm ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
+                                    <p className={`font-semibold text-sm ${isCredit ? 'text-success' : 'text-error'}`}>
                                         {isCredit ? '-' : '+'} {t.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                                     </p>
                                 </div>
@@ -92,7 +91,7 @@ const BillingTab: React.FC<BillingTabProps> = ({ contact, isReadOnly }) => {
                     })}
                 </div>
             ) : (
-                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-12 text-text-secondary">
                     <p>No transactions found.</p>
                 </div>
             )}

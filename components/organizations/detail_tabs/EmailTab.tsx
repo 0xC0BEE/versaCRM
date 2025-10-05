@@ -53,14 +53,12 @@ const EmailTab: React.FC<EmailTabProps> = ({ contact, setActiveTab, isReadOnly }
         }
         setIsGeneratingDraft(true);
         try {
-            // FIX: Initialize GoogleGenAI with named apiKey parameter
             const ai = new GoogleGenAI({apiKey: process.env.API_KEY!});
             const fullPrompt = `You are a CRM assistant. The user wants to write an email to a contact named ${contact.contactName}.
             User's prompt: "${aiPrompt}".
             Generate a professional and friendly email.
             Return a JSON object with two keys: "subject" (a string) and "body" (a string).`;
             
-            // FIX: Use ai.models.generateContent
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: fullPrompt,
@@ -73,14 +71,10 @@ const EmailTab: React.FC<EmailTabProps> = ({ contact, setActiveTab, isReadOnly }
                             body: { type: Type.STRING },
                         }
                     },
-                    // FIX: Disable model thinking to ensure a fast response and prevent long hangs.
                     thinkingConfig: { thinkingBudget: 0 },
                 }
             });
 
-            // FIX: The model can sometimes return the JSON wrapped in markdown.
-            // This robustly extracts the JSON string before parsing to prevent errors.
-            // FIX: Access response text via .text property
             let jsonString = response.text.trim();
             const match = jsonString.match(/```json\n([\s\S]*?)\n```/);
             if (match && match[1]) {
@@ -128,7 +122,7 @@ const EmailTab: React.FC<EmailTabProps> = ({ contact, setActiveTab, isReadOnly }
 
     if (isReadOnly) {
         return (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-12 text-text-secondary">
                 <p>Cannot send email to a new contact before they are saved.</p>
             </div>
         );
@@ -136,9 +130,9 @@ const EmailTab: React.FC<EmailTabProps> = ({ contact, setActiveTab, isReadOnly }
     
     return (
         <div className="mt-4 max-h-[55vh] overflow-y-auto p-1 pr-4 space-y-4">
-            <div className="p-4 border rounded-lg dark:border-dark-border bg-gray-50 dark:bg-gray-900/50">
+            <div className="p-4 border rounded-lg border-border-subtle bg-hover-bg">
                 <h4 className="font-semibold text-sm flex items-center mb-2">
-                    <Bot size={16} className="mr-2 text-primary-500" />
+                    <Bot size={16} className="mr-2 text-primary" />
                     Draft with AI
                 </h4>
                 <div className="flex items-center gap-2">

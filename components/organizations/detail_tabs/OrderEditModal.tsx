@@ -116,10 +116,10 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({ isOpen, onClose, contac
                 </div>
 
                 {/* Line Items */}
-                <div className="space-y-3 pt-4 border-t dark:border-dark-border">
+                <div className="space-y-3 pt-4 border-t border-border-subtle">
                     <h4 className="font-semibold">Line Items</h4>
                     {formData.lineItems.map((item, index) => (
-                        <div key={index} className="grid grid-cols-12 gap-2 items-center p-2 rounded-md bg-gray-50 dark:bg-gray-800/50">
+                        <div key={index} className="grid grid-cols-12 gap-2 items-center p-2 rounded-md bg-hover-bg">
                             <div className="col-span-5">
                                 <Select id={`li-prod-${index}`} label="" value={item.productId} onChange={e => handleLineItemChange(index, 'productId', e.target.value)} disabled={isPending}>
                                     <option value="">Select a product...</option>
@@ -136,14 +136,14 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({ isOpen, onClose, contac
                                 {(item.quantity * item.unitPrice).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                             </div>
                              <div className="col-span-1 text-right">
-                                <button onClick={() => removeLineItem(index)} className="p-1 text-gray-400 hover:text-red-500" disabled={isPending}><Trash2 size={16} /></button>
+                                <button onClick={() => removeLineItem(index)} className="p-1 text-text-secondary hover:text-error" disabled={isPending}><Trash2 size={16} /></button>
                             </div>
                         </div>
                     ))}
                     <Button variant="secondary" size="sm" onClick={addLineItem} leftIcon={<Plus size={14} />} disabled={isPending}>Add Item</Button>
                 </div>
                 
-                <div className="text-right pt-4 border-t dark:border-dark-border">
+                <div className="text-right pt-4 border-t border-border-subtle">
                     <span className="font-semibold text-lg">Total: {total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                 </div>
 

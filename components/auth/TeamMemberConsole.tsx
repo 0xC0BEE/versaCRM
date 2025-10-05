@@ -7,17 +7,17 @@ const TeamMemberConsole: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <div className="h-screen flex overflow-hidden bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text">
+        <div className="h-screen flex overflow-hidden bg-bg-primary text-text-primary">
             {/* Mobile sidebar overlay */}
             {sidebarOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)}></div>}
-
+            
             {/* Mobile sidebar */}
             <div className={`fixed inset-y-0 left-0 flex z-40 lg:hidden transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out`}>
                 <div className="relative flex-1 flex flex-col max-w-xs w-full">
                     <TeamMemberSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
                 </div>
             </div>
-            
+
             {/* Static sidebar for desktop */}
             <div className="hidden lg:flex lg:flex-shrink-0">
                 <TeamMemberSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />

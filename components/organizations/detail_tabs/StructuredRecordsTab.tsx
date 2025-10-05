@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
-// FIX: Imported correct types.
-// FIX: Corrected the import path for types to be a valid relative path.
 import { AnyContact, StructuredRecord } from '../../../types';
 import Button from '../../ui/Button';
 import { Plus, FileText } from 'lucide-react';
-// FIX: Corrected import path for useApp.
 import { useApp } from '../../../contexts/AppContext';
 import StructuredRecordEditModal from './StructuredRecordEditModal';
 
@@ -14,7 +11,6 @@ interface StructuredRecordsTabProps {
 }
 
 const StructuredRecordsTab: React.FC<StructuredRecordsTabProps> = ({ contact, isReadOnly }) => {
-    // FIX: industryConfig is now correctly provided by useApp hook.
     const { industryConfig } = useApp();
     const records = contact.structuredRecords || [];
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,15 +40,15 @@ const StructuredRecordsTab: React.FC<StructuredRecordsTabProps> = ({ contact, is
                         const recordType = industryConfig.structuredRecordTypes.find(rt => rt.id === record.type);
                         if (!recordType) return null;
                         return (
-                            <div key={record.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md border dark:border-dark-border cursor-pointer hover:bg-gray-100" onClick={() => handleEdit(record)}>
+                            <div key={record.id} className="p-3 bg-card-bg/50 rounded-md border border-border-subtle cursor-pointer hover:bg-hover-bg" onClick={() => handleEdit(record)}>
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <p className="font-semibold text-gray-800 dark:text-white">{record.title}</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        <p className="font-semibold text-text-primary">{record.title}</p>
+                                        <p className="text-xs text-text-secondary">
                                             {new Date(record.recordDate).toLocaleDateString()}
                                         </p>
                                     </div>
-                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                    <span className="text-xs font-medium px-2 py-0.5 rounded-micro bg-primary/10 text-primary">
                                         {recordType.name || record.type}
                                     </span>
                                 </div>
@@ -60,7 +56,7 @@ const StructuredRecordsTab: React.FC<StructuredRecordsTabProps> = ({ contact, is
                                     {recordType.fields.slice(0, 2).map(field => (
                                         <div key={field.id} className="flex">
                                             <span className="font-medium w-28 shrink-0">{field.label}:</span>
-                                            <span className="text-gray-600 dark:text-gray-300 truncate">{record.fields[field.id]}</span>
+                                            <span className="text-text-secondary truncate">{record.fields[field.id]}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -69,8 +65,8 @@ const StructuredRecordsTab: React.FC<StructuredRecordsTabProps> = ({ contact, is
                     })}
                 </div>
             ) : (
-                 <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                    <FileText className="mx-auto h-12 w-12 text-gray-400" />
+                 <div className="text-center py-12 text-text-secondary">
+                    <FileText className="mx-auto h-12 w-12 text-text-secondary/50" />
                     <p className="mt-2">No records found.</p>
                 </div>
             )}

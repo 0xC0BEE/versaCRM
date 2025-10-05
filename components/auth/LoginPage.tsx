@@ -43,9 +43,9 @@ const LoginPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-100 dark:bg-dark-bg flex items-center justify-center p-4">
+        <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4">
             <div className="w-full max-w-md">
-                <h1 className="text-3xl font-bold text-center mb-6 text-gray-800 dark:text-white">VersaCRM</h1>
+                <h1 className="text-3xl font-bold text-center mb-6 text-text-heading">VersaCRM</h1>
                 <Card>
                     <form onSubmit={handleLogin} className="space-y-4">
                         <Input id="email" label="Email Address" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="super@crm.com" required />
@@ -54,8 +54,8 @@ const LoginPage: React.FC = () => {
                             {isLoading ? 'Logging in...' : 'Sign In'}
                         </Button>
                     </form>
-                    <div className="mt-4 pt-4 border-t dark:border-dark-border text-center text-sm">
-                        <p className="font-semibold mb-2 text-gray-600 dark:text-gray-400">Quick Logins (Demo)</p>
+                    <div className="mt-4 pt-4 border-t border-border-subtle text-center text-sm">
+                        <p className="font-semibold mb-2 text-text-secondary">Quick Logins (Demo)</p>
                         <div className="flex flex-wrap justify-center gap-2">
                             {QUICK_LOGIN_USERS.map(user => (
                                 <Button key={user.email} size="sm" variant="secondary" onClick={() => quickLogin(user.email)} disabled={isLoading}>{user.label}</Button>

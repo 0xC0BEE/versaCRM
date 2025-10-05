@@ -146,9 +146,9 @@ body {
   background-color: rgba(var(--text-secondary), 0.4);
 }
 
-/* Fix for multi-select option colors in dark mode */
-.dark .custom-multiselect option {
-  background-color: rgb(var(--card-bg-dark));
-  color: rgb(var(--text-primary-dark));
+/* Fix for multi-select option colors in all themes */
+.custom-multiselect option {
+  background-color: rgb(var(--card-bg));
+  color: rgb(var(--text-primary));
   padding: 4px 8px;
 }

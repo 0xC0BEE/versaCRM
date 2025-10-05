@@ -1,9 +1,7 @@
 import React, { useMemo } from 'react';
-// FIX: Corrected the import path for types to be a valid relative path.
 import { AnyContact } from '../../../types';
 import Button from '../../ui/Button';
 import { Plus, Users } from 'lucide-react';
-// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../../contexts/DataContext';
 
 interface RelationshipsTabProps {
@@ -36,13 +34,13 @@ const RelationshipsTab: React.FC<RelationshipsTabProps> = ({ contact, isReadOnly
                     {relationships.map((rel, index) => {
                         const relatedContact = contactMap[rel.relatedContactId];
                         return (
-                            <div key={index} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md border dark:border-dark-border">
+                            <div key={index} className="p-3 bg-card-bg/50 rounded-md border border-border-subtle">
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <p className="font-semibold text-gray-800 dark:text-white">{relatedContact?.contactName || 'Unknown Contact'}</p>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">{relatedContact?.email}</p>
+                                        <p className="font-semibold text-text-primary">{relatedContact?.contactName || 'Unknown Contact'}</p>
+                                        <p className="text-sm text-text-secondary">{relatedContact?.email}</p>
                                     </div>
-                                    <span className="text-sm font-medium text-primary-600 dark:text-primary-400">
+                                    <span className="text-sm font-medium text-primary">
                                         {rel.relationshipType}
                                     </span>
                                 </div>
@@ -51,8 +49,8 @@ const RelationshipsTab: React.FC<RelationshipsTabProps> = ({ contact, isReadOnly
                     })}
                 </div>
             ) : (
-                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                     <Users className="mx-auto h-12 w-12 text-gray-400" />
+                <div className="text-center py-12 text-text-secondary">
+                     <Users className="mx-auto h-12 w-12 text-text-secondary/50" />
                     <p className="mt-2">No relationships found.</p>
                 </div>
             )}

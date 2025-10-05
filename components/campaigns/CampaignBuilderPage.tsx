@@ -113,7 +113,7 @@ const CampaignBuilderPage: React.FC<CampaignBuilderPageProps> = ({ campaign, onC
                     <Card title="Campaign Sequence">
                         <div className="space-y-4">
                             {formData.steps.map((step, index) => (
-                                <div key={index} className="p-4 border dark:border-dark-border rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                                <div key={index} className="p-4 border border-border-subtle rounded-lg bg-hover-bg">
                                     <div className="flex justify-between items-center mb-2">
                                         <h4 className="font-semibold flex items-center gap-2">
                                             {step.type === 'sendEmail' ? <Send size={16} className="text-blue-500" /> : <Clock size={16} className="text-orange-500" />}
