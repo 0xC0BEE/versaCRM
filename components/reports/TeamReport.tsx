@@ -19,8 +19,8 @@ const TeamReport: React.FC<TeamReportProps> = ({ data }) => {
     return (
         <div className="space-y-6">
             <Card title="Team Performance Overview" className="overflow-x-auto">
-                 <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                 <table className="w-full text-sm text-left text-text-secondary">
+                    <thead className="text-xs text-text-secondary uppercase bg-card-bg/50">
                         <tr>
                             <th scope="col" className="px-6 py-3">Team Member</th>
                             <th scope="col" className="px-6 py-3">Role</th>
@@ -31,8 +31,8 @@ const TeamReport: React.FC<TeamReportProps> = ({ data }) => {
                     </thead>
                     <tbody>
                         {[...teamPerformance].sort((a,b) => b.totalRevenue - a.totalRevenue).map(member => (
-                            <tr key={member.teamMemberId} className="bg-white border-b dark:bg-dark-card dark:border-dark-border">
-                                <td className="px-6 py-4 font-medium text-gray-900 dark:text-white flex items-center">
+                            <tr key={member.teamMemberId} className="border-b border-border-subtle">
+                                <td className="px-6 py-4 font-medium text-text-primary flex items-center">
                                      <img 
                                         className="w-8 h-8 mr-3 rounded-full" 
                                         src={`https://i.pravatar.cc/100?u=${member.teamMemberId}`} 
@@ -50,8 +50,8 @@ const TeamReport: React.FC<TeamReportProps> = ({ data }) => {
                             <tr><td colSpan={5} className="text-center p-8">No team performance data in this period.</td></tr>
                          )}
                     </tbody>
-                     <tfoot className="bg-gray-50 dark:bg-gray-700/50 font-semibold">
-                        <tr className="text-gray-800 dark:text-white">
+                     <tfoot className="bg-card-bg/50 font-semibold">
+                        <tr className="text-text-primary">
                             <td colSpan={2} className="px-6 py-3 text-right">Totals:</td>
                             <td className="px-6 py-3 text-center">{totalAppointments}</td>
                             <td className="px-6 py-3 text-center">{totalTasks}</td>

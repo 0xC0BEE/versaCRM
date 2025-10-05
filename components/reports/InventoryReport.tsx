@@ -23,8 +23,8 @@ const InventoryReport: React.FC<InventoryReportProps> = ({ data }) => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card title="Low Stock Items (< 100 Units)">
                     <div className="max-h-96 overflow-y-auto">
-                        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 sticky top-0">
+                        <table className="w-full text-sm text-left text-text-secondary">
+                            <thead className="text-xs text-text-secondary uppercase bg-card-bg/50 sticky top-0">
                                 <tr>
                                     <th scope="col" className="px-6 py-3">Product Name</th>
                                     <th scope="col" className="px-6 py-3">SKU</th>
@@ -33,10 +33,10 @@ const InventoryReport: React.FC<InventoryReportProps> = ({ data }) => {
                             </thead>
                             <tbody>
                                 {data.lowStockItems.map(item => (
-                                    <tr key={item.id} className="bg-white border-b dark:bg-dark-card dark:border-dark-border">
-                                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{item.name}</td>
+                                    <tr key={item.id} className="border-b border-border-subtle">
+                                        <td className="px-6 py-4 font-medium text-text-primary">{item.name}</td>
                                         <td className="px-6 py-4">{item.sku}</td>
-                                        <td className="px-6 py-4 font-bold text-red-500">{item.stockLevel}</td>
+                                        <td className="px-6 py-4 font-bold text-error">{item.stockLevel}</td>
                                     </tr>
                                 ))}
                                 {data.lowStockItems.length === 0 && (

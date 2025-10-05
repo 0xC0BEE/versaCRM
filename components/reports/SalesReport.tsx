@@ -18,8 +18,8 @@ const SalesReport: React.FC<SalesReportProps> = ({ data }) => {
             </div>
 
             <Card title="Sales by Product" className="overflow-x-auto">
-                 <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                 <table className="w-full text-sm text-left text-text-secondary">
+                    <thead className="text-xs text-text-secondary uppercase bg-card-bg/50">
                         <tr>
                             <th scope="col" className="px-6 py-3">Product Name</th>
                             <th scope="col" className="px-6 py-3">Quantity Sold</th>
@@ -28,8 +28,8 @@ const SalesReport: React.FC<SalesReportProps> = ({ data }) => {
                     </thead>
                     <tbody>
                         {data.salesByProduct.map(product => (
-                            <tr key={product.name} className="bg-white border-b dark:bg-dark-card dark:border-dark-border">
-                                <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{product.name}</td>
+                            <tr key={product.name} className="border-b border-border-subtle">
+                                <td className="px-6 py-4 font-medium text-text-primary">{product.name}</td>
                                 <td className="px-6 py-4">{product.quantity}</td>
                                 <td className="px-6 py-4">{product.revenue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
                             </tr>
