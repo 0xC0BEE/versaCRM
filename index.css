@@ -152,3 +152,175 @@ body {
   color: rgb(var(--text-primary));
   padding: 4px 8px;
 }
+
+/* Fix for native date picker theming */
+input[type="date"] {
+    color-scheme: light;
+}
+
+.dark input[type="date"] {
+    color-scheme: dark;
+}
+
+/* --- React Big Calendar Overrides --- */
+
+/* Main container */
+.rbc-calendar {
+  border-radius: 16px; /* --rounded-card */
+  border: 1px solid rgb(var(--border-subtle) / 0.3);
+  background-color: rgb(var(--card-bg));
+  color: rgb(var(--text-primary));
+  height: 100% !important;
+}
+
+/* Toolbar */
+.rbc-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-bottom: 1px solid rgb(var(--border-subtle) / 0.3);
+}
+
+.rbc-toolbar .rbc-toolbar-label {
+  font-weight: 600;
+  font-size: 1.25rem; /* 20px */
+  color: rgb(var(--text-heading));
+}
+
+/* Button Groups */
+.rbc-btn-group {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.rbc-btn-group button {
+  display: inline-block;
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid rgb(var(--border-subtle) / 0.3);
+  border-radius: 10px; /* --rounded-input */
+  background-color: rgb(var(--card-bg));
+  color: rgb(var(--text-primary));
+  transition: all 0.2s ease-in-out;
+}
+
+.rbc-btn-group button:hover {
+  background-color: rgb(var(--hover-bg) / 0.1);
+  border-color: rgb(var(--border-subtle) / 0.5);
+  color: rgb(var(--text-primary));
+}
+
+.rbc-btn-group button.rbc-active {
+  background-color: rgb(var(--primary));
+  color: white;
+  border-color: rgb(var(--primary));
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+}
+
+.rbc-btn-group button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(var(--primary) / 0.5);
+}
+
+
+/* Calendar Grid and Headers */
+.rbc-header {
+  padding: 12px 3px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 13px;
+  color: rgb(var(--text-secondary));
+  border-bottom: 1px solid rgb(var(--border-subtle) / 0.3);
+}
+
+.rbc-month-view, .rbc-time-view, .rbc-agenda-view {
+  border: none;
+}
+
+.rbc-day-bg {
+  border-left: 1px solid rgb(var(--border-subtle) / 0.3);
+}
+.rbc-month-row {
+  border-top: 1px solid rgb(var(--border-subtle) / 0.3);
+}
+
+
+/* Day cells */
+.rbc-date-cell {
+  padding: 6px;
+  text-align: right;
+  color: rgb(var(--text-secondary));
+}
+.rbc-date-cell.rbc-now {
+    font-weight: 600;
+    color: rgb(var(--primary));
+}
+
+
+/* Today's Date Highlight */
+.rbc-day-bg.rbc-today {
+  background-color: rgb(var(--primary) / 0.08);
+}
+
+/* Days outside of the current month */
+.rbc-off-range-bg {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    rgb(var(--border-subtle) / 0.05) 4px,
+    rgb(var(--border-subtle) / 0.05) 5px
+  );
+}
+.rbc-off-range .rbc-date-cell {
+  color: rgb(var(--text-secondary) / 0.4);
+}
+
+/* Events */
+.rbc-event {
+  border: none;
+  box-shadow: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  background-color: rgb(var(--primary));
+  color: white;
+  font-size: 13px;
+  transition: all 0.2s ease-in-out;
+}
+
+.rbc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.rbc-event.rbc-selected {
+  background-color: rgb(var(--primary-active));
+}
+
+.rbc-show-more {
+  color: rgb(var(--primary));
+  font-size: 12px;
+}
+
+/* Agenda View */
+.rbc-agenda-view table.rbc-agenda-table {
+  border: 1px solid rgb(var(--border-subtle) / 0.3);
+  border-radius: 10px;
+}
+.rbc-agenda-view table.rbc-agenda-table thead {
+    display: none;
+}
+.rbc-agenda-view table.rbc-agenda-table tbody > tr:first-child > td {
+    padding-top: 12px;
+}
+
+.rbc-agenda-date-cell, .rbc-agenda-time-cell {
+    border-right: 1px solid rgb(var(--border-subtle) / 0.3);
+}
+.rbc-agenda-date-cell {
+    font-weight: 600;
+}
