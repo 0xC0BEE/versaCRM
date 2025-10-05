@@ -120,7 +120,7 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
          <>
             {!isTabbedView && (
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">{industryConfig.contactNamePlural}</h1>
+                    <h1 className="text-2xl font-semibold text-text-heading">{industryConfig.contactNamePlural}</h1>
                     <Button onClick={handleAdd} leftIcon={<Plus size={16} />}>
                         New {industryConfig.contactName}
                     </Button>

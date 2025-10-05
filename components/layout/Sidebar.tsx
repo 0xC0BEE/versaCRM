@@ -37,9 +37,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     ];
 
     return (
-        <div className={`flex flex-col flex-shrink-0 w-64 bg-light-card dark:bg-dark-card border-r border-light-border dark:border-dark-border transition-all duration-300`}>
+        <div className={`flex flex-col flex-shrink-0 w-64 bg-card-bg border-r border-border-subtle transition-all duration-300`}>
             <div className="h-16 flex items-center justify-center flex-shrink-0 px-4 shadow-sm">
-                <h1 className="text-2xl font-bold text-light-text dark:text-dark-text">VersaCRM</h1>
+                <h1 className="text-2xl font-bold text-text-primary">VersaCRM</h1>
             </div>
             <nav className="flex-1 min-h-0 overflow-y-auto" aria-label="Sidebar">
                 <div className="p-2 space-y-1">
@@ -50,11 +50,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                                 onClick={() => handleNavigation(item.page)}
                                 className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md w-full text-left ${
                                     currentPage === item.page
-                                        ? 'bg-accent-blue/10 text-accent-blue'
-                                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                        ? 'bg-primary/10 text-primary'
+                                        : 'text-text-secondary hover:bg-hover-bg'
                                 }`}
                             >
-                                <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${currentPage === item.page ? 'text-accent-blue' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-400'}`} aria-hidden="true" />
+                                <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${currentPage === item.page ? 'text-primary' : 'text-text-secondary group-hover:text-text-primary'}`} aria-hidden="true" />
                                 {item.label || item.page}
                             </button>
                         ) : null

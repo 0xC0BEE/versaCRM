@@ -10,40 +10,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-      :root {
-        /* Color Palette - Light Mode */
-        --color-light-bg: 248 250 252; /* slate-50 */
-        --color-light-card: 255 255 255;
-        --color-light-text: 30 41 59; /* slate-800 */
-        --color-light-border: 226 232 240; /* slate-200 */
-        --color-accent-blue: 59 130 246;
-        --color-accent-green: 16 185 129;
-
-        /* Color Palette - Dark Mode */
-        --color-dark-bg: 17 24 39; /* gray-900 */
-        --color-dark-card: 31 41 55; /* gray-800 */
-        --color-dark-text: 243 244 246; /* gray-100 */
-        --color-dark-border: 55 65 81; /* gray-700 */
-        --color-dark-accent-glow: rgba(59, 130, 246, 0.3);
-
-        /* Shapes & Borders */
-        --radius-card: 16px;
-        --radius-input: 8px;
-        --radius-button: 8px;
-
-        /* Shadows (Layered) */
-        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-        --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        --shadow-glow: 0 0 8px var(--color-dark-accent-glow);
-
-        /* Transitions */
-        --transition-soft: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        --transition-spring: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-      }
       body {
         font-family: 'Inter', sans-serif;
-        letter-spacing: -0.025em;
+        letter-spacing: 0em;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        letter-spacing: -0.02em;
+        font-weight: 600;
       }
       html {
         scroll-behavior: smooth;
@@ -55,29 +30,56 @@
         theme: {
           extend: {
             colors: {
-              'light-bg': 'rgb(var(--color-light-bg) / <alpha-value>)',
-              'light-card': 'rgb(var(--color-light-card) / <alpha-value>)',
-              'light-text': 'rgb(var(--color-light-text) / <alpha-value>)',
-              'light-border': 'rgb(var(--color-light-border) / <alpha-value>)',
-              'dark-bg': 'rgb(var(--color-dark-bg) / <alpha-value>)',
-              'dark-card': 'rgb(var(--color-dark-card) / <alpha-value>)',
-              'dark-text': 'rgb(var(--color-dark-text) / <alpha-value>)',
-              'dark-border': 'rgb(var(--color-dark-border) / <alpha-value>)',
-              accent: {
-                blue: 'rgb(var(--color-accent-blue) / <alpha-value>)',
-                green: 'rgb(var(--color-accent-green) / <alpha-value>)',
-              }
+              'bg-primary': 'rgb(var(--bg-primary))',
+              'card-bg': 'rgb(var(--card-bg))',
+              'text-primary': 'rgb(var(--text-primary))',
+              'text-secondary': 'rgb(var(--text-secondary))',
+              'text-heading': 'rgb(var(--text-heading))',
+              'border-subtle': 'rgb(var(--border-subtle) / 0.3)',
+              'hover-bg': 'rgb(var(--hover-bg) / 0.1)',
+              primary: {
+                DEFAULT: 'rgb(var(--primary))',
+                hover: 'rgb(var(--primary-hover))',
+                active: 'rgb(var(--primary-active))',
+              },
+              success: {
+                DEFAULT: 'rgb(var(--success))',
+                hover: 'rgb(var(--success-hover))',
+              },
+              error: {
+                DEFAULT: 'rgb(var(--error))',
+                hover: 'rgb(var(--error-hover))',
+              },
+              warning: {
+                DEFAULT: 'rgb(var(--warning))',
+                hover: 'rgb(var(--warning-hover))',
+              },
             },
             borderRadius: {
-              'card': 'var(--radius-card)',
-              'input': 'var(--radius-input)',
-              'button': 'var(--radius-button)',
+              'card': '16px',
+              'input': '10px',
+              'button': '10px',
+              'micro': '6px',
             },
             boxShadow: {
-                'sm': 'var(--shadow-sm)',
-                'md': 'var(--shadow-md)',
-                'lg': 'var(--shadow-lg)',
-                'glow': 'var(--shadow-glow)',
+                'sm-new': '0 1px 2px rgb(0 0 0 / 0.05)',
+                'md-new': '0 4px 12px rgb(0 0 0 / 0.1)',
+                'lg-new': '0 10px 24px rgb(0 0 0 / 0.15)',
+                'glow-success': '0 0 12px rgb(var(--success-glow) / 0.3)'
+            },
+            animation: {
+              'fade-in-up': 'fadeInUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+              'pulse-predictive': 'pulse-predictive 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            },
+            keyframes: {
+              fadeInUp: {
+                '0%': { opacity: '0', transform: 'translateY(8px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              'pulse-predictive': {
+                '0%, 100%': { transform: 'scale(1)', opacity: '1' },
+                '50%': { transform: 'scale(1.02)', opacity: '0.95' },
+              }
             }
           }
         }
@@ -112,7 +114,7 @@
 }
 </script>
 </head>
-  <body class="bg-light-bg dark:bg-dark-bg bg-gradient-to-b from-slate-50 to-slate-200 dark:from-gray-900 dark:to-gray-800">
+  <body class="bg-bg-primary text-text-primary">
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
   </body>

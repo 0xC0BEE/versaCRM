@@ -8,7 +8,7 @@ interface TabsProps {
 
 const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, setActiveTab }) => {
     return (
-        <div className="border-b border-light-border dark:border-dark-border">
+        <div className="border-b border-border-subtle overflow-x-auto custom-scrollbar">
             <nav className="-mb-px flex space-x-8" aria-label="Tabs">
                 {tabs.map((tab) => (
                     <button
@@ -16,8 +16,8 @@ const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, setActiveTab }) => {
                         onClick={() => setActiveTab(tab)}
                         className={`whitespace-nowrap pb-4 px-1 border-b-2 font-semibold text-sm transition-colors ${
                             tab === activeTab
-                                ? 'border-accent-blue text-accent-blue'
-                                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:border-slate-600'
+                                ? 'border-primary text-primary'
+                                : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border-subtle'
                         }`}
                     >
                         {tab}

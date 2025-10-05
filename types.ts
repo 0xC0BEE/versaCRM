@@ -455,6 +455,7 @@ export interface CustomTheme {
         background: string;
         card: string;
         text: string;
+        textHeading: string;
         border: string;
     };
 }

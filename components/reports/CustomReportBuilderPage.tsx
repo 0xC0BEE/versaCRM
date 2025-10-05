@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import Card from '../ui/Card';
@@ -120,11 +119,11 @@ const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ onClo
                         <Button variant="secondary" size="sm" onClick={addFilter} leftIcon={<Plus size={14} />} className="mt-2">Add Filter</Button>
                     </Card>
                     <Card title="4. Visualization">
-                        <div className="flex justify-around">
-                            <Button variant={visualization.type === 'table' ? 'primary' : 'secondary'} onClick={() => setVisualization({ type: 'table', metric: { type: 'count' } })}><Table/></Button>
-                            <Button variant={visualization.type === 'bar' ? 'primary' : 'secondary'} onClick={() => setVisualization({ ...visualization, type: 'bar' })}><BarChart/></Button>
-                            <Button variant={visualization.type === 'pie' ? 'primary' : 'secondary'} onClick={() => setVisualization({ ...visualization, type: 'pie' })}><PieIcon/></Button>
-                            <Button variant={visualization.type === 'line' ? 'primary' : 'secondary'} onClick={() => setVisualization({ ...visualization, type: 'line' })}><LineIcon/></Button>
+                        <div className="flex justify-start gap-2">
+                            <Button className="w-10 h-10 p-0 min-w-0" variant={visualization.type === 'table' ? 'primary' : 'secondary'} onClick={() => setVisualization({ type: 'table', metric: { type: 'count' } })}><Table className="h-6 w-6" /></Button>
+                            <Button className="w-10 h-10 p-0 min-w-0" variant={visualization.type === 'bar' ? 'primary' : 'secondary'} onClick={() => setVisualization({ ...visualization, type: 'bar' })}><BarChart className="h-6 w-6" /></Button>
+                            <Button className="w-10 h-10 p-0 min-w-0" variant={visualization.type === 'pie' ? 'primary' : 'secondary'} onClick={() => setVisualization({ ...visualization, type: 'pie' })}><PieIcon className="h-6 w-6" /></Button>
+                            <Button className="w-10 h-10 p-0 min-w-0" variant={visualization.type === 'line' ? 'primary' : 'secondary'} onClick={() => setVisualization({ ...visualization, type: 'line' })}><LineIcon className="h-6 w-6" /></Button>
                         </div>
                         {visualization.type !== 'table' && (
                              <div className="mt-4 grid grid-cols-2 gap-2">

@@ -25,28 +25,29 @@ interface ContactDetailModalProps {
     onDelete: (contactId: string) => void;
     isSaving: boolean;
     isDeleting: boolean;
+    initialTab?: string;
 }
 
 const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ 
-    isOpen, onClose, contact, onSave, onDelete, isSaving, isDeleting
+    isOpen, onClose, contact, onSave, onDelete, isSaving, isDeleting, initialTab
 }) => {
     const { industryConfig } = useApp();
-    const [activeTab, setActiveTab] = useState('Profile');
+    const [activeTab, setActiveTab] = useState(initialTab || 'Profile');
     const [newContactKey, setNewContactKey] = useState(0);
 
     // This effect must be called before any early returns to obey the Rules of Hooks.
     useEffect(() => {
         if (isOpen) {
-            // Reset the active tab to 'Profile' whenever the modal is opened
+            // Reset the active tab whenever the modal is opened
             // or the contact within the modal changes.
-            setActiveTab('Profile');
+            setActiveTab(initialTab || 'Profile');
             // If it's a new contact, create a unique key for this instance of the modal
             // This forces the ProfileTab to remount and reset its state completely.
             if (!contact?.id) {
                 setNewContactKey(prev => prev + 1);
             }
         }
-    }, [isOpen, contact]);
+    }, [isOpen, contact, initialTab]);
 
     if (!contact) return null;
 

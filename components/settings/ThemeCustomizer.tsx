@@ -10,14 +10,16 @@ const ThemeCustomizer: React.FC = () => {
     return (
         <div>
             <h3 className="text-lg font-semibold">Theme Settings</h3>
-            <p className="text-sm text-gray-500 mb-4">Choose your preferred interface theme.</p>
+            <p className="text-sm text-text-secondary mb-4">Choose your preferred interface theme.</p>
             <div className="flex space-x-4">
                 {(['light', 'dark', 'system'] as Theme[]).map(t => (
                     <button
                         key={t}
                         onClick={() => setTheme(t)}
-                        className={`px-4 py-2 rounded-md font-medium capitalize ${
-                            theme === t ? 'bg-primary-600 text-white' : 'bg-gray-200 dark:bg-gray-700'
+                        className={`px-4 py-2 rounded-button font-medium capitalize transition-colors ${
+                            theme === t 
+                                ? 'bg-primary text-white' 
+                                : 'bg-card-bg text-text-primary border border-border-subtle hover:bg-hover-bg'
                         }`}
                     >
                         {t}

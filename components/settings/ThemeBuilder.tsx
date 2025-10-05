@@ -14,6 +14,7 @@ const ThemeBuilder: React.FC = () => {
         background: '#1a202c',
         card: '#2d3748',
         text: '#e2e8f0',
+        textHeading: '#ffffff',
         border: '#4a5568',
     };
 
@@ -22,6 +23,7 @@ const ThemeBuilder: React.FC = () => {
         background: '#0d0d0d',
         card: '#1a1a1a',
         text: '#f0f0f0',
+        textHeading: '#ffffff',
         border: '#333333',
     };
 
@@ -79,27 +81,27 @@ const ThemeBuilder: React.FC = () => {
     return (
         <div>
             <h3 className="text-lg font-semibold">Custom Theme Builder</h3>
-            <p className="text-sm text-gray-500 mb-4">Create, manage, and apply your own themes.</p>
+            <p className="text-sm text-text-secondary mb-4">Create, manage, and apply your own themes.</p>
 
             {editingTheme ? (
-                <div className="p-4 border rounded-lg dark:border-dark-border bg-gray-50 dark:bg-gray-900/50 space-y-4">
+                <div className="p-4 border border-border-subtle rounded-lg bg-card-bg/50 space-y-4">
                     <h4 className="font-semibold">{editingTheme.id ? 'Edit Theme' : 'Create New Theme'}</h4>
                     <input 
                         type="text" 
                         value={editingTheme.name || ''} 
                         onChange={e => setEditingTheme(p => ({...p!, name: e.target.value}))}
-                        className="w-full p-2 rounded-md bg-white dark:bg-gray-800 border dark:border-dark-border"
+                        className="w-full p-2 rounded-md bg-card-bg border border-border-subtle"
                     />
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                         {/* FIX: Switched to Object.entries for safer key/value iteration */}
                         {(Object.entries(editingTheme.colors!) as [keyof CustomTheme['colors'], string][]).map(([key, value]) => (
                             <div key={key}>
-                                <label className="block text-sm font-medium capitalize mb-1">{key}</label>
+                                <label className="block text-sm font-medium capitalize mb-1">{key === 'textHeading' ? 'Heading' : key}</label>
                                 <input 
                                     type="color" 
                                     value={value}
                                     onChange={e => handleColorChange(key, e.target.value)}
-                                    className="w-full h-10 p-1 bg-white dark:bg-gray-800 border rounded-md cursor-pointer"
+                                    className="w-full h-10 p-1 bg-card-bg border rounded-md cursor-pointer"
                                 />
                             </div>
                         ))}
@@ -120,11 +122,11 @@ const ThemeBuilder: React.FC = () => {
                 <h4 className="font-semibold">My Themes</h4>
                 {customThemes.length > 0 ? (
                     customThemes.map(theme => (
-                        <div key={theme.id} className="p-3 border dark:border-dark-border rounded-md bg-gray-50 dark:bg-gray-700/50 flex justify-between items-center">
+                        <div key={theme.id} className="p-3 border border-border-subtle rounded-md bg-card-bg/50 flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <div className="w-5 h-5 rounded-full border-2" style={{ backgroundColor: theme.colors.primary, borderColor: theme.colors.border}}></div>
                                 <p className="font-medium">{theme.name}</p>
-                                {activeCustomThemeId === theme.id && <span className="text-xs font-bold text-green-600 flex items-center gap-1"><Check size={14}/> Active</span>}
+                                {activeCustomThemeId === theme.id && <span className="text-xs font-bold text-success flex items-center gap-1"><Check size={14}/> Active</span>}
                             </div>
                             <div className="space-x-2">
                                 <Button size="sm" variant="secondary" onClick={() => applyCustomTheme(activeCustomThemeId === theme.id ? null : theme.id)}>
@@ -136,7 +138,7 @@ const ThemeBuilder: React.FC = () => {
                         </div>
                     ))
                 ) : (
-                    <p className="text-sm text-gray-500 py-4">No custom themes created yet.</p>
+                    <p className="text-sm text-text-secondary py-4">No custom themes created yet.</p>
                 )}
             </div>
         </div>

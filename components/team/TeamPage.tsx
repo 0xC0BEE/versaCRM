@@ -33,7 +33,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ isTabbedView = false }) => {
         <>
             {!isTabbedView && (
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Team Members</h1>
+                    <h1 className="text-2xl font-semibold text-text-primary">Team Members</h1>
                     <Button onClick={handleAdd} leftIcon={<Plus size={16} />}>
                         Invite Member
                     </Button>
@@ -44,28 +44,28 @@ const TeamPage: React.FC<TeamPageProps> = ({ isTabbedView = false }) => {
                     <div className="p-8 text-center">Loading team members...</div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <table className="w-full text-sm text-left text-text-secondary">
+                            <thead className="text-xs uppercase bg-card-bg/50 text-text-secondary">
                                 <tr>
-                                    <th scope="col" className="px-6 py-3">Name</th>
-                                    <th scope="col" className="px-6 py-3">Email</th>
-                                    <th scope="col" className="px-6 py-3">Role</th>
-                                    <th scope="col" className="px-6 py-3"><span className="sr-only">Edit</span></th>
+                                    <th scope="col" className="px-6 py-3 font-medium">Name</th>
+                                    <th scope="col" className="px-6 py-3 font-medium">Email</th>
+                                    <th scope="col" className="px-6 py-3 font-medium">Role</th>
+                                    <th scope="col" className="px-6 py-3 font-medium"><span className="sr-only">Edit</span></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {isError && (
-                                     <tr><td colSpan={4} className="text-center p-8 text-red-500">
+                                     <tr><td colSpan={4} className="text-center p-8 text-error">
                                         Failed to load team members.
                                     </td></tr>
                                 )}
                                 {!isError && members.map(member => (
-                                    <tr key={member.id} className="bg-white border-b dark:bg-dark-card dark:border-dark-border hover:bg-gray-50 dark:hover:bg-gray-600">
-                                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{member.name}</td>
+                                    <tr key={member.id} className="border-b border-border-subtle hover:bg-hover-bg">
+                                        <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{member.name}</td>
                                         <td className="px-6 py-4">{member.email}</td>
                                         <td className="px-6 py-4">{member.role}</td>
                                         <td className="px-6 py-4 text-right">
-                                            <button onClick={() => handleEdit(member)} className="font-medium text-primary-600 dark:text-primary-500 hover:underline">Edit</button>
+                                            <button onClick={() => handleEdit(member)} className="font-medium text-primary hover:underline">Edit</button>
                                         </td>
                                     </tr>
                                 ))}

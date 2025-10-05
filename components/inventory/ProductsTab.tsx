@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
-// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { Product } from '../../types';
 import Button from '../ui/Button';
 import { Plus } from 'lucide-react';
-// FIX: Corrected the import path for types to be a valid relative path.
-import { Product } from '../../types';
 import ProductEditModal from './ProductEditModal';
 
 const ProductsTab: React.FC = () => {
-    const { authenticatedUser } = useAuth();
-    const organizationId = authenticatedUser?.organizationId || '';
     const { productsQuery } = useData();
-    const { data: products = [], isLoading, isError } = productsQuery;
-    
+    const { authenticatedUser } = useAuth();
+    const { data: products = [], isLoading } = productsQuery;
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
@@ -26,64 +23,56 @@ const ProductsTab: React.FC = () => {
         setSelectedProduct(null);
         setIsModalOpen(true);
     };
-    
+
     return (
         <div>
-             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Products</h3>
-                <Button size="sm" variant="secondary" onClick={handleAdd} leftIcon={<Plus size={14} />}>Add Product</Button>
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-text-primary">Products</h3>
+                <Button size="sm" onClick={handleAdd} leftIcon={<Plus size={14} />}>
+                    New Product
+                </Button>
             </div>
             {isLoading ? (
-                <div>Loading products...</div>
+                <p className="text-text-secondary">Loading products...</p>
             ) : (
                 <div className="overflow-x-auto">
-                     <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <table className="w-full text-sm text-left text-text-secondary">
+                        <thead className="text-sm text-text-secondary uppercase bg-card-bg/50">
                             <tr>
-                                <th scope="col" className="px-6 py-3">Name</th>
-                                <th scope="col" className="px-6 py-3">SKU</th>
-                                <th scope="col" className="px-6 py-3">Category</th>
-                                <th scope="col" className="px-6 py-3">Sale Price</th>
-                                <th scope="col" className="px-6 py-3">Stock Level</th>
-                                <th scope="col" className="px-6 py-3"><span className="sr-only">Edit</span></th>
+                                <th scope="col" className="px-6 py-3 font-medium">Name</th>
+                                <th scope="col" className="px-6 py-3 font-medium">SKU</th>
+                                <th scope="col" className="px-6 py-3 font-medium">Category</th>
+                                <th scope="col" className="px-6 py-3 font-medium text-right">Sale Price</th>
+                                <th scope="col" className="px-6 py-3 font-medium text-right">Stock Level</th>
+                                <th scope="col" className="px-6 py-3 font-medium"><span className="sr-only">Edit</span></th>
                             </tr>
                         </thead>
                         <tbody>
-                            {isError && (
-                                <tr><td colSpan={6} className="text-center p-8 text-red-500">
-                                    Failed to load products. Please try again later.
-                                </td></tr>
-                            )}
-                            {!isError && products.map(product => (
-                                <tr key={product.id} className="bg-white border-b dark:bg-dark-card dark:border-dark-border hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{product.name}</td>
-                                    <td className="px-6 py-4">{product.sku}</td>
-                                    <td className="px-6 py-4">{product.category}</td>
-                                    <td className="px-6 py-4">{product.salePrice.toLocaleString('en-US', {style: 'currency', currency: 'USD'})}</td>
-                                    <td className="px-6 py-4">{product.stockLevel}</td>
+                            {products.map((product: Product) => (
+                                <tr key={product.id} className="border-b border-border-subtle hover:bg-hover-bg h-[52px]">
+                                    <td className="px-6 py-4 font-medium text-text-primary cursor-pointer" onClick={() => handleEdit(product)}>{product.name}</td>
+                                    <td className="px-6 py-4 cursor-pointer" onClick={() => handleEdit(product)}>{product.sku}</td>
+                                    <td className="px-6 py-4 cursor-pointer" onClick={() => handleEdit(product)}>{product.category}</td>
+                                    <td className="px-6 py-4 text-right cursor-pointer" onClick={() => handleEdit(product)}>{product.salePrice.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
+                                    <td className="px-6 py-4 text-right cursor-pointer" onClick={() => handleEdit(product)}>{product.stockLevel}</td>
                                     <td className="px-6 py-4 text-right">
-                                        <button onClick={() => handleEdit(product)} className="font-medium text-primary-600 dark:text-primary-500 hover:underline">Edit</button>
+                                        <button onClick={(e) => { e.stopPropagation(); handleEdit(product); }} className="font-medium text-primary hover:underline">Edit</button>
                                     </td>
                                 </tr>
                             ))}
-                            {!isError && products.length === 0 && (
-                                <tr><td colSpan={6} className="text-center p-8">
-                                    <p className="text-gray-500">No products found.</p>
-                                    <Button size="sm" variant="secondary" className="mt-2" onClick={handleAdd} leftIcon={<Plus size={14}/>}>
-                                        Add your first product
-                                    </Button>
-                                </td></tr>
+                            {products.length === 0 && (
+                                <tr><td colSpan={6} className="text-center p-8 text-text-secondary">No products found.</td></tr>
                             )}
                         </tbody>
                     </table>
                 </div>
             )}
             {isModalOpen && (
-                <ProductEditModal 
+                <ProductEditModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     product={selectedProduct}
-                    organizationId={organizationId}
+                    organizationId={authenticatedUser!.organizationId!}
                 />
             )}
         </div>

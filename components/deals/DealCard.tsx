@@ -1,39 +1,38 @@
 import React from 'react';
-// FIX: Corrected import path for types.
-import { Deal } from '../../types';
-// FIX: Corrected import path for DataContext.
+import { Deal, AnyContact } from '../../types';
 import { useData } from '../../contexts/DataContext';
+import { DollarSign, User } from 'lucide-react';
 
 interface DealCardProps {
     deal: Deal;
-    onClick: () => void;
-    onDragStart: (e: React.DragEvent<HTMLDivElement>) => void;
-    animationDelay?: number;
+    onClick: (deal: Deal) => void;
+    onDragStart: (e: React.DragEvent<HTMLDivElement>, dealId: string) => void;
 }
 
-const DealCard: React.FC<DealCardProps> = ({ deal, onClick, onDragStart, animationDelay = 0 }) => {
+const DealCard: React.FC<DealCardProps> = ({ deal, onClick, onDragStart }) => {
     const { contactsQuery } = useData();
     const { data: contacts = [] } = contactsQuery;
-    const contact = contacts.find((c: any) => c.id === deal.contactId);
+
+    const contact = (contacts as AnyContact[]).find(c => c.id === deal.contactId);
 
     return (
         <div
             draggable
-            onDragStart={onDragStart}
-            onClick={onClick}
-            className="p-4 bg-white dark:bg-dark-card rounded-md shadow-sm cursor-pointer border dark:border-dark-border hover:shadow-md hover:-translate-y-0.5 transition-all smooth-enter-stagger"
-            style={{ animationDelay: `${animationDelay}ms` }}
+            onDragStart={(e) => onDragStart(e, deal.id)}
+            onClick={() => onClick(deal)}
+            className="p-3 mb-3 bg-card-bg rounded-input shadow-sm-new border border-border-subtle cursor-pointer hover:shadow-md-new hover:-translate-y-0.5 transition-all"
         >
-            <h4 className="font-semibold text-sm text-gray-900 dark:text-white mb-1">{deal.name}</h4>
-            <p className="text-sm font-bold text-primary-600 dark:text-primary-400">
+            <h4 className="font-semibold text-sm text-text-primary">{deal.name}</h4>
+            <p className="text-sm text-text-secondary mt-1 flex items-center">
+                <DollarSign size={14} className="mr-1" />
                 {deal.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
             </p>
             {contact && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{contact.contactName}</p>
+                <p className="text-sm text-text-secondary mt-1 flex items-center">
+                    <User size={14} className="mr-1" />
+                    {contact.contactName}
+                </p>
             )}
-            <p className="text-xs text-gray-400 mt-1">
-                Closes: {new Date(deal.expectedCloseDate).toLocaleDateString()}
-            </p>
         </div>
     );
 };

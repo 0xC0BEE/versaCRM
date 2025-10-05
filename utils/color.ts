@@ -22,3 +22,21 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } | nul
 export function rgbToHex(r: number, g: number, b: number): string {
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
+
+/**
+ * Lightens or darkens a hex color by a given percentage.
+ * @param hex The hex color string.
+ * @param percent A value from -100 (black) to 100 (white).
+ * @returns The new hex color string.
+ */
+export function shadeColor(hex: string, percent: number): string {
+    let { r, g, b } = hexToRgb(hex) || { r: 0, g: 0, b: 0 };
+
+    const amount = Math.floor((percent / 100) * 255);
+
+    r = Math.max(0, Math.min(255, r + amount));
+    g = Math.max(0, Math.min(255, g + amount));
+    b = Math.max(0, Math.min(255, b + amount));
+    
+    return rgbToHex(r, g, b);
+}

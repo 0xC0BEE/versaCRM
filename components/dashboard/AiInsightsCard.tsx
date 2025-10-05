@@ -51,29 +51,29 @@ const AiInsightsCard: React.FC<AiInsightsCardProps> = ({ dashboardData, isLoadin
 
 
     return (
-        <Card>
+        <Card className="card-hover">
             <div className="flex justify-between items-start">
                 <div>
                     <h3 className="text-lg font-semibold flex items-center">
-                        <Bot size={20} className="mr-2 text-primary-500" />
+                        <Bot size={20} className="mr-2 text-primary" />
                         AI Insights
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Let Gemini analyze your current dashboard data.</p>
+                    <p className="text-sm text-text-secondary">Let Gemini analyze your current dashboard data.</p>
                 </div>
                 <Button onClick={generateInsight} disabled={isGenerating} size="sm">
-                    {isGenerating ? 'Generating...' : 'Generate Insights'}
+                    {isGenerating ? 'Generating...' : 'Generate'}
                 </Button>
             </div>
-            <div className="mt-4 p-4 min-h-[6rem] bg-gray-50 dark:bg-gray-900/50 rounded-lg flex items-center justify-center">
+            <div className="mt-4 p-4 min-h-[6rem] bg-bg-primary rounded-lg flex items-center justify-center">
                 {isGenerating ? (
-                    <div className="flex items-center space-x-2 text-gray-500">
+                    <div className="flex items-center space-x-2 text-text-secondary">
                         <Loader size={20} className="animate-spin" />
                         <span>Analyzing data...</span>
                     </div>
                 ) : insight ? (
                     <p className="text-sm whitespace-pre-wrap">{insight}</p>
                 ) : (
-                    <p className="text-sm text-gray-500">Click "Generate Insights" to see what's happening.</p>
+                    <p className="text-sm text-text-secondary">Click "Generate" to see what's happening.</p>
                 )}
             </div>
         </Card>

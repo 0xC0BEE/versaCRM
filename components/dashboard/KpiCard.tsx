@@ -12,14 +12,14 @@ const KpiCard: React.FC<KpiCardProps> = ({ title, value, iconName }) => {
     const Icon = (LucideIcons as any)[iconName] as React.ElementType || LucideIcons.BarChart2;
 
     return (
-        <Card>
+        <Card className="card-hover">
             <div className="flex items-center">
-                <div className="p-3 rounded-full bg-accent-blue/10 dark:bg-accent-blue/20">
-                    <Icon className="h-6 w-6 text-accent-blue" />
+                <div className="p-3 rounded-full bg-primary/10">
+                    <Icon className="h-6 w-6 text-primary" />
                 </div>
                 <div className="ml-4">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{title}</p>
-                    <p className="text-2xl font-semibold text-light-text dark:text-dark-text">{value}</p>
+                    <p className="text-sm text-text-secondary">{title}</p>
+                    <p className="text-2xl font-semibold text-text-primary">{value}</p>
                 </div>
             </div>
         </Card>

@@ -47,9 +47,9 @@ const MyTasksPage: React.FC = () => {
 
     return (
         <PageWrapper>
-            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white mb-6">My Tasks</h1>
+            <h1 className="text-2xl font-semibold text-text-heading mb-6">My Tasks</h1>
             <Card>
-                <div className="p-4 border-b dark:border-dark-border">
+                <div className="p-4 border-b border-border-subtle">
                     <form onSubmit={handleAddTask} className="flex gap-2">
                         <Input 
                             id="new-task"
@@ -70,19 +70,19 @@ const MyTasksPage: React.FC = () => {
                 ) : (
                     <div className="p-4 space-y-4">
                         <div>
-                            <h3 className="font-semibold mb-2">Pending ({pendingTasks.length})</h3>
+                            <h3 className="font-semibold text-text-primary mb-2">Pending ({pendingTasks.length})</h3>
                             <div className="space-y-2">
                                 {pendingTasks.length > 0 ? (
                                     pendingTasks.map((task: Task, index) => <TaskItem key={task.id} task={task} animationDelay={index * 50} />)
                                 ) : (
-                                    <p className="text-sm text-gray-500 p-3">No pending tasks. Well done!</p>
+                                    <p className="text-sm text-text-secondary p-3">No pending tasks. Well done!</p>
                                 )}
                             </div>
                         </div>
 
                         {completedTasks.length > 0 && (
-                            <div className="pt-4 border-t dark:border-dark-border">
-                                <h3 className="font-semibold mb-2">Completed ({completedTasks.length})</h3>
+                            <div className="pt-4 border-t border-border-subtle">
+                                <h3 className="font-semibold text-text-primary mb-2">Completed ({completedTasks.length})</h3>
                                 <div className="space-y-2">
                                     {completedTasks.map((task: Task, index) => <TaskItem key={task.id} task={task} animationDelay={index * 50} />)}
                                 </div>

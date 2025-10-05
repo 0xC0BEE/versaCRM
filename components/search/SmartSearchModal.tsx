@@ -130,7 +130,7 @@ Inventory Data: ${JSON.stringify(productsContext)}
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="e.g., Show me active leads, or What is our inventory status?"
-                        className="w-full pl-10 pr-3 py-2 text-base bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
+                        className="w-full pl-10 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
                         autoFocus
                     />
                 </div>

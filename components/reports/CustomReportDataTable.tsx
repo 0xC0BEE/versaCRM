@@ -13,7 +13,7 @@ const CustomReportDataTable: React.FC<CustomReportDataTableProps> = ({ data }) =
 
     const renderCell = (value: any) => {
         if (value === null || value === undefined) {
-            return <span className="text-gray-400">N/A</span>;
+            return <span className="text-text-secondary">N/A</span>;
         }
         if (typeof value === 'boolean') {
             return value ? 'Yes' : 'No';
@@ -33,19 +33,19 @@ const CustomReportDataTable: React.FC<CustomReportDataTableProps> = ({ data }) =
 
     return (
         <div className="overflow-x-auto max-h-[60vh]">
-            <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 sticky top-0">
+            <table className="w-full text-sm text-left text-text-secondary">
+                <thead className="text-xs uppercase bg-card-bg/50 text-text-secondary sticky top-0">
                     <tr>
                         {headers.map(header => (
-                            <th key={header} scope="col" className="px-6 py-3">{header}</th>
+                            <th key={header} scope="col" className="px-6 py-3 font-medium">{header}</th>
                         ))}
                     </tr>
                 </thead>
                 <tbody>
                     {data.map((row, rowIndex) => (
-                        <tr key={rowIndex} className="bg-white border-b dark:bg-dark-card dark:border-dark-border hover:bg-gray-50 dark:hover:bg-gray-600">
+                        <tr key={rowIndex} className="border-b border-border-subtle hover:bg-hover-bg">
                             {headers.map(header => (
-                                <td key={`${rowIndex}-${header}`} className="px-6 py-4">
+                                <td key={`${rowIndex}-${header}`} className="px-6 py-4 text-text-primary">
                                     {renderCell(row[header])}
                                 </td>
                             ))}

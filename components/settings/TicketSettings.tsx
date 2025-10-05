@@ -38,11 +38,11 @@ const TicketSettings: React.FC = () => {
     return (
         <div>
             <h3 className="text-lg font-semibold">SLA Policies</h3>
-            <p className="text-sm text-gray-500 mb-4">Set the target times for first response and ticket resolution based on priority. This will be used to track team performance.</p>
+            <p className="text-sm text-text-secondary mb-4">Set the target times for first response and ticket resolution based on priority. This will be used to track team performance.</p>
 
             <div className="space-y-4">
                 {(['high', 'medium', 'low'] as const).map(priority => (
-                    <div key={priority} className="p-4 border dark:border-dark-border rounded-lg">
+                    <div key={priority} className="p-4 border border-border-subtle rounded-lg">
                         <h4 className="font-medium capitalize mb-2">{priority} Priority Tickets</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input

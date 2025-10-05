@@ -60,7 +60,7 @@ const DealsPage: React.FC = () => {
     return (
         <PageWrapper>
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Deals Pipeline</h1>
+                <h1 className="text-2xl font-semibold text-text-heading">Deals Pipeline</h1>
                 <Button onClick={handleAddDeal} leftIcon={<Plus size={16} />}>
                     New Deal
                 </Button>

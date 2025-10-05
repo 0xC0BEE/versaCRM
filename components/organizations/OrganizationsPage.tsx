@@ -57,7 +57,7 @@ const OrganizationsPage: React.FC = () => {
     return (
         <PageWrapper>
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Organizations</h1>
+                <h1 className="text-2xl font-semibold text-text-heading">Organizations</h1>
                 <Button onClick={handleAdd} leftIcon={<Plus size={16} />}>
                     New Organization
                 </Button>

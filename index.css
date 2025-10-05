@@ -1,164 +1,97 @@
-/* ==========================================================================
-   VersaCRM - Clay-Elevated Harmony UI Design System
-   Production-Ready 2025 - Predictive, Joyful Relationship Management
-   ========================================================================== */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-/* ========================================================================== 
-   CSS Custom Properties - Clay-Elevated Harmony Theme
-   ========================================================================== */
+/* index.css - Global styles */
 :root {
-  /* Backgrounds & Surfaces */
-  --bg-primary: #f8fafc;
-  --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  --card-bg: #ffffff;
-  --bg-secondary: #f1f5f9;
+  color-scheme: light;
+  /* Transitions */
+  --transition-spring: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* Text Hierarchy */
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-tertiary: #94a3b8;
-  --text-inverse: #ffffff;
+  /* Light Mode Palette */
+  --bg-primary-light: 248 250 252;
+  --card-bg-light: 255 255 255;
+  --text-primary-light: 29 41 59;
+  --text-secondary-light: 100 116 139;
+  --text-heading-light: 29 41 59; /* Same as primary by default */
+  --border-subtle-light: 100 100 100; /* Transparent Black for subtlety */
+  --hover-bg-light: 59 130 246;
+  
+  /* Dark Mode Palette */
+  --bg-primary-dark: 15 23 42;
+  --card-bg-dark: 30 41 55;
+  --text-primary-dark: 241 245 249;
+  --text-secondary-dark: 148 163 184;
+  --text-heading-dark: 241 245 249; /* Same as primary by default */
+  --border-subtle-dark: 200 200 200; /* Transparent White for subtlety */
+  --hover-bg-dark: 59 130 246;
+  
+  /* Accent Colors (Shared) */
+  --primary: 59 130 246;
+  --primary-hover: 37 99 235;
+  --primary-active: 29 78 216;
+  --success: 16 185 129;
+  --success-hover: 5 150 105;
+  --success-glow: 16 185 129;
+  --error: 239 68 68;
+  --error-hover: 220 38 38;
+  --warning: 245 158 11;
+  --warning-hover: 217 119 6;
 
-  /* Brand & Semantic Colors */
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --primary-active: #1d4ed8;
-  --primary-glow: rgba(59, 130, 246, 0.3);
-
-  --success: #10b981;
-  --success-hover: #059669;
-  --success-glow: rgba(16, 185, 129, 0.3);
-
-  --error: #ef4444;
-  --error-hover: #dc2626;
-  --error-glow: rgba(239, 68, 68, 0.3);
-
-  --warning: #f59e0b;
-  --warning-hover: #d97706;
-  --warning-glow: rgba(245, 158, 11, 0.3);
-
-  --info: #06b6d4;
-  --info-hover: #0891b2;
-
-  /* Borders & Dividers */
-  --border-subtle: rgba(148, 163, 184, 0.2);
-  --border-medium: rgba(148, 163, 184, 0.3);
-  --border-strong: rgba(148, 163, 184, 0.5);
-
-  /* Interactive States */
-  --hover-bg: rgba(59, 130, 246, 0.08);
-  --active-bg: rgba(59, 130, 246, 0.12);
-  --focus-ring: rgba(59, 130, 246, 0.5);
-
-  /* Elevation Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.15);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.2);
-  --shadow-inner: inset 0 1px 2px rgba(0, 0, 0, 0.1);
-
-  /* Springy Transitions */
-  --transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  --transition-soft: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
-  /* Spacing Scale (4px base) */
-  --space-xs: 0.25rem;
-  --space-sm: 0.5rem;
-  --space-md: 0.75rem;
-  --space-lg: 1rem;
-  --space-xl: 1.25rem;
-  --space-2xl: 1.5rem;
-
-  /* Border Radius */
-  --radius-micro: 6px;
-  --radius-sm: 8px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-full: 9999px;
-
-  /* Z-Index Scale */
-  --z-dropdown: 1000;
-  --z-sticky: 1020;
-  --z-modal-backdrop: 1030;
-  --z-modal: 1040;
-  --z-toast: 1050;
-  --z-tooltip: 1060;
+  /* Apply Light Mode by Default */
+  --bg-primary: var(--bg-primary-light);
+  --card-bg: var(--card-bg-light);
+  --text-primary: var(--text-primary-light);
+  --text-secondary: var(--text-secondary-light);
+  --text-heading: var(--text-heading-light);
+  --border-subtle: var(--border-subtle-light);
+  --hover-bg: var(--hover-bg-light);
 }
 
-/* Dark Mode Overrides */
 .dark {
-  --bg-primary: #0f172a;
-  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  --card-bg: #1e2937;
-  --bg-secondary: #1e293b;
-  
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-tertiary: #64748b;
-  --text-inverse: #0f172a;
-  
-  --border-subtle: rgba(148, 163, 184, 0.1);
-  --border-medium: rgba(148, 163, 184, 0.2);
-  --border-strong: rgba(148, 163, 184, 0.3);
-  
-  --hover-bg: rgba(59, 130, 246, 0.15);
-  --active-bg: rgba(59, 130, 246, 0.2);
-  
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+  /* Apply Dark Mode when .dark class is present */
+  --bg-primary: var(--bg-primary-dark);
+  --card-bg: var(--card-bg-dark);
+  --text-primary: var(--text-primary-dark);
+  --text-secondary: var(--text-secondary-dark);
+  --text-heading: var(--text-heading-dark);
+  --border-subtle: var(--border-subtle-dark);
+  --hover-bg: var(--hover-bg-dark);
 }
 
-/* Base Reset & Foundation */
-*, *::before, *::after {
+body {
+  background-image: linear-gradient(135deg, rgb(var(--bg-primary)) 0%, color-mix(in srgb, rgb(var(--bg-primary)) 85%, rgb(var(--text-secondary))) 100%);
+}
+
+
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html {
-  font-size: 16px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  scroll-behavior: smooth;
+/* Base body styles are now in index.html for Tailwind compatibility */
+
+/* Ripple effect for buttons */
+.ripple {
+  position: relative;
+  overflow: hidden;
 }
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 15px;
-  font-weight: 400;
-  line-height: 1.5;
-  letter-spacing: 0em;
-  color: var(--text-primary);
-  background: var(--bg-gradient);
-  transition: background 0.3s ease, color 0.3s ease;
-  min-height: 100vh;
+.ripple::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  background-color: rgba(255, 255, 255, 0.4);
+  animation: ripple-animation 400ms linear;
 }
 
-/* Typography Scale - Exact Specs */
-.text-xs { font-size: 11px !important; line-height: 1.3; }
-.text-sm { font-size: 13px !important; line-height: 1.4; }
-.text-base { font-size: 15px !important; line-height: 1.5; }
-.text-lg { font-size: 17px !important; line-height: 1.5; }
-.text-xl { font-size: 22px !important; line-height: 1.4; }
-.text-2xl { font-size: 28px !important; line-height: 1.3; }
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
 
-h1, .h1 { font-size: 36px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; color: var(--text-primary); }
-h2, .h2 { font-size: 28px; font-weight: 600; line-height: 1.3; letter-spacing: -0.02em; color: var(--text-primary); }
-h3, .h3 { font-size: 22px; font-weight: 600; line-height: 1.4; letter-spacing: -0.01em; color: var(--text-primary); }
-h4, .h4 { font-size: 17px; font-weight: 600; line-height: 1.5; color: var(--text-primary); }
-h5, .h5 { font-size: 15px; font-weight: 600; line-height: 1.5; color: var(--text-primary); }
-h6, .h6 { font-size: 13px; font-weight: 600; line-height: 1.5; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-primary); }
-
-/* ==========================================================================
-   CLAY-ELEVATED ANIMATIONS - Predictive & Joyful
-   ========================================================================== */
-
+/* Keyframes defined in tailwind config now, but can be here too */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -170,206 +103,52 @@ h6, .h6 { font-size: 13px; font-weight: 600; line-height: 1.5; text-transform: u
   }
 }
 
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.02);
-    opacity: 0.9;
-  }
-}
-
-@keyframes glow {
-  0%, 100% {
-    box-shadow: 0 0 8px var(--primary-glow);
-  }
-  50% {
-    box-shadow: 0 0 16px var(--primary-glow);
-  }
-}
-
-@keyframes shake {
-  10%, 90% { transform: translate3d(-1px, 0, 0); }
-  20%, 80% { transform: translate3d(2px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-  40%, 60% { transform: translate3d(4px, 0, 0); }
-}
-
-@keyframes ripple {
-  to {
-    transform: scale(4);
-    opacity: 0;
-  }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Animation Utility Classes */
 .animate-fadeInUp {
-  animation: fadeInUp 0.5s var(--transition-soft) forwards;
+  animation: fadeInUp 0.5s var(--transition-spring) forwards;
   animation-fill-mode: backwards;
 }
 
-.animate-pulse-ai {
-  animation: pulse 1s infinite;
-  will-change: transform;
-}
-
-.animate-glow {
-  animation: glow 2s infinite;
-}
-
-.animate-shake {
-  animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* Stagger Delays for Lists */
-.stagger-1 { animation-delay: 0.05s; }
-.stagger-2 { animation-delay: 0.1s; }
-.stagger-3 { animation-delay: 0.15s; }
-.stagger-4 { animation-delay: 0.2s; }
-.stagger-5 { animation-delay: 0.25s; }
-
-/* Tailwind Directives */
+/* Add Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ==========================================================================
-   COMPONENT LAYER - Clay-Elevated Patterns
-   ========================================================================== */
-
 @layer components {
-  /* Living Cards - Hover & 3D Effects */
+  /* Global card hover effect with 3D perspective */
   .card-hover {
-    transition: var(--transition);
-    will-change: transform, box-shadow;
+    perspective: 1000px;
+    transition: var(--transition-spring);
   }
-
   .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-2px) rotateX(2deg);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.15);
   }
-
-  .card-perspective:hover {
-    transform: perspective(1000px) rotateX(2deg);
-  }
-
-  /* Glass Morphism */
-  .glass {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-  }
-
-  .dark .glass {
-    background: rgba(30, 41, 59, 0.7);
-    border: 1px solid rgba(148, 163, 184, 0.1);
-  }
-
-  /* Consistent Focus Ring */
-  .focus-ring {
-    outline: none;
-  }
-
-  .focus-ring:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
-  }
-
-  /* Ripple Effect */
-  .ripple {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .ripple::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-  }
-
-  .ripple:active::after {
-    animation: ripple 0.3s ease-out;
-  }
-
-  /* Skeleton Loading */
-  .skeleton {
-    background: linear-gradient(
-      90deg,
-      var(--bg-secondary) 0%,
-      rgba(148, 163, 184, 0.1) 50%,
-      var(--bg-secondary) 100%
-    );
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s ease-in-out infinite;
-  }
-
-  @keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  /* Custom Scrollbar */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
-    border-radius: var(--radius-micro);
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--border-medium);
-    border-radius: var(--radius-micro);
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--border-strong);
+  .dark .card-hover:hover {
+     box-shadow: 0 10px 24px rgba(0,0,0,0.2);
   }
 }
 
-/* ==========================================================================
-   ACCESSIBILITY - Reduced Motion Support
-   ========================================================================== */
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+/* Custom scrollbar for horizontal tabs */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
 }
 
-/* Print Optimization */
-@media print {
-  body {
-    background: white;
-    color: black;
-  }
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
 
-  .no-print {
-    display: none !important;
-  }
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(var(--text-secondary), 0.25);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(var(--text-secondary), 0.4);
+}
+
+/* Fix for multi-select option colors in dark mode */
+.dark .custom-multiselect option {
+  background-color: rgb(var(--card-bg-dark));
+  color: rgb(var(--text-primary-dark));
+  padding: 4px 8px;
 }

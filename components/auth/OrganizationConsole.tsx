@@ -7,7 +7,7 @@ const OrganizationConsole: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <div className="h-screen flex overflow-hidden bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text">
+        <div className="h-screen flex overflow-hidden bg-bg-primary text-text-primary">
             {/* Mobile sidebar overlay */}
             {sidebarOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)}></div>}
             

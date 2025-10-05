@@ -18,22 +18,22 @@ const MultiSelect: React.FC<MultiSelectProps> = ({ label, options, selectedValue
 
     return (
         <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium text-text-primary">
                 {label}
             </label>
             <select
                 multiple
                 value={selectedValues}
                 onChange={handleSelect}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 dark:text-gray-200 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                className="custom-multiselect mt-1 block w-full p-2 text-sm bg-card-bg text-text-primary border border-border-subtle focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm rounded-input transition-all h-48"
             >
                 {options.map(option => (
-                    <option key={option.value} value={option.value}>
+                    <option key={option.value} value={option.value} className="p-2">
                         {option.label}
                     </option>
                 ))}
             </select>
-            <p className="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple options.</p>
+            <p className="text-xs text-text-secondary mt-1">Hold Ctrl/Cmd to select multiple options.</p>
         </div>
     );
 };

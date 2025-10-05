@@ -2,40 +2,13 @@ import React, { createContext, useContext, useEffect, ReactNode, useMemo, useCal
 import useLocalStorage from '../hooks/useLocalStorage';
 // FIX: Corrected import path for types.
 import { Theme, CustomTheme, ThemeContextType } from '../types';
-import { hexToRgb } from '../utils/color';
+import { hexToRgb, shadeColor } from '../utils/color';
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 interface ThemeProviderProps {
     children: ReactNode;
 }
-
-// Helper function to generate a monochromatic palette from a single base color.
-const generateShades = (hex: string): Record<string, string> | null => {
-    const base = hexToRgb(hex);
-    if (!base) return null;
-
-    const shades: Record<string, string> = {};
-    const factors: Record<string, number> = {
-        '50': 0.95, '100': 0.9, '200': 0.75, '300': 0.6, '400': 0.4,
-        '500': 0, '600': -0.1, '700': -0.2, '800': -0.3, '900': -0.4, '950': -0.5
-    };
-
-    for (const [key, factor] of Object.entries(factors)) {
-        let r, g, b;
-        if (factor > 0) { // Mix with white
-            r = Math.round(base.r + (255 - base.r) * factor);
-            g = Math.round(base.g + (255 - base.g) * factor);
-            b = Math.round(base.b + (255 - base.b) * factor);
-        } else { // Mix with black
-            r = Math.round(base.r * (1 + factor));
-            g = Math.round(base.g * (1 + factor));
-            b = Math.round(base.b * (1 + factor));
-        }
-        shades[key] = `${r} ${g} ${b}`;
-    }
-    return shades;
-};
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const [storedTheme, setStoredTheme] = useLocalStorage<Theme>('theme', 'system');
@@ -58,7 +31,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // Apply custom theme by injecting a style tag
     useEffect(() => {
         const styleId = 'custom-theme-styles';
-        let styleTag = document.getElementById(styleId);
+        let styleTag = document.getElementById(styleId) as HTMLStyleElement | null;
 
         if (activeCustomThemeId) {
             const theme = customThemes.find(t => t.id === activeCustomThemeId);
@@ -69,29 +42,49 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
                     document.head.appendChild(styleTag);
                 }
                 
-                const primaryShades = generateShades(theme.colors.primary);
                 const bgRgb = hexToRgb(theme.colors.background);
                 const cardRgb = hexToRgb(theme.colors.card);
                 const textRgb = hexToRgb(theme.colors.text);
+                const textHeadingRgb = hexToRgb(theme.colors.textHeading);
                 const borderRgb = hexToRgb(theme.colors.border);
+                const primaryRgb = hexToRgb(theme.colors.primary);
+
+                if (!bgRgb || !cardRgb || !textRgb || !borderRgb || !primaryRgb || !textHeadingRgb) {
+                    console.error("Invalid hex color found in custom theme:", theme);
+                    if (styleTag) styleTag.remove(); // Clean up if colors are bad
+                    return;
+                }
                 
+                const primaryHoverRgb = hexToRgb(shadeColor(theme.colors.primary, -15));
+                const primaryActiveRgb = hexToRgb(shadeColor(theme.colors.primary, -25));
+                
+                // Derive secondary text color by mixing text with background
+                const textSecondaryR = Math.round(textRgb.r * 0.7 + bgRgb.r * 0.3);
+                const textSecondaryG = Math.round(textRgb.g * 0.7 + bgRgb.g * 0.3);
+                const textSecondaryB = Math.round(textRgb.b * 0.7 + bgRgb.b * 0.3);
+
+                // Ensure custom themes are always applied over a dark base
+                document.documentElement.classList.remove('light');
                 document.documentElement.classList.add('dark');
                 
-                if (primaryShades && bgRgb && cardRgb && textRgb && borderRgb) {
-                     styleTag.innerHTML = `
-                        :root {
-                            /* FIX: Explicitly override the main accent color variable */
-                            --color-accent-blue: ${primaryShades['500']};
-                            
-                            ${Object.entries(primaryShades).map(([key, value]) => `--color-primary-${key}: ${value};`).join('\n')}
-                            
-                            --color-dark-bg: ${bgRgb.r} ${bgRgb.g} ${bgRgb.b};
-                            --color-dark-card: ${cardRgb.r} ${cardRgb.g} ${cardRgb.b};
-                            --color-dark-text: ${textRgb.r} ${textRgb.g} ${textRgb.b};
-                            --color-dark-border: ${borderRgb.r} ${borderRgb.g} ${borderRgb.b};
-                        }
-                    `;
-                }
+                styleTag.innerHTML = `
+                    .dark {
+                        --bg-primary: ${bgRgb.r} ${bgRgb.g} ${bgRgb.b};
+                        --card-bg: ${cardRgb.r} ${cardRgb.g} ${cardRgb.b};
+                        --text-primary: ${textRgb.r} ${textRgb.g} ${textRgb.b};
+                        --text-heading: ${textHeadingRgb.r} ${textHeadingRgb.g} ${textHeadingRgb.b};
+                        --text-secondary: ${textSecondaryR} ${textSecondaryG} ${textSecondaryB};
+                        --border-subtle: ${borderRgb.r} ${borderRgb.g} ${borderRgb.b};
+                        --hover-bg: ${primaryRgb.r} ${primaryRgb.g} ${primaryRgb.b};
+
+                        --primary: ${primaryRgb.r} ${primaryRgb.g} ${primaryRgb.b};
+                        --primary-hover: ${primaryHoverRgb!.r} ${primaryHoverRgb!.g} ${primaryHoverRgb!.b};
+                        --primary-active: ${primaryActiveRgb!.r} ${primaryActiveRgb!.g} ${primaryActiveRgb!.b};
+                        
+                        /* Legacy variable for charts */
+                        --color-accent-blue: ${primaryRgb.r} ${primaryRgb.g} ${primaryRgb.b};
+                    }
+                `;
             }
         } else {
             // If no custom theme, remove the style tag

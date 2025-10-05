@@ -40,7 +40,7 @@ const TicketsPage: React.FC = () => {
     return (
         <PageWrapper>
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Support Tickets</h1>
+                <h1 className="text-2xl font-semibold text-text-heading">Support Tickets</h1>
                 <Button onClick={handleAdd} leftIcon={<Plus size={16} />}>
                     New Ticket
                 </Button>

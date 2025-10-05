@@ -60,7 +60,7 @@ const FormBuilder: React.FC = () => {
             <div className="flex justify-between items-center mb-4">
                 <div>
                     <h3 className="text-lg font-semibold">Customize Contact Fields</h3>
-                    <p className="text-sm text-gray-500">Add or edit fields for the <span className="font-semibold">{currentIndustry}</span> industry.</p>
+                    <p className="text-sm text-text-secondary">Add or edit fields for the <span className="font-semibold">{currentIndustry}</span> industry.</p>
                 </div>
                 <Button size="sm" onClick={handleAddField} leftIcon={<Plus size={14} />}>
                     Add Field
@@ -69,10 +69,10 @@ const FormBuilder: React.FC = () => {
 
             <div className="space-y-3">
                 {fields.map(field => (
-                    <div key={field.id} className="p-3 border dark:border-dark-border rounded-md bg-gray-50 dark:bg-gray-700/50 flex justify-between items-center">
+                    <div key={field.id} className="p-3 border border-border-subtle rounded-md bg-card-bg/50 flex justify-between items-center">
                         <div>
                             <p className="font-medium">{field.label}</p>
-                            <p className="text-xs text-gray-500 capitalize">{field.type}</p>
+                            <p className="text-xs text-text-secondary capitalize">{field.type}</p>
                         </div>
                         <div className="space-x-2">
                             <Button size="sm" variant="secondary" onClick={() => handleEditField(field)} leftIcon={<Edit size={14} />}>Edit</Button>
@@ -81,7 +81,7 @@ const FormBuilder: React.FC = () => {
                     </div>
                 ))}
                 {fields.length === 0 && (
-                    <p className="text-sm text-gray-500 py-4">No custom fields defined for this industry.</p>
+                    <p className="text-sm text-text-secondary py-4">No custom fields defined for this industry.</p>
                 )}
             </div>
             

@@ -92,7 +92,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
     const pageContent = (
         <>
              {!isTabbedView && (
-                <h1 className="text-2xl font-semibold text-gray-800 dark:text-white mb-6">Reports</h1>
+                <h1 className="text-2xl font-semibold text-text-heading mb-6">Reports</h1>
             )}
             <div className="space-y-6">
                 <Card>
