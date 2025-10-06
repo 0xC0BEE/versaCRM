@@ -1,0 +1,56 @@
+import React from 'react';
+import { Node } from 'reactflow';
+import TriggerConfig from './node_configs/TriggerConfig';
+// FIX: The imported module now has content, resolving the import error.
+import ActionConfig from './node_configs/ActionConfig';
+// FIX: The imported module now has content, resolving the import error.
+import ConditionConfig from './node_configs/ConditionConfig';
+
+interface ConfigPanelProps {
+    selectedNode: Node | null;
+    setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
+}
+
+const ConfigPanel: React.FC<ConfigPanelProps> = ({ selectedNode, setNodes }) => {
+    
+    if (!selectedNode) {
+        return (
+            <div>
+                <h3 className="text-lg font-semibold text-text-heading">Configure Node</h3>
+                <p className="text-sm text-text-secondary mt-4">Select a node on the canvas to configure it.</p>
+            </div>
+        );
+    }
+    
+    const updateNodeData = (data: Record<string, any>) => {
+        setNodes(nds => nds.map(node => {
+            if (node.id === selectedNode.id) {
+                // Create a new data object to ensure reactflow detects the change
+                node.data = { ...node.data, ...data };
+            }
+            return node;
+        }));
+    }
+
+    const renderConfig = () => {
+        switch (selectedNode.type) {
+            case 'trigger':
+                return <TriggerConfig node={selectedNode} updateNodeData={updateNodeData} />;
+            case 'action':
+                return <ActionConfig node={selectedNode} updateNodeData={updateNodeData} />;
+            case 'condition':
+                return <ConditionConfig node={selectedNode} updateNodeData={updateNodeData} />;
+            default:
+                return <p className="text-sm text-text-secondary">Unknown node type selected.</p>;
+        }
+    };
+
+    return (
+        <div>
+            <h3 className="text-lg font-semibold text-text-heading mb-4">Configure: {selectedNode.data.label}</h3>
+            {renderConfig()}
+        </div>
+    );
+};
+
+export default ConfigPanel;

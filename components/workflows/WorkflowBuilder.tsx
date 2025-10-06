@@ -20,6 +20,7 @@ interface WorkflowBuilderProps {
 const triggerTypes: { value: WorkflowTrigger['type'], label: string }[] = [
     { value: 'contactCreated', label: 'Contact is Created' },
     { value: 'contactStatusChanged', label: 'Contact Status Changes' },
+    { value: 'dealCreated', label: 'Deal is Created' },
     { value: 'dealStageChanged', label: 'Deal Stage Changes' },
     { value: 'ticketCreated', label: 'Ticket is Created' },
     { value: 'ticketStatusChanged', label: 'Ticket Status Changes' },

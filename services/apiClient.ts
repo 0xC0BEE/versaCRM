@@ -1,750 +1,462 @@
-// FIX: Import the mutable `mockDataStore` to allow modification of mock data arrays, resolving read-only assignment errors.
-import { mockDataStore as mock } from './mockData';
-import { industryConfigs } from '../config/industryConfig';
+// services/apiClient.ts
 import {
-  User, Organization, AnyContact, Product, Supplier, Warehouse, CalendarEvent, Task, Interaction, Deal, DealStage,
-  EmailTemplate, Workflow, Campaign, Ticket, CustomReport, DashboardWidget, Document, OrganizationSettings,
-  Industry, ReportType, AnyReportData, ContactStatus, CustomField, TicketReply, Order, Transaction, IndustryConfig
+  MOCK_USERS, MOCK_ORGANIZATIONS, MOCK_CONTACTS, MOCK_PRODUCTS, MOCK_SUPPLIERS, MOCK_WAREHOUSES,
+  MOCK_CALENDAR_EVENTS, MOCK_TASKS, MOCK_EMAIL_TEMPLATES, MOCK_WORKFLOWS, MOCK_ADVANCED_WORKFLOWS,
+  MOCK_CAMPAIGNS, MOCK_TICKETS, MOCK_CUSTOM_REPORTS, MOCK_DASHBOARD_WIDGETS, MOCK_ORG_SETTINGS,
+  MOCK_DEALS, MOCK_DEAL_STAGES, MOCK_NOTIFICATIONS
+} from './mockData';
+import {
+  User, Organization, AnyContact, Product, Supplier, Warehouse, CalendarEvent, Task, EmailTemplate,
+  Workflow, Campaign, Ticket, CustomReport, SLAPolicy, DashboardWidget, Deal, DealStage, Industry,
+  IndustryConfig, AdvancedWorkflow, TicketReply, Interaction, ContactStatus, Order, Transaction
 } from '../types';
+import { industryConfigs } from '../config/industryConfig';
 import { generateReportData, generateDashboardData } from './reportGenerator';
-// FIX: Switched to subDays as sub is not an exported member.
-import { subDays } from 'date-fns';
 import { checkAndTriggerWorkflows } from './workflowService';
-import { replacePlaceholders } from '../utils/textUtils';
+import { subDays } from 'date-fns';
 
-// Simulate network delay
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+const LATENCY = 500; // ms
+
+const simulateNetwork = <T>(data: T): Promise<T> => {
+  return new Promise(resolve => {
+    setTimeout(() => resolve(JSON.parse(JSON.stringify(data))), LATENCY);
+  });
+};
 
 const apiClient = {
-  // AUTH
-  async login(email: string): Promise<User | null> {
-    await delay(500);
-    const user = mock.users.find(u => u.email === email);
-    return user || null;
+  // --- Auth ---
+  login: (email: string): Promise<User | null> => simulateNetwork(MOCK_USERS.find(u => u.email === email) || null),
+
+  // --- Config ---
+  getIndustryConfig: (industry: Industry): Promise<IndustryConfig> => simulateNetwork(industryConfigs[industry]),
+  updateCustomFields: (industry: Industry, fields: any[]): Promise<IndustryConfig> => {
+      industryConfigs[industry].customFields = fields;
+      return simulateNetwork(industryConfigs[industry]);
   },
 
-  // CONFIG
-  async getIndustryConfig(industry: Industry): Promise<IndustryConfig> {
-    await delay(200);
-    return industryConfigs[industry];
+  // --- Organizations ---
+  getOrganizations: (): Promise<Organization[]> => simulateNetwork(MOCK_ORGANIZATIONS),
+  createOrganization: (orgData: Omit<Organization, 'id' | 'createdAt'>): Promise<Organization> => {
+    const newOrg: Organization = { ...orgData, id: `org_${Date.now()}`, createdAt: new Date().toISOString() };
+    MOCK_ORGANIZATIONS.push(newOrg);
+    return simulateNetwork(newOrg);
+  },
+  updateOrganization: (orgData: Organization): Promise<Organization> => {
+    const index = MOCK_ORGANIZATIONS.findIndex(o => o.id === orgData.id);
+    if (index > -1) MOCK_ORGANIZATIONS[index] = orgData;
+    return simulateNetwork(orgData);
+  },
+  deleteOrganization: (orgId: string): Promise<void> => {
+    const index = MOCK_ORGANIZATIONS.findIndex(o => o.id === orgId);
+    if (index > -1) MOCK_ORGANIZATIONS.splice(index, 1);
+    return simulateNetwork(undefined);
   },
 
-  // ORGANIZATIONS
-  async getOrganizations(): Promise<Organization[]> {
-    await delay(500);
-    return mock.organizations;
+  // --- Contacts ---
+  getContacts: (organizationId: string): Promise<AnyContact[]> => simulateNetwork(MOCK_CONTACTS.filter(c => c.organizationId === organizationId)),
+  getContactById: (contactId: string): Promise<AnyContact | null> => simulateNetwork(MOCK_CONTACTS.find(c => c.id === contactId) || null),
+  createContact: (contactData: Omit<AnyContact, 'id'>): Promise<AnyContact> => {
+    const newContact: AnyContact = { ...contactData, id: `contact_${Date.now()}`, createdAt: new Date().toISOString() };
+    MOCK_CONTACTS.push(newContact);
+    checkAndTriggerWorkflows('contactCreated', { contact: newContact });
+    return simulateNetwork(newContact);
   },
-  async createOrganization(orgData: Omit<Organization, 'id' | 'createdAt'>): Promise<Organization> {
-    await delay(500);
-    const newOrg: Organization = {
-      ...orgData,
-      id: `org_${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
-    mock.organizations.push(newOrg);
-    return newOrg;
-  },
-  async updateOrganization(orgData: Organization): Promise<Organization> {
-    await delay(500);
-    const index = mock.organizations.findIndex(o => o.id === orgData.id);
-    if (index !== -1) {
-      mock.organizations[index] = orgData;
+  updateContact: (contactData: AnyContact): Promise<AnyContact> => {
+    const index = MOCK_CONTACTS.findIndex(c => c.id === contactData.id);
+    if (index > -1) {
+        const oldContact = MOCK_CONTACTS[index];
+        MOCK_CONTACTS[index] = contactData;
+        if(oldContact.status !== contactData.status) {
+            checkAndTriggerWorkflows('contactStatusChanged', { contact: contactData, oldContact });
+        }
     }
-    return orgData;
+    return simulateNetwork(contactData);
   },
-  async deleteOrganization(orgId: string): Promise<string> {
-    await delay(500);
-    const index = mock.organizations.findIndex(o => o.id === orgId);
-    if (index !== -1) {
-      mock.organizations.splice(index, 1);
-    }
-    return orgId;
+  deleteContact: (contactId: string): Promise<void> => {
+    const index = MOCK_CONTACTS.findIndex(c => c.id === contactId);
+    if (index > -1) MOCK_CONTACTS.splice(index, 1);
+    return simulateNetwork(undefined);
   },
-
-  // CONTACTS
-  async getContacts(organizationId: string): Promise<AnyContact[]> {
-    await delay(800);
-    return mock.contacts.filter(c => c.organizationId === organizationId);
+   bulkDeleteContacts: (contactIds: string[]): Promise<void> => {
+    contactIds.forEach(id => {
+        const index = MOCK_CONTACTS.findIndex(c => c.id === id);
+        if (index > -1) MOCK_CONTACTS.splice(index, 1);
+    });
+    return simulateNetwork(undefined);
   },
-  async getContactById(contactId: string): Promise<AnyContact | null> {
-    await delay(300);
-    return mock.contacts.find(c => c.id === contactId) || null;
-  },
-  async createContact(contactData: Omit<AnyContact, 'id'>): Promise<AnyContact> {
-    await delay(500);
-    const newContact: AnyContact = {
-      ...contactData,
-      id: `contact_${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
-    mock.contacts.push(newContact);
-    
-    // Trigger workflow
-    checkAndTriggerWorkflows({
-        event: 'contactCreated',
-        contact: newContact,
-        dependencies: {
-            workflows: mock.workflows,
-            emailTemplates: mock.emailTemplates,
-            createTask: this.createTask.bind(this),
-            createInteraction: this.createInteraction.bind(this),
-            updateContact: this.updateContact.bind(this),
+  bulkUpdateContactStatus: ({ ids, status }: { ids: string[]; status: ContactStatus }): Promise<void> => {
+    ids.forEach(id => {
+        const index = MOCK_CONTACTS.findIndex(c => c.id === id);
+        if (index > -1) {
+            MOCK_CONTACTS[index].status = status;
         }
     });
-
-    return newContact;
+    return simulateNetwork(undefined);
   },
-  async updateContact(contactData: AnyContact): Promise<AnyContact> {
-    await delay(500);
-    const index = mock.contacts.findIndex(c => c.id === contactData.id);
-    const oldContact = index !== -1 ? { ...mock.contacts[index] } : null;
-    
-    if (index !== -1) {
-      mock.contacts[index] = contactData;
+
+  // --- Interactions ---
+  getAllInteractions: (organizationId: string): Promise<Interaction[]> => {
+    const interactions = MOCK_CONTACTS.filter(c => c.organizationId === organizationId).flatMap(c => c.interactions || []);
+    return simulateNetwork(interactions);
+  },
+  getInteractionsByContact: (contactId: string): Promise<Interaction[]> => {
+    const contact = MOCK_CONTACTS.find(c => c.id === contactId);
+    return simulateNetwork(contact?.interactions || []);
+  },
+  createInteraction: (interactionData: Omit<Interaction, 'id'>): Promise<Interaction> => {
+    const newInteraction: Interaction = { ...interactionData, id: `int_${Date.now()}`};
+    const contactIndex = MOCK_CONTACTS.findIndex(c => c.id === interactionData.contactId);
+    if (contactIndex > -1) {
+        if (!MOCK_CONTACTS[contactIndex].interactions) MOCK_CONTACTS[contactIndex].interactions = [];
+        MOCK_CONTACTS[contactIndex].interactions!.push(newInteraction);
     }
+    return simulateNetwork(newInteraction);
+  },
 
-    if (oldContact && oldContact.status !== contactData.status) {
-        checkAndTriggerWorkflows({
-            event: 'contactStatusChanged',
-            contact: contactData,
-            from: oldContact.status,
-            to: contactData.status,
-            dependencies: {
-                workflows: mock.workflows,
-                emailTemplates: mock.emailTemplates,
-                createTask: this.createTask.bind(this),
-                createInteraction: this.createInteraction.bind(this),
-                updateContact: this.updateContact.bind(this),
-            }
-        });
+  // --- Deals ---
+  getDeals: (organizationId: string): Promise<Deal[]> => simulateNetwork(MOCK_DEALS.filter(d => d.organizationId === organizationId)),
+  getDealStages: (organizationId: string): Promise<DealStage[]> => simulateNetwork(MOCK_DEAL_STAGES.filter(ds => ds.organizationId === organizationId)),
+  createDeal: (dealData: Omit<Deal, 'id' | 'createdAt'>): Promise<Deal> => {
+    const newDeal: Deal = { ...dealData, id: `deal_${Date.now()}`, createdAt: new Date().toISOString() };
+    MOCK_DEALS.push(newDeal);
+    const contact = MOCK_CONTACTS.find(c => c.id === newDeal.contactId);
+    if (contact) {
+        checkAndTriggerWorkflows('dealCreated', { contact, deal: newDeal });
     }
-
-    return contactData;
+    return simulateNetwork(newDeal);
   },
-  async deleteContact(contactId: string): Promise<string> {
-    await delay(500);
-    const index = mock.contacts.findIndex(c => c.id === contactId);
-    if (index !== -1) {
-      mock.contacts.splice(index, 1);
-    }
-    return contactId;
-  },
-  async bulkDeleteContacts(ids: string[], organizationId: string): Promise<string[]> {
-      await delay(1000);
-      const idsToDelete = new Set(ids);
-      for (let i = mock.contacts.length - 1; i >= 0; i--) {
-        const contact = mock.contacts[i];
-        if (idsToDelete.has(contact.id) && contact.organizationId === organizationId) {
-            mock.contacts.splice(i, 1);
-        }
-      }
-      return ids;
-  },
-  async bulkUpdateContactStatus(ids: string[], status: ContactStatus, organizationId: string): Promise<AnyContact[]> {
-      await delay(1000);
-      const updatedContacts: AnyContact[] = [];
-      ids.forEach(id => {
-          const index = mock.contacts.findIndex(c => c.id === id && c.organizationId === organizationId);
-          if (index !== -1) {
-              const updated = { ...mock.contacts[index], status };
-              mock.contacts[index] = updated;
-              updatedContacts.push(updated);
-          }
-      });
-      return updatedContacts;
-  },
-
-  // INTERACTIONS
-  async getInteractionsByContact(contactId: string): Promise<Interaction[]> {
-    await delay(400);
-    return mock.interactions.filter(i => i.contactId === contactId);
-  },
-  async getAllInteractions(organizationId: string): Promise<Interaction[]> {
-    await delay(600);
-    return mock.interactions.filter(i => i.organizationId === organizationId);
-  },
-  async createInteraction(interactionData: Omit<Interaction, 'id'>): Promise<Interaction> {
-    await delay(300);
-    const newInteraction: Interaction = {
-      ...interactionData,
-      id: `int_${Date.now()}`,
-    };
-    mock.interactions.push(newInteraction);
-    // Also add to contact object
-    const contactIndex = mock.contacts.findIndex(c => c.id === newInteraction.contactId);
-    if (contactIndex !== -1) {
-      const contact = mock.contacts[contactIndex];
-      contact.interactions = [...(contact.interactions || []), newInteraction];
-    }
-    return newInteraction;
-  },
-
-  // TRANSACTIONS (part of Contact)
-  async createTransaction({ contactId, data }: { contactId: string, data: Omit<Transaction, 'id'> }): Promise<AnyContact> {
-    await delay(400);
-    const newTransaction: Transaction = {
-      ...data,
-      id: `trans_${Date.now()}`,
-    };
-    const contactIndex = mock.contacts.findIndex(c => c.id === contactId);
-    if (contactIndex === -1) throw new Error("Contact not found");
-
-    const updatedContact = mock.contacts[contactIndex];
-    updatedContact.transactions = [...(updatedContact.transactions || []), newTransaction];
-    
-    return updatedContact;
-  },
-
-  // ORDERS (part of Contact)
-  async createOrder(orderData: Omit<Order, 'id'>): Promise<AnyContact> {
-    await delay(500);
-    const newOrder: Order = {
-      ...orderData,
-      id: `order_${Date.now()}`,
-    };
-    const contactIndex = mock.contacts.findIndex(c => c.id === orderData.contactId);
-    if (contactIndex === -1) throw new Error("Contact not found");
-
-    const updatedContact = mock.contacts[contactIndex];
-    updatedContact.orders = [...(updatedContact.orders || []), newOrder];
-    
-    return updatedContact;
-  },
-  async updateOrder(orderData: Order): Promise<AnyContact> {
-    await delay(500);
-    const contactIndex = mock.contacts.findIndex(c => c.id === orderData.contactId);
-    if (contactIndex === -1) throw new Error("Contact not found");
-    
-    const updatedContact = mock.contacts[contactIndex];
-    const orderIndex = (updatedContact.orders || []).findIndex(o => o.id === orderData.id);
-    if (orderIndex !== -1) {
-        updatedContact.orders![orderIndex] = orderData;
-    }
-    
-    return updatedContact;
-  },
-  async deleteOrder({ contactId, orderId }: { contactId: string, orderId: string }): Promise<AnyContact> {
-    await delay(500);
-    const contactIndex = mock.contacts.findIndex(c => c.id === contactId);
-    if (contactIndex === -1) throw new Error("Contact not found");
-    
-    const updatedContact = mock.contacts[contactIndex];
-    if (updatedContact.orders) {
-        updatedContact.orders = updatedContact.orders.filter(o => o.id !== orderId);
-    }
-
-    return updatedContact;
-  },
-
-  // INVENTORY
-  async getProducts(organizationId: string): Promise<Product[]> {
-    await delay(600);
-    return mock.products.filter(p => p.organizationId === organizationId);
-  },
-  async createProduct(productData: Omit<Product, 'id'>): Promise<Product> {
-    await delay(500);
-    const newProduct: Product = {
-      ...productData,
-      id: `prod_${Date.now()}`,
-    };
-    mock.products.push(newProduct);
-    return newProduct;
-  },
-  async updateProduct(productData: Product): Promise<Product> {
-    await delay(500);
-    const index = mock.products.findIndex(p => p.id === productData.id);
-    if (index !== -1) {
-      mock.products[index] = productData;
-    }
-    return productData;
-  },
-  async deleteProduct(productId: string): Promise<string> {
-    await delay(500);
-    const index = mock.products.findIndex(p => p.id === productId);
-    if (index !== -1) {
-      mock.products.splice(index, 1);
-    }
-    return productId;
-  },
-  async getSuppliers(organizationId: string): Promise<Supplier[]> {
-    await delay(400);
-    return mock.suppliers.filter(s => s.organizationId === organizationId);
-  },
-  async getWarehouses(organizationId: string): Promise<Warehouse[]> {
-    await delay(400);
-    return mock.warehouses.filter(w => w.organizationId === organizationId);
-  },
-
-  // CALENDAR
-  async getCalendarEvents(organizationId: string): Promise<CalendarEvent[]> {
-    await delay(700);
-    return mock.calendarEvents.filter(e => e.organizationId === organizationId);
-  },
-  async createCalendarEvent(eventData: Omit<CalendarEvent, 'id'>): Promise<CalendarEvent> {
-    await delay(400);
-    const newEvent: CalendarEvent = {
-      ...eventData,
-      id: `cal_${Date.now()}`,
-    };
-    mock.calendarEvents.push(newEvent);
-    return newEvent;
-  },
-  async updateCalendarEvent(eventData: CalendarEvent): Promise<CalendarEvent> {
-    await delay(400);
-    const index = mock.calendarEvents.findIndex(e => e.id === eventData.id);
-    if (index !== -1) {
-      mock.calendarEvents[index] = eventData;
-    }
-    return eventData;
-  },
-
-  // TASKS
-  async getTasks(organizationId: string): Promise<Task[]> {
-    await delay(500);
-    return mock.tasks.filter(t => t.organizationId === organizationId);
-  },
-  async createTask(taskData: Omit<Task, 'id' | 'isCompleted'>): Promise<Task> {
-    await delay(300);
-    const newTask: Task = {
-      ...taskData,
-      id: `task_${Date.now()}`,
-      isCompleted: false,
-    };
-    mock.tasks.push(newTask);
-    return newTask;
-  },
-  async updateTask(taskData: Task): Promise<Task> {
-    await delay(200);
-    const index = mock.tasks.findIndex(t => t.id === taskData.id);
-    if (index !== -1) {
-      mock.tasks[index] = taskData;
-    }
-    return taskData;
-  },
-  async deleteTask(taskId: string): Promise<string> {
-    await delay(200);
-    const index = mock.tasks.findIndex(t => t.id === taskId);
-    if (index !== -1) {
-      mock.tasks.splice(index, 1);
-    }
-    return taskId;
-  },
-
-  // TEAM
-  async getTeamMembers(organizationId: string): Promise<User[]> {
-    await delay(400);
-    return mock.users.filter(u => u.organizationId === organizationId && (u.role === 'Organization Admin' || u.role === 'Team Member'));
-  },
-  async createTeamMember(memberData: Omit<User, 'id'>): Promise<User> {
-    await delay(500);
-    const newUser: User = {
-      ...memberData,
-      id: `user_${Date.now()}`,
-    };
-    mock.users.push(newUser);
-    return newUser;
-  },
-  async updateTeamMember(memberData: User): Promise<User> {
-    await delay(500);
-    const index = mock.users.findIndex(u => u.id === memberData.id);
-    if (index !== -1) {
-      mock.users[index] = memberData;
-    }
-    return memberData;
-  },
-
-  // DEALS
-  async getDealStages(organizationId: string): Promise<DealStage[]> {
-      await delay(300);
-      return mock.dealStages.filter(ds => ds.organizationId === organizationId);
-  },
-  async getDeals(organizationId: string): Promise<Deal[]> {
-      await delay(600);
-      return mock.deals.filter(d => d.organizationId === organizationId);
-  },
-  async createDeal(dealData: Omit<Deal, 'id' | 'createdAt'>): Promise<Deal> {
-      await delay(500);
-      const newDeal: Deal = {
-          ...dealData,
-          id: `deal_${Date.now()}`,
-          createdAt: new Date().toISOString(),
-      };
-      mock.deals.push(newDeal);
-      return newDeal;
-  },
-  async updateDeal(dealData: Deal): Promise<Deal> {
-      await delay(200);
-      const index = mock.deals.findIndex(d => d.id === dealData.id);
-      const oldDeal = index !== -1 ? { ...mock.deals[index] } : null;
-      
-      if (index !== -1) {
-          mock.deals[index] = dealData;
-      }
-
-      if (oldDeal && oldDeal.stageId !== dealData.stageId) {
-          const contact = mock.contacts.find(c => c.id === dealData.contactId);
-          if (contact) {
-              checkAndTriggerWorkflows({
-                  event: 'dealStageChanged',
-                  contact,
-                  deal: dealData,
-                  from: oldDeal.stageId,
-                  to: dealData.stageId,
-                  dependencies: {
-                      workflows: mock.workflows,
-                      emailTemplates: mock.emailTemplates,
-                      createTask: this.createTask.bind(this),
-                      createInteraction: this.createInteraction.bind(this),
-                      updateContact: this.updateContact.bind(this),
-                  }
-              });
-          }
-      }
-
-      return dealData;
-  },
-  async deleteDeal(dealId: string): Promise<string> {
-      await delay(500);
-      const index = mock.deals.findIndex(d => d.id === dealId);
-      if (index !== -1) {
-        mock.deals.splice(index, 1);
-      }
-      return dealId;
-  },
-
-  // EMAIL TEMPLATES & WORKFLOWS
-  async getEmailTemplates(organizationId: string): Promise<EmailTemplate[]> {
-      await delay(300);
-      return mock.emailTemplates.filter(et => et.organizationId === organizationId);
-  },
-  async createEmailTemplate(templateData: Omit<EmailTemplate, 'id'>): Promise<EmailTemplate> {
-      await delay(400);
-      const newTemplate: EmailTemplate = { ...templateData, id: `et_${Date.now()}` };
-      mock.emailTemplates.push(newTemplate);
-      return newTemplate;
-  },
-  async updateEmailTemplate(templateData: EmailTemplate): Promise<EmailTemplate> {
-      await delay(400);
-      const index = mock.emailTemplates.findIndex(t => t.id === templateData.id);
-      if (index !== -1) {
-        mock.emailTemplates[index] = templateData;
-      }
-      return templateData;
-  },
-  async deleteEmailTemplate(templateId: string): Promise<string> {
-      await delay(400);
-      const index = mock.emailTemplates.findIndex(t => t.id === templateId);
-      if (index !== -1) {
-        mock.emailTemplates.splice(index, 1);
-      }
-      return templateId;
-  },
-  async getWorkflows(organizationId: string): Promise<Workflow[]> {
-      await delay(300);
-      return mock.workflows.filter(wf => wf.organizationId === organizationId);
-  },
-  async createWorkflow(workflowData: Omit<Workflow, 'id'>): Promise<Workflow> {
-      await delay(500);
-      const newWorkflow: Workflow = { ...workflowData, id: `wf_${Date.now()}` };
-      mock.workflows.push(newWorkflow);
-      return newWorkflow;
-  },
-  async updateWorkflow(workflowData: Workflow): Promise<Workflow> {
-      await delay(500);
-      const index = mock.workflows.findIndex(wf => wf.id === workflowData.id);
-      if (index !== -1) {
-        mock.workflows[index] = workflowData;
-      }
-      return workflowData;
-  },
-
-  // CAMPAIGNS
-  async getCampaigns(organizationId: string): Promise<Campaign[]> {
-      await delay(400);
-      return mock.campaigns.filter(c => c.organizationId === organizationId);
-  },
-  async createCampaign(campaignData: Omit<Campaign, 'id'>): Promise<Campaign> {
-      await delay(500);
-      const newCampaign: Campaign = { ...campaignData, id: `camp_${Date.now()}` };
-      mock.campaigns.push(newCampaign);
-      return newCampaign;
-  },
-  async updateCampaign(campaignData: Campaign): Promise<Campaign> {
-      await delay(500);
-      const index = mock.campaigns.findIndex(c => c.id === campaignData.id);
-      if (index !== -1) {
-        mock.campaigns[index] = campaignData;
-      }
-      return campaignData;
-  },
-  async launchCampaign(campaignId: string): Promise<Campaign> {
-    await delay(1500);
-    const campaignIndex = mock.campaigns.findIndex(c => c.id === campaignId);
-    if (campaignIndex === -1) throw new Error("Campaign not found");
-
-    const campaign = mock.campaigns[campaignIndex];
-    if (campaign.status !== 'Draft') throw new Error("Only draft campaigns can be launched.");
-
-    const targetContacts = mock.contacts.filter(c =>
-        c.organizationId === campaign.organizationId &&
-        campaign.targetAudience.status.includes(c.status)
-    );
-
-    campaign.status = 'Active';
-    campaign.stats.recipients = targetContacts.length;
-
-    const emailSteps = campaign.steps.filter(step => step.type === 'sendEmail');
-    for (const step of emailSteps) {
-        const template = mock.emailTemplates.find(t => t.id === step.emailTemplateId);
-        if (template) {
-            for (const contact of targetContacts) {
-                const body = replacePlaceholders(template.body, contact).replace('{{userName}}', 'Campaign Automator');
-                await this.createInteraction({
-                    contactId: contact.id,
-                    organizationId: contact.organizationId,
-                    userId: 'system-campaign',
-                    type: 'Email',
-                    date: new Date().toISOString(),
-                    notes: `(Automated Campaign: ${campaign.name})\nSubject: ${replacePlaceholders(template.subject, contact)}\n\n${body}`,
-                });
+  updateDeal: (dealData: Deal): Promise<Deal> => {
+    const index = MOCK_DEALS.findIndex(d => d.id === dealData.id);
+    if (index > -1) {
+        const oldDeal = MOCK_DEALS[index];
+        MOCK_DEALS[index] = dealData;
+        if (oldDeal.stageId !== dealData.stageId) {
+            const contact = MOCK_CONTACTS.find(c => c.id === dealData.contactId);
+            if (contact) {
+                checkAndTriggerWorkflows('dealStageChanged', { contact, deal: dealData, oldDeal });
             }
         }
     }
-    
-    campaign.stats.sent = targetContacts.length * emailSteps.length;
-    campaign.stats.opened = Math.floor(campaign.stats.sent * (Math.random() * 0.3 + 0.2)); // 20-50%
-    campaign.stats.clicked = Math.floor(campaign.stats.opened * (Math.random() * 0.2 + 0.05)); // 5-25% of opens
-
-    campaign.status = 'Completed';
-    
-    return campaign;
+    return simulateNetwork(dealData);
+  },
+  deleteDeal: (dealId: string): Promise<void> => {
+    const index = MOCK_DEALS.findIndex(d => d.id === dealId);
+    if (index > -1) MOCK_DEALS.splice(index, 1);
+    return simulateNetwork(undefined);
   },
 
-  // TICKETS
-  async getTickets(organizationId: string): Promise<Ticket[]> {
-      await delay(700);
-      return mock.tickets.filter(t => t.organizationId === organizationId);
+  // --- Email Templates ---
+  getEmailTemplates: (organizationId: string): Promise<EmailTemplate[]> => simulateNetwork(MOCK_EMAIL_TEMPLATES.filter(t => t.organizationId === organizationId)),
+  createEmailTemplate: (templateData: Omit<EmailTemplate, 'id'>): Promise<EmailTemplate> => {
+    const newTemplate: EmailTemplate = { ...templateData, id: `et_${Date.now()}` };
+    MOCK_EMAIL_TEMPLATES.push(newTemplate);
+    return simulateNetwork(newTemplate);
   },
-  async createTicket(ticketData: Omit<Ticket, 'id'|'createdAt'|'updatedAt'|'replies'>): Promise<Ticket> {
-      await delay(500);
-      const newTicket: Ticket = {
-          ...ticketData,
-          id: `ticket_${Date.now()}`,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          replies: [],
-      };
-      mock.tickets.push(newTicket);
-
-      const contact = mock.contacts.find(c => c.id === newTicket.contactId);
-      if (contact) {
-          checkAndTriggerWorkflows({
-              event: 'ticketCreated',
-              contact,
-              ticket: newTicket,
-              dependencies: {
-                  workflows: mock.workflows,
-                  emailTemplates: mock.emailTemplates,
-                  createTask: this.createTask.bind(this),
-                  createInteraction: this.createInteraction.bind(this),
-                  updateContact: this.updateContact.bind(this),
-              }
-          });
-      }
-
-      return newTicket;
+  updateEmailTemplate: (templateData: EmailTemplate): Promise<EmailTemplate> => {
+    const index = MOCK_EMAIL_TEMPLATES.findIndex(t => t.id === templateData.id);
+    if (index > -1) MOCK_EMAIL_TEMPLATES[index] = templateData;
+    return simulateNetwork(templateData);
   },
-  async updateTicket(ticketData: Ticket): Promise<Ticket> {
-      await delay(300);
-      const index = mock.tickets.findIndex(t => t.id === ticketData.id);
-      const oldTicket = index !== -1 ? { ...mock.tickets[index] } : null;
-      const updatedTicket = { ...ticketData, updatedAt: new Date().toISOString() };
-      
-      if (index !== -1) {
-        mock.tickets[index] = updatedTicket;
-      }
-
-      if (oldTicket && oldTicket.status !== updatedTicket.status) {
-        const contact = mock.contacts.find(c => c.id === updatedTicket.contactId);
-        if (contact) {
-            checkAndTriggerWorkflows({
-                event: 'ticketStatusChanged',
-                contact,
-                ticket: updatedTicket,
-                from: oldTicket.status,
-                to: updatedTicket.status,
-                dependencies: {
-                    workflows: mock.workflows,
-                    emailTemplates: mock.emailTemplates,
-                    createTask: this.createTask.bind(this),
-                    createInteraction: this.createInteraction.bind(this),
-                    updateContact: this.updateContact.bind(this),
-                }
-            });
-        }
-    }
-
-      return updatedTicket;
-  },
-  async addTicketReply(ticketId: string, reply: Omit<TicketReply, 'id' | 'timestamp'>): Promise<Ticket> {
-      await delay(300);
-      const newReply: TicketReply = {
-          ...reply,
-          id: `reply_${Date.now()}`,
-          timestamp: new Date().toISOString(),
-      };
-      const ticketIndex = mock.tickets.findIndex(t => t.id === ticketId);
-      if (ticketIndex === -1) throw new Error("Ticket not found");
-
-      const updatedTicket = mock.tickets[ticketIndex];
-      updatedTicket.replies.push(newReply);
-      updatedTicket.updatedAt = new Date().toISOString();
-      
-      return updatedTicket;
+  deleteEmailTemplate: (templateId: string): Promise<void> => {
+    const index = MOCK_EMAIL_TEMPLATES.findIndex(t => t.id === templateId);
+    if (index > -1) MOCK_EMAIL_TEMPLATES.splice(index, 1);
+    return simulateNetwork(undefined);
   },
 
-  // REPORTS & DASHBOARD
-  async getReportData(reportType: ReportType, dateRange: { start: Date; end: Date }, organizationId: string): Promise<AnyReportData> {
-      await delay(1200);
-      const dataSources = {
-          contacts: mock.contacts.filter(c => c.organizationId === organizationId),
-          products: mock.products.filter(p => p.organizationId === organizationId),
-          team: mock.users.filter(u => u.organizationId === organizationId),
-          tasks: mock.tasks.filter(t => t.organizationId === organizationId),
-          deals: mock.deals.filter(d => d.organizationId === organizationId),
-          dealStages: mock.dealStages.filter(ds => ds.organizationId === organizationId),
-      };
-      return generateReportData(reportType, dateRange, dataSources);
+  // --- Tasks ---
+  getTasks: (organizationId: string): Promise<Task[]> => simulateNetwork(MOCK_TASKS.filter(t => t.organizationId === organizationId)),
+  createTask: (taskData: Omit<Task, 'id' | 'isCompleted'>): Promise<Task> => {
+    const newTask: Task = { ...taskData, id: `task_${Date.now()}`, isCompleted: false };
+    MOCK_TASKS.push(newTask);
+    return simulateNetwork(newTask);
   },
-  async getDashboardData(organizationId: string) {
-      await delay(1000);
-// FIX: Use subDays for date calculations.
-      const dateRange = { start: subDays(new Date(), 30), end: new Date() };
-      const contacts = mock.contacts.filter(c => c.organizationId === organizationId);
-      const interactions = mock.interactions.filter(i => i.organizationId === organizationId);
-      return generateDashboardData(dateRange, contacts, interactions);
+  updateTask: (taskData: Task): Promise<Task> => {
+    const index = MOCK_TASKS.findIndex(t => t.id === taskData.id);
+    if (index > -1) MOCK_TASKS[index] = taskData;
+    return simulateNetwork(taskData);
   },
-  async getCustomReports(organizationId: string): Promise<CustomReport[]> {
-      await delay(400);
-      return mock.customReports.filter(cr => cr.organizationId === organizationId);
-  },
-  async createCustomReport(reportData: Omit<CustomReport, 'id'>): Promise<CustomReport> {
-      await delay(500);
-      const newReport: CustomReport = { ...reportData, id: `cr_${Date.now()}` };
-      mock.customReports.push(newReport);
-      return newReport;
-  },
-  async deleteCustomReport(reportId: string): Promise<string> {
-      await delay(500);
-      const reportIndex = mock.customReports.findIndex(cr => cr.id === reportId);
-      if (reportIndex !== -1) {
-        mock.customReports.splice(reportIndex, 1);
-      }
-      // Also remove any widgets associated with it
-      for (let i = mock.dashboardWidgets.length - 1; i >= 0; i--) {
-          if (mock.dashboardWidgets[i].reportId === reportId) {
-              mock.dashboardWidgets.splice(i, 1);
-          }
-      }
-      return reportId;
-  },
-  async generateCustomReport(config: CustomReport['config'], organizationId: string): Promise<any[]> {
-    await delay(1000);
-    let rawData: any[] = [];
-    if (config.dataSource === 'contacts') {
-        rawData = mock.contacts.filter(c => c.organizationId === organizationId);
-    } else if (config.dataSource === 'products') {
-        rawData = mock.products.filter(p => p.organizationId === organizationId);
-    }
-
-    const filteredData = rawData.filter(item => {
-        return config.filters.every(filter => {
-            const itemValue = String(item[filter.field] || '').toLowerCase();
-            const filterValue = filter.value.toLowerCase();
-            switch (filter.operator) {
-                case 'is': return itemValue === filterValue;
-                case 'is_not': return itemValue !== filterValue;
-                case 'contains': return itemValue.includes(filterValue);
-                case 'does_not_contain': return !itemValue.includes(filterValue);
-                default: return true;
-            }
-        });
-    });
-
-    return filteredData.map(item => {
-        const selectedColumns: any = {};
-        config.columns.forEach(col => {
-            selectedColumns[col] = item[col];
-        });
-        return selectedColumns;
-    });
-  },
-
-  // WIDGETS
-  async getDashboardWidgets(organizationId: string): Promise<DashboardWidget[]> {
-      await delay(300);
-      return mock.dashboardWidgets.filter(w => mock.customReports.find(cr => cr.id === w.reportId)?.organizationId === organizationId);
-  },
-  async addDashboardWidget(reportId: string, organizationId: string): Promise<DashboardWidget> {
-      await delay(400);
-      const newWidget: DashboardWidget = { id: `widget_${Date.now()}`, reportId };
-      mock.dashboardWidgets.push(newWidget);
-      return newWidget;
-  },
-  async removeDashboardWidget(widgetId: string, organizationId: string): Promise<string> {
-      await delay(400);
-      const index = mock.dashboardWidgets.findIndex(w => w.id === widgetId);
-      if (index !== -1) {
-        mock.dashboardWidgets.splice(index, 1);
-      }
-      return widgetId;
-  },
-
-  // DOCUMENTS
-  async getDocuments(contactId: string): Promise<Document[]> {
-      await delay(500);
-      return mock.documents.filter(d => d.contactId === contactId);
-  },
-  async uploadDocument(docData: Omit<Document, 'id'|'uploadDate'>): Promise<Document> {
-      await delay(800);
-      const newDoc: Document = {
-          ...docData,
-          id: `doc_${Date.now()}`,
-          uploadDate: new Date().toISOString(),
-      };
-      mock.documents.push(newDoc);
-      return newDoc;
-  },
-  async deleteDocument(docId: string): Promise<string> {
-      await delay(500);
-      const index = mock.documents.findIndex(d => d.id === docId);
-      if (index !== -1) {
-        mock.documents.splice(index, 1);
-      }
-      return docId;
+  deleteTask: (taskId: string): Promise<void> => {
+    const index = MOCK_TASKS.findIndex(t => t.id === taskId);
+    if (index > -1) MOCK_TASKS.splice(index, 1);
+    return simulateNetwork(undefined);
   },
   
-  // SETTINGS
-  async getOrganizationSettings(organizationId: string): Promise<OrganizationSettings | null> {
-      await delay(300);
-      return mock.organizationSettings.find(s => s.organizationId === organizationId) || null;
+  // --- Team ---
+  getTeamMembers: (organizationId: string): Promise<User[]> => simulateNetwork(MOCK_USERS.filter(u => u.organizationId === organizationId)),
+  createTeamMember: (memberData: Omit<User, 'id'>): Promise<User> => {
+      const newUser: User = { ...memberData, id: `user_${Date.now()}`};
+      MOCK_USERS.push(newUser);
+      return simulateNetwork(newUser);
   },
-  async updateOrganizationSettings(settingsData: OrganizationSettings): Promise<OrganizationSettings> {
-      await delay(500);
-      const index = mock.organizationSettings.findIndex(s => s.organizationId === settingsData.organizationId);
-      if (index > -1) {
-          mock.organizationSettings[index] = settingsData;
-      } else {
-          mock.organizationSettings.push(settingsData);
-      }
-      return settingsData;
-  },
-  async updateCustomFields({ industry, fields }: { industry: Industry, fields: CustomField[] }): Promise<IndustryConfig> {
-      await delay(500);
-      industryConfigs[industry].customFields = fields;
-      return industryConfigs[industry];
+  updateTeamMember: (memberData: User): Promise<User> => {
+      const index = MOCK_USERS.findIndex(u => u.id === memberData.id);
+      if (index > -1) MOCK_USERS[index] = memberData;
+      return simulateNetwork(memberData);
   },
 
+  // --- Calendar ---
+  getCalendarEvents: (organizationId: string): Promise<CalendarEvent[]> => simulateNetwork(MOCK_CALENDAR_EVENTS.filter(e => e.organizationId === organizationId)),
+  createCalendarEvent: (eventData: Omit<CalendarEvent, 'id' | 'organizationId'>, orgId: string): Promise<CalendarEvent> => {
+    const newEvent: CalendarEvent = { ...eventData, id: `event_${Date.now()}`, organizationId: orgId };
+    MOCK_CALENDAR_EVENTS.push(newEvent);
+    return simulateNetwork(newEvent);
+  },
+  updateCalendarEvent: (eventData: CalendarEvent): Promise<CalendarEvent> => {
+      const index = MOCK_CALENDAR_EVENTS.findIndex(e => e.id === eventData.id);
+      if (index > -1) MOCK_CALENDAR_EVENTS[index] = eventData;
+      return simulateNetwork(eventData);
+  },
+  
+  // --- Inventory ---
+  getProducts: (organizationId: string): Promise<Product[]> => simulateNetwork(MOCK_PRODUCTS.filter(p => p.organizationId === organizationId)),
+  createProduct: (productData: Omit<Product, 'id'>): Promise<Product> => {
+      const newProduct: Product = { ...productData, id: `prod_${Date.now()}`};
+      MOCK_PRODUCTS.push(newProduct);
+      return simulateNetwork(newProduct);
+  },
+  updateProduct: (productData: Product): Promise<Product> => {
+      const index = MOCK_PRODUCTS.findIndex(p => p.id === productData.id);
+      if (index > -1) MOCK_PRODUCTS[index] = productData;
+      return simulateNetwork(productData);
+  },
+  deleteProduct: (productId: string): Promise<void> => {
+      const index = MOCK_PRODUCTS.findIndex(p => p.id === productId);
+      if (index > -1) MOCK_PRODUCTS.splice(index, 1);
+      return simulateNetwork(undefined);
+  },
+  getSuppliers: (organizationId: string): Promise<Supplier[]> => simulateNetwork(MOCK_SUPPLIERS.filter(s => s.organizationId === organizationId)),
+  getWarehouses: (organizationId: string): Promise<Warehouse[]> => simulateNetwork(MOCK_WAREHOUSES.filter(w => w.organizationId === organizationId)),
+  
+  // --- Reports ---
+  getDashboardData: (organizationId: string): Promise<any> => {
+      const range = { start: subDays(new Date(), 30), end: new Date() };
+      const contacts = MOCK_CONTACTS.filter(c => c.organizationId === organizationId);
+      const interactions = contacts.flatMap(c => c.interactions || []);
+      return simulateNetwork(generateDashboardData(range, contacts, interactions));
+  },
+  getReportData: (reportType: any, dateRange: any, organizationId: string): Promise<any> => {
+    const data = {
+        contacts: MOCK_CONTACTS.filter(c => c.organizationId === organizationId),
+        products: MOCK_PRODUCTS.filter(p => p.organizationId === organizationId),
+        team: MOCK_USERS.filter(u => u.organizationId === organizationId),
+        tasks: MOCK_TASKS.filter(t => t.organizationId === organizationId),
+        deals: MOCK_DEALS.filter(d => d.organizationId === organizationId),
+        dealStages: MOCK_DEAL_STAGES.filter(ds => ds.organizationId === organizationId)
+    };
+    return simulateNetwork(generateReportData(reportType, dateRange, data));
+  },
+  getCustomReports: (organizationId: string): Promise<CustomReport[]> => simulateNetwork(MOCK_CUSTOM_REPORTS.filter(r => r.organizationId === organizationId)),
+  createCustomReport: (reportData: Omit<CustomReport, 'id'>): Promise<CustomReport> => {
+      const newReport: CustomReport = { ...reportData, id: `report_${Date.now()}` };
+      MOCK_CUSTOM_REPORTS.push(newReport);
+      return simulateNetwork(newReport);
+  },
+  deleteCustomReport: (reportId: string): Promise<void> => {
+      const index = MOCK_CUSTOM_REPORTS.findIndex(r => r.id === reportId);
+      if (index > -1) MOCK_CUSTOM_REPORTS.splice(index, 1);
+      return simulateNetwork(undefined);
+  },
+  getDashboardWidgets: (organizationId: string): Promise<DashboardWidget[]> => simulateNetwork(MOCK_DASHBOARD_WIDGETS.filter(w => MOCK_CUSTOM_REPORTS.find(r => r.id === w.reportId && r.organizationId === organizationId))),
+  addDashboardWidget: (reportId: string): Promise<DashboardWidget> => {
+      const newWidget: DashboardWidget = { id: `widget_${Date.now()}`, reportId };
+      MOCK_DASHBOARD_WIDGETS.push(newWidget);
+      return simulateNetwork(newWidget);
+  },
+  removeDashboardWidget: (widgetId: string): Promise<void> => {
+      const index = MOCK_DASHBOARD_WIDGETS.findIndex(w => w.id === widgetId);
+      if (index > -1) MOCK_DASHBOARD_WIDGETS.splice(index, 1);
+      return simulateNetwork(undefined);
+  },
+  generateCustomReport: (config: any, organizationId: string): Promise<any[]> => {
+    let rawData: any[] = [];
+    if (config.dataSource === 'contacts') {
+        rawData = MOCK_CONTACTS.filter(c => c.organizationId === organizationId);
+    } else {
+        rawData = MOCK_PRODUCTS.filter(p => p.organizationId === organizationId);
+    }
+    // Simplified filtering
+    const filtered = rawData.filter(item => {
+        return (config.filters || []).every((filter: any) => {
+            const val = String(item[filter.field] || '').toLowerCase();
+            const filterVal = filter.value.toLowerCase();
+            if (filter.operator === 'contains') return val.includes(filterVal);
+            if (filter.operator === 'is') return val === filterVal;
+            return true;
+        });
+    });
+    // Select columns
+    return simulateNetwork(filtered.map(item => {
+        const row: any = {};
+        config.columns.forEach((col: string) => {
+            row[col] = item[col];
+        });
+        return row;
+    }));
+  },
+
+  // --- Workflows ---
+  getWorkflows: (organizationId: string): Promise<Workflow[]> => simulateNetwork(MOCK_WORKFLOWS.filter(w => w.organizationId === organizationId)),
+  createWorkflow: (workflowData: Omit<Workflow, 'id'>): Promise<Workflow> => {
+      const newWorkflow: Workflow = { ...workflowData, id: `wf_${Date.now()}` };
+      MOCK_WORKFLOWS.push(newWorkflow);
+      return simulateNetwork(newWorkflow);
+  },
+  updateWorkflow: (workflowData: Workflow): Promise<Workflow> => {
+      const index = MOCK_WORKFLOWS.findIndex(w => w.id === workflowData.id);
+      if (index > -1) MOCK_WORKFLOWS[index] = workflowData;
+      return simulateNetwork(workflowData);
+  },
+
+  // --- Advanced Workflows ---
+  getAdvancedWorkflows: (organizationId: string): Promise<AdvancedWorkflow[]> => simulateNetwork(MOCK_ADVANCED_WORKFLOWS.filter(w => w.organizationId === organizationId)),
+  createAdvancedWorkflow: (workflowData: Omit<AdvancedWorkflow, 'id'>): Promise<AdvancedWorkflow> => {
+      const newWorkflow: AdvancedWorkflow = { ...workflowData, id: `adv_wf_${Date.now()}` };
+      MOCK_ADVANCED_WORKFLOWS.push(newWorkflow);
+      return simulateNetwork(newWorkflow);
+  },
+  updateAdvancedWorkflow: (workflowData: AdvancedWorkflow): Promise<AdvancedWorkflow> => {
+      const index = MOCK_ADVANCED_WORKFLOWS.findIndex(w => w.id === workflowData.id);
+      if (index > -1) MOCK_ADVANCED_WORKFLOWS[index] = workflowData;
+      return simulateNetwork(workflowData);
+  },
+  deleteAdvancedWorkflow: (workflowId: string): Promise<void> => {
+      const index = MOCK_ADVANCED_WORKFLOWS.findIndex(w => w.id === workflowId);
+      if (index > -1) MOCK_ADVANCED_WORKFLOWS.splice(index, 1);
+      return simulateNetwork(undefined);
+  },
+  
+  // --- Campaigns ---
+  getCampaigns: (organizationId: string): Promise<Campaign[]> => simulateNetwork(MOCK_CAMPAIGNS.filter(c => c.organizationId === organizationId)),
+  createCampaign: (campaignData: Omit<Campaign, 'id'>): Promise<Campaign> => {
+      const newCampaign: Campaign = { ...campaignData, id: `camp_${Date.now()}` };
+      MOCK_CAMPAIGNS.push(newCampaign);
+      return simulateNetwork(newCampaign);
+  },
+  updateCampaign: (campaignData: Campaign): Promise<Campaign> => {
+      const index = MOCK_CAMPAIGNS.findIndex(c => c.id === campaignData.id);
+      if (index > -1) MOCK_CAMPAIGNS[index] = campaignData;
+      return simulateNetwork(campaignData);
+  },
+  launchCampaign: (campaignId: string): Promise<Campaign> => {
+      const index = MOCK_CAMPAIGNS.findIndex(c => c.id === campaignId);
+      if (index > -1) {
+          MOCK_CAMPAIGNS[index].status = 'Active';
+          // Simulate sending
+          const audience = MOCK_CONTACTS.filter(c => MOCK_CAMPAIGNS[index].targetAudience.status.includes(c.status));
+          MOCK_CAMPAIGNS[index].stats.recipients = audience.length;
+          MOCK_CAMPAIGNS[index].stats.sent = audience.length; // simplified
+      }
+      return simulateNetwork(MOCK_CAMPAIGNS[index]);
+  },
+
+  // --- Tickets ---
+  getTickets: (organizationId: string): Promise<Ticket[]> => simulateNetwork(MOCK_TICKETS.filter(t => t.organizationId === organizationId)),
+  createTicket: (ticketData: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt' | 'replies'>): Promise<Ticket> => {
+      const now = new Date().toISOString();
+      const newTicket: Ticket = { ...ticketData, id: `ticket_${Date.now()}`, createdAt: now, updatedAt: now, replies: [] };
+      MOCK_TICKETS.push(newTicket);
+      return simulateNetwork(newTicket);
+  },
+  updateTicket: (ticketData: Ticket): Promise<Ticket> => {
+      const index = MOCK_TICKETS.findIndex(t => t.id === ticketData.id);
+      if (index > -1) {
+          MOCK_TICKETS[index] = { ...ticketData, updatedAt: new Date().toISOString() };
+          return simulateNetwork(MOCK_TICKETS[index]);
+      }
+      return Promise.reject('Ticket not found');
+  },
+  addTicketReply: (ticketId: string, replyData: Omit<TicketReply, 'id' | 'timestamp'>): Promise<Ticket> => {
+      const index = MOCK_TICKETS.findIndex(t => t.id === ticketId);
+      if (index > -1) {
+          const newReply: TicketReply = { ...replyData, id: `reply_${Date.now()}`, timestamp: new Date().toISOString() };
+          MOCK_TICKETS[index].replies.push(newReply);
+          MOCK_TICKETS[index].updatedAt = newReply.timestamp;
+          if (replyData.userId.startsWith('user_')) { // Team member reply
+              MOCK_TICKETS[index].status = 'Open';
+          }
+          return simulateNetwork(MOCK_TICKETS[index]);
+      }
+      return Promise.reject('Ticket not found');
+  },
+  getOrganizationSettings: (organizationId: string): Promise<{ ticketSla: SLAPolicy } | null> => {
+      return simulateNetwork(MOCK_ORG_SETTINGS[organizationId] || null);
+  },
+  updateOrganizationSettings: (settings: { organizationId: string, ticketSla: SLAPolicy }): Promise<{ ticketSla: SLAPolicy }> => {
+      MOCK_ORG_SETTINGS[settings.organizationId] = settings;
+      return simulateNetwork(settings);
+  },
+
+  // --- Documents ---
+  getDocuments: (contactId: string): Promise<any[]> => {
+    const contact = MOCK_CONTACTS.find(c => c.id === contactId);
+    return simulateNetwork(contact?.documents || []);
+  },
+  uploadDocument: (docData: any): Promise<any> => {
+    const contactIdx = MOCK_CONTACTS.findIndex(c => c.id === docData.contactId);
+    if(contactIdx === -1) return Promise.reject("Contact not found");
+    
+    const newDoc = {
+      ...docData,
+      id: `doc_${Date.now()}`,
+      uploadDate: new Date().toISOString()
+    };
+
+    if(!MOCK_CONTACTS[contactIdx].documents) MOCK_CONTACTS[contactIdx].documents = [];
+    MOCK_CONTACTS[contactIdx].documents!.push(newDoc);
+    return simulateNetwork(newDoc);
+  },
+  deleteDocument: (docId: string): Promise<void> => {
+      for(const contact of MOCK_CONTACTS) {
+          if (contact.documents) {
+              const docIdx = contact.documents.findIndex(d => d.id === docId);
+              if (docIdx > -1) {
+                  contact.documents.splice(docIdx, 1);
+                  break;
+              }
+          }
+      }
+      return simulateNetwork(undefined);
+  },
+
+  // --- Orders & Transactions
+  createOrder: (orderData: Omit<Order, 'id'>): Promise<Order> => {
+      const newOrder: Order = { ...orderData, id: `order_${Date.now()}` };
+      const contactIdx = MOCK_CONTACTS.findIndex(c => c.id === newOrder.contactId);
+      if (contactIdx > -1) {
+          if (!MOCK_CONTACTS[contactIdx].orders) MOCK_CONTACTS[contactIdx].orders = [];
+          MOCK_CONTACTS[contactIdx].orders!.push(newOrder);
+      }
+      return simulateNetwork(newOrder);
+  },
+  updateOrder: (orderData: Order): Promise<Order> => {
+      const contactIdx = MOCK_CONTACTS.findIndex(c => c.id === orderData.contactId);
+      if (contactIdx > -1) {
+          const orderIdx = MOCK_CONTACTS[contactIdx].orders?.findIndex(o => o.id === orderData.id) ?? -1;
+          if (orderIdx > -1) {
+              MOCK_CONTACTS[contactIdx].orders![orderIdx] = orderData;
+          }
+      }
+      return simulateNetwork(orderData);
+  },
+  deleteOrder: ({contactId, orderId}: {contactId: string, orderId: string}): Promise<void> => {
+      const contactIdx = MOCK_CONTACTS.findIndex(c => c.id === contactId);
+      if (contactIdx > -1) {
+          const orderIdx = MOCK_CONTACTS[contactIdx].orders?.findIndex(o => o.id === orderId) ?? -1;
+          if (orderIdx > -1) {
+              MOCK_CONTACTS[contactIdx].orders!.splice(orderIdx, 1);
+          }
+      }
+      return simulateNetwork(undefined);
+  },
+  createTransaction: ({ contactId, data }: { contactId: string, data: Omit<Transaction, 'id'> }): Promise<Transaction> => {
+      const newTransaction: Transaction = { ...data, id: `trans_${Date.now()}` };
+      const contactIdx = MOCK_CONTACTS.findIndex(c => c.id === contactId);
+      if (contactIdx > -1) {
+          if (!MOCK_CONTACTS[contactIdx].transactions) MOCK_CONTACTS[contactIdx].transactions = [];
+          MOCK_CONTACTS[contactIdx].transactions!.push(newTransaction);
+      }
+      return simulateNetwork(newTransaction);
+  }
 };
 
 export default apiClient;
