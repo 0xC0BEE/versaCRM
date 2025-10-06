@@ -205,7 +205,8 @@ export type WorkflowAction =
     | { type: 'createTask'; taskTitle?: string; assigneeId?: string }
     | { type: 'sendEmail'; emailTemplateId?: string }
     | { type: 'updateContactField'; fieldId?: string; newValue?: any }
-    | { type: 'sendWebhook'; webhookUrl?: string; payloadTemplate?: string };
+    | { type: 'sendWebhook'; webhookUrl?: string; payloadTemplate?: string }
+    | { type: 'wait'; days: number };
     
 export interface Workflow {
     id: string;

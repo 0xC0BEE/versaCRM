@@ -72,6 +72,8 @@ const executeWorkflowActions = (workflow: Workflow, contact: AnyContact, deal: D
     console.log(`Executing actions for workflow: ${workflow.name}`);
     let updatedContact = { ...contact };
 
+    // This executes actions sequentially. In a real system with delays, this would be a message queue.
+    // For our simulation, we process them instantly.
     workflow.actions.forEach(async action => {
         if (action.type === 'createTask') {
             if (action.taskTitle && action.assigneeId) {
@@ -115,6 +117,11 @@ const executeWorkflowActions = (workflow: Workflow, contact: AnyContact, deal: D
                 console.log(`Action: Updated field "${action.fieldId}" to "${action.newValue}"`);
                 toast.success(`Workflow "${workflow.name}" triggered: Contact field updated.`);
             }
+        } else if (action.type === 'wait') {
+            console.log(`Action: Waiting for ${action.days} days...`);
+            toast.success(`Workflow "${workflow.name}" has started a ${action.days}-day wait period.`);
+            // In a real system, this would queue the *next* action to run after the delay.
+            // For our mock, we just log it and proceed instantly for demonstration.
         } else if (action.type === 'sendWebhook') {
             if (action.webhookUrl && action.payloadTemplate) {
                 const payload = replacePlaceholders(action.payloadTemplate, contact, deal, ticket);

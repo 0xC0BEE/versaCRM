@@ -4,7 +4,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import { Workflow, WorkflowTrigger, WorkflowAction, ContactStatus, DealStage, EmailTemplate, CustomField, User } from '../../types';
-import { ArrowLeft, Plus, Trash2, Zap, Check } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Zap, Check, Clock } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from '../../hooks/useForm';
@@ -29,6 +29,7 @@ const actionTypes: { value: WorkflowAction['type'], label: string }[] = [
     { value: 'createTask', label: 'Create a Task' },
     { value: 'sendEmail', label: 'Send an Email' },
     { value: 'updateContactField', label: 'Update a Contact Field' },
+    { value: 'wait', label: 'Wait for a duration' },
     { value: 'sendWebhook', label: 'Send a Webhook' },
 ];
 
@@ -69,7 +70,15 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
     const handleActionChange = (index: number, field: string, value: any) => {
         const newActions = [...formData.actions];
         if (field === 'type') {
-            newActions[index] = { type: value };
+            // When changing type, reset the action to a default state for that type
+            switch (value) {
+                case 'createTask': newActions[index] = { type: 'createTask' }; break;
+                case 'sendEmail': newActions[index] = { type: 'sendEmail' }; break;
+                case 'updateContactField': newActions[index] = { type: 'updateContactField' }; break;
+                case 'wait': newActions[index] = { type: 'wait', days: 1 }; break;
+                case 'sendWebhook': newActions[index] = { type: 'sendWebhook' }; break;
+                default: newActions[index] = { type: 'createTask' }; // Fallback
+            }
         } else {
             (newActions[index] as any)[field] = value;
         }
@@ -218,6 +227,10 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
                          <Input id={`action-new-value-${index}`} label="New Value" value={action.newValue || ''} onChange={e => handleActionChange(index, 'newValue', e.target.value)} placeholder="Enter the new value for the field"/>
                     </>
                 );
+             case 'wait':
+                return (
+                    <Input id={`action-wait-days-${index}`} label="Wait for (days)" type="number" min="1" value={action.days || 1} onChange={e => handleActionChange(index, 'days', parseInt(e.target.value) || 1)} />
+                );
             case 'sendWebhook':
                 return (
                     <>
@@ -269,7 +282,10 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
                                     className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedNode.type === 'action' && selectedNode.index === index ? 'border-primary bg-primary/5' : 'border-border-subtle bg-card-bg hover:border-primary/50'}`}
                                     onClick={() => setSelectedNode({ type: 'action', index })}
                                 >
-                                    <div className="font-bold text-text-primary">Action #{index + 1}</div>
+                                    <div className="font-bold text-text-primary flex items-center">
+                                         {action.type === 'wait' ? <Clock size={16} className="mr-2 text-orange-500" /> : <Check size={16} className="mr-2 text-green-500" />}
+                                        Action #{index + 1}
+                                    </div>
                                     <p className="text-sm text-text-secondary mt-1">{actionTypes.find(a => a.value === action.type)?.label}</p>
                                     <Button size="sm" variant="danger" onClick={(e) => { e.stopPropagation(); removeAction(index); }} className="absolute top-2 right-2 w-7 h-7 p-0 min-w-0"><Trash2 size={14}/></Button>
                                 </div>
