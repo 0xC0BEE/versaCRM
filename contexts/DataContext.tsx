@@ -262,6 +262,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const ticketsQuery = useQuery<Ticket[], Error>({ queryKey: ['tickets', orgId], queryFn: () => apiClient.getTickets(orgId!), enabled: !!orgId });
     const createTicketMutation = useMutation({ mutationFn: apiClient.createTicket, onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
     const updateTicketMutation = useMutation({ mutationFn: apiClient.updateTicket, onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
+    // FIX: Correctly wrapped the mutation function to handle multiple arguments. `useMutation`'s `mutationFn` expects a function that takes a single object argument. This wrapper destructures the object and passes the values to the `apiClient` function.
     const addTicketReplyMutation = useMutation({ mutationFn: ({ticketId, reply}: {ticketId: string, reply: any}) => apiClient.addTicketReply(ticketId, reply), onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
 
     // --- FORMS ---

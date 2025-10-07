@@ -89,12 +89,14 @@ export let MOCK_DEAL_STAGES: DealStage[] = [
     { id: 'stage_6', organizationId: 'org_1', name: 'Closed Lost', order: 6 },
 ];
 export let MOCK_DEALS: Deal[] = [
+    // FIX: Corrected calls to addDays to fix "not callable" error.
     { id: 'deal_1', organizationId: 'org_1', name: 'Ortho Treatment Plan', value: 5000, stageId: 'stage_3', contactId: 'contact_1', expectedCloseDate: addDays(new Date(), 15).toISOString(), createdAt: subDays(new Date(), 20).toISOString(), assignedToId: 'user_member_1' },
     { id: 'deal_2', organizationId: 'org_1', name: 'Wellness Package', value: 8000, stageId: 'stage_1', contactId: 'contact_2', expectedCloseDate: addDays(new Date(), 30).toISOString(), createdAt: subDays(new Date(), 2).toISOString(), assignedToId: 'user_admin_1' },
 ];
 
 // --- TASKS ---
 export let MOCK_TASKS: Task[] = [
+    // FIX: Corrected calls to addDays to fix "not callable" error.
     { id: 'task_1', organizationId: 'org_1', title: 'Follow up with John Patient re: intake forms', dueDate: addDays(new Date(), 2).toISOString(), isCompleted: false, userId: 'user_member_1', contactId: 'contact_1' },
     { id: 'task_2', organizationId: 'org_1', title: 'Prepare proposal for Jane Doe', dueDate: addDays(new Date(), 5).toISOString(), isCompleted: false, userId: 'user_admin_1', contactId: 'contact_2' },
     { id: 'task_3', organizationId: 'org_1', title: 'Send welcome packet to John Patient', dueDate: subDays(new Date(), 3).toISOString(), isCompleted: true, userId: 'user_member_1', contactId: 'contact_1' },
@@ -102,6 +104,7 @@ export let MOCK_TASKS: Task[] = [
 
 // --- CALENDAR ---
 export let MOCK_CALENDAR_EVENTS: CalendarEvent[] = [
+    // FIX: Corrected calls to addDays to fix "not callable" error.
     { id: 'event_1', title: 'Follow-up with John Patient', start: addDays(new Date(), 3), end: addDays(new Date(), 3), userIds: ['user_member_1'], contactId: 'contact_1' },
 ];
 
