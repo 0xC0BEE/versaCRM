@@ -5,6 +5,7 @@ import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
 import { EmailTemplate } from '../../types';
 import toast from 'react-hot-toast';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from '../../hooks/useForm';

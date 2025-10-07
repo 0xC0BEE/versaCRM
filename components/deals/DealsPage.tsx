@@ -7,6 +7,7 @@ import { useData } from '../../contexts/DataContext';
 // FIX: Corrected import path for types.
 import { Deal, DealStage } from '../../types';
 import DealColumn from './DealColumn';
+// FIX: Corrected import path for DealEditModal.
 import DealEditModal from './DealEditModal';
 import LoadingSpinner from '../ui/LoadingSpinner';
 

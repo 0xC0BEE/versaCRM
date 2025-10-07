@@ -1,15 +1,15 @@
-
 import {
-    AnyContact, Workflow, AdvancedWorkflow, Task, User, ReactFlowNode, Deal, ContactStatus, ReactFlowEdge
+    AnyContact, Workflow, AdvancedWorkflow, Task, User, ReactFlowNode, Deal, ContactStatus, ReactFlowEdge, AuditLogEntry
 } from '../types';
 import {
-    MOCK_WORKFLOWS, MOCK_ADVANCED_WORKFLOWS, MOCK_TASKS, MOCK_USERS
+    MOCK_WORKFLOWS, MOCK_ADVANCED_WORKFLOWS, MOCK_TASKS, MOCK_USERS, MOCK_CONTACTS
 } from './mockData';
 import { replacePlaceholders } from '../utils/textUtils';
 // FIX: Import Node and Edge to use for casting.
 import { Node, Edge } from 'reactflow';
 
-export type EventType = 'contactCreated' | 'contactStatusChanged' | 'dealCreated' | 'dealStageChanged';
+// FIX: Add ticket-related event types.
+export type EventType = 'contactCreated' | 'contactStatusChanged' | 'dealCreated' | 'dealStageChanged' | 'ticketCreated' | 'ticketStatusChanged';
 
 interface EventPayload {
     contact: AnyContact;
@@ -83,6 +83,41 @@ const triggerSimpleWorkflows = (eventType: EventType, payload: EventPayload): st
                     break;
                 case 'sendEmail':
                     logs.push(`  - Action [Send Email]: (Simulated) Sent email using template ID ${action.emailTemplateId}`);
+                    break;
+                case 'createAuditLogEntry':
+                    const oldStatus = payload.oldContact?.status;
+                    const newStatus = payload.contact.status;
+                    if (oldStatus !== newStatus) {
+                        // In a real app, the user performing the action would be passed in the payload.
+                        // For this simulation, we'll assume a default admin user made the change.
+                        const user = MOCK_USERS.find(u => u.id === 'user_admin_1');
+                        if (user) {
+                            const logMessage = `updated status from "${oldStatus}" to "${newStatus}".`;
+                            const newLogEntry: AuditLogEntry = {
+                                id: `log_wf_${Date.now()}`,
+                                timestamp: new Date().toISOString(),
+                                userId: user.id,
+                                userName: user.name,
+                                change: logMessage,
+                            };
+                            
+                            const contactIndex = MOCK_CONTACTS.findIndex(c => c.id === payload.contact.id);
+                            if (contactIndex > -1) {
+                                if (!MOCK_CONTACTS[contactIndex].auditLogs) {
+                                    MOCK_CONTACTS[contactIndex].auditLogs = [];
+                                }
+                                // Add to the beginning of the array to show newest first
+                                MOCK_CONTACTS[contactIndex].auditLogs!.unshift(newLogEntry);
+                                logs.push(`  - Action [Create Audit Log]: Created log for contact ${payload.contact.id}: "${user.name} ${logMessage}"`);
+                            } else {
+                                logs.push(`  - Action [Create Audit Log]: FAILED - Contact ${payload.contact.id} not found.`);
+                            }
+                        } else {
+                            logs.push(`  - Action [Create Audit Log]: FAILED - User for logging not found.`);
+                        }
+                    } else {
+                        logs.push(`  - Action [Create Audit Log]: SKIPPED - Status did not change.`);
+                    }
                     break;
             }
         });

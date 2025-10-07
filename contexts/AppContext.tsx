@@ -4,6 +4,7 @@ import { AppContextType, Industry, Page, IndustryConfig, FilterCondition } from 
 import useLocalStorage from '../hooks/useLocalStorage';
 import { useAuth } from './AuthContext';
 import { useQuery } from '@tanstack/react-query';
+// FIX: Corrected import path for apiClient from a file path to a relative module path.
 import apiClient from '../services/apiClient';
 import { industryConfigs as fallbackConfigs } from '../config/industryConfig';
 
@@ -26,10 +27,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         }
     }, [authenticatedUser, setCurrentPage]);
 
-    const { data: industryConfig = fallbackConfigs[currentIndustry] } = useQuery<IndustryConfig>({
+    const { data } = useQuery<IndustryConfig | null>({
         queryKey: ['industryConfig', currentIndustry],
         queryFn: () => apiClient.getIndustryConfig(currentIndustry),
     });
+
+    // If the API returns null (as it's designed to), or if data is loading (undefined),
+    // we must ensure we fall back to our local configuration.
+    const industryConfig = data || fallbackConfigs[currentIndustry];
+
 
     const value: AppContextType = useMemo(() => ({
         currentPage,

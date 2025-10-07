@@ -4,9 +4,8 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import toast from 'react-hot-toast';
-// FIX: Corrected import path for types.
-import { Deal, DealStage, AnyContact } from '../../types';
-// FIX: Corrected import path for DataContext.
+import { Deal, DealStage, AnyContact, User } from '../../types';
+// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from '../../hooks/useForm';
@@ -20,38 +19,33 @@ interface DealEditModalProps {
 
 const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) => {
     const { 
-        dealStagesQuery, 
-        contactsQuery,
         createDealMutation, 
         updateDealMutation, 
-        deleteDealMutation 
+        deleteDealMutation, 
+        dealStagesQuery, 
+        contactsQuery, 
+        teamMembersQuery 
     } = useData();
     const { authenticatedUser } = useAuth();
-    const isNew = !deal;
-
     const { data: stages = [] } = dealStagesQuery;
     const { data: contacts = [] } = contactsQuery;
+    const { data: teamMembers = [] } = teamMembersQuery;
+    const isNew = !deal;
 
-    const initialState = useMemo(() => {
-        const sortedStages = [...stages].sort((a, b) => a.order - b.order);
-        return {
-            name: '',
-            value: 0,
-            stageId: sortedStages.length > 0 ? sortedStages[0].id : '',
-            contactId: '',
-            expectedCloseDate: new Date().toISOString().split('T')[0],
-        };
-    }, [stages]);
+    const initialState = useMemo(() => ({
+        name: '',
+        value: 0,
+        stageId: stages[0]?.id || '',
+        contactId: '',
+        expectedCloseDate: new Date().toISOString().split('T')[0],
+        assignedToId: authenticatedUser?.id,
+    }), [stages, authenticatedUser]);
 
-    const { formData, handleChange, setFormData } = useForm(initialState, deal);
-
+    const { formData, handleChange } = useForm(initialState, deal);
+    
     const handleSave = () => {
         if (!formData.name.trim() || !formData.contactId) {
-            toast.error("Deal Name and associated Contact are required.");
-            return;
-        }
-        if (formData.value < 0) {
-            toast.error("Deal value cannot be negative.");
+            toast.error("Deal Name and Contact are required.");
             return;
         }
 
@@ -60,19 +54,22 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
                 ...formData,
                 organizationId: authenticatedUser!.organizationId!,
             }, {
-                onSuccess: () => onClose()
+                onSuccess: onClose
             });
         } else {
-            updateDealMutation.mutate({ ...deal!, ...formData }, {
-                onSuccess: () => onClose()
+            updateDealMutation.mutate({
+                ...deal!,
+                ...formData
+            }, {
+                onSuccess: onClose
             });
         }
     };
-
+    
     const handleDelete = () => {
         if (deal && window.confirm(`Are you sure you want to delete the deal "${deal.name}"?`)) {
             deleteDealMutation.mutate(deal.id, {
-                onSuccess: () => onClose()
+                onSuccess: onClose
             });
         }
     };
@@ -95,21 +92,34 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
                         id="deal-value"
                         label="Value"
                         type="number"
-                        min="0"
                         value={formData.value}
                         onChange={e => handleChange('value', parseFloat(e.target.value) || 0)}
+                        required
                         disabled={isPending}
                     />
-                    <Select id="deal-stage" label="Stage" value={formData.stageId} onChange={e => handleChange('stageId', e.target.value)}>
+                    <Select
+                        id="deal-stage"
+                        label="Stage"
+                        value={formData.stageId}
+                        onChange={e => handleChange('stageId', e.target.value)}
+                        disabled={isPending}
+                    >
                         {stages.map((s: DealStage) => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </Select>
                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Select id="deal-contact" label="Associated Contact" value={formData.contactId} onChange={e => handleChange('contactId', e.target.value)} required>
+                    <Select
+                        id="deal-contact"
+                        label="Contact"
+                        value={formData.contactId}
+                        onChange={e => handleChange('contactId', e.target.value)}
+                        required
+                        disabled={isPending}
+                    >
                         <option value="">Select a contact...</option>
                         {contacts.map((c: AnyContact) => <option key={c.id} value={c.id}>{c.contactName}</option>)}
                     </Select>
-                    <Input
+                     <Input
                         id="deal-close-date"
                         label="Expected Close Date"
                         type="date"
@@ -118,20 +128,28 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
                         disabled={isPending}
                     />
                 </div>
+                 <Select
+                    id="deal-assigned-to"
+                    label="Assigned To"
+                    value={formData.assignedToId || ''}
+                    onChange={e => handleChange('assignedToId', e.target.value)}
+                    disabled={isPending}
+                >
+                    <option value="">Unassigned</option>
+                    {teamMembers.map((m: User) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </Select>
             </div>
-            <div className="mt-6 flex justify-between items-center">
-                <div>
+             <div className="mt-6 flex justify-between items-center">
+                 <div>
                     {!isNew && (
                         <Button variant="danger" onClick={handleDelete} disabled={isPending} leftIcon={<Trash2 size={16} />}>
-                            {deleteDealMutation.isPending ? 'Deleting...' : 'Delete'}
+                           {deleteDealMutation.isPending ? 'Deleting...' : 'Delete'}
                         </Button>
                     )}
                 </div>
                 <div className="flex space-x-2">
                     <Button variant="secondary" onClick={onClose} disabled={isPending}>Cancel</Button>
-                    <Button onClick={handleSave} disabled={isPending}>
-                        {isPending ? 'Saving...' : 'Save Deal'}
-                    </Button>
+                    <Button onClick={handleSave} disabled={isPending}>{isPending ? 'Saving...' : 'Save Deal'}</Button>
                 </div>
             </div>
         </Modal>

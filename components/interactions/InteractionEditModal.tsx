@@ -124,13 +124,13 @@ const InteractionEditModal: React.FC<InteractionEditModalProps> = ({ isOpen, onC
                         disabled={isPending}
                     />
                     {showSuggestions && filteredSuggestions.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-dark-card border dark:border-dark-border rounded-md shadow-lg max-h-40 overflow-y-auto">
+                        <div className="absolute z-10 w-full mt-1 bg-card-bg border border-border-subtle rounded-md shadow-lg max-h-40 overflow-y-auto">
                             <ul>
                                 {filteredSuggestions.map(user => (
                                     <li key={user.id}>
                                         <button
                                             onClick={() => handleMentionSelect(user)}
-                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                            className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-primary hover:text-white"
                                         >
                                             {user.name}
                                         </button>

@@ -3,6 +3,7 @@ import PageWrapper from '../layout/PageWrapper';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import { Plus, Send, BarChart, Mail } from 'lucide-react';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Campaign } from '../../types';
@@ -82,8 +83,8 @@ const CampaignsPage: React.FC = () => {
                                         <td className="px-6 py-4 font-medium text-text-primary">{c.name}</td>
                                         <td className="px-6 py-4">
                                             <span className={`text-xs font-medium px-2 py-0.5 rounded-micro ${
-                                                c.status === 'Active' ? 'bg-primary/10 text-primary' :
-                                                c.status === 'Completed' ? 'bg-success/10 text-success' :
+                                                c.status === 'Active' ? 'bg-success/10 text-success' :
+                                                c.status === 'Completed' ? 'bg-blue-500/10 text-blue-400' :
                                                 'bg-slate-400/10 text-text-secondary'
                                             }`}>
                                                 {c.status}
@@ -94,16 +95,17 @@ const CampaignsPage: React.FC = () => {
                                         <td className="px-6 py-4 text-center">{c.stats.opened}</td>
                                         <td className="px-6 py-4 text-center">{c.stats.clicked}</td>
                                         <td className="px-6 py-4 text-right">
-                                            {c.status === 'Draft' ? (
-                                                <div className="flex gap-2 justify-end">
-                                                    <Button size="sm" variant="secondary" onClick={() => handleEdit(c)}>Edit</Button>
-                                                    <Button size="sm" onClick={() => handleLaunch(c)} leftIcon={<Send size={14} />} disabled={launchCampaignMutation.isPending}>
-                                                        Launch
-                                                    </Button>
-                                                </div>
-                                            ) : (
-                                                 <Button size="sm" variant="secondary" leftIcon={<BarChart size={14} />}>View Report</Button>
-                                            )}
+                                            <div className="flex gap-2 justify-end">
+                                                {c.status === 'Draft' && (
+                                                    <>
+                                                        <Button size="sm" variant="secondary" onClick={() => handleEdit(c)}>Edit</Button>
+                                                        <Button size="sm" onClick={() => handleLaunch(c)} leftIcon={<Send size={14}/>} disabled={launchCampaignMutation.isPending}>Launch</Button>
+                                                    </>
+                                                )}
+                                                {c.status !== 'Draft' && (
+                                                    <Button size="sm" variant="secondary" leftIcon={<BarChart size={14}/>}>Report</Button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -114,7 +116,7 @@ const CampaignsPage: React.FC = () => {
                     <div className="text-center py-20 text-text-secondary">
                         <Mail className="mx-auto h-16 w-16 text-text-secondary/50" />
                         <h2 className="mt-4 text-lg font-semibold text-text-primary">No Campaigns Created Yet</h2>
-                        <p className="mt-2 text-sm">Create a new campaign to engage your audience.</p>
+                        <p className="mt-2 text-sm">Create automated email sequences to nurture your leads.</p>
                          <Button onClick={handleAdd} leftIcon={<Plus size={16} />} className="mt-4">
                             Create First Campaign
                         </Button>

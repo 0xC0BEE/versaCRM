@@ -16,6 +16,7 @@ import DealsPage from '../deals/DealsPage';
 import WorkflowsPage from '../workflows/WorkflowsPage';
 import CampaignsPage from '../campaigns/CampaignsPage';
 import TicketsPage from '../tickets/TicketsPage';
+import TeamPage from '../team/TeamPage';
 
 const PageRenderer: React.FC = () => {
     const { currentPage } = useApp();
@@ -40,6 +41,7 @@ const PageRenderer: React.FC = () => {
     switch (currentPage) {
         case 'Dashboard': return <DashboardPage />;
         case 'Contacts': return <ContactsPage />;
+        case 'Team': return <TeamPage />; // Added Team page route
         case 'Organizations': return <OrganizationsPage />;
         case 'Deals': return <DealsPage />;
         case 'Tickets': return <TicketsPage />;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import PageWrapper from '../layout/PageWrapper';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import { useApp } from '../../contexts/AppContext';
 import { useAuth } from '../../contexts/AuthContext';

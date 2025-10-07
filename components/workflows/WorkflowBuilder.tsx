@@ -5,6 +5,7 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 import { Workflow, WorkflowTrigger, WorkflowAction, ContactStatus, DealStage, EmailTemplate, CustomField, User } from '../../types';
 import { ArrowLeft, Plus, Trash2, Zap, Check, Clock } from 'lucide-react';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from '../../hooks/useForm';

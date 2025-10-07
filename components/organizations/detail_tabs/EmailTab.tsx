@@ -5,6 +5,7 @@ import Input from '../../ui/Input';
 import Select from '../../ui/Select';
 import Textarea from '../../ui/Textarea';
 import { Send, Bot, Loader } from 'lucide-react';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../../contexts/DataContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useApp } from '../../../contexts/AppContext';

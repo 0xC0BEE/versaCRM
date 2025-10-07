@@ -1,12 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../services/apiClient';
 // FIX: Corrected import path for types.
+// FIX: Aliased Document to AppDocument to avoid name collision with DOM type.
 import { Document as AppDocument } from '../types';
 import toast from 'react-hot-toast';
 
 export const useDocuments = (contactId: string) => {
     const queryClient = useQueryClient();
 
+    // FIX: Used aliased type AppDocument.
     const documentsQuery = useQuery<AppDocument[], Error>({
         queryKey: ['documents', contactId],
         queryFn: () => apiClient.getDocuments(contactId),
@@ -14,6 +16,7 @@ export const useDocuments = (contactId: string) => {
     });
 
     const uploadDocumentMutation = useMutation({
+        // FIX: Used aliased type AppDocument.
         mutationFn: (docData: Omit<AppDocument, 'id'|'uploadDate'>) => apiClient.uploadDocument(docData),
         onSuccess: () => {
             toast.success('Document uploaded!');

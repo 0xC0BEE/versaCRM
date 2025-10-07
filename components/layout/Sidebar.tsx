@@ -23,6 +23,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     const navItems: { page: Page; icon: React.ElementType; label?: string; permission?: keyof typeof permissions }[] = [
         { page: 'Dashboard', icon: Home },
         { page: 'Contacts', icon: Users, label: industryConfig.contactNamePlural },
+        { page: 'Team', icon: Users }, // Added Team link
         { page: 'Deals', icon: Handshake },
         { page: 'Tickets', icon: LifeBuoy },
         { page: 'Interactions', icon: Inbox },

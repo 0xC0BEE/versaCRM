@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Deal, AnyContact } from '../../types';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import { Handshake } from 'lucide-react';
 

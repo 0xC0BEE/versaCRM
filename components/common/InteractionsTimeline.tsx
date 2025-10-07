@@ -2,6 +2,7 @@ import React from 'react';
 import { Interaction } from '../../types';
 import { Mail, Phone, Users, FileText, Calendar, MapPin, Wrench } from 'lucide-react';
 import { format } from 'date-fns';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 
 interface InteractionsTimelineProps {

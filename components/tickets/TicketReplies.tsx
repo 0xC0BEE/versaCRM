@@ -229,7 +229,7 @@ const TicketReplies: React.FC<TicketRepliesProps> = ({ ticket, showInternalNotes
                                 <li key={user.id}>
                                     <button
                                         onClick={() => handleMentionSelect(user)}
-                                        className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-hover-bg"
+                                        className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-primary hover:text-white"
                                     >
                                         {user.name}
                                     </button>

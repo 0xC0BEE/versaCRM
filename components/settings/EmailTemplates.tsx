@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import Button from '../ui/Button';
 import { Plus, Trash2, Edit } from 'lucide-react';

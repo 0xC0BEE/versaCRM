@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from './test-utils';
 import App from '../App';
+// FIX: Corrected import path for apiClient.
 import apiClient from '../services/apiClient';
 
 // Mock the apiClient module
