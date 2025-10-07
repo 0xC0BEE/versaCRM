@@ -4,6 +4,7 @@ import LoginPage from './components/auth/LoginPage';
 import OrganizationConsole from './components/auth/OrganizationConsole';
 import TeamMemberConsole from './components/auth/TeamMemberConsole';
 import ClientPortal from './components/auth/ClientPortal';
+import CallControlModal from './components/voip/CallControlModal';
 
 function App() {
     const { authenticatedUser, hasPermission } = useAuth();
@@ -12,17 +13,24 @@ function App() {
         return <LoginPage />;
     }
     
-    if (authenticatedUser.isClient) {
-        return <ClientPortal />;
-    }
+    const renderApp = () => {
+        if (authenticatedUser.isClient) {
+            return <ClientPortal />;
+        }
 
-    // A user's ability to see the full console vs. the team member console
-    // can now be determined by a specific permission.
-    if (hasPermission('settings:access')) {
-        return <OrganizationConsole />;
-    }
+        if (hasPermission('settings:access')) {
+            return <OrganizationConsole />;
+        }
 
-    return <TeamMemberConsole />;
+        return <TeamMemberConsole />;
+    };
+
+    return (
+        <>
+            {renderApp()}
+            <CallControlModal />
+        </>
+    );
 }
 
 export default App;

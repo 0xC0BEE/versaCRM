@@ -3,6 +3,9 @@ import React from 'react';
 import { AnyContact } from '../../types';
 // FIX: Corrected import path for useApp.
 import { useApp } from '../../contexts/AppContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useData } from '../../contexts/DataContext';
+import { Phone } from 'lucide-react';
 
 interface ContactsTableProps {
     contacts: AnyContact[];
@@ -13,7 +16,20 @@ interface ContactsTableProps {
 }
 
 const ContactsTable: React.FC<ContactsTableProps> = ({ contacts, onRowClick, isError, selectedContactIds, setSelectedContactIds }) => {
-    const { industryConfig } = useApp();
+    const { industryConfig, setCallContact, setIsCallModalOpen } = useApp();
+    const { hasPermission } = useAuth();
+    const { organizationSettingsQuery } = useData();
+    const { data: settings } = organizationSettingsQuery;
+
+    const canUseVoip = hasPermission('voip:use') && settings?.voip.isConnected;
+
+    const handleCallClick = (e: React.MouseEvent, contact: AnyContact) => {
+        e.stopPropagation(); // Prevent row click from firing
+        if (canUseVoip) {
+            setCallContact(contact);
+            setIsCallModalOpen(true);
+        }
+    };
 
     const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked) {
@@ -99,7 +115,15 @@ const ContactsTable: React.FC<ContactsTableProps> = ({ contacts, onRowClick, isE
                                 </div>
                             </td>
                             <td className="px-6 py-4 cursor-pointer" onClick={() => onRowClick(contact)}>{contact.email}</td>
-                            <td className="px-6 py-4 cursor-pointer" onClick={() => onRowClick(contact)}>{contact.phone}</td>
+                            <td className="px-6 py-4">
+                                <span 
+                                    className={`flex items-center gap-2 ${canUseVoip ? 'cursor-pointer group hover:text-primary' : ''}`}
+                                    onClick={(e) => contact.phone && handleCallClick(e, contact)}
+                                >
+                                    {contact.phone}
+                                    {canUseVoip && contact.phone && <Phone size={14} className="text-text-secondary group-hover:text-primary transition-colors" />}
+                                </span>
+                            </td>
                             <td className="px-6 py-4 cursor-pointer" onClick={() => onRowClick(contact)}>
                                 <span className={`text-xs font-medium px-2 py-0.5 rounded-micro ${
                                     contact.status === 'Active' ? 'bg-success/10 text-success' :

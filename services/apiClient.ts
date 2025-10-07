@@ -280,6 +280,24 @@ const apiClient = {
     }
     return newInteraction;
   },
+  // FIX: Add missing `updateInteraction` method to the API client.
+  async updateInteraction(interactionData: Interaction): Promise<Interaction> {
+    await delay(API_DELAY);
+    const contactIndex = MOCK_CONTACTS_MUTABLE.findIndex(c => c.id === interactionData.contactId);
+    if (contactIndex > -1) {
+        const contact = MOCK_CONTACTS_MUTABLE[contactIndex];
+        const interactionIndex = contact.interactions?.findIndex(i => i.id === interactionData.id) ?? -1;
+        if (interactionIndex > -1) {
+            contact.interactions![interactionIndex] = interactionData;
+        } else {
+            throw new Error('Interaction not found on contact');
+        }
+        MOCK_CONTACTS_MUTABLE[contactIndex] = contact;
+    } else {
+        throw new Error('Contact not found for interaction update');
+    }
+    return interactionData;
+  },
 
   // --- Tasks ---
   async getAllTasksByOrg(orgId: string): Promise<Task[]> {
@@ -565,6 +583,23 @@ const apiClient = {
       .flatMap(c => c.interactions || [])
       .filter(i => i.type === 'Email');
     return emailInteractions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  },
+  // FIX: Add missing VoIP connection methods.
+  async connectVoipProvider(provider: string): Promise<OrganizationSettings> {
+    await delay(API_DELAY);
+    MOCK_ORGANIZATION_SETTINGS.voip = {
+      isConnected: true,
+      provider: provider,
+    };
+    return MOCK_ORGANIZATION_SETTINGS;
+  },
+  async disconnectVoipProvider(): Promise<OrganizationSettings> {
+    await delay(API_DELAY);
+    MOCK_ORGANIZATION_SETTINGS.voip = {
+      isConnected: false,
+      provider: null,
+    };
+    return MOCK_ORGANIZATION_SETTINGS;
   },
 
   // --- Orders & Transactions ---

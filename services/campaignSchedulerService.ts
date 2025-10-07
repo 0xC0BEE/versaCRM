@@ -92,17 +92,19 @@ export const campaignSchedulerService = {
                 if (!currentNode) continue;
 
                 (async () => {
+                    // FIX: Add a type guard for `currentNode` inside the async closure, as TypeScript can't infer it from the outer scope.
+                    if (!currentNode) return;
                     let nextNodeId: string | null = null;
                     
                     switch (currentNode.type) {
                         case 'journeyTrigger':
-                            const nextEdge = campaign.edges.find(e => e.source === currentNode!.id);
+                            const nextEdge = campaign.edges.find(e => e.source === currentNode.id);
                             nextNodeId = nextEdge ? nextEdge.target : null;
                             break;
                         case 'journeyAction':
                             if(currentNode.data.nodeType === 'wait') {
                                 // Just find the next node after a wait
-                                const nextEdge = campaign.edges.find(e => e.source === currentNode!.id);
+                                const nextEdge = campaign.edges.find(e => e.source === currentNode.id);
                                 nextNodeId = nextEdge ? nextEdge.target : null;
                             } else {
                                 nextNodeId = await executeJourneyAction(currentNode, contact, campaign);

@@ -17,6 +17,8 @@ const interactionIcons: Record<Interaction['type'], React.ReactNode> = {
     Appointment: <Calendar className="h-4 w-4 text-white" />,
     'Site Visit': <MapPin className="h-4 w-4 text-white" />,
     'Maintenance Request': <Wrench className="h-4 w-4 text-white" />,
+    // FIX: Add missing 'VoIP Call' icon to satisfy the InteractionType record.
+    'VoIP Call': <Phone className="h-4 w-4 text-white" />,
 };
 
 const interactionColors: Record<Interaction['type'], string> = {
@@ -27,6 +29,8 @@ const interactionColors: Record<Interaction['type'], string> = {
     Appointment: 'bg-indigo-500',
     'Site Visit': 'bg-orange-500',
     'Maintenance Request': 'bg-red-500',
+    // FIX: Add missing 'VoIP Call' color to satisfy the InteractionType record.
+    'VoIP Call': 'bg-cyan-500',
 };
 
 const InteractionsTimeline: React.FC<InteractionsTimelineProps> = ({ interactions }) => {

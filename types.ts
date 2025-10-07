@@ -54,7 +54,8 @@ export type Permission =
     | 'inventory:manage'
     | 'settings:access'
     | 'settings:manage:team'
-    | 'settings:manage:roles';
+    | 'settings:manage:roles'
+    | 'voip:use';
 
 export interface CustomRole {
     id: string;
@@ -126,7 +127,7 @@ export interface Interaction {
     openedAt?: string;
     clickedAt?: string;
 }
-export type InteractionType = 'Appointment' | 'Call' | 'Email' | 'Note' | 'Site Visit' | 'Meeting' | 'Maintenance Request';
+export type InteractionType = 'Appointment' | 'Call' | 'Email' | 'Note' | 'Site Visit' | 'Meeting' | 'Maintenance Request' | 'VoIP Call';
 
 
 export interface OrderLineItem {
@@ -552,6 +553,10 @@ export interface LeadScoringRule {
     interactionType?: InteractionType;
     status?: ContactStatus;
 }
+export interface VoipSettings {
+    isConnected: boolean;
+    provider: string | null;
+}
 
 export interface OrganizationSettings {
     organizationId: string;
@@ -563,6 +568,7 @@ export interface OrganizationSettings {
         connectedEmail: string | null;
         lastSync: string | null;
     };
+    voip: VoipSettings;
 }
 
 
@@ -580,6 +586,10 @@ export interface AppContextType {
     setSimulatedDate: (date: Date) => void;
     reportToEditId: string | null;
     setReportToEditId: (id: string | null) => void;
+    isCallModalOpen: boolean;
+    setIsCallModalOpen: (isOpen: boolean) => void;
+    callContact: AnyContact | null;
+    setCallContact: (contact: AnyContact | null) => void;
 }
 
 export interface AuthContextType {

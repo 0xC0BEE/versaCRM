@@ -6,12 +6,13 @@ import Input from '../../ui/Input';
 import Select from '../../ui/Select';
 import Textarea from '../../ui/Textarea';
 import Button from '../../ui/Button';
-import { Save, Trash2, Camera, Upload } from 'lucide-react';
+import { Save, Trash2, Camera, Upload, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PhotoCaptureModal from './PhotoCaptureModal';
 import { fileToDataUrl } from '../../../utils/fileUtils';
 // FIX: Corrected import path for DataContext.
 import { useData } from '../../../contexts/DataContext';
+import { useAuth } from '../../../contexts/AuthContext';
 
 interface ProfileTabProps {
     contact: AnyContact;
@@ -25,11 +26,22 @@ interface ProfileTabProps {
 const ProfileTab: React.FC<ProfileTabProps> = ({ 
     contact, onSave, onDelete, isSaving, isDeleting, isReadOnly = false
 }) => {
-    const { industryConfig } = useApp();
-    const { teamMembersQuery } = useData();
+    const { industryConfig, setCallContact, setIsCallModalOpen } = useApp();
+    const { teamMembersQuery, organizationSettingsQuery } = useData();
+    const { hasPermission } = useAuth();
     const { data: teamMembers = [] } = teamMembersQuery;
+    const { data: settings } = organizationSettingsQuery;
     const { formData, setFormData, handleChange, handleCustomFieldChange } = useForm(contact, contact);
     const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+
+    const canUseVoip = hasPermission('voip:use') && settings?.voip.isConnected;
+
+    const handleCallClick = () => {
+        if (canUseVoip && contact) {
+            setCallContact(contact);
+            setIsCallModalOpen(true);
+        }
+    };
 
     const handleSave = () => {
         if (!formData.contactName.trim() || !formData.email.trim()) {
@@ -115,7 +127,14 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
                      <Input id="contactName" label="Full Name" value={formData.contactName} onChange={(e) => handleChange('contactName', e.target.value)} required disabled={isReadOnly} />
                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Input id="email" label="Email" type="email" value={formData.email} onChange={(e) => handleChange('email', e.target.value)} required disabled={isReadOnly} />
-                        <Input id="phone" label="Phone" type="tel" value={formData.phone} onChange={(e) => handleChange('phone', e.target.value)} disabled={isReadOnly} />
+                        <div className="relative">
+                            <Input id="phone" label="Phone" type="tel" value={formData.phone} onChange={(e) => handleChange('phone', e.target.value)} disabled={isReadOnly} />
+                            {canUseVoip && formData.phone && !isReadOnly && (
+                                <button onClick={handleCallClick} className="absolute right-2 top-8 p-1.5 rounded-full text-text-secondary hover:bg-hover-bg hover:text-primary transition-colors">
+                                    <Phone size={16} />
+                                </button>
+                            )}
+                        </div>
                      </div>
                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Select id="status" label="Status" value={formData.status} onChange={(e) => handleChange('status', e.target.value as ContactStatus)} disabled={isReadOnly}>

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 // FIX: Corrected import path for types.
-import { AppContextType, Industry, Page, IndustryConfig, FilterCondition } from '../types';
+import { AppContextType, Industry, Page, IndustryConfig, FilterCondition, AnyContact } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { useAuth } from './AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -21,6 +21,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [contactFilters, setContactFilters] = useState<FilterCondition[]>([]);
     const [simulatedDate, setSimulatedDate] = useState(new Date());
     const [reportToEditId, setReportToEditId] = useState<string | null>(null);
+    const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+    const [callContact, setCallContact] = useState<AnyContact | null>(null);
     
     // When the user logs out, reset the page to Dashboard.
     useEffect(() => {
@@ -51,7 +53,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setSimulatedDate,
         reportToEditId,
         setReportToEditId,
-    }), [currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, contactFilters, setContactFilters, simulatedDate, setSimulatedDate, reportToEditId, setReportToEditId]);
+        isCallModalOpen,
+        setIsCallModalOpen,
+        callContact,
+        setCallContact,
+    }), [currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, contactFilters, setContactFilters, simulatedDate, setSimulatedDate, reportToEditId, setReportToEditId, isCallModalOpen, setIsCallModalOpen, callContact, setCallContact]);
 
     return (
         <AppContext.Provider value={value}>

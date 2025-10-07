@@ -15,7 +15,7 @@ export const MOCK_ORGANIZATIONS: Organization[] = [
 // --- ROLES & USERS ---
 export let MOCK_ROLES: CustomRole[] = [
   { id: 'role_super', organizationId: 'org_1', name: 'Super Admin', description: 'Has all permissions across all organizations.', isSystemRole: true, permissions: {} },
-  { id: 'role_admin', organizationId: 'org_1', name: 'Organization Admin', description: 'Manages settings and users for their organization.', isSystemRole: true, permissions: { 'settings:access': true, 'settings:manage:team': true, 'settings:manage:roles': true, 'contacts:read:all': true, 'reports:read': true, 'automations:manage': true, 'inventory:manage': true, 'deals:read': true, 'tickets:read': true } },
+  { id: 'role_admin', organizationId: 'org_1', name: 'Organization Admin', description: 'Manages settings and users for their organization.', isSystemRole: true, permissions: { 'settings:access': true, 'settings:manage:team': true, 'settings:manage:roles': true, 'contacts:read:all': true, 'reports:read': true, 'automations:manage': true, 'inventory:manage': true, 'deals:read': true, 'tickets:read': true, 'voip:use': true } },
   { id: 'role_team', organizationId: 'org_1', name: 'Team Member', description: 'Standard user with access to assigned records.', isSystemRole: true, permissions: { 'contacts:read:own': true, 'deals:read': true, 'tickets:read': true } },
   { id: 'role_client', organizationId: 'org_1', name: 'Client', description: 'Accesses the client portal.', isSystemRole: true, permissions: {} },
 ];
@@ -176,7 +176,11 @@ export let MOCK_ORGANIZATION_SETTINGS: OrganizationSettings = {
       isConnected: false,
       connectedEmail: null,
       lastSync: null,
-  }
+  },
+  voip: {
+      isConnected: false,
+      provider: null,
+  },
 };
 
 // --- EXTERNAL DATA FOR SYNCING ---

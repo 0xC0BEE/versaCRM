@@ -51,6 +51,7 @@ interface DataContextType {
     deleteRoleMutation: any;
     updateCustomFieldsMutation: any;
     createInteractionMutation: any;
+    updateInteractionMutation: any;
     createTaskMutation: any;
     updateTaskMutation: any;
     deleteTaskMutation: any;
@@ -96,6 +97,8 @@ interface DataContextType {
     connectEmailMutation: any;
     disconnectEmailMutation: any;
     runEmailSyncMutation: any;
+    connectVoipMutation: any;
+    disconnectVoipMutation: any;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -327,6 +330,17 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         onError: () => toast.error('Failed to log interaction.')
     });
 
+    const updateInteractionMutation = useMutation({
+        mutationFn: apiClient.updateInteraction,
+        onSuccess: (data) => {
+            toast.success('Interaction updated.');
+            queryClient.invalidateQueries({ queryKey: ['allInteractions', orgId] });
+            queryClient.invalidateQueries({ queryKey: ['contactInteractions', data.contactId] });
+            queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
+        },
+        onError: () => toast.error('Failed to update interaction.'),
+    });
+
     const createTaskMutation = useGenericMutation(apiClient.createTask, 'tasks', 'Task created.', 'Failed to create task.');
     const updateTaskMutation = useGenericMutation(apiClient.updateTask, 'tasks', 'Task updated.', 'Failed to update task.');
     const deleteTaskMutation = useGenericMutation(apiClient.deleteTask, 'tasks', 'Task deleted.', 'Failed to delete task.');
@@ -412,6 +426,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         },
         onError: (err: any) => toast.error(err.message || 'Email sync failed.'),
     });
+    
+    const connectVoipMutation = useGenericMutation(apiClient.connectVoipProvider, 'organizationSettings', 'VoIP provider connected.', 'Failed to connect provider.');
+    const disconnectVoipMutation = useGenericMutation(apiClient.disconnectVoipProvider, 'organizationSettings', 'VoIP provider disconnected.', 'Failed to disconnect provider.');
 
     const createOrderMutation = useGenericMutation(apiClient.createOrder, 'contacts', 'Order created.', 'Failed to create order.');
     const updateOrderMutation = useGenericMutation(apiClient.updateOrder, 'contacts', 'Order updated.', 'Failed to update order.');
@@ -471,7 +488,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         advancedWorkflowsQuery, allInteractionsQuery, dashboardDataQuery, organizationSettingsQuery, customReportsQuery, dashboardWidgetsQuery, syncedEmailsQuery,
         createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation, createContactMutation, updateContactMutation,
         deleteContactMutation, createUserMutation, updateUserMutation, deleteUserMutation, createRoleMutation, updateRoleMutation, deleteRoleMutation, updateCustomFieldsMutation,
-        createInteractionMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createCalendarEventMutation,
+        createInteractionMutation, updateInteractionMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createCalendarEventMutation,
         updateCalendarEventMutation, createProductMutation, updateProductMutation, deleteProductMutation, createDealMutation,
         updateDealMutation, deleteDealMutation, createTicketMutation, updateTicketMutation, addTicketReplyMutation,
         createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation, createCampaignMutation,
@@ -480,13 +497,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateOrderMutation, deleteOrderMutation, createTransactionMutation, uploadDocumentMutation, deleteDocumentMutation,
         createCustomReportMutation, updateCustomReportMutation, deleteCustomReportMutation, addDashboardWidgetMutation, removeDashboardWidgetMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation,
         recalculateAllScoresMutation, handleNewChatMessageMutation, connectEmailMutation, disconnectEmailMutation, runEmailSyncMutation,
+        connectVoipMutation, disconnectVoipMutation,
     }), [
         organizationsQuery, contactsQuery, teamMembersQuery, rolesQuery, tasksQuery, calendarEventsQuery, productsQuery, suppliersQuery,
         warehousesQuery, dealsQuery, dealStagesQuery, ticketsQuery, emailTemplatesQuery, campaignsQuery, workflowsQuery,
         advancedWorkflowsQuery, allInteractionsQuery, dashboardDataQuery, organizationSettingsQuery, customReportsQuery, dashboardWidgetsQuery, syncedEmailsQuery,
         createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation, createContactMutation, updateContactMutation,
         deleteContactMutation, createUserMutation, updateUserMutation, deleteUserMutation, createRoleMutation, updateRoleMutation, deleteRoleMutation, updateCustomFieldsMutation,
-        createInteractionMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createCalendarEventMutation,
+        createInteractionMutation, updateInteractionMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createCalendarEventMutation,
         updateCalendarEventMutation, createProductMutation, updateProductMutation, deleteProductMutation, createDealMutation,
         updateDealMutation, deleteDealMutation, createTicketMutation, updateTicketMutation, addTicketReplyMutation,
         createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation, createCampaignMutation,
@@ -494,7 +512,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateAdvancedWorkflowMutation, deleteAdvancedWorkflowMutation, updateOrganizationSettingsMutation, createOrderMutation,
         updateOrderMutation, deleteOrderMutation, createTransactionMutation, uploadDocumentMutation, deleteDocumentMutation,
         createCustomReportMutation, updateCustomReportMutation, deleteCustomReportMutation, addDashboardWidgetMutation, removeDashboardWidgetMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation,
-        recalculateAllScoresMutation, handleNewChatMessageMutation, connectEmailMutation, disconnectEmailMutation, runEmailSyncMutation
+        recalculateAllScoresMutation, handleNewChatMessageMutation, connectEmailMutation, disconnectEmailMutation, runEmailSyncMutation,
+        connectVoipMutation, disconnectVoipMutation
     ]);
 
     return (
