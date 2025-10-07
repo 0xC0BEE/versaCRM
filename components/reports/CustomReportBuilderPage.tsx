@@ -1,211 +1,200 @@
-import React, { useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import PageWrapper from '../layout/PageWrapper';
-import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
-import MultiSelect from '../ui/MultiSelect';
 import { CustomReport, ReportDataSource, FilterCondition, ReportVisualization } from '../../types';
-// FIX: Corrected import path for DataContext.
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { useForm } from '../../hooks/useForm';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Card from '../ui/Card';
+import MultiSelect from '../ui/MultiSelect';
+import { useQuery } from '@tanstack/react-query';
+import apiClient from '../../services/apiClient';
+import CustomReportDataTable from './CustomReportDataTable';
+import { processReportData } from '../../utils/reportProcessor';
+import CustomReportChart from './CustomReportChart';
 
 interface CustomReportBuilderPageProps {
+    reportToEdit: CustomReport | null;
     onClose: () => void;
 }
 
-const contactColumns = [
-    { value: 'contactName', label: 'Name' },
-    { value: 'email', label: 'Email' },
-    { value: 'phone', label: 'Phone' },
-    { value: 'status', label: 'Status' },
-    { value: 'leadSource', label: 'Lead Source' },
-    { value: 'createdAt', label: 'Created At' },
-];
-
-const productColumns = [
-    { value: 'name', label: 'Name' },
-    { value: 'sku', label: 'SKU' },
-    { value: 'category', label: 'Category' },
-    { value: 'costPrice', label: 'Cost Price' },
-    { value: 'salePrice', label: 'Sale Price' },
-    { value: 'stockLevel', label: 'Stock Level' },
-];
-
-const operatorOptions = [
-    { id: 'is', name: 'Is' },
-    { id: 'is_not', name: 'Is Not' },
-    { id: 'contains', name: 'Contains' },
-    { id: 'does_not_contain', name: 'Does Not Contain' },
-];
-
-const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ onClose }) => {
-    const { createCustomReportMutation } = useData();
+const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ reportToEdit, onClose }) => {
+    const { createCustomReportMutation, updateCustomReportMutation } = useData();
     const { authenticatedUser } = useAuth();
+    const isNew = !reportToEdit;
 
-    const initialState = useMemo((): Omit<CustomReport, 'id'> => ({
-        organizationId: authenticatedUser!.organizationId!,
-        name: '',
-        config: {
-            dataSource: 'contacts',
-            columns: [],
-            filters: [],
-            visualization: {
-                type: 'table',
-                metric: { type: 'count' },
-            },
-        },
-    }), [authenticatedUser]);
-    
-    const { formData, setFormData, handleChange } = useForm(initialState, null);
-    
-    const availableColumns = formData.config.dataSource === 'contacts' ? contactColumns : productColumns;
+    const [config, setConfig] = useState<CustomReport['config']>(() => reportToEdit?.config || {
+        dataSource: 'contacts',
+        columns: ['contactName', 'email', 'status'],
+        filters: [],
+        visualization: { type: 'table', metric: { type: 'count' } }
+    });
+    const [name, setName] = useState(reportToEdit?.name || '');
 
-    const handleConfigChange = (field: keyof CustomReport['config'], value: any) => {
-        const newConfig = { ...formData.config, [field]: value };
-        // Reset dependent fields when data source changes
-        if (field === 'dataSource') {
-            newConfig.columns = [];
-            newConfig.filters = [];
-            if(newConfig.visualization.groupByKey) newConfig.visualization.groupByKey = undefined;
-            if(newConfig.visualization.metric.column) newConfig.visualization.metric.column = undefined;
+    useEffect(() => {
+        if (reportToEdit) {
+            setConfig(reportToEdit.config);
+            setName(reportToEdit.name);
         }
-        handleChange('config', newConfig);
-    };
+    }, [reportToEdit]);
     
-    const handleFilterChange = (index: number, field: keyof FilterCondition, value: string) => {
-        const newFilters = [...formData.config.filters];
+    const contactColumns = useMemo(() => ['id', 'organizationId', 'contactName', 'email', 'phone', 'status', 'leadSource', 'createdAt', 'leadScore', 'assignedToId'], []);
+    const productColumns = useMemo(() => ['id', 'organizationId', 'name', 'sku', 'category', 'description', 'costPrice', 'salePrice', 'stockLevel'], []);
+    const numericContactColumns = useMemo(() => ['leadScore'], []);
+    const numericProductColumns = useMemo(() => ['costPrice', 'salePrice', 'stockLevel'], []);
+
+    const availableColumns = useMemo(() => {
+        return config.dataSource === 'contacts' ? contactColumns : productColumns;
+    }, [config.dataSource, contactColumns, productColumns]);
+    
+    const numericColumns = useMemo(() => {
+        return config.dataSource === 'contacts' ? numericContactColumns : numericProductColumns;
+    }, [config.dataSource, numericContactColumns, numericProductColumns]);
+
+    const { data: previewData, isLoading: isPreviewLoading } = useQuery({
+        queryKey: ['reportPreview', config],
+        queryFn: () => apiClient.generateCustomReport(config, authenticatedUser!.organizationId),
+        enabled: !!authenticatedUser,
+    });
+    
+    const chartData = useMemo(() => {
+        if (previewData && config.visualization.type !== 'table') {
+            return processReportData(previewData, config.visualization);
+        }
+        return [];
+    }, [previewData, config.visualization]);
+    
+    const handleConfigChange = (path: string, value: any) => {
+        setConfig(prev => {
+            const keys = path.split('.');
+            const newConfig = { ...prev };
+            let current: any = newConfig;
+            for (let i = 0; i < keys.length - 1; i++) {
+                current = current[keys[i]];
+            }
+            current[keys[keys.length - 1]] = value;
+            
+            // If dataSource changes, reset columns and filters
+            if (path === 'dataSource') {
+                newConfig.columns = value === 'contacts' ? ['contactName', 'email', 'status'] : ['name', 'sku', 'salePrice'];
+                newConfig.filters = [];
+                newConfig.visualization.groupByKey = undefined;
+                newConfig.visualization.metric.column = undefined;
+            }
+
+            return newConfig;
+        });
+    };
+
+    const addFilter = () => handleConfigChange('filters', [...config.filters, { field: availableColumns[0], operator: 'contains', value: '' }]);
+    const removeFilter = (index: number) => handleConfigChange('filters', config.filters.filter((_, i) => i !== index));
+    const updateFilter = (index: number, field: keyof FilterCondition, value: any) => {
+        const newFilters = [...config.filters];
         (newFilters[index] as any)[field] = value;
         handleConfigChange('filters', newFilters);
     };
 
-    const addFilter = () => {
-        const newFilter: FilterCondition = { field: availableColumns[0].value, operator: 'contains', value: '' };
-        handleConfigChange('filters', [...formData.config.filters, newFilter]);
-    };
-
-    const removeFilter = (index: number) => {
-        handleConfigChange('filters', formData.config.filters.filter((_, i) => i !== index));
-    };
-    
-    const handleVisualizationChange = (field: keyof ReportVisualization, value: any) => {
-         const newVisualization = { ...formData.config.visualization, [field]: value };
-         handleConfigChange('visualization', newVisualization);
-    };
-
-    const handleMetricChange = (field: keyof ReportVisualization['metric'], value: any) => {
-         const newVisualization = { 
-             ...formData.config.visualization, 
-             metric: { ...formData.config.visualization.metric, [field]: value }
-        };
-         handleConfigChange('visualization', newVisualization);
-    };
-
     const handleSave = () => {
-        if (!formData.name.trim()) return toast.error("Report name is required.");
-        if (formData.config.columns.length === 0) return toast.error("Please select at least one column.");
+        if (!name.trim()) return toast.error("Report name is required.");
 
-        createCustomReportMutation.mutate(formData, {
-            onSuccess: onClose
-        });
+        const reportData = {
+            name,
+            organizationId: authenticatedUser!.organizationId!,
+            config
+        };
+
+        if (isNew) {
+            createCustomReportMutation.mutate(reportData, { onSuccess: onClose });
+        } else {
+            updateCustomReportMutation.mutate({ ...reportToEdit!, ...reportData }, { onSuccess: onClose });
+        }
     };
-    
-    const isChart = formData.config.visualization.type !== 'table';
+
+    const isPending = createCustomReportMutation.isPending || updateCustomReportMutation.isPending;
 
     return (
         <PageWrapper>
-            <div className="flex justify-between items-center mb-6">
-                 <h1 className="text-2xl font-semibold text-text-heading">Custom Report Builder</h1>
-                 <div className="flex gap-2">
-                    <Button variant="secondary" onClick={onClose} leftIcon={<ArrowLeft size={16} />}>Cancel</Button>
-                    <Button onClick={handleSave} disabled={createCustomReportMutation.isPending}>
-                        {createCustomReportMutation.isPending ? 'Saving...' : 'Save Report'}
-                    </Button>
-                 </div>
+            <div className="flex justify-between items-center mb-4">
+                <Button variant="secondary" onClick={onClose} leftIcon={<ArrowLeft size={16} />}>Back to Reports</Button>
+                <div className="flex items-center gap-4">
+                    <Input id="report-name" label="" placeholder="Enter Report Name..." value={name} onChange={e => setName(e.target.value)} className="w-72" />
+                    <Button onClick={handleSave} disabled={isPending}>{isPending ? 'Saving...' : 'Save Report'}</Button>
+                </div>
             </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-6">
-                    <Card title="1. General Information">
-                        <Input id="report-name" label="Report Name" value={formData.name} onChange={e => handleChange('name', e.target.value)} />
-                    </Card>
 
-                    <Card title="2. Data Source & Columns">
-                         <Select 
-                            id="data-source" 
-                            label="Data Source" 
-                            value={formData.config.dataSource} 
-                            onChange={e => handleConfigChange('dataSource', e.target.value as ReportDataSource)}
-                        >
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card title="Report Configuration" className="lg:col-span-1">
+                    <div className="space-y-4">
+                        <Select id="dataSource" label="Data Source" value={config.dataSource} onChange={e => handleConfigChange('dataSource', e.target.value)}>
                             <option value="contacts">Contacts</option>
                             <option value="products">Products</option>
                         </Select>
-                        <div className="mt-4">
-                            <MultiSelect 
-                                label="Columns to Include"
-                                options={availableColumns}
-                                selectedValues={formData.config.columns}
-                                onChange={values => handleConfigChange('columns', values)}
-                            />
-                        </div>
-                    </Card>
-
-                    <Card title="3. Filters">
-                         <div className="space-y-3">
-                            {formData.config.filters.map((filter, index) => (
-                                <div key={index} className="flex items-center gap-2">
-                                    <Select id={`filter-field-${index}`} label="" value={filter.field} onChange={e => handleFilterChange(index, 'field', e.target.value)} className="w-1/3">
-                                        {availableColumns.map(col => <option key={col.value} value={col.value}>{col.label}</option>)}
-                                    </Select>
-                                    <Select id={`filter-op-${index}`} label="" value={filter.operator} onChange={e => handleFilterChange(index, 'operator', e.target.value as any)} className="w-1/4">
-                                        {operatorOptions.map(op => <option key={op.id} value={op.id}>{op.name}</option>)}
-                                    </Select>
-                                    <Input id={`filter-val-${index}`} label="" value={filter.value} onChange={e => handleFilterChange(index, 'value', e.target.value)} className="flex-grow" />
-                                    <Button variant="danger" size="sm" onClick={() => removeFilter(index)}><Trash2 size={14}/></Button>
-                                </div>
-                            ))}
-                            <Button variant="secondary" size="sm" onClick={addFilter} leftIcon={<Plus size={14} />}>Add Filter</Button>
-                        </div>
-                    </Card>
-                </div>
-
-                <div>
-                    <Card title="4. Visualization">
-                        <Select id="viz-type" label="Display As" value={formData.config.visualization.type} onChange={e => handleVisualizationChange('type', e.target.value)}>
-                            <option value="table">Table</option>
-                            <option value="bar">Bar Chart</option>
-                            <option value="pie">Pie Chart</option>
-                            <option value="line">Line Chart</option>
-                        </Select>
                         
-                        {isChart && (
-                             <div className="mt-4 pt-4 border-t border-border-subtle space-y-4">
-                                <Select id="viz-group" label="Group By" value={formData.config.visualization.groupByKey || ''} onChange={e => handleVisualizationChange('groupByKey', e.target.value)}>
-                                     <option value="">Select a column to group...</option>
-                                     {availableColumns.filter(c => ['status', 'leadSource', 'category'].includes(c.value)).map(col => <option key={col.value} value={col.value}>{col.label}</option>)}
-                                </Select>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Select id="viz-metric" label="Metric" value={formData.config.visualization.metric.type} onChange={e => handleMetricChange('type', e.target.value)}>
-                                        <option value="count">Count of records</option>
-                                        <option value="sum">Sum of</option>
-                                        <option value="average">Average of</option>
-                                    </Select>
-                                    {(formData.config.visualization.metric.type === 'sum' || formData.config.visualization.metric.type === 'average') && (
-                                        <Select id="viz-metric-col" label="Metric Column" value={formData.config.visualization.metric.column || ''} onChange={e => handleMetricChange('column', e.target.value)}>
-                                            <option value="">Select a column...</option>
-                                            {availableColumns.filter(c => ['costPrice', 'salePrice', 'stockLevel'].includes(c.value)).map(col => <option key={col.value} value={col.value}>{col.label}</option>)}
-                                        </Select>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </Card>
-                </div>
-            </div>
+                        <MultiSelect label="Columns" options={availableColumns.map(c => ({ value: c, label: c }))} selectedValues={config.columns} onChange={cols => handleConfigChange('columns', cols)} />
 
+                        <div>
+                            <h4 className="text-sm font-medium mb-2">Filters</h4>
+                            <div className="space-y-2">
+                                {config.filters.map((filter, index) => (
+                                    <div key={index} className="flex gap-1 items-end">
+                                        <Select id={`filter-field-${index}`} label="" value={filter.field} onChange={e => updateFilter(index, 'field', e.target.value)} className="w-1/3">
+                                            {availableColumns.map(c => <option key={c} value={c}>{c}</option>)}
+                                        </Select>
+                                        <Select id={`filter-op-${index}`} label="" value={filter.operator} onChange={e => updateFilter(index, 'operator', e.target.value as any)} className="w-1/4">
+                                            <option value="contains">contains</option><option value="is">is</option>
+                                        </Select>
+                                        <Input id={`filter-val-${index}`} label="" value={filter.value} onChange={e => updateFilter(index, 'value', e.target.value)} className="flex-grow" />
+                                        <Button size="sm" variant="danger" onClick={() => removeFilter(index)}><Trash2 size={14}/></Button>
+                                    </div>
+                                ))}
+                                <Button size="sm" variant="secondary" onClick={addFilter} leftIcon={<Plus size={14}/>}>Add Filter</Button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 className="text-sm font-medium mb-2">Visualization</h4>
+                             <Select id="vis-type" label="Display as" value={config.visualization.type} onChange={e => handleConfigChange('visualization.type', e.target.value)}>
+                                <option value="table">Table</option><option value="bar">Bar Chart</option><option value="pie">Pie Chart</option><option value="line">Line Chart</option>
+                            </Select>
+                            {config.visualization.type !== 'table' && (
+                                <div className="mt-2 space-y-2">
+                                    <Select id="vis-group" label="Group By" value={config.visualization.groupByKey || ''} onChange={e => handleConfigChange('visualization.groupByKey', e.target.value)}>
+                                        <option value="">Select a column...</option>
+                                        {availableColumns.map(c => <option key={c} value={c}>{c}</option>)}
+                                    </Select>
+                                    <div className="flex gap-2">
+                                        <Select id="vis-metric-type" label="Metric" value={config.visualization.metric.type} onChange={e => handleConfigChange('visualization.metric.type', e.target.value)}>
+                                            <option value="count">Count</option><option value="sum">Sum</option><option value="average">Average</option>
+                                        </Select>
+                                        {(config.visualization.metric.type === 'sum' || config.visualization.metric.type === 'average') && (
+                                            <Select id="vis-metric-col" label="On Column" value={config.visualization.metric.column || ''} onChange={e => handleConfigChange('visualization.metric.column', e.target.value)}>
+                                                <option value="">Select column...</option>
+                                                {availableColumns.filter(c => numericColumns.includes(c)).map(c => <option key={c} value={c}>{c}</option>)}
+                                            </Select>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                    </div>
+                </Card>
+
+                <Card title="Live Preview" className="lg:col-span-2">
+                    {isPreviewLoading ? (
+                        <div className="h-96 flex items-center justify-center">Loading preview...</div>
+                    ) : !previewData || previewData.length === 0 ? (
+                        <div className="h-96 flex items-center justify-center">No data matches your criteria.</div>
+                    ) : config.visualization.type === 'table' ? (
+                        <CustomReportDataTable data={previewData} />
+                    ) : (
+                        <CustomReportChart data={chartData} visualizationType={config.visualization.type} />
+                    )}
+                </Card>
+            </div>
         </PageWrapper>
     );
 };

@@ -125,7 +125,14 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
                             <option>Inactive</option>
                             <option>Do Not Contact</option>
                         </Select>
-                         <Input id="leadSource" label="Lead Source" value={formData.leadSource} onChange={(e) => handleChange('leadSource', e.target.value)} disabled={isReadOnly} />
+                        <div>
+                            <label htmlFor="lead-score" className="block text-sm font-medium text-text-primary">
+                                Lead Score
+                            </label>
+                            <div id="lead-score" className="mt-1 flex items-center justify-center h-10 w-full bg-card-bg/50 border border-border-subtle rounded-input">
+                                <span className="text-lg font-bold text-primary">{formData.leadScore || 0}</span>
+                            </div>
+                        </div>
                      </div>
                       <Select
                         id="assignedTo"
@@ -139,6 +146,8 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
                             <option key={member.id} value={member.id}>{member.name}</option>
                         ))}
                     </Select>
+                     <Input id="leadSource" label="Lead Source" value={formData.leadSource} onChange={(e) => handleChange('leadSource', e.target.value)} disabled={isReadOnly} />
+
 
                     {/* Custom Fields */}
                     {industryConfig.customFields.length > 0 && (

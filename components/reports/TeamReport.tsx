@@ -1,16 +1,24 @@
 import React from 'react';
-// FIX: Imported correct type.
-// FIX: Corrected the import path for types to be a valid relative path.
-import { TeamReportData } from '../../types';
+import { TeamReportData, CustomRole } from '../../types';
 import Card from '../ui/Card';
-import { User, DollarSign, CheckSquare, Calendar } from 'lucide-react';
+import { useData } from '../../contexts/DataContext';
 
 interface TeamReportProps {
     data: TeamReportData;
 }
 
 const TeamReport: React.FC<TeamReportProps> = ({ data }) => {
+    const { rolesQuery } = useData();
+    const { data: roles = [] } = rolesQuery;
     const teamPerformance = data?.teamPerformance || [];
+    
+    const roleMap = React.useMemo(() => {
+        return (roles as CustomRole[]).reduce((acc, role) => {
+            acc[role.id] = role.name;
+            return acc;
+        }, {} as Record<string, string>);
+    }, [roles]);
+
 
     const totalRevenue = teamPerformance.reduce((sum, member) => sum + member.totalRevenue, 0);
     const totalAppointments = teamPerformance.reduce((sum, member) => sum + member.appointments, 0);
@@ -40,7 +48,7 @@ const TeamReport: React.FC<TeamReportProps> = ({ data }) => {
                                     />
                                     {member.teamMemberName}
                                 </td>
-                                <td className="px-6 py-4">{member.teamMemberRole}</td>
+                                <td className="px-6 py-4">{roleMap[member.teamMemberRole] || member.teamMemberRole}</td>
                                 <td className="px-6 py-4 text-center">{member.appointments}</td>
                                 <td className="px-6 py-4 text-center">{member.tasks}</td>
                                 <td className="px-6 py-4 text-right font-mono">{member.totalRevenue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>

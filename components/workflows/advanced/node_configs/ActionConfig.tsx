@@ -24,41 +24,49 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
     const { data: emailTemplates = [] } = emailTemplatesQuery;
     const { data: teamMembers = [] } = teamMembersQuery;
 
-    // FIX: Local state for task title input to prevent re-render issues
-    const [taskTitle, setTaskTitle] = useState(node.data.taskTitle || '');
+    // Use a single local state object for all form fields to prevent input lag.
+    const [localData, setLocalData] = useState(node.data);
 
     useEffect(() => {
-        // Sync local state when the selected node changes
-        setTaskTitle(node.data.taskTitle || '');
-    }, [node.id, node.data.taskTitle]);
+        // Sync local state when the selected node changes.
+        setLocalData(node.data);
+    }, [node.id, node.data]);
 
-    const handleTaskTitleBlur = () => {
-        // Only update the global state when the user is done editing
-        if (node.data.taskTitle !== taskTitle) {
-            updateNodeData({ taskTitle });
+    const handleLocalChange = (field: string, value: any) => {
+        setLocalData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handlePersistChange = (field: string, value: any) => {
+        // Persist the change to the global React Flow state.
+        if (node.data[field] !== value) {
+            updateNodeData({ [field]: value });
         }
     };
 
     const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newType = e.target.value as NodeExecutionType;
         const newLabel = actionTypes.find(t => t.value === newType)?.label || 'Action';
-        // Reset specific properties when type changes
         const newData: Record<string, any> = { nodeType: newType, label: newLabel };
         if (newType === 'wait') {
             newData.days = 1;
         }
+        // This is a structural change, so update the global state immediately.
         updateNodeData(newData);
     };
 
     const renderActionOptions = () => {
-        switch (node.data.nodeType as NodeExecutionType) {
+        switch (localData.nodeType as NodeExecutionType) {
             case 'sendEmail':
                 return (
                     <Select
                         id="email-template"
                         label="Email Template"
-                        value={node.data.emailTemplateId || ''}
-                        onChange={(e) => updateNodeData({ emailTemplateId: e.target.value })}
+                        value={localData.emailTemplateId || ''}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            handleLocalChange('emailTemplateId', value);
+                            handlePersistChange('emailTemplateId', value);
+                        }}
                     >
                         <option value="">Select a template...</option>
                         {(emailTemplates as EmailTemplate[]).map((t: EmailTemplate) => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -70,16 +78,20 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
                         <Input
                             id="task-title"
                             label="Task Title"
-                            value={taskTitle} // Use local state for value
-                            onChange={(e) => setTaskTitle(e.target.value)} // Update local state on change
-                            onBlur={handleTaskTitleBlur} // Update global state on blur
+                            value={localData.taskTitle || ''}
+                            onChange={(e) => handleLocalChange('taskTitle', e.target.value)}
+                            onBlur={() => handlePersistChange('taskTitle', localData.taskTitle)}
                             placeholder="e.g., Follow up with {{contactName}}"
                         />
                         <Select
                             id="task-assignee"
                             label="Assign To"
-                            value={node.data.assigneeId || ''}
-                            onChange={(e) => updateNodeData({ assigneeId: e.target.value })}
+                            value={localData.assigneeId || ''}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                handleLocalChange('assigneeId', value);
+                                handlePersistChange('assigneeId', value);
+                            }}
                         >
                             <option value="">Select a team member...</option>
                             {(teamMembers as User[]).map((m: User) => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -92,18 +104,26 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
                         <Select
                             id="update-field-id"
                             label="Field to Update"
-                            value={node.data.fieldId || ''}
-                            onChange={(e) => updateNodeData({ fieldId: e.target.value })}
+                            value={localData.fieldId || ''}
+                             onChange={(e) => {
+                                const value = e.target.value;
+                                handleLocalChange('fieldId', value);
+                                handlePersistChange('fieldId', value);
+                            }}
                         >
                             <option value="">Select a field...</option>
                             <option value="status">Status</option>
                         </Select>
-                        {node.data.fieldId === 'status' && (
+                        {localData.fieldId === 'status' && (
                             <Select
                                 id="update-field-value"
                                 label="New Status"
-                                value={node.data.newValue || ''}
-                                onChange={(e) => updateNodeData({ newValue: e.target.value })}
+                                value={localData.newValue || ''}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    handleLocalChange('newValue', value);
+                                    handlePersistChange('newValue', value);
+                                }}
                             >
                                 <option value="">Select a status...</option>
                                 {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
@@ -118,8 +138,9 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
                         label="Wait for (days)"
                         type="number"
                         min="1"
-                        value={node.data.days || 1}
-                        onChange={(e) => updateNodeData({ days: parseInt(e.target.value) || 1 })}
+                        value={localData.days || 1}
+                        onChange={(e) => handleLocalChange('days', parseInt(e.target.value) || 1)}
+                        onBlur={() => handlePersistChange('days', localData.days)}
                     />
                 );
             default:
@@ -129,7 +150,7 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
 
     return (
         <div className="space-y-4">
-            <Select id="action-type" label="Action Type" value={node.data.nodeType} onChange={handleTypeChange}>
+            <Select id="action-type" label="Action Type" value={localData.nodeType} onChange={handleTypeChange}>
                 {actionTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </Select>
             <div className="space-y-2 pt-2 border-t border-border-subtle">

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 // FIX: Corrected import path for apiClient.
 import apiClient from '../../../services/apiClient';
 import { AnyContact } from '../../../types';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
 import { Bot, Loader, Send } from 'lucide-react';

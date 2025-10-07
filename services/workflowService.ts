@@ -1,416 +1,222 @@
-import {
-    AnyContact, Workflow, AdvancedWorkflow, Task, User, ReactFlowNode, Deal, ContactStatus, ReactFlowEdge, AuditLogEntry, Interaction, EmailTemplate, Ticket
-} from '../types';
-import {
-    MOCK_WORKFLOWS, MOCK_ADVANCED_WORKFLOWS, MOCK_TASKS, MOCK_USERS, MOCK_CONTACTS_MUTABLE, MOCK_EMAIL_TEMPLATES
-} from './mockData';
+import { MOCK_CONTACTS_MUTABLE, MOCK_WORKFLOWS, MOCK_ADVANCED_WORKFLOWS, MOCK_DEAL_STAGES, MOCK_EMAIL_TEMPLATES, MOCK_TASKS, MOCK_USERS, MOCK_ROLES } from './mockData';
+// FIX: Removed unused 'Node' and 'Edge' imports which are not exported from the types module.
+import { Workflow, WorkflowTrigger, AnyContact, Deal, AdvancedWorkflow, NodeExecutionType, AuditLogEntry, Task, Interaction, ContactStatus } from '../types';
 import { replacePlaceholders } from '../utils/textUtils';
-// FIX: Import Node and Edge to use for casting.
-import { Node, Edge } from 'reactflow';
+// FIX: Imported 'addDays' from 'date-fns' to make the function available.
+import { addDays } from 'date-fns';
 
-// FIX: Add ticket-related event types.
-export type EventType = 'contactCreated' | 'contactStatusChanged' | 'dealCreated' | 'dealStageChanged' | 'ticketCreated' | 'ticketStatusChanged';
+const logs: string[] = [];
 
-interface EventPayload {
-    contact: AnyContact;
-    oldContact?: AnyContact;
-    deal?: Deal;
-    oldDeal?: Deal;
-    ticket?: Ticket;
-    oldTicket?: Ticket;
+function evaluateCondition(condition: any, payload: any): boolean {
+    const { field, operator, value } = condition;
+    if (!field) return false;
+
+    // Resolve nested field paths like 'contact.status' or 'deal.value'
+    const fieldParts = field.split('.');
+    let dataValue = payload[fieldParts[0]];
+    for (let i = 1; i < fieldParts.length; i++) {
+        if (dataValue === undefined) break;
+        dataValue = dataValue[fieldParts[i]];
+    }
+
+    if (dataValue === undefined) return false;
+    
+    // Handle numeric comparisons for fields like leadScore or deal.value
+    if (typeof dataValue === 'number') {
+        const numericValue = Number(value);
+        switch(operator) {
+            case 'gt': return dataValue > numericValue;
+            case 'lt': return dataValue < numericValue;
+            case 'eq': return dataValue === numericValue;
+            default: return false;
+        }
+    }
+
+    // Handle string comparisons
+    const stringValue = String(dataValue).toLowerCase();
+    const compareValue = String(value).toLowerCase();
+
+    switch(operator) {
+        case 'is': return stringValue === compareValue;
+        case 'is_not': return stringValue !== compareValue;
+        case 'contains': return stringValue.includes(compareValue);
+        default: return false;
+    }
 }
 
-// --- Main Trigger Function ---
-export const checkAndTriggerWorkflows = async (eventType: EventType, payload: EventPayload): Promise<string[]> => {
-    const logs: string[] = [];
-    logs.push(`[SYSTEM] Firing event: ${eventType}`);
-    
-    const simpleLogs = triggerSimpleWorkflows(eventType, payload);
-    const advancedLogs = triggerAdvancedWorkflows(eventType, payload);
+function checkTrigger(trigger: WorkflowTrigger, eventType: string, payload: any): boolean {
+    if (trigger.type !== eventType) return false;
 
-    const allLogs = logs.concat(simpleLogs, advancedLogs);
-    if (allLogs.length === 1) {
-        allLogs.push("[SYSTEM] No active workflows found matching this trigger.");
+    switch (eventType) {
+        case 'contactStatusChanged':
+            const { contact, oldContact } = payload as { contact: AnyContact; oldContact: AnyContact };
+            const fromMatch = !trigger.fromStatus || trigger.fromStatus === oldContact.status;
+            const toMatch = !trigger.toStatus || trigger.toStatus === contact.status;
+            return fromMatch && toMatch;
+        case 'dealStageChanged':
+             const { deal, oldDeal } = payload as { deal: Deal, oldDeal: Deal};
+             const fromStageMatch = !trigger.fromStageId || trigger.fromStageId === oldDeal.stageId;
+             const toStageMatch = !trigger.toStageId || trigger.toStageId === deal.stageId;
+             return fromStageMatch && toStageMatch;
+        case 'ticketCreated':
+             const { ticket } = payload as { ticket: any };
+             const priorityMatch = !trigger.priority || trigger.priority === ticket.priority;
+             return priorityMatch;
+        default:
+            return true;
     }
-    
-    console.log(allLogs.join('\n')); // Keep console logs for in-app background execution
-    return allLogs;
-};
+}
 
-
-// --- Simple Workflow Engine ---
-const triggerSimpleWorkflows = (eventType: EventType, payload: EventPayload): string[] => {
-    const logs: string[] = [];
-    
-    const relevantWorkflows = MOCK_WORKFLOWS.filter(wf => {
-        if (!wf.isActive) return false;
-
-        const trigger = wf.trigger;
-        if (trigger.type !== eventType) return false;
-        
-        if (trigger.type === 'contactStatusChanged') {
-            if (trigger.fromStatus && trigger.fromStatus !== payload.oldContact?.status) return false;
-            if (trigger.toStatus && trigger.toStatus !== payload.contact.status) return false;
-        }
-
-        if (trigger.type === 'dealStageChanged') {
-            if (trigger.fromStageId && trigger.fromStageId !== payload.oldDeal?.stageId) return false;
-            if (trigger.toStageId && trigger.toStageId !== payload.deal?.stageId) return false;
-        }
-        
-        if (trigger.type === 'ticketCreated') {
-            if (trigger.priority && trigger.priority !== payload.ticket?.priority) return false;
-        }
-
-        if (trigger.type === 'ticketStatusChanged') {
-            if (trigger.fromStatus && trigger.fromStatus !== payload.oldTicket?.status) return false;
-            if (trigger.toStatus && trigger.toStatus !== payload.ticket?.status) return false;
-        }
-
-        return true;
-    });
-
-    if(relevantWorkflows.length > 0) {
-        logs.push(`[INFO] Found ${relevantWorkflows.length} matching simple workflows.`);
+async function executeSimpleActions(workflow: Workflow, payload: any) {
+    logs.push(`[Workflow] Executing simple actions for: "${workflow.name}"`);
+    for (const action of workflow.actions) {
+        await executeAction(action, payload, workflow.id, logs);
     }
+}
 
-    relevantWorkflows.forEach(wf => {
-        logs.push(`[EXEC] Running simple workflow: '${wf.name}'`);
-        wf.actions.forEach(action => {
-            switch (action.type) {
-                case 'createTask': {
-                    const title = replacePlaceholders(action.taskTitle || 'New Task', payload.contact, payload.deal);
-                    
-                    let assigneeId = action.assigneeId;
-                    if (!assigneeId && payload.deal?.assignedToId) {
-                        assigneeId = payload.deal.assignedToId;
-                        logs.push(`  - Action [Create Task]: Assigning to deal owner (ID: ${assigneeId})`);
-                    } else if (!assigneeId) {
-                        assigneeId = MOCK_USERS.find(u => u.organizationId === wf.organizationId && u.role === 'Team Member')?.id || '';
-                        logs.push(`  - Action [Create Task]: No assignee specified. Falling back to default user (ID: ${assigneeId})`);
-                    }
+async function executeAdvancedActions(workflow: AdvancedWorkflow, payload: any) {
+    logs.push(`[Workflow] Executing advanced actions for: "${workflow.name}"`);
+    const triggerNode = workflow.nodes.find(n => n.type === 'trigger');
+    if (!triggerNode) return;
+    
+    let currentNodeId: string | null = triggerNode.id;
+    const visited = new Set<string>(); // To prevent infinite loops
 
-                    const newTask: Task = {
-                        id: `task_wf_${Date.now()}`,
-                        organizationId: wf.organizationId,
-                        title,
-                        dueDate: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-                        isCompleted: false,
-                        userId: assigneeId,
-                        contactId: payload.contact.id,
-                    };
-                    MOCK_TASKS.push(newTask);
-                    logs.push(`  - Action [Create Task]: Created task '${title}' for user ID ${assigneeId}`);
-                    break;
-                }
-                case 'sendEmail': {
-                    const template = MOCK_EMAIL_TEMPLATES.find(t => t.id === action.emailTemplateId);
-                    if (!template) {
-                        logs.push(`  - Action [Send Email]: FAILED - Template ID ${action.emailTemplateId} not found.`);
-                        break;
-                    }
+    while (currentNodeId && !visited.has(currentNodeId)) {
+        visited.add(currentNodeId);
+        const currentNode = workflow.nodes.find(n => n.id === currentNodeId);
+        if (!currentNode) break;
+
+        let nextNodeId: string | null = null;
+
+        if (currentNode.type === 'action') {
+            await executeAction(currentNode.data, payload, workflow.id, logs);
+            const outgoingEdge = workflow.edges.find(e => e.source === currentNode.id);
+            nextNodeId = outgoingEdge ? outgoingEdge.target : null;
+        } else if (currentNode.type === 'condition') {
+            const conditionResult = evaluateCondition(currentNode.data.condition, payload);
+            logs.push(`  -> CONDITION: ${currentNode.data.label} evaluated to ${conditionResult}.`);
+            const outgoingEdge = workflow.edges.find(e => e.source === currentNode.id && e.sourceHandle === String(conditionResult));
+            nextNodeId = outgoingEdge ? outgoingEdge.target : null;
+        } else { // trigger
+             const outgoingEdge = workflow.edges.find(e => e.source === currentNode.id);
+             nextNodeId = outgoingEdge ? outgoingEdge.target : null;
+        }
         
-                    const senderId = payload.deal?.assignedToId || MOCK_USERS.find(u => u.organizationId === wf.organizationId && u.role === 'Organization Admin')?.id || '';
-                    const sender = MOCK_USERS.find(u => u.id === senderId);
-        
-                    const subject = replacePlaceholders(template.subject, payload.contact, payload.deal);
-                    const body = replacePlaceholders(template.body.replace('{{userName}}', sender?.name || 'The Team'), payload.contact, payload.deal);
-        
-                    const emailInteraction: Interaction = {
+        currentNodeId = nextNodeId;
+    }
+}
+
+async function executeAction(actionData: any, payload: any, workflowId: string, logArray: string[]) {
+     await new Promise(res => setTimeout(res, 200)); // Simulate async
+     const actionType = actionData.nodeType || actionData.type;
+
+     switch (actionType) {
+        case 'createTask':
+            {
+                const taskTitle = replacePlaceholders(actionData.taskTitle || 'Untitled Task', payload.contact, payload.deal);
+                // FIX: User object does not have a 'role' property. Finding admin user by roleId via MOCK_ROLES.
+                const adminRoleId = MOCK_ROLES.find(r => r.name === 'Administrator')?.id;
+                const assigneeId = actionData.assigneeId || payload.deal?.assignedToId || payload.contact?.assignedToId || MOCK_USERS.find(u => u.roleId === adminRoleId)?.id || '';
+                const newTask: Omit<Task, 'id' | 'isCompleted'> = {
+                    organizationId: payload.contact?.organizationId || payload.deal?.organizationId,
+                    userId: assigneeId,
+                    title: taskTitle,
+                    dueDate: addDays(new Date(), 3).toISOString(),
+                    contactId: payload.contact?.id,
+                };
+                const createdTask = { ...newTask, id: `task_${Date.now()}`, isCompleted: false };
+                MOCK_TASKS.push(createdTask);
+                logArray.push(`  -> ACTION: Create Task. Title: "${taskTitle}". Assignee: ${assigneeId}.`);
+            }
+            break;
+        case 'sendEmail':
+            {
+                const template = MOCK_EMAIL_TEMPLATES.find(t => t.id === actionData.emailTemplateId);
+                 if (template && payload.contact) {
+                     // FIX: User object does not have a 'role' property. Finding admin user by roleId via MOCK_ROLES.
+                     const adminRoleId = MOCK_ROLES.find(r => r.organizationId === payload.contact.organizationId && r.name === 'Administrator')?.id;
+                     const sender = MOCK_USERS.find(u => u.organizationId === payload.contact.organizationId && u.roleId === adminRoleId) || MOCK_USERS[0];
+                     const subject = replacePlaceholders(template.subject, payload.contact, payload.deal);
+                     const body = replacePlaceholders(template.body.replace('{{userName}}', sender.name), payload.contact, payload.deal);
+                     const emailInteraction: Interaction = {
                         id: `int_wf_${Date.now()}`,
-                        organizationId: wf.organizationId,
+                        organizationId: payload.contact.organizationId,
                         contactId: payload.contact.id,
-                        userId: senderId,
+                        userId: sender.id, // System or specific user
                         type: 'Email',
                         date: new Date().toISOString(),
-                        notes: `Subject: ${subject}\n\n${body}`,
+                        notes: `(Workflow: ${workflowId})\nSubject: ${subject}\n\n${body}`,
                     };
-        
                     const contactIndex = MOCK_CONTACTS_MUTABLE.findIndex(c => c.id === payload.contact.id);
                     if (contactIndex > -1) {
-                        if (!MOCK_CONTACTS_MUTABLE[contactIndex].interactions) {
-                            MOCK_CONTACTS_MUTABLE[contactIndex].interactions = [];
-                        }
-                        MOCK_CONTACTS_MUTABLE[contactIndex].interactions!.unshift(emailInteraction);
-                        logs.push(`  - Action [Send Email]: (Simulated) Sent '${template.name}' to ${payload.contact.contactName} and logged interaction.`);
-                    } else {
-                        logs.push(`  - Action [Send Email]: FAILED - Contact ${payload.contact.id} not found to log interaction.`);
+                         if (!MOCK_CONTACTS_MUTABLE[contactIndex].interactions) MOCK_CONTACTS_MUTABLE[contactIndex].interactions = [];
+                         MOCK_CONTACTS_MUTABLE[contactIndex].interactions!.unshift(emailInteraction);
                     }
-                    break;
                 }
-                case 'updateContactField': {
-                    if (!action.fieldId || action.newValue === undefined) {
-                        logs.push(`  - Action [Update Contact Field]: FAILED - Missing fieldId or newValue.`);
-                        break;
-                    }
-                    const contactIndex = MOCK_CONTACTS_MUTABLE.findIndex(c => c.id === payload.contact.id);
-                    if (contactIndex > -1) {
-                        const contactToUpdate = MOCK_CONTACTS_MUTABLE[contactIndex];
-                        // Check if it's a top-level field or a custom field
-                        if (Object.keys(contactToUpdate).includes(action.fieldId)) {
-                             (contactToUpdate as any)[action.fieldId] = action.newValue;
-                             logs.push(`  - Action [Update Contact Field]: Updated '${action.fieldId}' for contact ${payload.contact.contactName} to '${action.newValue}'.`);
-                        } else {
-                             contactToUpdate.customFields[action.fieldId] = action.newValue;
-                             logs.push(`  - Action [Update Contact Field]: Updated custom field '${action.fieldId}' for contact ${payload.contact.contactName} to '${action.newValue}'.`);
-                        }
-                    } else {
-                        logs.push(`  - Action [Update Contact Field]: FAILED - Contact ${payload.contact.id} not found.`);
-                    }
-                    break;
-                }
-                case 'createAuditLogEntry':
-                    const oldStatus = payload.oldContact?.status;
-                    const newStatus = payload.contact.status;
-                    if (oldStatus !== newStatus) {
-                        // In a real app, the user performing the action would be passed in the payload.
-                        // For this simulation, we'll assume a default admin user made the change.
-                        const user = MOCK_USERS.find(u => u.id === 'user_admin_1');
-                        if (user) {
-                            const logMessage = `updated status from "${oldStatus}" to "${newStatus}".`;
-                            const newLogEntry: AuditLogEntry = {
-                                id: `log_wf_${Date.now()}`,
-                                timestamp: new Date().toISOString(),
-                                userId: user.id,
-                                userName: user.name,
-                                change: logMessage,
-                            };
-                            
-                            const contactIndex = MOCK_CONTACTS_MUTABLE.findIndex(c => c.id === payload.contact.id);
-                            if (contactIndex > -1) {
-                                if (!MOCK_CONTACTS_MUTABLE[contactIndex].auditLogs) {
-                                    MOCK_CONTACTS_MUTABLE[contactIndex].auditLogs = [];
-                                }
-                                // Add to the beginning of the array to show newest first
-                                MOCK_CONTACTS_MUTABLE[contactIndex].auditLogs!.unshift(newLogEntry);
-                                logs.push(`  - Action [Create Audit Log]: Created log for contact ${payload.contact.id}: "${user.name} ${logMessage}"`);
-                            } else {
-                                logs.push(`  - Action [Create Audit Log]: FAILED - Contact ${payload.contact.id} not found.`);
-                            }
-                        } else {
-                            logs.push(`  - Action [Create Audit Log]: FAILED - User for logging not found.`);
-                        }
-                    } else {
-                        logs.push(`  - Action [Create Audit Log]: SKIPPED - Status did not change.`);
-                    }
-                    break;
+                logArray.push(`  -> ACTION: Send Email. Template ID: ${actionData.emailTemplateId}.`);
             }
-        });
+            break;
+        case 'updateContactField':
+             {
+                const contactIndex = MOCK_CONTACTS_MUTABLE.findIndex(c => c.id === payload.contact.id);
+                if (contactIndex > -1 && actionData.fieldId) {
+                    (MOCK_CONTACTS_MUTABLE[contactIndex] as any)[actionData.fieldId] = actionData.newValue;
+                    logArray.push(`  -> ACTION: Update Contact. Field: ${actionData.fieldId}. New Value: ${actionData.newValue}.`);
+                }
+            }
+            break;
+        case 'createAuditLogEntry':
+            {
+                const { contact, oldContact, user } = payload;
+                if(contact && oldContact) {
+                    const logEntry: AuditLogEntry = {
+                        id: `log_${Date.now()}`,
+                        timestamp: new Date().toISOString(),
+                        userId: user?.id || 'system',
+                        userName: user?.name || 'System',
+                        change: `had status updated from "${oldContact.status}" to "${contact.status}".`
+                    };
+                     const contactIndex = MOCK_CONTACTS_MUTABLE.findIndex(c => c.id === contact.id);
+                     if (contactIndex > -1) {
+                        if(!MOCK_CONTACTS_MUTABLE[contactIndex].auditLogs) MOCK_CONTACTS_MUTABLE[contactIndex].auditLogs = [];
+                        MOCK_CONTACTS_MUTABLE[contactIndex].auditLogs!.push(logEntry);
+                     }
+                    logArray.push(`  -> ACTION: Create Audit Log Entry.`);
+                }
+            }
+            break;
+        default:
+             logArray.push(`  -> ACTION: Unknown action type: ${actionType}.`);
+     }
+}
+
+export async function checkAndTriggerWorkflows(eventType: string, payload: any): Promise<string[]> {
+    logs.length = 0;
+    logs.push(`[Workflow Engine] Event triggered: ${eventType}`);
+
+    // Simple Workflows
+    const matchingSimple = MOCK_WORKFLOWS.filter(
+        (wf) => wf.isActive && checkTrigger(wf.trigger, eventType, payload)
+    );
+    for (const workflow of matchingSimple) {
+        await executeSimpleActions(workflow, payload);
+    }
+
+    // Advanced Workflows
+    const matchingAdvanced = MOCK_ADVANCED_WORKFLOWS.filter(wf => {
+        const triggerNode = wf.nodes.find(n => n.type === 'trigger');
+        return wf.isActive && triggerNode && triggerNode.data.nodeType === eventType;
     });
-    return logs;
-};
-
-
-// --- Advanced Workflow Engine ---
-
-const executeAction = (node: ReactFlowNode, payload: EventPayload, organizationId: string): string[] => {
-    const logs: string[] = [];
-    // FIX: Cast node to Node to access properties.
-    const rfn = node as Node;
-    if (rfn.type !== 'action') return logs;
-
-    logs.push(`  - Action [${rfn.data.label}]`);
-
-    switch (rfn.data.nodeType) {
-        case 'createTask': {
-            const title = replacePlaceholders(rfn.data.taskTitle || 'New Task', payload.contact, payload.deal);
-            
-            let assigneeId = rfn.data.assigneeId;
-            if (!assigneeId && payload.deal?.assignedToId) {
-                assigneeId = payload.deal.assignedToId;
-                logs.push(`    - SUCCESS: Assigning to deal owner (ID: ${assigneeId})`);
-            } else if (!assigneeId) {
-                assigneeId = MOCK_USERS.find(u => u.organizationId === organizationId && u.role === 'Team Member')?.id || '';
-                logs.push(`    - SUCCESS: No assignee specified. Falling back to default user (ID: ${assigneeId})`);
-            }
-
-            const newTask: Task = {
-                id: `task_wf_${Date.now()}_${Math.random()}`,
-                organizationId: organizationId,
-                title,
-                dueDate: new Date(Date.now() + 86400000).toISOString(),
-                isCompleted: false,
-                userId: assigneeId,
-                contactId: payload.contact.id,
-            };
-            MOCK_TASKS.push(newTask);
-            logs.push(`    - SUCCESS: Created task '${title}' for user ID ${assigneeId}`);
-            break;
-        }
-        case 'sendEmail': {
-            const template = MOCK_EMAIL_TEMPLATES.find(t => t.id === rfn.data.emailTemplateId);
-            if (!template) {
-                logs.push(`    - FAILED: Template ID ${rfn.data.emailTemplateId} not found.`);
-                break;
-            }
-
-            const senderId = payload.deal?.assignedToId || MOCK_USERS.find(u => u.organizationId === organizationId && u.role === 'Organization Admin')?.id || '';
-            const sender = MOCK_USERS.find(u => u.id === senderId);
-
-            const subject = replacePlaceholders(template.subject, payload.contact, payload.deal);
-            const body = replacePlaceholders(template.body.replace('{{userName}}', sender?.name || 'The Team'), payload.contact, payload.deal);
-
-            const emailInteraction: Interaction = {
-                id: `int_awf_${Date.now()}`,
-                organizationId: organizationId,
-                contactId: payload.contact.id,
-                userId: senderId,
-                type: 'Email',
-                date: new Date().toISOString(),
-                notes: `Subject: ${subject}\n\n${body}`,
-            };
-            
-            const contactIndex = MOCK_CONTACTS_MUTABLE.findIndex(c => c.id === payload.contact.id);
-            if (contactIndex > -1) {
-                if (!MOCK_CONTACTS_MUTABLE[contactIndex].interactions) {
-                    MOCK_CONTACTS_MUTABLE[contactIndex].interactions = [];
-                }
-                MOCK_CONTACTS_MUTABLE[contactIndex].interactions!.unshift(emailInteraction);
-                logs.push(`    - SUCCESS: (Simulated) Sent email '${template.name}' to ${payload.contact.contactName} and logged interaction.`);
-            } else {
-                 logs.push(`    - FAILED: Contact ${payload.contact.id} not found to log interaction.`);
-            }
-            break;
-        }
-        case 'updateContactField': {
-            const { fieldId, newValue } = rfn.data;
-            if (!fieldId || newValue === undefined) {
-                logs.push(`    - FAILED: Missing fieldId or newValue.`);
-                break;
-            }
-            const contactIndex = MOCK_CONTACTS_MUTABLE.findIndex(c => c.id === payload.contact.id);
-            if (contactIndex > -1) {
-                const contactToUpdate = MOCK_CONTACTS_MUTABLE[contactIndex];
-                if (Object.keys(contactToUpdate).includes(fieldId)) {
-                    (contactToUpdate as any)[fieldId] = newValue;
-                    logs.push(`    - SUCCESS: Updated '${fieldId}' for contact ${payload.contact.contactName} to '${newValue}'.`);
-                } else {
-                    contactToUpdate.customFields[fieldId] = newValue;
-                    logs.push(`    - SUCCESS: Updated custom field '${fieldId}' for contact ${payload.contact.contactName} to '${newValue}'.`);
-                }
-            } else {
-                logs.push(`    - FAILED: Contact ${payload.contact.id} not found.`);
-            }
-            break;
-        }
-        case 'wait':
-            logs.push(`    - SUCCESS: (Simulated) Waiting for ${rfn.data.days} day(s).`);
-            break;
-    }
-    return logs;
-};
-
-const evaluateCondition = (node: ReactFlowNode, payload: EventPayload): { result: boolean, log: string } => {
-    // FIX: Cast node to Node to access properties.
-    const rfn = node as Node;
-    const condition = rfn.data.condition;
-    if (!condition || !condition.field) return { result: false, log: "  - Condition: Invalid or missing condition."};
-
-    const [object, field] = condition.field.split('.');
-    
-    let valueToTest: any;
-    if (object === 'contact') {
-        valueToTest = (payload.contact as any)[field];
-    } else if (object === 'deal' && payload.deal) {
-        valueToTest = (payload.deal as any)[field];
-    } else {
-        return { result: false, log: `  - Condition: Invalid object '${object}' in condition.`}; 
+     for (const workflow of matchingAdvanced) {
+        await executeAdvancedActions(workflow, payload);
     }
 
-    const compareValue = condition.value;
-    let result = false;
 
-    switch (condition.operator) {
-        case 'is': result = String(valueToTest).toLowerCase() === String(compareValue).toLowerCase(); break;
-        case 'is_not': result = String(valueToTest).toLowerCase() !== String(compareValue).toLowerCase(); break;
-        case 'contains': result = String(valueToTest).toLowerCase().includes(String(compareValue).toLowerCase()); break;
-        case 'greater_than': result = Number(valueToTest) > Number(compareValue); break;
-        case 'less_than': result = Number(valueToTest) < Number(compareValue); break;
-        default: result = false;
-    }
-    
-    const log = `  - Condition [${rfn.data.label}]: '${valueToTest}' ${condition.operator} '${compareValue}'? RESULT: ${result}`;
-    return { result, log };
-};
-
-const traverseWorkflow = (startNode: ReactFlowNode, nodes: ReactFlowNode[], edges: ReactFlowEdge[], payload: EventPayload, organizationId: string): string[] => {
-    const logs: string[] = [];
-    let currentNode: ReactFlowNode | undefined = startNode;
-    const maxSteps = nodes.length + 1; // Prevent infinite loops
-    let steps = 0;
-
-    while (currentNode && steps < maxSteps) {
-        steps++;
-        // FIX: Cast currentNode to Node to access properties.
-        const rfn = currentNode as Node;
-        logs.push(`[STEP] Executing node ID ${rfn.id} ('${rfn.data.label}')`);
-        
-        if (rfn.type === 'action') {
-            logs.push(...executeAction(currentNode, payload, organizationId));
-            
-            // Find next node
-            // FIX: Cast edge to Edge to access properties.
-            const nextEdge = edges.find(edge => (edge as Edge).source === rfn?.id);
-            // FIX: Cast node to Node to access properties and nextEdge to Edge.
-            currentNode = nodes.find(node => (node as Node).id === (nextEdge as Edge)?.target);
-
-        } else if (rfn.type === 'condition') {
-            const { result, log } = evaluateCondition(currentNode, payload);
-            logs.push(log);
-            
-            const handleId = result ? 'true' : 'false';
-            // FIX: Cast edge and node to access properties.
-            const nextEdge = edges.find(edge => (edge as Edge).source === rfn?.id && (edge as Edge).sourceHandle === handleId);
-            // FIX: Cast node and edge to access properties.
-            currentNode = nodes.find(node => (node as Node).id === (nextEdge as Edge)?.target);
-
-        } else if (rfn.type === 'trigger') {
-            // Find first node connected to trigger
-            // FIX: Cast edge and node to access properties.
-            const nextEdge = edges.find(edge => (edge as Edge).source === rfn?.id);
-            // FIX: Cast node and edge to access properties.
-            currentNode = nodes.find(node => (node as Node).id === (nextEdge as Edge)?.target);
-        } else {
-            logs.push(`[WARN] Unknown node type or dead end reached at node ID ${rfn.id}.`);
-            currentNode = undefined;
-        }
-    }
-    
-    if (steps >= maxSteps) {
-        logs.push('[ERROR] Workflow execution stopped to prevent infinite loop.');
-    } else {
-        logs.push('[END] Workflow execution finished.');
+    if (matchingSimple.length === 0 && matchingAdvanced.length === 0) {
+        logs.push(`[Workflow Engine] No matching active workflows found.`);
     }
 
-    return logs;
-};
-
-const triggerAdvancedWorkflows = (eventType: EventType, payload: EventPayload): string[] => {
-    const logs: string[] = [];
-
-    const relevantWorkflows = MOCK_ADVANCED_WORKFLOWS.filter(wf => {
-        if (!wf.isActive) return false;
-        // FIX: Cast node to Node to access properties.
-        const triggerNode = wf.nodes.find(n => (n as Node).type === 'trigger');
-        // FIX: Cast triggerNode to Node to access properties.
-        return (triggerNode as Node)?.data.nodeType === eventType;
-    });
-
-    if (relevantWorkflows.length > 0) {
-        logs.push(`[INFO] Found ${relevantWorkflows.length} matching advanced workflows.`);
-    }
-
-    relevantWorkflows.forEach(wf => {
-        logs.push(`[EXEC] Running advanced workflow: '${wf.name}'`);
-        // FIX: Cast node to Node to access properties.
-        const triggerNode = wf.nodes.find(n => (n as Node).type === 'trigger');
-        if (triggerNode) {
-            const executionLogs = traverseWorkflow(triggerNode, wf.nodes, wf.edges, payload, wf.organizationId);
-            logs.push(...executionLogs);
-        } else {
-            logs.push(`[ERROR] Workflow '${wf.name}' has no trigger node.`);
-        }
-    });
-
-    return logs;
-};
+    logs.push(`[Workflow Engine] Finished processing event.`);
+    return [...logs];
+}

@@ -230,7 +230,7 @@ function generateTeamReport(dateRange: { start: Date; end: Date }, contacts: Any
         return {
             teamMemberId: member.id,
             teamMemberName: member.name,
-            teamMemberRole: member.role,
+            teamMemberRole: member.roleId, // Changed to roleId
             appointments,
             tasks: completedTasks,
             totalRevenue,

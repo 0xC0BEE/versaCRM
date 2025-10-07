@@ -74,7 +74,7 @@ const DynamicChart: React.FC<DynamicChartProps> = ({ type, data }) => {
                         <XAxis dataKey="name" tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
                         <Tooltip content={<CustomTooltip />} />
-                        <Line type="monotone" dataKey="value" stroke="rgb(var(--color-accent-green))" name="Value" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }}/>
+                        <Line type="monotone" dataKey="value" stroke="rgb(var(--primary))" name="Value" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }}/>
                     </LineChart>
                 );
             case 'pie':

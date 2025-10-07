@@ -1,0 +1,113 @@
+import React, { useMemo, useState } from 'react';
+import { Campaign, AnyContact, Interaction } from '../../types';
+import PageWrapper from '../layout/PageWrapper';
+import { ArrowLeft } from 'lucide-react';
+import Button from '../ui/Button';
+import { useData } from '../../contexts/DataContext';
+import KpiCard from '../dashboard/KpiCard';
+import Card from '../ui/Card';
+import CampaignFunnelChart from './CampaignFunnelChart';
+import CampaignEngagementTimeline from './CampaignEngagementTimeline';
+import Tabs from '../ui/Tabs';
+import ContactsTable from '../contacts/ContactsTable';
+import LoadingSpinner from '../ui/LoadingSpinner';
+
+interface CampaignReportPageProps {
+    campaign: Campaign;
+    onBack: () => void;
+}
+
+const CampaignReportPage: React.FC<CampaignReportPageProps> = ({ campaign, onBack }) => {
+    const { allInteractionsQuery, contactsQuery } = useData();
+    const { data: allInteractions = [], isLoading: interactionsLoading } = allInteractionsQuery;
+    const { data: allContacts = [], isLoading: contactsLoading } = contactsQuery;
+    const [activeTab, setActiveTab] = useState('Opened');
+
+    const isLoading = interactionsLoading || contactsLoading;
+
+    const { openRate, clickRate, interactions, openedContacts, clickedContacts } = useMemo(() => {
+        if (!campaign || !allInteractions.length || !allContacts.length) {
+            return { openRate: 0, clickRate: 0, interactions: [], openedContacts: [], clickedContacts: [] };
+        }
+
+        const campaignInteractions = (allInteractions as Interaction[]).filter(i => i.notes.includes(`(Campaign: ${campaign.name})`));
+        const sentCount = campaign.stats.sent;
+        const openedCount = campaign.stats.opened;
+        const clickedCount = campaign.stats.clicked;
+        
+        const openRate = sentCount > 0 ? (openedCount / sentCount) * 100 : 0;
+        const clickRate = openedCount > 0 ? (clickedCount / openedCount) * 100 : 0; // Click-through rate based on opens
+
+        const contactMap = new Map((allContacts as AnyContact[]).map(c => [c.id, c]));
+        
+        const openedContactIds = new Set(campaignInteractions.filter(i => i.openedAt).map(i => i.contactId));
+        const clickedContactIds = new Set(campaignInteractions.filter(i => i.clickedAt).map(i => i.contactId));
+        
+        const openedContacts = Array.from(openedContactIds).map(id => contactMap.get(id)).filter(Boolean) as AnyContact[];
+        const clickedContacts = Array.from(clickedContactIds).map(id => contactMap.get(id)).filter(Boolean) as AnyContact[];
+
+        return { openRate, clickRate, interactions: campaignInteractions, openedContacts, clickedContacts };
+    }, [campaign, allInteractions, allContacts]);
+    
+    const tabs = [`Opened (${openedContacts.length})`, `Clicked (${clickedContacts.length})`];
+
+    const renderContactList = () => {
+        const contactsToShow = activeTab.startsWith('Opened') ? openedContacts : clickedContacts;
+        return (
+            <ContactsTable 
+                contacts={contactsToShow}
+                onRowClick={() => {}} // Read-only view
+                isError={false}
+                selectedContactIds={new Set()}
+                setSelectedContactIds={() => {}}
+            />
+        );
+    }
+    
+    if (isLoading) {
+        return <PageWrapper><LoadingSpinner/></PageWrapper>;
+    }
+
+    return (
+        <PageWrapper>
+            <div className="flex items-center mb-6">
+                <Button variant="secondary" onClick={onBack} className="mr-4">
+                    <ArrowLeft size={20} />
+                </Button>
+                <div>
+                    <h1 className="text-2xl font-semibold text-text-heading">{campaign.name}</h1>
+                    <p className="text-sm text-text-secondary">Performance Report</p>
+                </div>
+            </div>
+
+            <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <KpiCard title="Recipients" value={campaign.stats.recipients} iconName="Users" />
+                    <KpiCard title="Sent" value={campaign.stats.sent} iconName="Send" />
+                    <KpiCard title="Open Rate" value={`${openRate.toFixed(1)}%`} iconName="MailOpen" />
+                    <KpiCard title="Click Rate" value={`${clickRate.toFixed(1)}%`} iconName="MousePointerClick" />
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <Card title="Campaign Funnel">
+                        <CampaignFunnelChart stats={campaign.stats} />
+                    </Card>
+                     <Card title="Engagement Timeline (First 48h)">
+                        <CampaignEngagementTimeline interactions={interactions} campaignStartDate={new Date()} />
+                    </Card>
+                </div>
+
+                <Card>
+                    <div className="p-6">
+                        <Tabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+                        <div className="mt-4">
+                            {renderContactList()}
+                        </div>
+                    </div>
+                </Card>
+            </div>
+        </PageWrapper>
+    );
+};
+
+export default CampaignReportPage;

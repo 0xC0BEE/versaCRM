@@ -9,22 +9,42 @@ import ThemeBuilder from './ThemeBuilder';
 import DataMigration from './DataMigration';
 import EmailTemplates from './EmailTemplates';
 import TicketSettings from './TicketSettings';
+import LeadScoringSettings from './LeadScoringSettings';
+import LiveChatSettings from './LiveChatSettings';
+import RolesAndPermissionsPage from './RolesAndPermissionsPage';
+import { useAuth } from '../../contexts/AuthContext';
+import IntegrationsSettings from './IntegrationsSettings';
 
 const SettingsPage: React.FC = () => {
-    const [activeTab, setActiveTab] = useState('Contact Forms');
+    const { hasPermission } = useAuth();
+    const [activeTab, setActiveTab] = useState('Lead Scoring');
     
-    const tabs = [
-        'Contact Forms', 
-        'Interaction Forms', 
-        'Email Templates',
-        'Ticket Settings',
-        'Appearance', 
-        'Custom Themes',
-        'Data Migration'
+    const allTabs = [
+        { name: 'Roles & Permissions', permission: 'settings:manage:roles' },
+        { name: 'Integrations' },
+        { name: 'Live Chat' },
+        { name: 'Lead Scoring' },
+        { name: 'Contact Forms' }, 
+        { name: 'Interaction Forms' }, 
+        { name: 'Email Templates' },
+        { name: 'Ticket Settings' },
+        { name: 'Appearance' }, 
+        { name: 'Custom Themes' },
+        { name: 'Data Migration' }
     ];
+
+    const availableTabs = allTabs.filter(tab => !tab.permission || hasPermission(tab.permission as any)).map(tab => tab.name);
 
     const renderContent = () => {
         switch (activeTab) {
+            case 'Roles & Permissions':
+                return <RolesAndPermissionsPage />;
+            case 'Integrations':
+                return <IntegrationsSettings />;
+            case 'Live Chat':
+                return <LiveChatSettings />;
+            case 'Lead Scoring':
+                return <LeadScoringSettings />;
             case 'Contact Forms':
                 return <FormBuilder />;
             case 'Interaction Forms':
@@ -49,7 +69,7 @@ const SettingsPage: React.FC = () => {
              <h1 className="text-2xl font-semibold text-text-heading mb-6">Settings</h1>
             <Card>
                 <div className="p-6">
-                    <Tabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+                    <Tabs tabs={availableTabs} activeTab={activeTab} setActiveTab={setActiveTab} />
                     <div className="mt-6">
                         {renderContent()}
                     </div>

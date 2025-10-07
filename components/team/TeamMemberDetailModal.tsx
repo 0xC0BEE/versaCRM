@@ -3,8 +3,7 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
-import { User, UserRole } from '../../types';
-// FIX: Corrected import path for DataContext.
+import { User, CustomRole } from '../../types';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from '../../hooks/useForm';
@@ -19,19 +18,22 @@ interface TeamMemberDetailModalProps {
 }
 
 const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({ isOpen, onClose, member }) => {
-    const { createUserMutation, updateUserMutation, deleteUserMutation } = useData();
+    const { createUserMutation, updateUserMutation, deleteUserMutation, rolesQuery } = useData();
     const { authenticatedUser } = useAuth();
+    const { data: roles = [] } = rolesQuery;
     const isNew = !member;
 
-    // State to show the new user's credentials after creation
     const [newUserCredentials, setNewUserCredentials] = useState<{ email: string; password: string } | null>(null);
 
     const initialState = useMemo((): Omit<User, 'id'> => ({
         name: '',
         email: '',
-        role: 'Team Member',
+        roleId: (roles as CustomRole[])[0]?.id || '',
         organizationId: authenticatedUser!.organizationId!,
-    }), [authenticatedUser]);
+        isClient: false,
+        //FIX: Added role property to satisfy type
+        role: ''
+    }), [authenticatedUser, roles]);
 
     const { formData, handleChange, resetForm } = useForm(initialState, member);
 
@@ -50,11 +52,7 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({ isOpen, o
                 onSuccess: (newUser) => {
                     const tempPassword = 'password123'; // In a real app, this would be generated securely
                     setNewUserCredentials({ email: newUser.email, password: tempPassword });
-                    // Don't close this modal yet, the credentials modal will handle it.
                 },
-                onError: () => {
-                    // Error toast is handled by DataContext, but can add specific ones here if needed
-                }
             });
         } else {
             updateUserMutation.mutate({ ...member!, ...formData }, {
@@ -91,10 +89,10 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({ isOpen, o
                 <div className="space-y-4">
                     <Input id="member-name" label="Full Name" value={formData.name} onChange={e => handleChange('name', e.target.value)} required disabled={isPending} />
                     <Input id="member-email" label="Email Address" type="email" value={formData.email} onChange={e => handleChange('email', e.target.value)} required disabled={isPending} />
-                    <Select id="member-role" label="Role" value={formData.role} onChange={e => handleChange('role', e.target.value as UserRole)} disabled={isPending}>
-                        <option>Team Member</option>
-                        <option>Organization Admin</option>
-                        {/* Client role is usually not assigned this way */}
+                    <Select id="member-role" label="Role" value={formData.roleId} onChange={e => handleChange('roleId', e.target.value)} disabled={isPending || rolesQuery.isLoading}>
+                        {(roles as CustomRole[]).map(role => (
+                            <option key={role.id} value={role.id}>{role.name}</option>
+                        ))}
                     </Select>
                 </div>
                 <div className="mt-6 flex justify-between items-center">

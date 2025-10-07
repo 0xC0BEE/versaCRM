@@ -17,31 +17,21 @@ import WorkflowsPage from '../workflows/WorkflowsPage';
 import CampaignsPage from '../campaigns/CampaignsPage';
 import TicketsPage from '../tickets/TicketsPage';
 import TeamPage from '../team/TeamPage';
+import SyncedEmailPage from '../synced_email/SyncedEmailPage';
 
 const PageRenderer: React.FC = () => {
     const { currentPage } = useApp();
     const { authenticatedUser } = useAuth();
-    const role = authenticatedUser?.role;
+    
+    // The main App component now decides which console to render.
+    // This renderer just needs to map page names to components.
 
-    // Team Member specific pages
-    if (role === 'Team Member') {
-        switch (currentPage) {
-            case 'Dashboard': return <TeamMemberDashboard />;
-            case 'Contacts': return <ContactsPage />;
-            case 'Deals': return <DealsPage />;
-            case 'Tickets': return <TicketsPage />;
-            case 'Interactions': return <InteractionsPage />;
-            case 'Calendar': return <CalendarPage />;
-            case 'Tasks': return <MyTasksPage />;
-            default: return <TeamMemberDashboard />;
-        }
-    }
-
-    // Org Admin / Super Admin pages
     switch (currentPage) {
-        case 'Dashboard': return <DashboardPage />;
+        case 'Dashboard': 
+            // The dashboard itself can decide what to show based on role/permissions
+            return authenticatedUser?.isClient ? <div /> : <DashboardPage />;
         case 'Contacts': return <ContactsPage />;
-        case 'Team': return <TeamPage />; // Added Team page route
+        case 'Team': return <TeamPage />;
         case 'Organizations': return <OrganizationsPage />;
         case 'Deals': return <DealsPage />;
         case 'Tickets': return <TicketsPage />;
@@ -53,7 +43,9 @@ const PageRenderer: React.FC = () => {
         case 'Settings': return <SettingsPage />;
         case 'Workflows': return <WorkflowsPage />;
         case 'Campaigns': return <CampaignsPage />;
-        default: return <DashboardPage />;
+        case 'Synced Email': return <SyncedEmailPage />;
+        default: 
+            return <DashboardPage />;
     }
 };
 

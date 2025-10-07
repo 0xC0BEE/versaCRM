@@ -14,7 +14,9 @@ import ContactCard from './ContactCard';
 import ReviewPromptCard from './ReviewPromptCard';
 import Tabs from '../ui/Tabs';
 import ContactDetailModal from '../organizations/ContactDetailModal';
+// FIX: Corrected import path for types
 import { AnyContact } from '../../types';
+import DashboardWidget from './DashboardWidget';
 
 
 interface DashboardPageProps {
@@ -24,9 +26,10 @@ interface DashboardPageProps {
 const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) => {
     const { authenticatedUser } = useAuth();
     const { industryConfig } = useApp();
-    const { dashboardDataQuery, contactsQuery, updateContactMutation, deleteContactMutation } = useData();
+    const { dashboardDataQuery, contactsQuery, updateContactMutation, deleteContactMutation, dashboardWidgetsQuery } = useData();
     const { data: dashboardData, isLoading: isDashboardLoading } = dashboardDataQuery;
     const { data: contacts = [], isLoading: isContactsLoading } = contactsQuery;
+    const { data: widgets = [], isLoading: isWidgetsLoading } = dashboardWidgetsQuery;
     
     const isAdmin = authenticatedUser?.role === 'Organization Admin' || authenticatedUser?.role === 'Super Admin';
     const [activeTab, setActiveTab] = useState('Organization');
@@ -67,7 +70,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
     };
 
     const renderOrgDashboard = () => {
-        if (isDashboardLoading || isContactsLoading) return <LoadingSpinner />;
+        if (isDashboardLoading || isContactsLoading || isWidgetsLoading) return <LoadingSpinner />;
         if (!dashboardData) return <div>No dashboard data available.</div>;
 
         return (
@@ -114,6 +117,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
                         </Card>
                     ))}
                 </div>
+
+                {/* Custom Widgets */}
+                {widgets.length > 0 && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {widgets.map((widget: any) => (
+                            <DashboardWidget key={widget.id} widget={widget} />
+                        ))}
+                    </div>
+                )}
             </div>
         );
     };

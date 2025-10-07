@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import { Download, Plus } from 'lucide-react';
+import { Download, Plus, Check, Edit, Trash2, Eye } from 'lucide-react';
 // FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
-import { AnyReportData, ReportType, AnyContact, Product, User, Task, Deal, DealStage } from '../../types';
+import { AnyReportData, ReportType, AnyContact, Product, User, Task, Deal, DealStage, CustomReport } from '../../types';
 import { generateReportData } from '../../services/reportGenerator';
 import { subDays } from 'date-fns';
 import ReportFilters from './ReportFilters';
@@ -17,9 +17,9 @@ import TeamReport from './TeamReport';
 import DealsReport from './DealsReport';
 import { exportToCSV } from '../../utils/export';
 import CustomReportBuilderPage from './CustomReportBuilderPage';
-import CustomReportDataTable from './CustomReportDataTable';
-import { processReportData } from '../../utils/reportProcessor';
-import CustomReportChart from './CustomReportChart';
+import ReportPreviewModal from './ReportPreviewModal';
+import { useApp } from '../../contexts/AppContext';
+
 
 interface ReportsPageProps {
     isTabbedView?: boolean;
@@ -29,8 +29,29 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
     const [reportType, setReportType] = useState<ReportType>('deals');
     const [dateRange, setDateRange] = useState({ start: subDays(new Date(), 30), end: new Date() });
     const [view, setView] = useState<'reports' | 'builder'>('reports');
+    const [selectedReport, setSelectedReport] = useState<CustomReport | null>(null);
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+    
+    const { reportToEditId, setReportToEditId } = useApp();
 
-    const { contactsQuery, productsQuery, teamMembersQuery, tasksQuery, dealsQuery, dealStagesQuery, customReportsQuery } = useData();
+    const { 
+        contactsQuery, productsQuery, teamMembersQuery, tasksQuery, dealsQuery, dealStagesQuery, 
+        customReportsQuery, dashboardWidgetsQuery, addDashboardWidgetMutation, deleteCustomReportMutation 
+    } = useData();
+    const { data: customReports = [] } = customReportsQuery;
+    const { data: dashboardWidgets = [] } = dashboardWidgetsQuery;
+    
+    useEffect(() => {
+        if (reportToEditId) {
+            const report = (customReports as CustomReport[]).find(r => r.id === reportToEditId);
+            if (report) {
+                setSelectedReport(report);
+                setView('builder');
+                setReportToEditId(null); // Clear the trigger
+            }
+        }
+    }, [reportToEditId, customReports, setReportToEditId]);
+
 
     const isLoading = contactsQuery.isLoading || productsQuery.isLoading || teamMembersQuery.isLoading || tasksQuery.isLoading || dealsQuery.isLoading || dealStagesQuery.isLoading;
 
@@ -74,9 +95,31 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
             }
         }
     }
+    
+    const handleEdit = (report: CustomReport) => {
+        setSelectedReport(report);
+        setView('builder');
+    };
+    
+    const handleNew = () => {
+        setSelectedReport(null);
+        setView('builder');
+    };
+    
+    const handleDelete = (reportId: string) => {
+        if (window.confirm("Are you sure you want to delete this report? This will also remove it from any dashboards.")) {
+            deleteCustomReportMutation.mutate(reportId);
+        }
+    };
+    
+    const handlePreview = (report: CustomReport) => {
+        setSelectedReport(report);
+        setIsPreviewModalOpen(true);
+    };
+
 
     if (view === 'builder') {
-        return <CustomReportBuilderPage onClose={() => setView('reports')} />;
+        return <CustomReportBuilderPage reportToEdit={selectedReport} onClose={() => setView('reports')} />;
     }
 
     const pageContent = (
@@ -86,7 +129,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
                     <h1 className="text-2xl font-semibold text-text-heading">Reports</h1>
                     <div className="flex gap-2">
                         <Button variant="secondary" onClick={handleExport} leftIcon={<Download size={16} />}>Export</Button>
-                        <Button onClick={() => setView('builder')} leftIcon={<Plus size={16} />}>Custom Report</Button>
+                        <Button onClick={handleNew} leftIcon={<Plus size={16} />}>Custom Report</Button>
                     </div>
                 </div>
             )}
@@ -98,6 +141,45 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
                     {isLoading ? <div className="p-8 text-center">Loading report data...</div> : renderReport()}
                 </div>
             </Card>
+
+            <Card title="My Custom Reports" className="mt-6">
+                 {customReports.length > 0 ? (
+                    <div className="divide-y divide-border-subtle">
+                        {(customReports as CustomReport[]).map((report: CustomReport) => {
+                            const widgetExists = dashboardWidgets.some((w: any) => w.reportId === report.id);
+                            return (
+                                <div key={report.id} className="p-3 flex justify-between items-center">
+                                    <p className="font-medium">{report.name}</p>
+                                    <div className="flex items-center gap-2">
+                                        <Button 
+                                            size="sm" 
+                                            variant="secondary"
+                                            onClick={() => addDashboardWidgetMutation.mutate(report.id)}
+                                            disabled={widgetExists || addDashboardWidgetMutation.isPending}
+                                            leftIcon={widgetExists ? <Check size={14} /> : <Plus size={14} />}
+                                        >
+                                            {widgetExists ? 'Added' : 'Add to Dashboard'}
+                                        </Button>
+                                        <Button size="sm" variant="secondary" onClick={() => handlePreview(report)}><Eye size={14} /></Button>
+                                        <Button size="sm" variant="secondary" onClick={() => handleEdit(report)}><Edit size={14} /></Button>
+                                        <Button size="sm" variant="danger" onClick={() => handleDelete(report.id)} disabled={deleteCustomReportMutation.isPending}><Trash2 size={14} /></Button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <p className="text-sm text-text-secondary text-center p-6">You haven't created any custom reports yet.</p>
+                )}
+            </Card>
+            
+            {isPreviewModalOpen && selectedReport && (
+                <ReportPreviewModal
+                    isOpen={isPreviewModalOpen}
+                    onClose={() => setIsPreviewModalOpen(false)}
+                    report={selectedReport}
+                />
+            )}
         </>
     );
     

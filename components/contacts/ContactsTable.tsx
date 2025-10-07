@@ -1,5 +1,5 @@
 import React from 'react';
-// FIX: Replaced placeholder content with a valid component implementation and adjusted import paths.
+// FIX: Corrected import path for types.
 import { AnyContact } from '../../types';
 import { useApp } from '../../contexts/AppContext';
 
@@ -54,12 +54,13 @@ const ContactsTable: React.FC<ContactsTableProps> = ({ contacts, onRowClick, isE
                         <th scope="col" className="px-6 py-3 font-medium">Email</th>
                         <th scope="col" className="px-6 py-3 font-medium">Phone</th>
                         <th scope="col" className="px-6 py-3 font-medium">Status</th>
+                        <th scope="col" className="px-6 py-3 font-medium text-center">Lead Score</th>
                         <th scope="col" className="px-6 py-3 font-medium">Created At</th>
                     </tr>
                 </thead>
                 <tbody>
                     {isError && (
-                        <tr><td colSpan={6} className="text-center p-8 text-error">
+                        <tr><td colSpan={7} className="text-center p-8 text-error">
                             Failed to load {industryConfig.contactNamePlural.toLowerCase()}. Please try again later.
                         </td></tr>
                     )}
@@ -108,11 +109,14 @@ const ContactsTable: React.FC<ContactsTableProps> = ({ contacts, onRowClick, isE
                                     {contact.status}
                                 </span>
                             </td>
+                            <td className="px-6 py-4 font-semibold text-text-primary text-center cursor-pointer" onClick={() => onRowClick(contact)}>
+                                {contact.leadScore || 0}
+                            </td>
                             <td className="px-6 py-4 cursor-pointer" onClick={() => onRowClick(contact)}>{new Date(contact.createdAt).toLocaleDateString()}</td>
                         </tr>
                     ))}
                     {!isError && contacts.length === 0 && (
-                        <tr><td colSpan={6} className="text-center p-8">
+                        <tr><td colSpan={7} className="text-center p-8">
                              <p className="text-text-secondary">No {industryConfig.contactNamePlural.toLowerCase()} found.</p>
                         </td></tr>
                     )}

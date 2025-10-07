@@ -4,6 +4,7 @@ import { Bell, LogOut, Menu, Search } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import NotificationsPanel from './NotificationsPanel';
 import SmartSearchModal from '../search/SmartSearchModal';
+import { useData } from '../../contexts/DataContext';
 
 interface HeaderProps {
     toggleSidebar?: () => void;
@@ -12,8 +13,12 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     const { authenticatedUser, logout } = useAuth();
     const { unreadCount } = useNotifications();
+    const { rolesQuery } = useData();
+    const { data: roles = [] } = rolesQuery;
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+    const roleName = roles.find((r: any) => r.id === authenticatedUser?.roleId)?.name || (authenticatedUser?.isClient ? 'Client' : '');
 
     return (
         <>
@@ -67,7 +72,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                             <div className="flex items-center space-x-4">
                                 <div className="text-right">
                                     <p className="text-sm font-semibold text-text-primary">{authenticatedUser?.name}</p>
-                                    <p className="text-xs text-text-secondary">{authenticatedUser?.role}</p>
+                                    <p className="text-xs text-text-secondary">{roleName}</p>
                                 </div>
                                 <button onClick={logout} className="p-2 rounded-full hover:bg-hover-bg" aria-label="Logout">
                                     <LogOut size={20} className="text-error" />

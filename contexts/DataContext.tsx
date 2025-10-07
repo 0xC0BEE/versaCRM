@@ -5,17 +5,18 @@ import { useAuth } from './AuthContext';
 import {
     AnyContact, Organization, User, Task, CalendarEvent, Product, Supplier, Warehouse, Deal, DealStage,
     Ticket, EmailTemplate, Campaign, Workflow, AdvancedWorkflow, Interaction, OrganizationSettings, Industry,
-    CustomField, IndustryConfig, ContactStatus, Order, Transaction, DashboardWidget, CustomReport
+    CustomField, IndustryConfig, ContactStatus, Order, Transaction, DashboardWidget, CustomReport, CustomRole, Document
 } from '../types';
 import toast from 'react-hot-toast';
 import { generateDashboardData } from '../services/reportGenerator';
-import { subDays } from 'date-fns';
+import { subDays, format } from 'date-fns';
 
 interface DataContextType {
     // Queries
     organizationsQuery: any;
     contactsQuery: any;
     teamMembersQuery: any;
+    rolesQuery: any;
     tasksQuery: any;
     calendarEventsQuery: any;
     productsQuery: any;
@@ -33,6 +34,7 @@ interface DataContextType {
     organizationSettingsQuery: any;
     customReportsQuery: any;
     dashboardWidgetsQuery: any;
+    syncedEmailsQuery: any;
 
     // Mutations
     createOrganizationMutation: any;
@@ -44,6 +46,9 @@ interface DataContextType {
     createUserMutation: any;
     updateUserMutation: any;
     deleteUserMutation: any;
+    createRoleMutation: any;
+    updateRoleMutation: any;
+    deleteRoleMutation: any;
     updateCustomFieldsMutation: any;
     createInteractionMutation: any;
     createTaskMutation: any;
@@ -66,6 +71,7 @@ interface DataContextType {
     createCampaignMutation: any;
     updateCampaignMutation: any;
     launchCampaignMutation: any;
+    advanceDayMutation: any;
     createWorkflowMutation: any;
     updateWorkflowMutation: any;
     createAdvancedWorkflowMutation: any;
@@ -79,37 +85,47 @@ interface DataContextType {
     uploadDocumentMutation: any;
     deleteDocumentMutation: any;
     createCustomReportMutation: any;
+    updateCustomReportMutation: any;
+    deleteCustomReportMutation: any;
+    addDashboardWidgetMutation: any;
     removeDashboardWidgetMutation: any;
     bulkDeleteContactsMutation: any;
     bulkUpdateContactStatusMutation: any;
+    recalculateAllScoresMutation: any;
+    handleNewChatMessageMutation: any;
+    connectEmailMutation: any;
+    disconnectEmailMutation: any;
+    runEmailSyncMutation: any;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { authenticatedUser, permissions } = useAuth();
+    const { authenticatedUser, hasPermission } = useAuth();
     const queryClient = useQueryClient();
 
     const orgId = authenticatedUser?.organizationId;
     const userId = authenticatedUser?.id;
-    const isAdmin = permissions?.canViewAllContacts; // A good proxy for admin-level data access
 
     // --- QUERIES ---
 
     const organizationsQuery = useQuery<Organization[], Error>({
         queryKey: ['organizations'],
         queryFn: apiClient.getOrganizations,
-        enabled: authenticatedUser?.role === 'Super Admin',
+        enabled: !!authenticatedUser, // Super Admin logic handled in UI
     });
     
     const contactsQuery = useQuery<AnyContact[], Error>({
-        queryKey: ['contacts', orgId, authenticatedUser?.role],
+        queryKey: ['contacts', orgId, userId, hasPermission('contacts:read:all')],
         queryFn: async () => {
             const orgContacts = await apiClient.getContactsByOrg(orgId!);
-            if (authenticatedUser?.role === 'Team Member') {
-                return orgContacts.filter(c => c.assignedToId === authenticatedUser.id);
+            if (hasPermission('contacts:read:all')) {
+                return orgContacts;
             }
-            return orgContacts;
+            if (hasPermission('contacts:read:own')) {
+                return orgContacts.filter(c => c.assignedToId === userId);
+            }
+            return []; // No permission, return empty
         },
         enabled: !!orgId,
     });
@@ -119,11 +135,17 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         queryFn: () => apiClient.getUsersByOrg(orgId!),
         enabled: !!orgId,
     });
+
+    const rolesQuery = useQuery<CustomRole[], Error>({
+        queryKey: ['roles', orgId],
+        queryFn: () => apiClient.getRoles(orgId!),
+        enabled: !!orgId && hasPermission('settings:manage:roles'),
+    });
     
     const tasksQuery = useQuery<Task[], Error>({
-        queryKey: ['tasks', orgId, userId, isAdmin],
+        queryKey: ['tasks', orgId, userId, hasPermission('contacts:read:all')], // Re-using contact permission as a proxy
         queryFn: () => {
-            if (isAdmin) {
+            if (hasPermission('contacts:read:all')) {
                 return apiClient.getAllTasksByOrg(orgId!);
             }
             return apiClient.getTasksByUser(userId!, orgId!);
@@ -221,6 +243,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         enabled: !!orgId
     });
 
+    const syncedEmailsQuery = useQuery<Interaction[], Error>({
+        queryKey: ['syncedEmails', orgId],
+        queryFn: () => apiClient.getSyncedEmails(orgId!),
+        enabled: !!orgId,
+    });
+
     // --- DERIVED QUERIES ---
 
     const dashboardDataQuery = useQuery({
@@ -235,20 +263,18 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // --- MUTATIONS ---
     
-    const useGenericMutation = (mutationFn: (...args: any[]) => Promise<any>, queryKeyToInvalidate: string, successMsg: string, errorMsg: string) => {
+    const useGenericMutation = (mutationFn: (...args: any[]) => Promise<any>, queryKeyToInvalidate: string | string[], successMsg: string, errorMsg: string) => {
         return useMutation({
             mutationFn,
             onSuccess: () => {
                 toast.success(successMsg);
-                queryClient.invalidateQueries({ queryKey: [queryKeyToInvalidate, orgId] });
-                 if (queryKeyToInvalidate === 'tasks') {
-                    queryClient.invalidateQueries({ queryKey: [queryKeyToInvalidate, orgId, userId, isAdmin] });
-                } else {
-                    queryClient.invalidateQueries({ queryKey: [queryKeyToInvalidate, orgId] });
+                const keys = Array.isArray(queryKeyToInvalidate) ? queryKeyToInvalidate : [queryKeyToInvalidate];
+                for (const key of keys) {
+                   queryClient.invalidateQueries({ queryKey: [key] }); // Invalidate globally or by orgId
                 }
             },
             onError: (err: any) => {
-                toast.error(errorMsg);
+                toast.error(err.message || errorMsg);
                 console.error(err);
             },
         });
@@ -276,6 +302,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const createUserMutation = useGenericMutation(apiClient.createUser, 'teamMembers', 'Team member invited.', 'Failed to invite team member.');
     const updateUserMutation = useGenericMutation(apiClient.updateUser, 'teamMembers', 'Team member updated.', 'Failed to update team member.');
     const deleteUserMutation = useGenericMutation(apiClient.deleteUser, 'teamMembers', 'Team member removed.', 'Failed to remove team member.');
+    
+    const createRoleMutation = useGenericMutation(apiClient.createRole, 'roles', 'Role created.', 'Failed to create role.');
+    const updateRoleMutation = useGenericMutation(apiClient.updateRole, 'roles', 'Role updated.', 'Failed to update role.');
+    const deleteRoleMutation = useGenericMutation(apiClient.deleteRole, 'roles', 'Role deleted.', 'Failed to delete role.');
     
     const updateCustomFieldsMutation = useMutation({
         mutationFn: apiClient.updateCustomFields,
@@ -334,7 +364,32 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const createCampaignMutation = useGenericMutation(apiClient.createCampaign, 'campaigns', 'Campaign saved.', 'Failed to save campaign.');
     const updateCampaignMutation = useGenericMutation(apiClient.updateCampaign, 'campaigns', 'Campaign updated.', 'Failed to update campaign.');
-    const launchCampaignMutation = useGenericMutation(apiClient.launchCampaign, 'campaigns', 'Campaign launched!', 'Failed to launch campaign.');
+    
+    const launchCampaignMutation = useMutation({
+        mutationFn: apiClient.launchCampaign,
+        onSuccess: () => {
+            toast.success('Campaign launched!');
+            queryClient.invalidateQueries({ queryKey: ['campaigns', orgId] });
+            queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
+            queryClient.invalidateQueries({ queryKey: ['allInteractions', orgId] });
+        },
+        onError: () => {
+            toast.error('Failed to launch campaign.');
+        }
+    });
+
+    const advanceDayMutation = useMutation({
+        mutationFn: (currentDate: Date) => apiClient.advanceDay(currentDate),
+        onSuccess: (newDate) => {
+            toast.success(`Advanced time to ${format(newDate, 'PP')}`);
+            queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+            queryClient.invalidateQueries({ queryKey: ['contacts'] });
+            queryClient.invalidateQueries({ queryKey: ['allInteractions'] });
+        },
+        onError: () => {
+            toast.error('Failed to advance time.');
+        }
+    });
 
     const createWorkflowMutation = useGenericMutation(apiClient.createWorkflow, 'workflows', 'Workflow created.', 'Failed to create workflow.');
     const updateWorkflowMutation = useGenericMutation(apiClient.updateWorkflow, 'workflows', 'Workflow updated.', 'Failed to update workflow.');
@@ -345,6 +400,19 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     const updateOrganizationSettingsMutation = useGenericMutation(apiClient.updateOrganizationSettings, 'organizationSettings', 'Settings updated.', 'Failed to update settings.');
 
+    const connectEmailMutation = useGenericMutation(apiClient.connectEmailAccount, 'organizationSettings', 'Email account connected.', 'Failed to connect email.');
+    const disconnectEmailMutation = useGenericMutation(apiClient.disconnectEmailAccount, 'organizationSettings', 'Email account disconnected.', 'Failed to disconnect email.');
+    const runEmailSyncMutation = useMutation({
+        mutationFn: (orgId: string) => apiClient.runEmailSync(orgId),
+        onSuccess: ({ syncedCount }) => {
+            toast.success(`Sync complete. Found ${syncedCount} new emails.`);
+            queryClient.invalidateQueries({ queryKey: ['syncedEmails', orgId] });
+            queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
+            queryClient.invalidateQueries({ queryKey: ['organizationSettings', orgId] });
+        },
+        onError: (err: any) => toast.error(err.message || 'Email sync failed.'),
+    });
+
     const createOrderMutation = useGenericMutation(apiClient.createOrder, 'contacts', 'Order created.', 'Failed to create order.');
     const updateOrderMutation = useGenericMutation(apiClient.updateOrder, 'contacts', 'Order updated.', 'Failed to update order.');
     const deleteOrderMutation = useGenericMutation(apiClient.deleteOrder, 'contacts', 'Order deleted.', 'Failed to delete order.');
@@ -352,7 +420,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const createTransactionMutation = useGenericMutation(apiClient.createTransaction, 'contacts', 'Transaction created.', 'Failed to create transaction.');
 
     const uploadDocumentMutation = useMutation({
-        mutationFn: apiClient.uploadDocument,
+        mutationFn: (docData: Omit<Document, 'id' | 'uploadDate'>) => apiClient.uploadDocument(docData),
         onSuccess: (data) => {
             toast.success("Document uploaded.");
             queryClient.invalidateQueries({ queryKey: ['documents', data.contactId] });
@@ -361,7 +429,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     const deleteDocumentMutation = useMutation({
-        mutationFn: apiClient.deleteDocument,
+        mutationFn: (docId: string) => apiClient.deleteDocument(docId),
         onSuccess: (data, docId) => {
             toast.success("Document deleted.");
             queryClient.invalidateQueries({ queryKey: ['documents'] }); // Invalidate all document queries
@@ -370,37 +438,63 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     const createCustomReportMutation = useGenericMutation(apiClient.createCustomReport, 'customReports', 'Custom report saved.', 'Failed to save report.');
+    const updateCustomReportMutation = useGenericMutation(apiClient.updateCustomReport, 'customReports', 'Custom report updated.', 'Failed to update report.');
+    const deleteCustomReportMutation = useGenericMutation(apiClient.deleteCustomReport, ['customReports', 'dashboardWidgets'], 'Custom report deleted.', 'Failed to delete report.');
+    
+    const addDashboardWidgetMutation = useMutation({
+        mutationFn: (reportId: string) => apiClient.addDashboardWidget(reportId, orgId!),
+        onSuccess: () => {
+            toast.success('Widget added to dashboard.');
+            queryClient.invalidateQueries({ queryKey: ['dashboardWidgets', orgId] });
+        },
+        onError: () => toast.error('Failed to add widget.')
+    });
+    
     const removeDashboardWidgetMutation = useGenericMutation(apiClient.removeDashboardWidget, 'dashboardWidgets', 'Widget removed.', 'Failed to remove widget.');
+
+    const recalculateAllScoresMutation = useGenericMutation(apiClient.recalculateAllScores, 'contacts', 'All lead scores recalculated.', 'Failed to recalculate scores.');
+
+    const handleNewChatMessageMutation = useMutation({
+        mutationFn: apiClient.handleNewChatMessage,
+        onSuccess: () => {
+            toast.success("New ticket created from chat.");
+            queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
+            queryClient.invalidateQueries({ queryKey: ['tickets', orgId] });
+        },
+        onError: () => toast.error('Failed to process chat message.'),
+    });
 
 
     const value = useMemo(() => ({
-        organizationsQuery, contactsQuery, teamMembersQuery, tasksQuery, calendarEventsQuery, productsQuery, suppliersQuery,
+        organizationsQuery, contactsQuery, teamMembersQuery, rolesQuery, tasksQuery, calendarEventsQuery, productsQuery, suppliersQuery,
         warehousesQuery, dealsQuery, dealStagesQuery, ticketsQuery, emailTemplatesQuery, campaignsQuery, workflowsQuery,
-        advancedWorkflowsQuery, allInteractionsQuery, dashboardDataQuery, organizationSettingsQuery, customReportsQuery, dashboardWidgetsQuery,
+        advancedWorkflowsQuery, allInteractionsQuery, dashboardDataQuery, organizationSettingsQuery, customReportsQuery, dashboardWidgetsQuery, syncedEmailsQuery,
         createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation, createContactMutation, updateContactMutation,
-        deleteContactMutation, createUserMutation, updateUserMutation, deleteUserMutation, updateCustomFieldsMutation,
+        deleteContactMutation, createUserMutation, updateUserMutation, deleteUserMutation, createRoleMutation, updateRoleMutation, deleteRoleMutation, updateCustomFieldsMutation,
         createInteractionMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createCalendarEventMutation,
         updateCalendarEventMutation, createProductMutation, updateProductMutation, deleteProductMutation, createDealMutation,
         updateDealMutation, deleteDealMutation, createTicketMutation, updateTicketMutation, addTicketReplyMutation,
         createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation, createCampaignMutation,
-        updateCampaignMutation, launchCampaignMutation, createWorkflowMutation, updateWorkflowMutation, createAdvancedWorkflowMutation,
+        updateCampaignMutation, launchCampaignMutation, advanceDayMutation, createWorkflowMutation, updateWorkflowMutation, createAdvancedWorkflowMutation,
         updateAdvancedWorkflowMutation, deleteAdvancedWorkflowMutation, updateOrganizationSettingsMutation, createOrderMutation,
         updateOrderMutation, deleteOrderMutation, createTransactionMutation, uploadDocumentMutation, deleteDocumentMutation,
-        createCustomReportMutation, removeDashboardWidgetMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation
+        createCustomReportMutation, updateCustomReportMutation, deleteCustomReportMutation, addDashboardWidgetMutation, removeDashboardWidgetMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation,
+        recalculateAllScoresMutation, handleNewChatMessageMutation, connectEmailMutation, disconnectEmailMutation, runEmailSyncMutation,
     }), [
-        organizationsQuery, contactsQuery, teamMembersQuery, tasksQuery, calendarEventsQuery, productsQuery, suppliersQuery,
+        organizationsQuery, contactsQuery, teamMembersQuery, rolesQuery, tasksQuery, calendarEventsQuery, productsQuery, suppliersQuery,
         warehousesQuery, dealsQuery, dealStagesQuery, ticketsQuery, emailTemplatesQuery, campaignsQuery, workflowsQuery,
-        advancedWorkflowsQuery, allInteractionsQuery, dashboardDataQuery, organizationSettingsQuery, customReportsQuery, dashboardWidgetsQuery,
+        advancedWorkflowsQuery, allInteractionsQuery, dashboardDataQuery, organizationSettingsQuery, customReportsQuery, dashboardWidgetsQuery, syncedEmailsQuery,
         createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation, createContactMutation, updateContactMutation,
-        deleteContactMutation, createUserMutation, updateUserMutation, deleteUserMutation, updateCustomFieldsMutation,
+        deleteContactMutation, createUserMutation, updateUserMutation, deleteUserMutation, createRoleMutation, updateRoleMutation, deleteRoleMutation, updateCustomFieldsMutation,
         createInteractionMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createCalendarEventMutation,
         updateCalendarEventMutation, createProductMutation, updateProductMutation, deleteProductMutation, createDealMutation,
         updateDealMutation, deleteDealMutation, createTicketMutation, updateTicketMutation, addTicketReplyMutation,
         createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation, createCampaignMutation,
-        updateCampaignMutation, launchCampaignMutation, createWorkflowMutation, updateWorkflowMutation, createAdvancedWorkflowMutation,
+        updateCampaignMutation, launchCampaignMutation, advanceDayMutation, createWorkflowMutation, updateWorkflowMutation, createAdvancedWorkflowMutation,
         updateAdvancedWorkflowMutation, deleteAdvancedWorkflowMutation, updateOrganizationSettingsMutation, createOrderMutation,
         updateOrderMutation, deleteOrderMutation, createTransactionMutation, uploadDocumentMutation, deleteDocumentMutation,
-        createCustomReportMutation, removeDashboardWidgetMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation
+        createCustomReportMutation, updateCustomReportMutation, deleteCustomReportMutation, addDashboardWidgetMutation, removeDashboardWidgetMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation,
+        recalculateAllScoresMutation, handleNewChatMessageMutation, connectEmailMutation, disconnectEmailMutation, runEmailSyncMutation
     ]);
 
     return (

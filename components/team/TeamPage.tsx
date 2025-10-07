@@ -3,19 +3,21 @@ import PageWrapper from '../layout/PageWrapper';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import { Plus } from 'lucide-react';
-// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
-// FIX: Corrected the import path for types to be a valid relative path.
-import { User } from '../../types';
+import { User, CustomRole } from '../../types';
 import TeamMemberDetailModal from './TeamMemberDetailModal';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface TeamPageProps {
     isTabbedView?: boolean;
 }
 
 const TeamPage: React.FC<TeamPageProps> = ({ isTabbedView = false }) => {
-    const { teamMembersQuery } = useData();
-    const { data: members = [], isLoading, isError } = teamMembersQuery;
+    const { teamMembersQuery, rolesQuery } = useData();
+    const { hasPermission } = useAuth();
+    const { data: members = [], isLoading: membersLoading, isError } = teamMembersQuery;
+    const { data: roles = [], isLoading: rolesLoading } = rolesQuery;
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedMember, setSelectedMember] = useState<User | null>(null);
 
@@ -28,15 +30,26 @@ const TeamPage: React.FC<TeamPageProps> = ({ isTabbedView = false }) => {
         setSelectedMember(null);
         setIsModalOpen(true);
     };
+    
+    const roleMap = React.useMemo(() => {
+        return (roles as CustomRole[]).reduce((acc, role) => {
+            acc[role.id] = role.name;
+            return acc;
+        }, {} as Record<string, string>);
+    }, [roles]);
+
+    const isLoading = membersLoading || rolesLoading;
 
     const pageContent = (
         <>
             {!isTabbedView && (
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-semibold text-text-primary">Team Members</h1>
-                    <Button onClick={handleAdd} leftIcon={<Plus size={16} />}>
-                        Invite Member
-                    </Button>
+                    {hasPermission('settings:manage:team') && (
+                        <Button onClick={handleAdd} leftIcon={<Plus size={16} />}>
+                            Invite Member
+                        </Button>
+                    )}
                 </div>
             )}
             <Card>
@@ -59,13 +72,15 @@ const TeamPage: React.FC<TeamPageProps> = ({ isTabbedView = false }) => {
                                         Failed to load team members.
                                     </td></tr>
                                 )}
-                                {!isError && members.map(member => (
+                                {!isError && members.map((member: User) => (
                                     <tr key={member.id} className="border-b border-border-subtle hover:bg-hover-bg">
                                         <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{member.name}</td>
                                         <td className="px-6 py-4">{member.email}</td>
-                                        <td className="px-6 py-4">{member.role}</td>
+                                        <td className="px-6 py-4">{roleMap[member.roleId] || 'N/A'}</td>
                                         <td className="px-6 py-4 text-right">
-                                            <button onClick={() => handleEdit(member)} className="font-medium text-primary hover:underline">Edit</button>
+                                            {hasPermission('settings:manage:team') && (
+                                                <button onClick={() => handleEdit(member)} className="font-medium text-primary hover:underline">Edit</button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -77,11 +92,13 @@ const TeamPage: React.FC<TeamPageProps> = ({ isTabbedView = false }) => {
                     </div>
                 )}
             </Card>
-            <TeamMemberDetailModal 
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                member={selectedMember}
-            />
+            {hasPermission('settings:manage:team') && (
+                <TeamMemberDetailModal 
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    member={selectedMember}
+                />
+            )}
         </>
     );
 

@@ -8,10 +8,14 @@ import ClientHistoryTab from './client_portal/HistoryTab';
 import ClientDocumentsTab from './client_portal/DocumentsTab';
 import ClientTicketsTab from './client_portal/ClientTicketsTab';
 import AiAssistantTab from './client_portal/AiAssistantTab';
+import { useData } from '../../contexts/DataContext';
+import LiveChatWidget from '../chat/LiveChatWidget';
 
 const ClientPortal: React.FC = () => {
     const { authenticatedUser, logout } = useAuth();
     const [activeTab, setActiveTab] = useState('Profile');
+    const { organizationSettingsQuery } = useData();
+    const { data: settings, isLoading: settingsLoading } = organizationSettingsQuery;
 
     const tabs = ['Profile', 'History', 'Documents', 'Tickets', 'AI Assistant'];
 
@@ -58,6 +62,9 @@ const ClientPortal: React.FC = () => {
                     </div>
                 </Card>
             </main>
+            {!settingsLoading && settings?.liveChat.isEnabled && (
+                <LiveChatWidget settings={settings.liveChat} user={authenticatedUser} />
+            )}
         </div>
     );
 };

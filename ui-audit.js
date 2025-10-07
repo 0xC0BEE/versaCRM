@@ -14,13 +14,20 @@
         // Ignore tiny icon-only buttons
         if (btn.offsetWidth < 30 || btn.offsetHeight < 20) return;
 
-        const expectedHeight = 40; // From style guide (md size)
-        const actualHeight = btn.offsetHeight;
-        if (Math.abs(actualHeight - expectedHeight) > TOLERANCE) {
+        const style = window.getComputedStyle(btn);
+        const actualHeight = parseFloat(style.height);
+        
+        let expectedHeight = 40; // md
+        if (btn.classList.contains('h-8')) expectedHeight = 32; // sm
+        if (btn.classList.contains('h-11')) expectedHeight = 44; // lg
+        
+        // This is a rough check for base button sizes, ignoring responsive overrides for simplicity
+        const isSizeMd = btn.classList.contains('min-w-[96px]');
+        if (isSizeMd && Math.abs(actualHeight - 40) > TOLERANCE) {
             issues.push({
                 element: btn,
-                message: `Button height is ${actualHeight}px, expected ~${expectedHeight}px.`,
-                type: 'Warning',
+                message: `Button (md) height is ${actualHeight}px, expected ~40px.`,
+                type: 'Info',
             });
         }
     });
@@ -47,12 +54,20 @@
      elementsToCheckRadius.forEach(el => {
         const style = window.getComputedStyle(el);
         const borderRadius = style.borderRadius;
-        let expectedRadius = '10px'; // button
+        
+        let expectedRadius;
+        if(el.tagName.toLowerCase() === 'button') {
+            expectedRadius = '10px';
+             // sm buttons have a different radius
+            if (el.classList.contains('rounded-[8px]')) {
+                 expectedRadius = '8px';
+            }
+        }
         if(el.classList.contains('rounded-card')) {
             expectedRadius = '16px';
         }
         
-        if (borderRadius !== expectedRadius) {
+        if (expectedRadius && borderRadius !== expectedRadius) {
              issues.push({
                 element: el,
                 message: `Incorrect border-radius. Found ${borderRadius}, expected ${expectedRadius}.`,

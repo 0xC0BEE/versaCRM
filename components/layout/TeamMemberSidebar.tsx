@@ -1,7 +1,8 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
-import { Page } from '../../types';
+import { Page, Permission } from '../../types';
 import { Calendar, Handshake, Home, Inbox, LifeBuoy, Ticket, Users } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -10,6 +11,7 @@ interface SidebarProps {
 
 const TeamMemberSidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     const { currentPage, setCurrentPage, industryConfig } = useApp();
+    const { hasPermission } = useAuth();
 
     const handleNavigation = (page: Page) => {
         setCurrentPage(page);
@@ -18,12 +20,11 @@ const TeamMemberSidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         }
     };
     
-    // A simplified list of navigation items for Team Members
-    const navItems: { page: Page; icon: React.ElementType; label?: string; }[] = [
+    const navItems: { page: Page; icon: React.ElementType; label?: string; permission?: Permission }[] = [
         { page: 'Dashboard', icon: Home },
-        { page: 'Contacts', icon: Users, label: industryConfig.contactNamePlural },
-        { page: 'Deals', icon: Handshake },
-        { page: 'Tickets', icon: LifeBuoy },
+        { page: 'Contacts', icon: Users, label: industryConfig.contactNamePlural, permission: 'contacts:read:own' },
+        { page: 'Deals', icon: Handshake, permission: 'deals:read' },
+        { page: 'Tickets', icon: LifeBuoy, permission: 'tickets:read' },
         { page: 'Interactions', icon: Inbox },
         { page: 'Calendar', icon: Calendar },
         { page: 'Tasks', icon: Ticket },
@@ -37,18 +38,20 @@ const TeamMemberSidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
             <nav className="flex-1 min-h-0 overflow-y-auto" aria-label="Sidebar">
                 <div className="p-2 space-y-1">
                     {navItems.map(item => (
-                        <button
-                            key={item.page}
-                            onClick={() => handleNavigation(item.page)}
-                            className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md w-full text-left ${
-                                currentPage === item.page
-                                    ? 'bg-primary/10 text-primary'
-                                    : 'text-text-secondary hover:bg-hover-bg'
-                            }`}
-                        >
-                            <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${currentPage === item.page ? 'text-primary' : 'text-text-secondary group-hover:text-text-primary'}`} aria-hidden="true" />
-                            {item.label || item.page}
-                        </button>
+                        (!item.permission || hasPermission(item.permission)) && (
+                            <button
+                                key={item.page}
+                                onClick={() => handleNavigation(item.page)}
+                                className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md w-full text-left ${
+                                    currentPage === item.page
+                                        ? 'bg-primary/10 text-primary'
+                                        : 'text-text-secondary hover:bg-hover-bg'
+                                }`}
+                            >
+                                <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${currentPage === item.page ? 'text-primary' : 'text-text-secondary group-hover:text-text-primary'}`} aria-hidden="true" />
+                                {item.label || item.page}
+                            </button>
+                        )
                     ))}
                 </div>
             </nav>

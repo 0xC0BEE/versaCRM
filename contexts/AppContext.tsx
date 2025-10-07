@@ -19,6 +19,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [currentPage, setCurrentPage] = useLocalStorage<Page>('page', 'Dashboard');
     const [currentIndustry, setCurrentIndustry] = useLocalStorage<Industry>('industry', 'Health');
     const [contactFilters, setContactFilters] = useState<FilterCondition[]>([]);
+    const [simulatedDate, setSimulatedDate] = useState(new Date());
+    const [reportToEditId, setReportToEditId] = useState<string | null>(null);
     
     // When the user logs out, reset the page to Dashboard.
     useEffect(() => {
@@ -45,7 +47,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         industryConfig,
         contactFilters,
         setContactFilters,
-    }), [currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, contactFilters, setContactFilters]);
+        simulatedDate,
+        setSimulatedDate,
+        reportToEditId,
+        setReportToEditId,
+    }), [currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, contactFilters, setContactFilters, simulatedDate, setSimulatedDate, reportToEditId, setReportToEditId]);
 
     return (
         <AppContext.Provider value={value}>

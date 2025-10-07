@@ -1,9 +1,8 @@
-import React, { createContext, useContext, ReactNode, useMemo, useCallback } from 'react';
-// FIX: Corrected import path for types.
-import { User, AuthContextType, Permissions } from '../types';
+import React, { createContext, useContext, ReactNode, useMemo, useCallback, useState, useEffect } from 'react';
+import { User, AuthContextType, Permission, CustomRole } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
-import { permissionsByRole } from '../config/permissionsConfig';
 import { useQueryClient } from '@tanstack/react-query';
+import apiClient from '../services/apiClient';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -13,45 +12,62 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [authenticatedUser, setAuthenticatedUser] = useLocalStorage<User | null>('user', null);
+    const [userRole, setUserRole] = useState<CustomRole | null>(null);
+    const [isLoadingRole, setIsLoadingRole] = useState(false);
     const queryClient = useQueryClient();
+
+    useEffect(() => {
+        const fetchRole = async () => {
+            if (authenticatedUser && authenticatedUser.roleId) {
+                setIsLoadingRole(true);
+                try {
+                    const roles = await apiClient.getRoles(authenticatedUser.organizationId);
+                    const role = roles.find(r => r.id === authenticatedUser.roleId);
+                    setUserRole(role || null);
+                } catch (error) {
+                    console.error("Failed to fetch user role:", error);
+                    setUserRole(null);
+                } finally {
+                    setIsLoadingRole(false);
+                }
+            } else {
+                setUserRole(null);
+            }
+        };
+        fetchRole();
+    }, [authenticatedUser]);
+
 
     const login = useCallback((user: User) => {
         setAuthenticatedUser(user);
     }, [setAuthenticatedUser]);
 
     const logout = useCallback(() => {
-        // This is the definitive, imperative fix for the logout issue.
-        // It enforces a strict order of operations to prevent race conditions
-        // in sensitive development environments like iframes.
-
-        // 1. Clear all cached data from react-query FIRST.
-        // This is synchronous and ensures that any components that are about
-        // to unmount will not find any stale data.
         queryClient.clear();
-
-        // 2. Explicitly clear all session-related items from local storage.
-        // This provides a completely clean slate for the next session.
         localStorage.removeItem('user');
         localStorage.removeItem('industry');
         localStorage.removeItem('page');
-        
-        // 3. ONLY after all cleanup is complete, update the application state.
-        // This will trigger React to unmount the old console and render the
-        // login page. Because all data is already gone, no errors will occur.
         setAuthenticatedUser(null);
+        setUserRole(null);
     }, [queryClient, setAuthenticatedUser]);
     
-    const permissions = useMemo((): Permissions | null => {
-        if (!authenticatedUser) return null;
-        return permissionsByRole[authenticatedUser.role];
-    }, [authenticatedUser]);
+    const hasPermission = useCallback((permission: Permission): boolean => {
+        if (isLoadingRole || !userRole) {
+            return false;
+        }
+        // Super Admins have all permissions implicitly
+        if (userRole.name === 'Super Admin') return true;
+        
+        return !!userRole.permissions[permission];
+    }, [userRole, isLoadingRole]);
+
 
     const value: AuthContextType = useMemo(() => ({
         authenticatedUser,
         login,
         logout,
-        permissions,
-    }), [authenticatedUser, login, logout, permissions]);
+        hasPermission,
+    }), [authenticatedUser, login, logout, hasPermission]);
 
     return (
         <AuthContext.Provider value={value}>
