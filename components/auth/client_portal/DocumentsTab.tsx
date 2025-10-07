@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+// FIX: Corrected import path for types.
 import { Document as DocType } from '../../../types';
 import { format } from 'date-fns';
 import Button from '../../ui/Button';

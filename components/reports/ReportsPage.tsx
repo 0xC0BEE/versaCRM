@@ -5,9 +5,11 @@ import Button from '../ui/Button';
 import { Download, Plus, Check, Edit, Trash2, Eye } from 'lucide-react';
 // FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
+// FIX: Corrected import path for types.
 import { AnyReportData, ReportType, AnyContact, Product, User, Task, Deal, DealStage, CustomReport } from '../../types';
 import { generateReportData } from '../../services/reportGenerator';
-import { subDays } from 'date-fns';
+// FIX: Changed date-fns import for 'subDays' from a destructured import to a default import from its subpath to resolve a module export error.
+import subDays from 'date-fns/subDays';
 import ReportFilters from './ReportFilters';
 import SalesReport from './SalesReport';
 import InventoryReport from './InventoryReport';

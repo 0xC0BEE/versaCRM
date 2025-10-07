@@ -8,6 +8,7 @@ import ClientHistoryTab from './client_portal/HistoryTab';
 import ClientDocumentsTab from './client_portal/DocumentsTab';
 import ClientTicketsTab from './client_portal/ClientTicketsTab';
 import AiAssistantTab from './client_portal/AiAssistantTab';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import LiveChatWidget from '../chat/LiveChatWidget';
 

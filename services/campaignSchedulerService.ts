@@ -51,7 +51,7 @@ async function evaluateJourneyCondition(node: Node, contact: AnyContact, campaig
     let result = false; // Default to 'false' path
     switch (node.data.nodeType) {
         case 'ifEmailOpened': {
-            const lastEmail = (contact.interactions || []).find(i => i.type === 'Email' && i.notes.includes(`Campaign: ${campaign.name}`));
+            const lastEmail = (contact.interactions || []).find(i => i.type === 'Email' && i.notes.includes(`Campaign: ${campaign.name})`));
             if (lastEmail) {
                 // Mock logic: 50% chance of opening
                 result = Math.random() > 0.5;
@@ -118,18 +118,28 @@ export const campaignSchedulerService = {
                     // Now that we have the next node, handle its logic
                     const nextNode = nextNodeId ? campaign.nodes.find(n => n.id === nextNodeId) : null;
                     
+                    // FIX: To prevent race conditions from async operations, find the 'live' enrollment object from the contact before modifying it.
+                    // This ensures we don't update a stale object if the enrollments array was modified by a parallel process.
+                    const liveEnrollment = (contact.campaignEnrollments || []).find(e => e.campaignId === enrollment.campaignId);
+
+                    // If the enrollment was removed, stop processing.
+                    if (!liveEnrollment) {
+                        return;
+                    }
+
                     if (nextNode) {
                         if (nextNode.data.nodeType === 'wait') {
                             const waitDays = nextNode.data.days || 1;
-                            enrollment.waitUntil = addDays(currentDate, waitDays).toISOString();
-                            enrollment.currentNodeId = nextNodeId!;
+                            liveEnrollment.waitUntil = addDays(currentDate, waitDays).toISOString();
+                            liveEnrollment.currentNodeId = nextNodeId!;
                             console.log(`[Scheduler] Contact ${contact.id} is now waiting for ${waitDays} days.`);
                         } else {
                             // It's an action/condition to be executed on the next run
-                            enrollment.waitUntil = currentDate.toISOString();
-                            enrollment.currentNodeId = nextNodeId!;
+                            liveEnrollment.waitUntil = currentDate.toISOString();
+                            liveEnrollment.currentNodeId = nextNodeId!;
                              // Re-run scheduler for immediate actions after a wait
-                            this.processScheduledCampaigns(currentDate);
+                            // FIX: Replaced `this.processScheduledCampaigns` with `campaignSchedulerService.processScheduledCampaigns` to correctly reference the method and avoid `this` being undefined in the async function's scope.
+                            campaignSchedulerService.processScheduledCampaigns(currentDate);
                         }
                     } else {
                         // End of journey, remove enrollment

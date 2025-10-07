@@ -14,6 +14,7 @@ import LiveChatSettings from './LiveChatSettings';
 import RolesAndPermissionsPage from './RolesAndPermissionsPage';
 import { useAuth } from '../../contexts/AuthContext';
 import IntegrationsSettings from './IntegrationsSettings';
+import ApiAndAppsPage from './ApiAndAppsPage';
 
 const SettingsPage: React.FC = () => {
     const { hasPermission } = useAuth();
@@ -22,6 +23,7 @@ const SettingsPage: React.FC = () => {
     const allTabs = [
         { name: 'Roles & Permissions', permission: 'settings:manage:roles' },
         { name: 'Integrations' },
+        { name: 'API & Apps', permission: 'settings:manage:api' },
         { name: 'Live Chat' },
         { name: 'Lead Scoring' },
         { name: 'Contact Forms' }, 
@@ -41,6 +43,8 @@ const SettingsPage: React.FC = () => {
                 return <RolesAndPermissionsPage />;
             case 'Integrations':
                 return <IntegrationsSettings />;
+            case 'API & Apps':
+                return <ApiAndAppsPage />;
             case 'Live Chat':
                 return <LiveChatSettings />;
             case 'Lead Scoring':

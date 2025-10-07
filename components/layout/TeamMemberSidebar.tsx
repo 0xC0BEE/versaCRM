@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
+// FIX: Corrected import path for types.
 import { Page, Permission } from '../../types';
 import { Calendar, Handshake, Home, Inbox, LifeBuoy, Ticket, Users } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';

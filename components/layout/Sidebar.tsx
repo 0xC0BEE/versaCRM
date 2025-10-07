@@ -1,13 +1,33 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
-import { useAuth } from '../../contexts/AuthContext';
 import { Page, Permission } from '../../types';
-import { BarChart2, Building2, Calendar, Handshake, Home, Inbox, LifeBuoy, Mail, Megaphone, Package, Settings, Ticket, Users, UsersRound, Zap } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import {
+    Home, Building, Users, Briefcase, Inbox, Calendar, BarChart2, Settings, Package, Handshake,
+    LifeBuoy, Zap, Mails, ClipboardList, BookOpen, LayoutTemplate, Bot
+} from 'lucide-react';
 
 interface SidebarProps {
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
 }
+
+// FIX: Defined an interface for navigation items to ensure a consistent shape and resolve type errors.
+// FIX: Changed page type to Page for better type safety.
+interface NavItem {
+    page: Page;
+    icon: React.ElementType;
+    label?: string;
+    permission?: Permission;
+    isSuperAdminOnly?: boolean;
+}
+
+// FIX: Added NavSection interface to strongly type navSections array.
+interface NavSection {
+    title: string;
+    items: NavItem[];
+}
+
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     const { currentPage, setCurrentPage, industryConfig } = useApp();
@@ -15,64 +35,106 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
     const handleNavigation = (page: Page) => {
         setCurrentPage(page);
-        if (window.innerWidth < 1024) { // Close sidebar on mobile after navigation
+        if (window.innerWidth < 1024) {
             setIsOpen(false);
         }
     };
 
-    const navItems: { page: Page; icon: React.ElementType; label?: string; permission?: Permission }[] = [
-        { page: 'Dashboard', icon: Home },
-        { page: 'Synced Email', icon: Mail, permission: 'contacts:read:all' },
-        { page: 'Contacts', icon: Users, label: industryConfig.contactNamePlural }, // Permission is handled specially below
-        { page: 'Team', icon: UsersRound, permission: 'settings:manage:team' },
-        { page: 'Deals', icon: Handshake, permission: 'deals:read' },
-        { page: 'Tickets', icon: LifeBuoy, permission: 'tickets:read' },
-        { page: 'Interactions', icon: Inbox },
-        { page: 'Organizations', icon: Building2 }, // Super Admin only logic is in PageRenderer
-        { page: 'Calendar', icon: Calendar },
-        { page: 'Tasks', icon: Ticket },
-        { page: 'Inventory', icon: Package, permission: 'inventory:read' },
-        { page: 'Campaigns', icon: Megaphone, permission: 'automations:manage' },
-        { page: 'Workflows', icon: Zap, permission: 'automations:manage' },
-        { page: 'Reports', icon: BarChart2, permission: 'reports:read' },
-        { page: 'Settings', icon: Settings, permission: 'settings:access' },
+    const isSuperAdmin = authenticatedUser?.roleId === 'role_super';
+
+    // FIX: Applied NavSection[] type to resolve type inference issues.
+    const navSections: NavSection[] = [
+        {
+            title: 'Core',
+            items: [
+                { page: 'Dashboard', icon: Home, permission: 'contacts:read:own' },
+                { page: 'Contacts', icon: Users, label: industryConfig.contactNamePlural, permission: 'contacts:read:own' },
+                { page: 'Deals', icon: Handshake, permission: 'deals:read' },
+                { page: 'Tasks', icon: Briefcase, permission: 'contacts:read:own' },
+                { page: 'Calendar', icon: Calendar, permission: 'contacts:read:own' },
+            ]
+        },
+        {
+            title: 'Business',
+            items: [
+                { page: 'Tickets', icon: LifeBuoy, permission: 'tickets:read' },
+                { page: 'Campaigns', icon: Zap, permission: 'automations:manage' },
+                { page: 'Forms', icon: ClipboardList, permission: 'automations:manage' },
+                { page: 'LandingPages', icon: LayoutTemplate, permission: 'automations:manage' },
+                { page: 'Workflows', icon: Bot, permission: 'automations:manage' },
+                { page: 'Interactions', icon: Inbox, permission: 'contacts:read:all' },
+                { page: 'SyncedEmail', icon: Mails, permission: 'contacts:read:all' },
+                { page: 'Inventory', icon: Package, permission: 'inventory:read' },
+            ]
+        },
+        {
+            title: 'Analytics',
+            items: [
+                { page: 'Reports', icon: BarChart2, permission: 'reports:read' },
+            ]
+        },
+         {
+            title: 'Developer',
+            items: [
+                { page: 'ApiDocs', icon: BookOpen, permission: 'settings:manage:api' },
+            ]
+        },
+        {
+            title: 'Admin',
+            items: [
+                { page: 'Team', icon: Users, permission: 'settings:manage:team' },
+                { page: 'Settings', icon: Settings, permission: 'settings:access' },
+                 { page: 'Organizations', icon: Building, isSuperAdminOnly: true },
+            ]
+        }
     ];
-    
-    const roleName = authenticatedUser?.isClient ? 'Client' : 'User'; // Simplified for display
 
     return (
         <div className={`flex flex-col flex-shrink-0 w-64 bg-card-bg border-r border-border-subtle transition-all duration-300`}>
-            <div className="h-16 flex items-center justify-center flex-shrink-0 px-4 shadow-sm">
+            <div className="h-16 flex items-center justify-center flex-shrink-0 px-4">
                 <h1 className="text-2xl font-bold text-text-primary">VersaCRM</h1>
             </div>
             <nav className="flex-1 min-h-0 overflow-y-auto" aria-label="Sidebar">
-                <div className="p-2 space-y-1">
-                    {navItems.map(item => {
-                         // Organizations is a special case for Super Admins only
-                        if (item.page === 'Organizations' && !MOCK_USERS.find(u => u.id === authenticatedUser?.id)?.email.includes('super')) {
-                            return null;
-                        }
+                <div className="p-2">
+                    {navSections.map(section => {
+                        const accessibleItems = section.items.filter((item: NavItem) => {
+                            if (item.isSuperAdminOnly) return isSuperAdmin;
+                            
+                            const requiredPermission = item.permission as Permission;
+                            if (!requiredPermission) return true;
 
-                        let hasAccess = !item.permission || hasPermission(item.permission);
-                        // Special handling for Contacts link to show if user has EITHER permission
-                        if (item.page === 'Contacts') {
-                            hasAccess = hasPermission('contacts:read:own') || hasPermission('contacts:read:all');
-                        }
+                            if (hasPermission(requiredPermission)) return true;
+                            
+                            // Special case: if 'read:own' is required, also allow 'read:all'
+                            if (requiredPermission === 'contacts:read:own' && hasPermission('contacts:read:all')) {
+                                return true;
+                            }
 
-                        return hasAccess ? (
-                            <button
-                                key={item.page}
-                                onClick={() => handleNavigation(item.page)}
-                                className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md w-full text-left ${
-                                    currentPage === item.page
-                                        ? 'bg-primary/10 text-primary'
-                                        : 'text-text-secondary hover:bg-hover-bg'
-                                }`}
-                            >
-                                <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${currentPage === item.page ? 'text-primary' : 'text-text-secondary group-hover:text-text-primary'}`} aria-hidden="true" />
-                                {item.label || item.page}
-                            </button>
-                        ) : null
+                            return false;
+                        });
+                        if (accessibleItems.length === 0) return null;
+
+                        return (
+                            <div key={section.title} className="mb-4">
+                                <h3 className="px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">{section.title}</h3>
+                                <div className="mt-2 space-y-1">
+                                    {accessibleItems.map((item: NavItem) => (
+                                        <button
+                                            key={item.page}
+                                            onClick={() => handleNavigation(item.page)}
+                                            className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md w-full text-left ${
+                                                currentPage === item.page
+                                                    ? 'bg-primary/10 text-primary'
+                                                    : 'text-text-secondary hover:bg-hover-bg'
+                                            }`}
+                                        >
+                                            <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${currentPage === item.page ? 'text-primary' : 'text-text-secondary group-hover:text-text-primary'}`} aria-hidden="true" />
+                                            {item.label || item.page}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        );
                     })}
                 </div>
             </nav>
@@ -80,7 +142,4 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     );
 };
 
-// Need to import MOCK_USERS to check for super admin email
-// FIX: Corrected import path for mockData
-import { MOCK_USERS } from '../../services/mockData';
 export default Sidebar;

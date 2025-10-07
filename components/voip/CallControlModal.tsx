@@ -112,7 +112,7 @@ const CallControlModal: React.FC = () => {
             <div className="text-center">
                 <div className="w-24 h-24 rounded-full mx-auto mb-4 bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
                     {callContact?.avatar ? (
-                        <img src={callContact.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                        <img src={callContact.avatar} alt="Avatar" className="w-full h-full object-cover rounded-full" />
                     ) : (
                         <span className="font-bold text-slate-500 text-4xl">{callContact?.contactName.charAt(0)}</span>
                     )}

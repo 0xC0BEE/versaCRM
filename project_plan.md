@@ -10,86 +10,81 @@ This section details the current state of the VersaCRM application, a robust, mu
 - **Data Fetching:** Asynchronous operations and server-state caching are handled by `@tanstack/react-query`.
 - **Styling:** A flexible and responsive UI built with Tailwind CSS, featuring a dynamic theming system (light, dark, and a custom theme builder).
 - **Backend:** A mocked API client (`apiClient.ts`) that simulates network latency and data persistence within the session, enabling rapid frontend development.
-- **Testing:** A solid testing foundation is established using Vitest and React Testing Library, with initial tests for UI components and core utilities.
+- **Testing:** A solid testing foundation is established using Vitest and React Testing Library.
 
 ### Key Implemented Features
 
-#### **A. Authentication & Multi-Tenancy**
-- **Role-Based Access Control (RBAC):** Four distinct user roles (`Super Admin`, `Organization Admin`, `Team Member`, `Client`) with tailored UI and permissions.
-- **Dedicated Consoles:** Each role receives a unique console or portal, ensuring a focused user experience.
-- **Organization Scoping:** Data is properly scoped, so Organization Admins and Team Members only see data relevant to their organization.
-- **Super Admin View:** A dedicated page for Super Admins to oversee and manage all organizations on the platform.
+#### **A. Authentication & Security**
+- **Granular Permissions:** A full-fledged Roles & Permissions system allowing admins to create custom roles and define specific permissions (e.g., `contacts:read:all`, `deals:create`, `settings:manage:team`).
+- **Dedicated Consoles:** Each role receives a unique console or portal, with UI elements dynamically rendered based on their permissions.
+- **Organization Scoping:** Data is properly scoped, so users only see data relevant to their organization and role.
 
 #### **B. Industry Specialization & Customization**
 - **Dynamic Industry Configuration:** The CRM adapts its terminology, fields, and dashboard components based on the selected industry (`Health`, `Finance`, `Legal`, `Generic`).
-- **Custom Field Builder:** A user-friendly interface in the Settings for admins to add, edit, and delete custom fields for the `Contacts` module, specific to their industry.
-- **Custom Theme Builder:** Users can create, save, and apply their own color schemes to personalize the application's appearance.
+- **Custom Field Builder:** A user-friendly interface in the Settings for admins to add, edit, and delete custom fields for the `Contacts` module.
+- **Custom Theme Builder:** Users can create, save, and apply their own color schemes.
 
-#### **C. Core CRM Modules**
-- **Contacts Management:** Full CRUD functionality for contacts. A comprehensive detail view provides a 360-degree look at a contact through various tabs (Profile, Interaction History, Orders, Documents, etc.). Includes advanced features like bulk actions and filtering.
-- **Deals Pipeline:** A visual, Kanban-style board for sales pipeline management. Users can drag and drop deals between stages to update their status.
-- **Support Ticketing System:** A complete ticketing module where users and clients can create tickets. Features include threaded replies, internal notes with `@mentions`, file attachments, and SLA timers to track response/resolution times.
-- **Task Management:** A dedicated "My Tasks" page allows users to manage their to-do lists, with features for marking tasks complete and viewing overdue items.
+#### **C. Core CRM & Sales Modules**
+- **Contacts Management:** Full CRUD functionality for contacts. A comprehensive 360-degree detail view with multiple tabs (Profile, History, Orders, etc.). Includes advanced features like bulk actions, filtering, and click-to-call.
+- **Deals Pipeline:** A visual, Kanban-style board for sales pipeline management with drag-and-drop functionality.
+- **Task Management:** A dedicated "My Tasks" page for managing to-do lists.
 - **Calendar & Scheduling:** A full-page calendar for creating and viewing events.
 
-#### **D. AI & User Experience**
-- **AI-Powered Features (Gemini):**
-    - **Smart Search:** A `Ctrl+K` modal that uses natural language processing to either apply complex filters or generate text-based reports.
-    - **AI Insights:** A dashboard widget that analyzes key metrics and provides actionable summaries.
-    - **AI Email Composer:** An assistant in the contact detail view to draft professional emails from a simple prompt.
-    - **AI Contact Summary:** Generates a concise summary of a contact's history and status.
-    - **Client-Facing AI Assistant:** A chatbot in the Client Portal for answering questions.
-- **Notifications Center:** A real-time, in-app panel that alerts users to new assignments, mentions, and ticket replies.
-- **Client Portal:** A secure, self-service portal for clients to view their profile, interaction history, shared documents, and manage their support tickets.
+#### **D. Marketing & Automation**
+- **Visual Journey Builder:** An advanced, node-based visual editor for creating multi-step marketing campaigns with branching logic (e.g., "If email opened...").
+- **Workflow Automation:** A powerful engine for both simple ("if this, then that") and advanced visual workflows, triggered by events across Contacts, Deals, and Tickets.
+- **Lead Scoring:** A configurable engine to automatically score leads based on interactions and status changes, fully integrated into campaigns and workflows.
+- **Campaign Performance Analytics:** A dedicated reporting page for each campaign, showing KPIs, a conversion funnel, an engagement timeline, and lists of engaged contacts.
 
-#### **E. Reporting & Analytics**
-- **Standard Reports:** Pre-built, filterable reports for key areas like Deals, Sales, Inventory, and Team Performance.
-- **Custom Report Builder:** A powerful tool allowing admins to build and save custom tabular or graphical reports by selecting a data source, columns, filters, and visualization type (table, bar, pie, line).
+#### **E. Service & Communication**
+- **Support Ticketing System:** A complete ticketing module with threaded replies, internal notes with `@mentions`, file attachments, and SLA timers.
+- **Live Chat Widget:** A customizable chat widget that can be embedded on external websites to capture leads and create support tickets automatically.
+- **Two-Way Email Sync:** A simulated integration to connect a user's email inbox, automatically logging communications on the correct contact's record.
+- **VoIP Telephony Integration:** A simulated "click-to-call" feature with an in-app call control modal and automatic call logging, including an AI-powered call summary feature.
+
+#### **F. Analytics & Reporting**
+- **Custom Report Builder:** A powerful tool allowing admins to build and save custom tabular or graphical reports with a live preview, supporting various data sources, filters, and aggregations.
 - **Customizable Dashboard:** Admins can add their saved custom reports as widgets to their main dashboard for at-a-glance insights.
 
----
-
-## 2. Immediate Next Steps (What We've Planned)
-
-This section outlines features that are designed but require further implementation.
-
-- **Full Workflow Automation:** The `WorkflowBuilder` UI is complete, but the `workflowService` needs to be triggered by more events (e.g., Deal stage change, Ticket creation). We also need to expand the library of available triggers and actions.
-- **Campaign Execution Engine:** The `CampaignBuilder` allows users to design email sequences. The backend logic to execute these campaigns (i.e., send emails based on the defined schedule and track open/click rates) needs to be built.
-- **Scoped Data Views:** Implement the logic to ensure "Team Members" can only see contacts, deals, and tasks that are explicitly assigned to them.
-- **Data Migration Tool:** The UI for data import/export exists as a placeholder. This needs to be built out with robust CSV parsing, field mapping, and error handling.
-- **Expand Test Coverage:** Increase the number of unit and integration tests to cover complex user flows, mutations, and all AI-powered features.
+#### **G. Platform & Extensibility**
+- **API & App Marketplace Foundation:** A dedicated settings area for managing API keys and a simulated App Marketplace. A full API documentation page is also available, laying the groundwork for a developer ecosystem.
+- **Data Migration Tool:** A functional CSV import/export tool for contacts, including a field-mapping step to ensure data integrity.
 
 ---
 
-## 3. Strategic Roadmap: Competing with Top 5 CRMs
+## 2. Strategic Analysis & Next Major Phase
 
-To elevate VersaCRM to the level of market leaders like Salesforce, HubSpot, and Zoho, we will focus on three key pillars: **Automation**, **Integration**, and **Intelligence**.
+A competitive analysis against top-tier CRMs (Salesforce, HubSpot, Zoho) reveals that while VersaCRM has an exceptionally strong internal engine for automation and analytics, it lacks the native tools to **proactively generate and capture leads from a company's public-facing digital assets.**
 
-### **Pillar 1: Advanced Automation & Marketing**
-- **Lead Scoring:** Develop a system to automatically score leads based on demographics, custom field data, and engagement (e.g., +10 points for opening an email, +25 for visiting the pricing page).
-- **Visual Journey Builder:** Evolve the Campaign Builder into a full-fledged visual workflow editor with branching logic (e.g., "If lead score > 50, create a deal and assign it to a sales rep; else, add to a nurturing sequence").
-- **Website & Social Media Integration:**
-    - Provide a tracking script for websites to capture visitor analytics and link sessions to CRM contacts.
-    - Integrate with social media platforms (LinkedIn, Twitter) to schedule posts and monitor brand mentions directly from the CRM.
+This is the most significant strategic gap. To truly compete as an all-in-one "Growth Platform," we must bridge the gap between a user's website and the CRM.
 
-### **Pillar 2: Seamless Integration & Extensibility**
-- **Public API & App Marketplace:**
-    - Design and document a secure, public REST or GraphQL API for third-party developers.
-    - Build an App Marketplace where other SaaS companies can list integrations (e.g., QuickBooks for accounting, Slack for notifications, Shopify for e-commerce).
-- **Native Communication Integrations:**
-    - **Email Sync:** Deep two-way synchronization with Google Workspace and Microsoft 365, allowing users to manage their CRM activities from their inbox.
-    - **VoIP Telephony:** Integrate a VoIP dialer to enable click-to-call from contact profiles, with automatic call logging, recording, and AI-powered transcription.
-- **Live Chat Widget:** Provide a customizable live chat widget that businesses can embed on their website, with conversations automatically creating new leads or support tickets.
+Therefore, our next major development phase will be the creation of the **Inbound Marketing & Lead Capture Suite**.
+
+---
+
+## 3. Strategic Roadmap: Building a True Growth Platform
+
+To elevate VersaCRM to the level of market leaders, we will focus on these key pillars, starting with the highest priority.
+
+### **Pillar 1: Inbound Marketing & Lead Capture Suite (Highest Priority)**
+This suite transforms the CRM from a passive database into a proactive growth engine.
+- **Public Form Builder:** Build a tool for creating custom forms (with custom fields) that can be embedded on external websites to capture leads directly into VersaCRM.
+- **Landing Page Builder:** Create a simple, component-based builder for creating and hosting marketing landing pages, complete with the forms created in the Form Builder.
+- **Website Analytics Integration:** Provide a tracking script to link anonymous website visitor activity (page views, sessions) to a contact's profile after they convert on a form, providing invaluable context for sales.
+
+### **Pillar 2: Platform Extensibility & True Customization**
+This pillar focuses on evolving VersaCRM from a product into a true platform.
+- **Live Public API:** Transition the simulated API to a live, production-ready backend with a real database, enabling a true third-party developer ecosystem.
+- **Custom Objects:** This is a major architectural step. Allow admins to define, create, and manage brand new top-level objects beyond Contacts and Deals (e.g., "Properties" for a real estate CRM, or "Contracts" for a legal firm).
+- **App Marketplace Expansion:** Build out the backend infrastructure to support real, third-party app integrations (e.g., QuickBooks for accounting, Slack for notifications).
 
 ### **Pillar 3: Predictive Intelligence & Advanced BI**
 - **Predictive Analytics (AI):**
-    - **Deal Forecasting:** Use historical data to predict the probability of a deal closing and forecast future revenue.
-    - **Churn Prediction:** Analyze contact behavior to identify customers at risk of churning, allowing for proactive intervention.
-    - **Next Best Action:** Recommend the next best action for a sales or support rep to take with a specific contact.
-- **Fully Customizable Dashboards:** Move beyond widgets to a drag-and-drop dashboard canvas where users can freely resize, rearrange, and configure a wide variety of charts, tables, and funnels.
-- **Enterprise BI Connectors:** Allow large organizations to connect their data warehouses and dedicated BI tools (Tableau, Power BI) directly to their VersaCRM data for advanced analysis.
+    - **Deal Forecasting:** Use historical data to predict the probability of a deal closing.
+    - **Churn Prediction:** Analyze behavior to identify customers at risk of churning.
+    - **Next Best Action:** Recommend the next best action for a sales or support rep.
+- **Advanced Dashboard Canvas:** Evolve the dashboard to a full drag-and-drop canvas where users can freely resize, rearrange, and configure a wide variety of charts and data visualizations.
 
 ### **Pillar 4: Enterprise-Grade Platform Features**
-- **Granular Permissions:** Evolve beyond role-based permissions to a fully granular system allowing admins to control field-level visibility and access rights for different teams.
-- **Sandbox Environments:** Provide isolated sandbox environments for testing new configurations, workflows, and integrations without affecting the live production data.
-- **Native Mobile Applications:** Develop full-featured native iOS and Android applications with offline capabilities, enabling teams to work effectively from anywhere.
+- **Native Mobile Applications:** Develop full-featured native iOS and Android applications with offline capabilities.
+- **Sandbox Environments:** Provide isolated sandbox environments for testing new configurations, workflows, and integrations without affecting production data.

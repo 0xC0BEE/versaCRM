@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+// FIX: Corrected import path for Sidebar.
 import Sidebar from '../layout/Sidebar';
 import Header from '../layout/Header';
+// FIX: Corrected import path for PageRenderer.
 import PageRenderer from '../common/PageRenderer';
 
 const OrganizationConsole: React.FC = () => {

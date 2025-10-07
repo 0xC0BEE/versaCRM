@@ -1,6 +1,7 @@
 import React from 'react';
 import { Interaction } from '../../types';
-import { Mail, Phone, Users, FileText, Calendar, MapPin, Wrench } from 'lucide-react';
+// FIX: Imported ClipboardList icon for 'Form Submission' type.
+import { Mail, Phone, Users, FileText, Calendar, MapPin, Wrench, ClipboardList } from 'lucide-react';
 import { format } from 'date-fns';
 // FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
@@ -9,6 +10,7 @@ interface InteractionsTimelineProps {
     interactions: Interaction[];
 }
 
+// FIX: Added 'Form Submission' icon to satisfy the InteractionType record.
 const interactionIcons: Record<Interaction['type'], React.ReactNode> = {
     Email: <Mail className="h-4 w-4 text-white" />,
     Call: <Phone className="h-4 w-4 text-white" />,
@@ -17,10 +19,11 @@ const interactionIcons: Record<Interaction['type'], React.ReactNode> = {
     Appointment: <Calendar className="h-4 w-4 text-white" />,
     'Site Visit': <MapPin className="h-4 w-4 text-white" />,
     'Maintenance Request': <Wrench className="h-4 w-4 text-white" />,
-    // FIX: Add missing 'VoIP Call' icon to satisfy the InteractionType record.
     'VoIP Call': <Phone className="h-4 w-4 text-white" />,
+    'Form Submission': <ClipboardList className="h-4 w-4 text-white" />,
 };
 
+// FIX: Added 'Form Submission' color to satisfy the InteractionType record.
 const interactionColors: Record<Interaction['type'], string> = {
     Email: 'bg-blue-500',
     Call: 'bg-green-500',
@@ -29,8 +32,8 @@ const interactionColors: Record<Interaction['type'], string> = {
     Appointment: 'bg-indigo-500',
     'Site Visit': 'bg-orange-500',
     'Maintenance Request': 'bg-red-500',
-    // FIX: Add missing 'VoIP Call' color to satisfy the InteractionType record.
     'VoIP Call': 'bg-cyan-500',
+    'Form Submission': 'bg-teal-500',
 };
 
 const InteractionsTimeline: React.FC<InteractionsTimelineProps> = ({ interactions }) => {

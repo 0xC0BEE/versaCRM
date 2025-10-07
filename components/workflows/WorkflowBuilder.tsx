@@ -289,22 +289,30 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
                                         Action #{index + 1}
                                     </div>
                                     <p className="text-sm text-text-secondary mt-1">{actionTypes.find(a => a.value === action.type)?.label}</p>
-                                    <Button size="sm" variant="danger" onClick={(e) => { e.stopPropagation(); removeAction(index); }} className="absolute top-2 right-2 w-7 h-7 p-0 min-w-0"><Trash2 size={14}/></Button>
+                                     <button
+                                        onClick={(e) => { e.stopPropagation(); removeAction(index); }}
+                                        className="absolute top-1 right-1 p-1 rounded-full hover:bg-error/20 text-text-secondary hover:text-error"
+                                    >
+                                        <Trash2 size={14}/>
+                                    </button>
                                 </div>
                                 <div className="h-8 w-px bg-border-subtle mx-auto"></div>
                             </React.Fragment>
                         ))}
 
                         {/* Add Action Button */}
-                        <Button variant="secondary" onClick={addAction} leftIcon={<Plus size={16}/>} className="w-full">
-                            Add Action
-                        </Button>
+                         <button
+                            onClick={addAction}
+                            className="w-full p-3 rounded-lg border-2 border-dashed border-border-subtle text-text-secondary hover:border-primary hover:text-primary transition-all flex items-center justify-center"
+                        >
+                           <Plus size={16} className="mr-2" /> Add Action
+                        </button>
                     </div>
                 </div>
 
                 {/* Config Panel */}
                 <div className="lg:col-span-1">
-                   {renderConfigPanel()}
+                    {renderConfigPanel()}
                 </div>
             </div>
         </PageWrapper>

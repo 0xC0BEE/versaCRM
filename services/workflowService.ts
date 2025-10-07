@@ -116,7 +116,7 @@ async function executeAction(actionData: any, payload: any, workflowId: string, 
             {
                 const taskTitle = replacePlaceholders(actionData.taskTitle || 'Untitled Task', payload.contact, payload.deal);
                 // FIX: User object does not have a 'role' property. Finding admin user by roleId via MOCK_ROLES.
-                const adminRoleId = MOCK_ROLES.find(r => r.name === 'Administrator')?.id;
+                const adminRoleId = MOCK_ROLES.find(r => r.name === 'Organization Admin')?.id;
                 const assigneeId = actionData.assigneeId || payload.deal?.assignedToId || payload.contact?.assignedToId || MOCK_USERS.find(u => u.roleId === adminRoleId)?.id || '';
                 const newTask: Omit<Task, 'id' | 'isCompleted'> = {
                     organizationId: payload.contact?.organizationId || payload.deal?.organizationId,
@@ -135,7 +135,7 @@ async function executeAction(actionData: any, payload: any, workflowId: string, 
                 const template = MOCK_EMAIL_TEMPLATES.find(t => t.id === actionData.emailTemplateId);
                  if (template && payload.contact) {
                      // FIX: User object does not have a 'role' property. Finding admin user by roleId via MOCK_ROLES.
-                     const adminRoleId = MOCK_ROLES.find(r => r.organizationId === payload.contact.organizationId && r.name === 'Administrator')?.id;
+                     const adminRoleId = MOCK_ROLES.find(r => r.organizationId === payload.contact.organizationId && r.name === 'Organization Admin')?.id;
                      const sender = MOCK_USERS.find(u => u.organizationId === payload.contact.organizationId && u.roleId === adminRoleId) || MOCK_USERS[0];
                      const subject = replacePlaceholders(template.subject, payload.contact, payload.deal);
                      const body = replacePlaceholders(template.body.replace('{{userName}}', sender.name), payload.contact, payload.deal);

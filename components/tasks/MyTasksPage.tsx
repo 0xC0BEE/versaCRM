@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import PageWrapper from '../layout/PageWrapper';
+// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import TaskItem from './TaskItem';
 import Card from '../ui/Card';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { Plus } from 'lucide-react';
+// FIX: Corrected import path for types.
 import { Task, User } from '../../types';
 import { addDays } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -49,7 +51,7 @@ const MyTasksPage: React.FC = () => {
     };
     
     const { pendingTasks, completedTasks } = useMemo(() => {
-        const pending = tasks.filter((task: Task) => !task.isCompleted).sort((a, b) => new Date(a.dueDate).getTime() - new Date(a.dueDate).getTime());
+        const pending = tasks.filter((task: Task) => !task.isCompleted).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
         const completed = tasks.filter((task: Task) => task.isCompleted).sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
         return { pendingTasks: pending, completedTasks: completed };
     }, [tasks]);
