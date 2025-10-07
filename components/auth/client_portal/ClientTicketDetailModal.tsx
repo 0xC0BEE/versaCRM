@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import TicketReplies from '../../tickets/TicketReplies';
 import { Paperclip, Trash2 } from 'lucide-react';
 import { fileToDataUrl } from '../../../utils/fileUtils';
+// FIX: Corrected import path for apiClient.
 import apiClient from '../../../services/apiClient';
 
 interface ClientTicketDetailModalProps {

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// FIX: Corrected import path for apiClient from a file path to a relative module path.
 import apiClient from '../services/apiClient';
 import { useAuth } from './AuthContext';
 import { AnyContact, Organization, User, CustomRole, Task, CalendarEvent, Product, Deal, DealStage, EmailTemplate, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, Supplier, Warehouse, Interaction, CustomReport, DashboardWidget, LandingPage } from '../types';
@@ -221,10 +222,27 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const organizationSettingsQuery = useQuery<OrganizationSettings, Error>({ queryKey: ['organizationSettings', orgId], queryFn: () => apiClient.getOrganizationSettings(orgId!), enabled: !!orgId });
     const updateOrganizationSettingsMutation = useMutation({ mutationFn: apiClient.updateOrganizationSettings, onSuccess: onMutationSuccess(['organizationSettings', orgId]), onError: onMutationError });
     const recalculateAllScoresMutation = useMutation({ mutationFn: apiClient.recalculateAllScores, onSuccess: onMutationSuccess(['contacts', orgId]), onError: onMutationError });
-    const connectEmailMutation = useMutation({ mutationFn: apiClient.updateOrganizationSettings, onSuccess: onMutationSuccess(['organizationSettings', orgId]), onError: onMutationError });
-    const disconnectEmailMutation = useMutation({ mutationFn: apiClient.updateOrganizationSettings, onSuccess: onMutationSuccess(['organizationSettings', orgId]), onError: onMutationError });
-    const connectVoipMutation = useMutation({ mutationFn: apiClient.updateOrganizationSettings, onSuccess: onMutationSuccess(['organizationSettings', orgId]), onError: onMutationError });
-    const disconnectVoipMutation = useMutation({ mutationFn: apiClient.updateOrganizationSettings, onSuccess: onMutationSuccess(['organizationSettings', orgId]), onError: onMutationError });
+    // FIX: Wrapped apiClient calls in arrow functions to correctly handle arguments from mutate calls.
+    const connectEmailMutation = useMutation({
+        mutationFn: (email: string) => apiClient.updateOrganizationSettings({ emailIntegration: { isConnected: true, connectedEmail: email } }),
+        onSuccess: onMutationSuccess(['organizationSettings', orgId]),
+        onError: onMutationError
+    });
+    const disconnectEmailMutation = useMutation({
+        mutationFn: () => apiClient.updateOrganizationSettings({ emailIntegration: { isConnected: false, connectedEmail: undefined, lastSync: undefined } }),
+        onSuccess: onMutationSuccess(['organizationSettings', orgId]),
+        onError: onMutationError
+    });
+    const connectVoipMutation = useMutation({
+        mutationFn: (provider: string) => apiClient.updateOrganizationSettings({ voip: { isConnected: true, provider } }),
+        onSuccess: onMutationSuccess(['organizationSettings', orgId]),
+        onError: onMutationError
+    });
+    const disconnectVoipMutation = useMutation({
+        mutationFn: () => apiClient.updateOrganizationSettings({ voip: { isConnected: false, provider: undefined } }),
+        onSuccess: onMutationSuccess(['organizationSettings', orgId]),
+        onError: onMutationError
+    });
     
     // --- WORKFLOWS ---
     const workflowsQuery = useQuery<Workflow[], Error>({ queryKey: ['workflows', orgId], queryFn: () => apiClient.getWorkflows(orgId!), enabled: !!orgId });

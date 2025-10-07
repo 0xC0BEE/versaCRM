@@ -414,7 +414,8 @@ export interface CustomReport {
     };
 }
 
-export type ReportDataSource = 'contacts' | 'products';
+// FIX: Added 'deals' to ReportDataSource to allow for deal-based custom reports.
+export type ReportDataSource = 'contacts' | 'products' | 'deals';
 
 export interface ReportVisualization {
     type: 'table' | 'bar' | 'pie' | 'line';

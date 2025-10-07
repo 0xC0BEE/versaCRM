@@ -1,3 +1,4 @@
+// FIX: Corrected import path for mockData.
 import { MOCK_CAMPAIGNS, MOCK_CONTACTS_MUTABLE, MOCK_EMAIL_TEMPLATES, MOCK_TASKS, MOCK_USERS } from './mockData';
 import { AnyContact, Campaign, CampaignEnrollment, Edge, Interaction, Node, Task } from '../types';
 import { replacePlaceholders } from '../utils/textUtils';

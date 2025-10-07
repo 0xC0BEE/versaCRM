@@ -1,7 +1,7 @@
 import React from 'react';
 import { useData } from '../../contexts/DataContext';
 import { useForm } from '../../hooks/useForm';
-import { LiveChatSettings, ContactStatus, Ticket } from '../../types';
+import { LiveChatSettings as LiveChatSettingsType, ContactStatus, Ticket } from '../../types';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
@@ -14,7 +14,7 @@ const LiveChatSettings: React.FC = () => {
     const { organizationSettingsQuery, updateOrganizationSettingsMutation } = useData();
     const { data: settings } = organizationSettingsQuery;
 
-    const initialState: LiveChatSettings = {
+    const initialState: LiveChatSettingsType = {
         isEnabled: true,
         color: '#3b82f6',
         welcomeMessage: 'Welcome! How can we help you today?',
@@ -26,7 +26,7 @@ const LiveChatSettings: React.FC = () => {
 
     const { formData, handleChange, setFormData } = useForm(initialState, settings?.liveChat);
     
-    const handleToggle = (field: keyof LiveChatSettings) => {
+    const handleToggle = (field: keyof LiveChatSettingsType) => {
         setFormData(prev => ({ ...prev, [field]: !prev[field] }));
     };
 

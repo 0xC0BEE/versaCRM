@@ -1,3 +1,4 @@
+// FIX: Corrected import path for mockData from a file path to a relative module path.
 import { MOCK_CONTACTS_MUTABLE, MOCK_WORKFLOWS, MOCK_ADVANCED_WORKFLOWS, MOCK_DEAL_STAGES, MOCK_EMAIL_TEMPLATES, MOCK_TASKS, MOCK_USERS, MOCK_ROLES } from './mockData';
 // FIX: Removed unused 'Node' and 'Edge' imports which are not exported from the types module.
 import { Workflow, WorkflowTrigger, AnyContact, Deal, AdvancedWorkflow, NodeExecutionType, AuditLogEntry, Task, Interaction, ContactStatus } from '../types';

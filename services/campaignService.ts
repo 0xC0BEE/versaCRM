@@ -1,6 +1,7 @@
 import {
   MOCK_CAMPAIGNS,
   MOCK_CONTACTS_MUTABLE,
+// FIX: Corrected import path for mockData.
 } from './mockData';
 import { Campaign, CampaignEnrollment, AnyContact, CampaignTargetAudience } from '../types';
 

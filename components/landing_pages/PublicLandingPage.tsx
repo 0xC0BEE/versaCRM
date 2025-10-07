@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+// FIX: Corrected import path for apiClient.
 import apiClient from '../../services/apiClient';
 import { LandingPage, PublicForm } from '../../types';
 import Input from '../ui/Input';

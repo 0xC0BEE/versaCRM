@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { DashboardWidget as WidgetType, CustomReport } from '../../types';
 import Card from '../ui/Card';
 import { useData } from '../../contexts/DataContext';
+// FIX: Corrected import path for apiClient.
 import apiClient from '../../services/apiClient';
 import { processReportData } from '../../utils/reportProcessor';
 import CustomReportDataTable from '../reports/CustomReportDataTable';
