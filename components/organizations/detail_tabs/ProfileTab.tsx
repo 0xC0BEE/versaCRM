@@ -121,6 +121,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({
                         <Select id="status" label="Status" value={formData.status} onChange={(e) => handleChange('status', e.target.value as ContactStatus)} disabled={isReadOnly}>
                             <option>Lead</option>
                             <option>Active</option>
+                            <option>Needs Attention</option>
                             <option>Inactive</option>
                             <option>Do Not Contact</option>
                         </Select>

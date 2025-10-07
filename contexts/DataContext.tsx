@@ -87,11 +87,12 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { authenticatedUser } = useAuth();
+    const { authenticatedUser, permissions } = useAuth();
     const queryClient = useQueryClient();
 
     const orgId = authenticatedUser?.organizationId;
     const userId = authenticatedUser?.id;
+    const isAdmin = permissions?.canViewAllContacts; // A good proxy for admin-level data access
 
     // --- QUERIES ---
 
@@ -120,8 +121,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
     
     const tasksQuery = useQuery<Task[], Error>({
-        queryKey: ['tasks', userId],
-        queryFn: () => apiClient.getTasksByUser(userId!, orgId!),
+        queryKey: ['tasks', orgId, userId, isAdmin],
+        queryFn: () => {
+            if (isAdmin) {
+                return apiClient.getAllTasksByOrg(orgId!);
+            }
+            return apiClient.getTasksByUser(userId!, orgId!);
+        },
         enabled: !!userId && !!orgId,
     });
 
@@ -235,6 +241,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             onSuccess: () => {
                 toast.success(successMsg);
                 queryClient.invalidateQueries({ queryKey: [queryKeyToInvalidate, orgId] });
+                 if (queryKeyToInvalidate === 'tasks') {
+                    queryClient.invalidateQueries({ queryKey: [queryKeyToInvalidate, orgId, userId, isAdmin] });
+                } else {
+                    queryClient.invalidateQueries({ queryKey: [queryKeyToInvalidate, orgId] });
+                }
             },
             onError: (err: any) => {
                 toast.error(errorMsg);
@@ -281,6 +292,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             toast.success('Interaction logged.');
             queryClient.invalidateQueries({ queryKey: ['allInteractions', orgId] });
             queryClient.invalidateQueries({ queryKey: ['contactInteractions', data.contactId] });
+            queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
         },
         onError: () => toast.error('Failed to log interaction.')
     });
@@ -302,7 +314,19 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     const createTicketMutation = useGenericMutation(apiClient.createTicket, 'tickets', 'Ticket created.', 'Failed to create ticket.');
     const updateTicketMutation = useGenericMutation(apiClient.updateTicket, 'tickets', 'Ticket updated.', 'Failed to update ticket.');
-    const addTicketReplyMutation = useGenericMutation(apiClient.addTicketReply, 'tickets', 'Reply added.', 'Failed to add reply.');
+
+    const addTicketReplyMutation = useMutation({
+        mutationFn: (data: { ticketId: string; reply: Omit<Ticket['replies'][0], 'id' | 'timestamp'> }) => 
+            apiClient.addTicketReply(data.ticketId, data.reply),
+        onSuccess: () => {
+            toast.success('Reply added.');
+            queryClient.invalidateQueries({ queryKey: ['tickets', orgId] });
+        },
+        onError: (err: any) => {
+            toast.error('Failed to add reply.');
+            console.error(err);
+        },
+    });
 
     const createEmailTemplateMutation = useGenericMutation(apiClient.createEmailTemplate, 'emailTemplates', 'Template created.', 'Failed to create template.');
     const updateEmailTemplateMutation = useGenericMutation(apiClient.updateEmailTemplate, 'emailTemplates', 'Template updated.', 'Failed to update template.');

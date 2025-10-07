@@ -9,9 +9,10 @@ import { format, isPast } from 'date-fns';
 interface TaskItemProps {
     task: Task;
     animationDelay?: number;
+    assigneeName?: string;
 }
 
-const TaskItem: React.FC<TaskItemProps> = ({ task, animationDelay = 0 }) => {
+const TaskItem: React.FC<TaskItemProps> = ({ task, animationDelay = 0, assigneeName }) => {
     const { updateTaskMutation, deleteTaskMutation } = useData();
 
     const handleToggleComplete = () => {
@@ -43,9 +44,17 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, animationDelay = 0 }) => {
                 <p className={`text-sm font-medium ${task.isCompleted ? 'text-text-secondary line-through' : 'text-text-primary'}`}>
                     {task.title}
                 </p>
-                <p className={`text-sm ${isOverdue ? 'text-error' : 'text-text-secondary'}`}>
-                    Due {format(new Date(task.dueDate), 'MMM d')}
-                </p>
+                <div className="flex items-center gap-2 text-xs">
+                    <p className={`${isOverdue ? 'text-error' : 'text-text-secondary'}`}>
+                        Due {format(new Date(task.dueDate), 'MMM d')}
+                    </p>
+                    {assigneeName && (
+                        <>
+                            <span className="text-text-secondary/50">•</span>
+                            <p className="text-text-secondary">{assigneeName}</p>
+                        </>
+                    )}
+                </div>
             </div>
             <button 
                 onClick={handleDelete} 

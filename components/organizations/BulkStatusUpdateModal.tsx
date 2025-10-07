@@ -12,7 +12,7 @@ interface BulkStatusUpdateModalProps {
     selectedCount: number;
 }
 
-const statusOptions: ContactStatus[] = ['Lead', 'Active', 'Inactive', 'Do Not Contact'];
+const statusOptions: ContactStatus[] = ['Lead', 'Active', 'Needs Attention', 'Inactive', 'Do Not Contact'];
 
 const BulkStatusUpdateModal: React.FC<BulkStatusUpdateModalProps> = ({ isOpen, onClose, onUpdate, isUpdating, selectedCount }) => {
     const [newStatus, setNewStatus] = useState<ContactStatus>('Active');

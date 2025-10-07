@@ -4,7 +4,7 @@ import {
     Campaign, Workflow, AdvancedWorkflow, OrganizationSettings, SLAPolicy, IndustryConfig, Industry, ContactStatus, CustomField, DashboardWidget, CustomReport
   } from '../types';
 import {
-    MOCK_USERS, MOCK_ORGANIZATIONS, MOCK_CONTACTS, MOCK_PRODUCTS, MOCK_SUPPLIERS, MOCK_WAREHOUSES,
+    MOCK_USERS, MOCK_ORGANIZATIONS, MOCK_CONTACTS_MUTABLE, MOCK_PRODUCTS, MOCK_SUPPLIERS, MOCK_WAREHOUSES,
     MOCK_TASKS, MOCK_CALENDAR_EVENTS, MOCK_DEAL_STAGES, MOCK_DEALS, MOCK_TICKETS, MOCK_EMAIL_TEMPLATES, MOCK_ORGANIZATION_SETTINGS,
     MOCK_CAMPAIGNS, MOCK_WORKFLOWS, MOCK_ADVANCED_WORKFLOWS, MOCK_DASHBOARD_WIDGETS, MOCK_CUSTOM_REPORTS
 } from './mockData';
@@ -14,8 +14,6 @@ import { checkAndTriggerWorkflows } from './workflowService';
 
 // Simulate API delay
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-
-let MOCK_CONTACTS_MUTABLE = MOCK_CONTACTS;
 
 const apiClient = {
     // Auth
@@ -104,6 +102,7 @@ const apiClient = {
             structuredRecords: [], auditLogs: [], transactions: [], documents: [],
         };
         MOCK_CONTACTS_MUTABLE.push(newContact);
+        await checkAndTriggerWorkflows('contactCreated', { contact: newContact });
         return newContact;
     },
     updateContact: async (contactData: AnyContact): Promise<AnyContact> => {
@@ -144,12 +143,21 @@ const apiClient = {
         const newInteraction: Interaction = { ...interactionData, id: `int_${Date.now()}` };
         const contactIndex = MOCK_CONTACTS_MUTABLE.findIndex(c => c.id === interactionData.contactId);
         if (contactIndex > -1) {
-            MOCK_CONTACTS_MUTABLE[contactIndex].interactions?.push(newInteraction);
+            const oldContact = MOCK_CONTACTS_MUTABLE[contactIndex];
+            const updatedContact = {
+                ...oldContact,
+                interactions: [newInteraction, ...(oldContact.interactions || [])],
+            };
+            MOCK_CONTACTS_MUTABLE[contactIndex] = updatedContact;
         }
         return newInteraction;
     },
 
     // Tasks
+    getAllTasksByOrg: async (orgId: string): Promise<Task[]> => {
+        await delay(300);
+        return MOCK_TASKS.filter(t => t.organizationId === orgId);
+    },
     getTasksByUser: async (userId: string, orgId: string): Promise<Task[]> => {
         await delay(300);
         return MOCK_TASKS.filter(t => t.userId === userId && t.organizationId === orgId);
@@ -279,26 +287,58 @@ const apiClient = {
             replies: [],
         };
         MOCK_TICKETS.push(newTicket);
+
+        const contact = MOCK_CONTACTS_MUTABLE.find(c => c.id === newTicket.contactId);
+        if (contact) {
+            await checkAndTriggerWorkflows('ticketCreated', {
+                contact,
+                ticket: newTicket,
+            });
+        }
+
         return newTicket;
     },
     updateTicket: async (ticketData: Ticket): Promise<Ticket> => {
         await delay(300);
         const index = MOCK_TICKETS.findIndex(t => t.id === ticketData.id);
-        if (index > -1) MOCK_TICKETS[index] = { ...ticketData, updatedAt: new Date().toISOString() };
+        if (index > -1) {
+            const oldTicket = { ...MOCK_TICKETS[index] };
+            MOCK_TICKETS[index] = { ...ticketData, updatedAt: new Date().toISOString() };
+            const updatedTicket = MOCK_TICKETS[index];
+
+            if (oldTicket.status !== updatedTicket.status) {
+                const contact = MOCK_CONTACTS_MUTABLE.find(c => c.id === updatedTicket.contactId);
+                if (contact) {
+                    await checkAndTriggerWorkflows('ticketStatusChanged', {
+                        contact,
+                        ticket: updatedTicket,
+                        oldTicket,
+                    });
+                }
+            }
+        }
         return MOCK_TICKETS[index];
     },
     addTicketReply: async (ticketId: string, replyData: Omit<Ticket['replies'][0], 'id' | 'timestamp'>): Promise<Ticket> => {
         await delay(300);
         const index = MOCK_TICKETS.findIndex(t => t.id === ticketId);
         if (index > -1) {
+            const ticketToUpdate = MOCK_TICKETS[index];
             const newReply = { ...replyData, id: `reply_${Date.now()}`, timestamp: new Date().toISOString() };
-            MOCK_TICKETS[index].replies.push(newReply);
-            MOCK_TICKETS[index].updatedAt = new Date().toISOString();
-            if (replyData.userId.startsWith('user_') && MOCK_TICKETS[index].status === 'New') {
-                MOCK_TICKETS[index].status = 'Open';
+            
+            const updatedTicket = {
+                ...ticketToUpdate,
+                replies: [...ticketToUpdate.replies, newReply],
+                updatedAt: new Date().toISOString(),
+            };
+
+            if (replyData.userId.startsWith('user_') && updatedTicket.status === 'New') {
+                updatedTicket.status = 'Open';
             }
+            MOCK_TICKETS[index] = updatedTicket;
+            return updatedTicket;
         }
-        return MOCK_TICKETS[index];
+        throw new Error(`Ticket with ID ${ticketId} not found.`);
     },
     
     // Settings
@@ -306,9 +346,8 @@ const apiClient = {
         await delay(100);
         return MOCK_ORGANIZATION_SETTINGS;
     },
-    updateOrganizationSettings: async (orgId: string, settings: Partial<Omit<OrganizationSettings, 'id' | 'organizationId'>>): Promise<OrganizationSettings> => {
+    updateOrganizationSettings: async (settings: Partial<Omit<OrganizationSettings, 'id' | 'organizationId'>>): Promise<OrganizationSettings> => {
         await delay(300);
-        // FIX: Mutate the imported object instead of reassigning it, which is not allowed.
         Object.assign(MOCK_ORGANIZATION_SETTINGS, settings);
         return MOCK_ORGANIZATION_SETTINGS;
     },
@@ -525,15 +564,20 @@ const apiClient = {
     },
     bulkDeleteContacts: async(ids: string[]): Promise<void> => {
         await delay(500);
-        MOCK_CONTACTS_MUTABLE = MOCK_CONTACTS_MUTABLE.filter(c => !ids.includes(c.id));
+        // FIX: Cannot reassign an imported variable. Mutate the array in place.
+        for (let i = MOCK_CONTACTS_MUTABLE.length - 1; i >= 0; i--) {
+            if (ids.includes(MOCK_CONTACTS_MUTABLE[i].id)) {
+                MOCK_CONTACTS_MUTABLE.splice(i, 1);
+            }
+        }
     },
     bulkUpdateContactStatus: async({ids, status}: {ids: string[], status: ContactStatus}): Promise<void> => {
         await delay(500);
-        MOCK_CONTACTS_MUTABLE = MOCK_CONTACTS_MUTABLE.map(c => {
+        // FIX: Cannot reassign an imported variable. Mutate the array in place.
+        MOCK_CONTACTS_MUTABLE.forEach((c, index) => {
             if (ids.includes(c.id)) {
-                return { ...c, status };
+                MOCK_CONTACTS_MUTABLE[index] = { ...c, status };
             }
-            return c;
         });
     }
 };

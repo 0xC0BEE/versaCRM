@@ -3,7 +3,7 @@ import Select from '../../../ui/Select';
 import Input from '../../../ui/Input';
 import { Node } from 'reactflow';
 import { useData } from '../../../../contexts/DataContext';
-import { User, EmailTemplate, NodeExecutionType } from '../../../../types';
+import { User, EmailTemplate, NodeExecutionType, ContactStatus } from '../../../../types';
 
 interface ActionConfigProps {
     node: Node;
@@ -13,8 +13,11 @@ interface ActionConfigProps {
 const actionTypes: { value: NodeExecutionType, label: string }[] = [
     { value: 'sendEmail', label: 'Send an Email' },
     { value: 'createTask', label: 'Create a Task' },
+    { value: 'updateContactField', label: 'Update Contact Field' },
     { value: 'wait', label: 'Wait for a duration' },
 ];
+
+const statusOptions: ContactStatus[] = ['Lead', 'Active', 'Needs Attention', 'Inactive', 'Do Not Contact'];
 
 const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => {
     const { emailTemplatesQuery, teamMembersQuery } = useData();
@@ -58,7 +61,7 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
                         onChange={(e) => updateNodeData({ emailTemplateId: e.target.value })}
                     >
                         <option value="">Select a template...</option>
-                        {emailTemplates.map((t: EmailTemplate) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                        {(emailTemplates as EmailTemplate[]).map((t: EmailTemplate) => <option key={t.id} value={t.id}>{t.name}</option>)}
                     </Select>
                 );
             case 'createTask':
@@ -79,8 +82,33 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
                             onChange={(e) => updateNodeData({ assigneeId: e.target.value })}
                         >
                             <option value="">Select a team member...</option>
-                            {teamMembers.map((m: User) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                            {(teamMembers as User[]).map((m: User) => <option key={m.id} value={m.id}>{m.name}</option>)}
                         </Select>
+                    </>
+                );
+            case 'updateContactField':
+                return (
+                    <>
+                        <Select
+                            id="update-field-id"
+                            label="Field to Update"
+                            value={node.data.fieldId || ''}
+                            onChange={(e) => updateNodeData({ fieldId: e.target.value })}
+                        >
+                            <option value="">Select a field...</option>
+                            <option value="status">Status</option>
+                        </Select>
+                        {node.data.fieldId === 'status' && (
+                            <Select
+                                id="update-field-value"
+                                label="New Status"
+                                value={node.data.newValue || ''}
+                                onChange={(e) => updateNodeData({ newValue: e.target.value })}
+                            >
+                                <option value="">Select a status...</option>
+                                {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                            </Select>
+                        )}
                     </>
                 );
             case 'wait':

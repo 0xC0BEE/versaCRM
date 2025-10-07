@@ -1,5 +1,5 @@
 import React from 'react';
-import { Send, CheckSquare, Clock, GitFork } from 'lucide-react';
+import { Send, CheckSquare, Clock, GitFork, Edit } from 'lucide-react';
 import { NodeExecutionType, WorkflowNodeType } from '../../../types';
 
 interface DraggableNodeProps {
@@ -32,6 +32,7 @@ const DraggableNode: React.FC<DraggableNodeProps> = ({ type, nodeType, label, ic
 const actionNodes: Omit<DraggableNodeProps, 'type'>[] = [
     { nodeType: 'sendEmail', label: 'Send Email', icon: <Send size={16} className="text-primary"/> },
     { nodeType: 'createTask', label: 'Create Task', icon: <CheckSquare size={16} className="text-success"/> },
+    { nodeType: 'updateContactField', label: 'Update Contact Field', icon: <Edit size={16} className="text-indigo-500"/> },
     { nodeType: 'wait', label: 'Wait', icon: <Clock size={16} className="text-warning"/> },
 ];
 

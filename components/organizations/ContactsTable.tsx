@@ -103,6 +103,7 @@ const ContactsTable: React.FC<ContactsTableProps> = ({ contacts, onRowClick, isE
                                 <span className={`text-xs font-medium px-2 py-0.5 rounded-micro ${
                                     contact.status === 'Active' ? 'bg-success/10 text-success' :
                                     contact.status === 'Lead' ? 'bg-primary/10 text-primary' :
+                                    contact.status === 'Needs Attention' ? 'bg-warning/10 text-warning' :
                                     'bg-slate-400/10 text-text-secondary'
                                 }`}>
                                     {contact.status}

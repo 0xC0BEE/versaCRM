@@ -20,7 +20,7 @@ export type Page =
   // FIX: Added 'Team' to the Page type to allow its use in the Sidebar navigation.
   | 'Team';
 export type Theme = 'light' | 'dark' | 'system';
-export type ContactStatus = 'Lead' | 'Active' | 'Inactive' | 'Do Not Contact';
+export type ContactStatus = 'Lead' | 'Active' | 'Inactive' | 'Do Not Contact' | 'Needs Attention';
 // FIX: Add 'Meeting' to InteractionType to allow its use in industry configurations.
 export type InteractionType = 'Appointment' | 'Call' | 'Email' | 'Note' | 'Site Visit' | 'Maintenance Request' | 'Meeting';
 
@@ -453,6 +453,7 @@ export interface WorkflowTrigger {
     toStatus?: string;
     fromStageId?: string;
     toStageId?: string;
+    priority?: 'Low' | 'Medium' | 'High';
 }
 
 export interface WorkflowAction {
@@ -478,7 +479,7 @@ export interface Workflow {
 
 // Advanced Workflows (React Flow)
 export type WorkflowNodeType = 'trigger' | 'action' | 'condition';
-export type NodeExecutionType = WorkflowTriggerType | 'sendEmail' | 'createTask' | 'wait' | 'ifCondition';
+export type NodeExecutionType = WorkflowTriggerType | 'sendEmail' | 'createTask' | 'updateContactField' | 'wait' | 'ifCondition';
 
 export interface AdvancedWorkflow {
     id: string;

@@ -19,7 +19,7 @@ export let MOCK_USERS: User[] = [
 ];
 
 // --- CONTACTS & RELATED DATA ---
-export let MOCK_CONTACTS: AnyContact[] = [
+export let MOCK_CONTACTS_MUTABLE: AnyContact[] = [
   {
     id: 'contact_1',
     organizationId: 'org_1',
@@ -65,25 +65,25 @@ export let MOCK_CONTACTS: AnyContact[] = [
 ];
 
 // Populate related data for contacts
-MOCK_CONTACTS[0].interactions = [
+MOCK_CONTACTS_MUTABLE[0].interactions = [
   { id: 'int_1', organizationId: 'org_1', contactId: 'contact_1', userId: 'user_team_1', type: 'Appointment', date: subDays(new Date(), 30).toISOString(), notes: 'Initial consultation. Discussed treatment plan.' },
   { id: 'int_2', organizationId: 'org_1', contactId: 'contact_1', userId: 'user_team_1', type: 'Call', date: subDays(new Date(), 15).toISOString(), notes: 'Follow-up call. Patient reported feeling better.' },
   { id: 'int_3', organizationId: 'org_1', contactId: 'contact_1', userId: 'user_admin_1', type: 'Email', date: subDays(new Date(), 5).toISOString(), notes: 'Sent appointment reminder for next week.' },
 ];
-MOCK_CONTACTS[0].orders = [
+MOCK_CONTACTS_MUTABLE[0].orders = [
   { id: 'order_1', organizationId: 'org_1', contactId: 'contact_1', orderDate: subDays(new Date(), 28).toISOString(), status: 'Completed', lineItems: [{ productId: 'prod_1', description: 'Vitamin D Supplements', quantity: 1, unitPrice: 25.00 }], total: 25.00 },
 ];
-MOCK_CONTACTS[0].transactions = [
+MOCK_CONTACTS_MUTABLE[0].transactions = [
   { id: 'trans_1', date: subDays(new Date(), 28).toISOString(), type: 'Charge', amount: 25.00, method: 'Credit Card', orderId: 'order_1' },
   { id: 'trans_2', date: subDays(new Date(), 28).toISOString(), type: 'Payment', amount: 25.00, method: 'Credit Card', orderId: 'order_1' },
 ];
-MOCK_CONTACTS[0].documents = [
+MOCK_CONTACTS_MUTABLE[0].documents = [
     { id: 'doc_1', organizationId: 'org_1', contactId: 'contact_1', fileName: 'intake_form.pdf', fileType: 'application/pdf', uploadDate: subDays(new Date(), 40).toISOString(), dataUrl: '...' },
 ];
-MOCK_CONTACTS[0].structuredRecords = [
+MOCK_CONTACTS_MUTABLE[0].structuredRecords = [
     { id: 'sr_1', type: 'soap_note', title: 'Initial SOAP Note', recordDate: subDays(new Date(), 30).toISOString(), fields: { subjective: 'Patient reports mild back pain.', objective: '...', assessment: '...', plan: '...' } }
 ];
-MOCK_CONTACTS[0].auditLogs = [
+MOCK_CONTACTS_MUTABLE[0].auditLogs = [
     { id: 'log_1', timestamp: subDays(new Date(), 2).toISOString(), userId: 'user_admin_1', userName: 'Alice Admin', change: 'updated status to Active.' },
     { id: 'log_2', timestamp: subDays(new Date(), 15).toISOString(), userId: 'user_team_1', userName: 'Bob Practitioner', change: 'added a new interaction.' },
     { id: 'log_3', timestamp: subDays(new Date(), 45).toISOString(), userId: 'user_admin_1', userName: 'Alice Admin', change: 'created the contact.' },
@@ -141,6 +141,7 @@ export let MOCK_TICKETS: Ticket[] = [
 // --- SETTINGS ---
 export let MOCK_EMAIL_TEMPLATES: EmailTemplate[] = [
     { id: 'et_1', organizationId: 'org_1', name: 'Welcome Email', subject: 'Welcome to General Health Clinic!', body: 'Hi {{contactName}},\n\nWelcome! We\'re glad to have you with us.\n\nThanks,\n{{userName}}' },
+    { id: 'et_2', organizationId: 'org_1', name: 'Deal Won - Welcome Onboard', subject: 'Welcome to the family, {{contactName}}!', body: 'Hi {{contactName}},\n\nWe are thrilled that your deal "{{dealName}}" has been successfully closed. Welcome aboard!\n\nWe look forward to a great partnership.\n\nBest,\n{{userName}}' },
 ];
 
 export let MOCK_ORGANIZATION_SETTINGS: OrganizationSettings = {
@@ -175,11 +176,70 @@ export let MOCK_WORKFLOWS: Workflow[] = [
         actions: [{
             type: 'createTask',
             taskTitle: 'Follow up on proposal for {{dealName}}',
-            // In a real app, this would be more dynamic, e.g., deal owner
-            assigneeId: 'user_admin_1'
+            // No assigneeId here, so it will default to the deal owner
+        }],
+    },
+    {
+        id: 'wf_deal_won_email_1',
+        organizationId: 'org_1',
+        name: 'Send Welcome Email on Deal Won',
+        isActive: true,
+        trigger: {
+            type: 'dealStageChanged',
+            toStageId: 'stage_5' // Closed Won
+        },
+        actions: [{
+            type: 'sendEmail',
+            emailTemplateId: 'et_2'
+        }],
+    },
+    {
+        id: 'wf_ticket_status_1',
+        organizationId: 'org_1',
+        name: 'Flag Contact for High Priority Ticket',
+        isActive: true,
+        trigger: {
+            type: 'ticketCreated',
+            priority: 'High'
+        },
+        actions: [{
+            type: 'updateContactField',
+            fieldId: 'status',
+            newValue: 'Needs Attention'
         }],
     }
 ];
-export let MOCK_ADVANCED_WORKFLOWS: AdvancedWorkflow[] = [];
+export let MOCK_ADVANCED_WORKFLOWS: AdvancedWorkflow[] = [
+    {
+        id: 'awf_1',
+        organizationId: 'org_1',
+        name: 'High-Value Deal Follow-up',
+        isActive: true,
+        nodes: [
+            { id: '1', type: 'trigger', position: { x: 250, y: 5 }, data: { label: 'Deal Stage Changes', nodeType: 'dealStageChanged' } },
+            { id: '2', type: 'condition', position: { x: 250, y: 125 }, data: { label: 'If/Then Condition', nodeType: 'ifCondition', condition: { field: 'deal.value', operator: 'greater_than', value: '7500' } } },
+            { id: '3', type: 'action', position: { x: 400, y: 250 }, data: { label: 'Create a Task', nodeType: 'createTask', taskTitle: 'High-value deal: Schedule onboarding call for {{dealName}}' } },
+            { id: '4', type: 'action', position: { x: 100, y: 250 }, data: { label: 'Create a Task', nodeType: 'createTask', taskTitle: 'Standard deal: Follow up with {{contactName}} re: {{dealName}}' } },
+        ],
+        edges: [
+            { id: 'e1-2', source: '1', target: '2' },
+            { id: 'e2-3', source: '2', target: '3', sourceHandle: 'true' },
+            { id: 'e2-4', source: '2', target: '4', sourceHandle: 'false' },
+        ],
+    },
+    {
+        id: 'awf_2',
+        organizationId: 'org_1',
+        name: 'Nurture New Leads',
+        isActive: true,
+        nodes: [
+            { id: '1', type: 'trigger', position: { x: 250, y: 5 }, data: { label: 'Contact is Created', nodeType: 'contactCreated' } },
+            { id: '2', type: 'action', position: { x: 250, y: 125 }, data: { label: 'Send Email', nodeType: 'sendEmail', emailTemplateId: 'et_1' } },
+        ],
+        edges: [
+            { id: 'e1-2', source: '1', target: '2' },
+        ],
+    }
+];
 export let MOCK_DASHBOARD_WIDGETS: any[] = [];
 export let MOCK_CUSTOM_REPORTS: any[] = [];

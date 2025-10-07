@@ -8,16 +8,28 @@ import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { Plus } from 'lucide-react';
 // FIX: Corrected import path for types.
-import { Task } from '../../types';
+import { Task, User } from '../../types';
 import { addDays } from 'date-fns';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 
 const MyTasksPage: React.FC = () => {
-    const { authenticatedUser } = useAuth();
-    const { tasksQuery, createTaskMutation } = useData();
-    const { data: tasks = [], isLoading } = tasksQuery;
+    const { authenticatedUser, permissions } = useAuth();
+    const { tasksQuery, createTaskMutation, teamMembersQuery } = useData();
+    const { data: tasks = [], isLoading: tasksLoading } = tasksQuery;
+    const { data: teamMembers = [], isLoading: membersLoading } = teamMembersQuery;
     const [newTaskTitle, setNewTaskTitle] = useState('');
+
+    const isAdmin = permissions?.canViewAllContacts;
+    const pageTitle = isAdmin ? 'All Tasks' : 'My Tasks';
+    const isLoading = tasksLoading || membersLoading;
+
+    const userMap = useMemo(() => {
+        return (teamMembers as User[]).reduce((acc, user) => {
+            acc[user.id] = user.name;
+            return acc;
+        }, {} as Record<string, string>);
+    }, [teamMembers]);
 
     const handleAddTask = (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,7 +59,7 @@ const MyTasksPage: React.FC = () => {
 
     return (
         <PageWrapper>
-            <h1 className="text-2xl font-semibold text-text-heading mb-6">My Tasks</h1>
+            <h1 className="text-2xl font-semibold text-text-heading mb-6">{pageTitle}</h1>
             <Card>
                 <div className="p-4 border-b border-border-subtle">
                     <form onSubmit={handleAddTask} className="flex gap-2">
@@ -73,7 +85,14 @@ const MyTasksPage: React.FC = () => {
                             <h3 className="font-semibold text-text-primary mb-2">Pending ({pendingTasks.length})</h3>
                             <div className="space-y-2">
                                 {pendingTasks.length > 0 ? (
-                                    pendingTasks.map((task: Task, index) => <TaskItem key={task.id} task={task} animationDelay={index * 50} />)
+                                    pendingTasks.map((task: Task, index) => (
+                                        <TaskItem 
+                                            key={task.id} 
+                                            task={task} 
+                                            animationDelay={index * 50}
+                                            assigneeName={isAdmin ? userMap[task.userId] : undefined}
+                                        />
+                                    ))
                                 ) : (
                                     <p className="text-sm text-text-secondary p-3">No pending tasks. Well done!</p>
                                 )}
@@ -84,7 +103,14 @@ const MyTasksPage: React.FC = () => {
                             <div className="pt-4 border-t border-border-subtle">
                                 <h3 className="font-semibold text-text-primary mb-2">Completed ({completedTasks.length})</h3>
                                 <div className="space-y-2">
-                                    {completedTasks.map((task: Task, index) => <TaskItem key={task.id} task={task} animationDelay={index * 50} />)}
+                                    {completedTasks.map((task: Task, index) => (
+                                        <TaskItem 
+                                            key={task.id} 
+                                            task={task} 
+                                            animationDelay={index * 50} 
+                                            assigneeName={isAdmin ? userMap[task.userId] : undefined}
+                                        />
+                                    ))}
                                 </div>
                             </div>
                         )}
