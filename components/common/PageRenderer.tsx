@@ -19,6 +19,7 @@ import ApiDocsPage from '../api/ApiDocsPage';
 import CampaignsPage from '../campaigns/CampaignsPage';
 import FormsPage from '../forms/FormsPage';
 import LandingPagesPage from '../landing_pages/LandingPagesPage';
+import KnowledgeBasePage from '../kb/KnowledgeBasePage';
 
 const PageRenderer: React.FC = () => {
     const { currentPage } = useApp();
@@ -63,6 +64,8 @@ const PageRenderer: React.FC = () => {
             return <SettingsPage />;
         case 'ApiDocs':
             return <ApiDocsPage />;
+        case 'KnowledgeBase':
+            return <KnowledgeBasePage />;
         default:
             return <DashboardPage />;
     }

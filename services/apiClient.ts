@@ -397,7 +397,8 @@ const apiClient = {
         if(index > -1) MOCK_TICKETS[index] = { ...data, updatedAt: new Date().toISOString() };
         return MOCK_TICKETS[index];
     },
-    addTicketReply: async (ticketId: string, reply: any) => {
+    // FIX: Refactored `addTicketReply` to accept a single object argument (`{ ticketId, reply }`) for consistency with other mutation functions in the API client, resolving a type mismatch with `useMutation`.
+    addTicketReply: async ({ ticketId, reply }: { ticketId: string, reply: any }) => {
         const index = MOCK_TICKETS.findIndex(t => t.id === ticketId);
         if(index > -1) {
             const newReply = { ...reply, id: `rep_${Date.now()}`, timestamp: new Date().toISOString()};

@@ -221,7 +221,14 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const updateCustomFieldsMutation = useMutation({ mutationFn: apiClient.updateCustomFields, onSuccess: onMutationSuccess(['industryConfig']), onError: onMutationError });
     const organizationSettingsQuery = useQuery<OrganizationSettings, Error>({ queryKey: ['organizationSettings', orgId], queryFn: () => apiClient.getOrganizationSettings(orgId!), enabled: !!orgId });
     const updateOrganizationSettingsMutation = useMutation({ mutationFn: apiClient.updateOrganizationSettings, onSuccess: onMutationSuccess(['organizationSettings', orgId]), onError: onMutationError });
-    const recalculateAllScoresMutation = useMutation({ mutationFn: apiClient.recalculateAllScores, onSuccess: onMutationSuccess(['contacts', orgId]), onError: onMutationError });
+    const recalculateAllScoresMutation = useMutation({
+        mutationFn: (orgId: string) => apiClient.recalculateAllScores(orgId),
+        // FIX: Replaced onMutationSuccess helper with an inline function to resolve a potential type inference issue with the useMutation hook.
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
+        },
+        onError: onMutationError
+    });
     // FIX: Wrapped apiClient calls in arrow functions to correctly handle arguments from mutate calls.
     const connectEmailMutation = useMutation({
         mutationFn: (email: string) => apiClient.updateOrganizationSettings({ emailIntegration: { isConnected: true, connectedEmail: email } }),
@@ -262,8 +269,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const ticketsQuery = useQuery<Ticket[], Error>({ queryKey: ['tickets', orgId], queryFn: () => apiClient.getTickets(orgId!), enabled: !!orgId });
     const createTicketMutation = useMutation({ mutationFn: apiClient.createTicket, onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
     const updateTicketMutation = useMutation({ mutationFn: apiClient.updateTicket, onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
-    // FIX: Correctly wrapped the mutation function to handle multiple arguments. `useMutation`'s `mutationFn` expects a function that takes a single object argument. This wrapper destructures the object and passes the values to the `apiClient` function.
-    const addTicketReplyMutation = useMutation({ mutationFn: ({ticketId, reply}: {ticketId: string, reply: any}) => apiClient.addTicketReply(ticketId, reply), onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
+    // FIX: The mutationFn for `addTicketReplyMutation` was wrapped in an arrow function to be more explicit and help with potential type inference issues, resolving an argument mismatch error.
+    const addTicketReplyMutation = useMutation({ mutationFn: (vars: { ticketId: string, reply: any }) => apiClient.addTicketReply(vars), onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
 
     // --- FORMS ---
     const formsQuery = useQuery<PublicForm[], Error>({ queryKey: ['forms', orgId], queryFn: () => apiClient.getForms(orgId!), enabled: !!orgId });
@@ -294,7 +301,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
 
     // --- EMAIL SYNC ---
     const syncedEmailsQuery = useQuery<Interaction[], Error>({ queryKey: ['syncedEmails', orgId], queryFn: () => apiClient.getInteractions(orgId!).then(ints => ints.filter(i => i.userId === 'system')), enabled: !!orgId });
-    const runEmailSyncMutation = useMutation({ mutationFn: apiClient.runEmailSync, onSuccess: () => {
+    const runEmailSyncMutation = useMutation({ mutationFn: (orgId: string) => apiClient.runEmailSync(orgId), onSuccess: () => {
         onMutationSuccess(['syncedEmails', orgId])();
         onMutationSuccess(['organizationSettings', orgId])();
     }, onError: onMutationError });

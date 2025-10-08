@@ -21,7 +21,7 @@ interface ClientTicketDetailModalProps {
 }
 
 const ClientTicketDetailModal: React.FC<ClientTicketDetailModalProps> = ({ isOpen, onClose, ticket }) => {
-    const { createTicketMutation } = useData();
+    const { createTicketMutation, addTicketReplyMutation } = useData();
     const { authenticatedUser } = useAuth();
     const isNew = !ticket;
     
@@ -71,12 +71,16 @@ const ClientTicketDetailModal: React.FC<ClientTicketDetailModalProps> = ({ isOpe
             onSuccess: async (createdTicket) => {
                 // If there's an attachment, add it as the first reply
                 if (attachmentData) {
-                    await apiClient.addTicketReply(createdTicket.id, {
-                        userId: authenticatedUser!.id,
-                        userName: authenticatedUser!.name,
-                        message: "Attached file.",
-                        isInternal: false,
-                        attachment: attachmentData,
+                    // FIX: Updated the direct call to `apiClient.addTicketReply` to pass a single object argument (`{ ticketId, reply }`) to match the API client's updated, more consistent method signature.
+                    addTicketReplyMutation.mutate({
+                        ticketId: createdTicket.id,
+                        reply: {
+                            userId: authenticatedUser!.id,
+                            userName: authenticatedUser!.name,
+                            message: "Attached file.",
+                            isInternal: false,
+                            attachment: attachmentData,
+                        }
                     });
                 }
                 resetForm();

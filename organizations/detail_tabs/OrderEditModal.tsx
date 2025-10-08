@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import Modal from '../../ui/Modal';
-import Button from '../../ui/Button';
-import Input from '../../ui/Input';
-import Select from '../../ui/Select';
+import Button from '../ui/Button';
+import Input from '../ui/Input';
+import Select from '../ui/Select';
 import toast from 'react-hot-toast';
 import { AnyContact, Order, OrderLineItem, Product } from '../../../types';
 import { useData } from '../../../contexts/DataContext';

@@ -4,7 +4,7 @@ import { Page, Permission } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import {
     Home, Building, Users, Briefcase, Inbox, Calendar, BarChart2, Settings, Package, Handshake,
-    LifeBuoy, Zap, Mails, ClipboardList, BookOpen, LayoutTemplate, Bot
+    LifeBuoy, Zap, Mails, ClipboardList, BookOpen, LayoutTemplate, Bot, HelpCircle
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -80,6 +80,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
             ]
         },
         {
+            title: 'Resources',
+            items: [
+                { page: 'KnowledgeBase', icon: HelpCircle, label: 'Help & KB' },
+            ]
+        },
+        {
             title: 'Admin',
             items: [
                 { page: 'Team', icon: Users, permission: 'settings:manage:team' },
@@ -106,7 +112,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                             if (hasPermission(requiredPermission)) return true;
                             
                             // Special case: if 'read:own' is required, also allow 'read:all'
-                            if (requiredPermission === 'contacts:read:own' && hasPermission('contacts:read:all')) {
+                            if (requiredPermission.endsWith(':own') && hasPermission(requiredPermission.replace(':own', ':all') as Permission)) {
                                 return true;
                             }
 

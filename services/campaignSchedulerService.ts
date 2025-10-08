@@ -52,7 +52,7 @@ async function evaluateJourneyCondition(node: Node, contact: AnyContact, campaig
     let result = false; // Default to 'false' path
     switch (node.data.nodeType) {
         case 'ifEmailOpened': {
-            const lastEmail = (contact.interactions || []).find(i => i.type === 'Email' && i.notes.includes(`Campaign: ${campaign.name})`));
+            const lastEmail = (contact.interactions || []).find(i => i.type === 'Email' && i.notes.includes(`(Campaign: ${campaign.name})`));
             if (lastEmail) {
                 // Mock logic: 50% chance of opening
                 result = Math.random() > 0.5;

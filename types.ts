@@ -3,7 +3,7 @@ import React from 'react';
 // --- Core App & Context Types ---
 
 // FIX: Added 'Tickets', 'LandingPages', and 'CampaignReport' to the Page union type.
-export type Page = 'Dashboard' | 'Organizations' | 'OrganizationDetails' | 'Contacts' | 'Profiles' | 'Deals' | 'Interactions' | 'Calendar' | 'Tasks' | 'Reports' | 'Settings' | 'Inventory' | 'Team' | 'Workflows' | 'Campaigns' | 'SyncedEmail' | 'ApiDocs' | 'Forms' | 'Tickets' | 'LandingPages' | 'CampaignReport';
+export type Page = 'Dashboard' | 'Organizations' | 'OrganizationDetails' | 'Contacts' | 'Profiles' | 'Deals' | 'Interactions' | 'Calendar' | 'Tasks' | 'Reports' | 'Settings' | 'Inventory' | 'Team' | 'Workflows' | 'Campaigns' | 'SyncedEmail' | 'ApiDocs' | 'Forms' | 'Tickets' | 'LandingPages' | 'CampaignReport' | 'KnowledgeBase';
 
 export type Theme = 'light' | 'dark' | 'system';
 
@@ -678,4 +678,12 @@ export interface CustomTheme {
         textHeading: string;
         border: string;
     };
+}
+
+// --- Knowledge Base ---
+export interface KBArticleType {
+    id: string;
+    title: string;
+    category: string;
+    content: React.ReactNode;
 }
