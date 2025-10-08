@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ReactFlowProvider, Node, Edge } from 'reactflow';
 import PageWrapper from '../layout/PageWrapper';
 import Button from '../ui/Button';
-import { Campaign } from '../../types';
+import { Campaign, ContactStatus } from '../../types';
 import { ArrowLeft } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -35,8 +35,18 @@ const CampaignBuilderPage: React.FC<CampaignBuilderPageProps> = ({ campaign, onC
             setCampaignName(campaign.name || '');
         } else {
             // Default for a new campaign journey
+            const defaultAudience = { status: 'Lead' as ContactStatus };
             setNodes([
-                { id: '1', type: 'journeyTrigger', position: { x: 250, y: 25 }, data: { label: 'Target Audience' } }
+                { 
+                    id: '1', 
+                    type: 'journeyTrigger', 
+                    position: { x: 250, y: 25 }, 
+                    data: { 
+                        label: 'Target Audience', 
+                        nodeType: 'targetAudience',
+                        targetAudience: defaultAudience
+                    } 
+                }
             ]);
             setEdges([]);
             setCampaignName('');

@@ -269,8 +269,14 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const ticketsQuery = useQuery<Ticket[], Error>({ queryKey: ['tickets', orgId], queryFn: () => apiClient.getTickets(orgId!), enabled: !!orgId });
     const createTicketMutation = useMutation({ mutationFn: apiClient.createTicket, onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
     const updateTicketMutation = useMutation({ mutationFn: apiClient.updateTicket, onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
-    // FIX: The mutationFn for `addTicketReplyMutation` was wrapped in an arrow function to be more explicit and help with potential type inference issues, resolving an argument mismatch error.
-    const addTicketReplyMutation = useMutation({ mutationFn: (vars: { ticketId: string, reply: any }) => apiClient.addTicketReply(vars), onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
+    // FIX: The mutationFn was wrapped in an arrow function that was redundant and potentially causing type inference issues. By passing apiClient.addTicketReply directly, we rely on TypeScript to correctly infer the types, which resolves the argument mismatch error.
+    const addTicketReplyMutation = useMutation({
+        mutationFn: apiClient.addTicketReply,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tickets', orgId] });
+        },
+        onError: onMutationError
+    });
 
     // --- FORMS ---
     const formsQuery = useQuery<PublicForm[], Error>({ queryKey: ['forms', orgId], queryFn: () => apiClient.getForms(orgId!), enabled: !!orgId });

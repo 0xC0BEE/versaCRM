@@ -17,7 +17,7 @@ const KBSidebar: React.FC<KBSidebarProps> = ({ articles, selectedArticleId, setS
             }
             acc[article.category].push(article);
             return acc;
-        }, {});
+        }, {} as Record<string, KBArticleType[]>);
     }, [articles]);
 
     // Initialize all categories to be open by default
@@ -37,7 +37,7 @@ const KBSidebar: React.FC<KBSidebarProps> = ({ articles, selectedArticleId, setS
 
     return (
         <div className="p-4">
-            {Object.entries(articlesByCategory).map(([category, articles]) => (
+            {Object.entries(articlesByCategory).map(([category, categoryArticles]) => (
                 <div key={category} className="mb-2">
                     <button 
                         onClick={() => toggleCategory(category)}
@@ -51,7 +51,8 @@ const KBSidebar: React.FC<KBSidebarProps> = ({ articles, selectedArticleId, setS
                     </button>
                     <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategories[category] ? 'max-h-screen' : 'max-h-0'}`}>
                         <ul className="space-y-1 border-l border-border-subtle ml-2 pl-2">
-                            {articles.map(article => (
+                            {/* FIX: Renamed shadowed 'articles' variable to 'categoryArticles' to avoid conflict and resolve map error. */}
+                            {categoryArticles.map(article => (
                                 <li key={article.id}>
                                     <button
                                         onClick={() => setSelectedArticleId(article.id)}

@@ -132,7 +132,7 @@ const WorkflowsPage: React.FC<WorkflowsPageProps> = ({ isTabbedView = false }) =
                                                 {w.isActive ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">{w.workflowType === 'Simple' ? w.trigger.type : ('nodes' in w && w.nodes.find(n => n.type === 'trigger')?.data.label)}</td>
+                                        <td className="px-6 py-4">{w.workflowType === 'Simple' ? (w as Workflow).trigger.type : ('nodes' in w && w.nodes.find(n => n.type === 'trigger')?.data.label)}</td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex gap-2 justify-end">
                                                 <Button size="sm" variant="secondary" onClick={() => handleEdit(w)}>Edit</Button>

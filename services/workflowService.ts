@@ -116,11 +116,13 @@ async function executeAction(actionData: any, payload: any, workflowId: string, 
         case 'createTask':
             {
                 const taskTitle = replacePlaceholders(actionData.taskTitle || 'Untitled Task', payload.contact, payload.deal);
-                // FIX: User object does not have a 'role' property. Finding admin user by roleId via MOCK_ROLES.
-                const adminRoleId = MOCK_ROLES.find(r => r.name === 'Organization Admin')?.id;
-                const assigneeId = actionData.assigneeId || payload.deal?.assignedToId || payload.contact?.assignedToId || MOCK_USERS.find(u => u.roleId === adminRoleId)?.id || '';
+                const orgId = payload.contact?.organizationId || payload.deal?.organizationId;
+                const adminRoleId = MOCK_ROLES.find(r => r.organizationId === orgId && r.name === 'Organization Admin')?.id;
+                const adminForOrg = MOCK_USERS.find(u => u.organizationId === orgId && u.roleId === adminRoleId);
+                const assigneeId = actionData.assigneeId || payload.deal?.assignedToId || payload.contact?.assignedToId || adminForOrg?.id || '';
+                
                 const newTask: Omit<Task, 'id' | 'isCompleted'> = {
-                    organizationId: payload.contact?.organizationId || payload.deal?.organizationId,
+                    organizationId: orgId,
                     userId: assigneeId,
                     title: taskTitle,
                     dueDate: addDays(new Date(), 3).toISOString(),
@@ -162,8 +164,17 @@ async function executeAction(actionData: any, payload: any, workflowId: string, 
              {
                 const contactIndex = MOCK_CONTACTS_MUTABLE.findIndex(c => c.id === payload.contact.id);
                 if (contactIndex > -1 && actionData.fieldId) {
-                    (MOCK_CONTACTS_MUTABLE[contactIndex] as any)[actionData.fieldId] = actionData.newValue;
-                    logArray.push(`  -> ACTION: Update Contact. Field: ${actionData.fieldId}. New Value: ${actionData.newValue}.`);
+                    const topLevelFields = ['contactName', 'email', 'phone', 'status', 'leadSource'];
+                    if (topLevelFields.includes(actionData.fieldId)) {
+                        (MOCK_CONTACTS_MUTABLE[contactIndex] as any)[actionData.fieldId] = actionData.newValue;
+                        logArray.push(`  -> ACTION: Update Contact Field. Field: ${actionData.fieldId}. New Value: ${actionData.newValue}.`);
+                    } else { // Assume custom field
+                        if (!MOCK_CONTACTS_MUTABLE[contactIndex].customFields) {
+                            MOCK_CONTACTS_MUTABLE[contactIndex].customFields = {};
+                        }
+                        MOCK_CONTACTS_MUTABLE[contactIndex].customFields[actionData.fieldId] = actionData.newValue;
+                        logArray.push(`  -> ACTION: Update Contact Custom Field. Field: ${actionData.fieldId}. New Value: ${actionData.newValue}.`);
+                    }
                 }
             }
             break;

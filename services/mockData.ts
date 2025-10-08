@@ -112,7 +112,27 @@ export let MOCK_FORMS: PublicForm[] = [
 ];
 
 export let MOCK_CAMPAIGNS: Campaign[] = [
-    { id: 'camp_1', organizationId: 'org_1', name: 'New Lead Nurturing', status: 'Draft', stats: { recipients: 0, sent: 0, opened: 0, clicked: 0 }, targetAudience: { status: 'Lead' }, nodes: [], edges: [] }
+    { 
+        id: 'camp_1', 
+        organizationId: 'org_1', 
+        name: 'New Lead Nurturing', 
+        status: 'Draft', 
+        stats: { recipients: 0, sent: 0, opened: 0, clicked: 0 }, 
+        targetAudience: { status: 'Lead' }, 
+        nodes: [
+            { 
+                id: '1', 
+                type: 'journeyTrigger', 
+                position: { x: 250, y: 25 }, 
+                data: { 
+                    label: 'Target Audience', 
+                    nodeType: 'targetAudience', 
+                    targetAudience: { status: 'Lead' } 
+                } 
+            }
+        ], 
+        edges: [] 
+    }
 ];
 
 export let MOCK_DOCUMENTS: Document[] = [
