@@ -23,6 +23,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [reportToEditId, setReportToEditId] = useState<string | null>(null);
     const [isCallModalOpen, setIsCallModalOpen] = useState(false);
     const [callContact, setCallContact] = useState<AnyContact | null>(null);
+    const [initialKbArticleId, setInitialKbArticleId] = useState<string | null>(null);
     
     // When the user logs out, reset the page to Dashboard.
     useEffect(() => {
@@ -57,7 +58,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setIsCallModalOpen,
         callContact,
         setCallContact,
-    }), [currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, contactFilters, setContactFilters, simulatedDate, setSimulatedDate, reportToEditId, setReportToEditId, isCallModalOpen, setIsCallModalOpen, callContact, setCallContact]);
+        initialKbArticleId,
+        setInitialKbArticleId,
+    }), [currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, contactFilters, setContactFilters, simulatedDate, setSimulatedDate, reportToEditId, setReportToEditId, isCallModalOpen, setIsCallModalOpen, callContact, setCallContact, initialKbArticleId, setInitialKbArticleId]);
 
     return (
         <AppContext.Provider value={value}>

@@ -1,12 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import Card from '../ui/Card';
 import KBSidebar from './KBSidebar';
 import KBArticle from './KBArticle';
 import { kbArticles } from '../../config/kbContent';
+import { useApp } from '../../contexts/AppContext';
 
 const KnowledgeBasePage: React.FC = () => {
+    const { initialKbArticleId, setInitialKbArticleId } = useApp();
     const [selectedArticleId, setSelectedArticleId] = useState<string>('getting-started');
+    
+    useEffect(() => {
+      if (initialKbArticleId) {
+        setSelectedArticleId(initialKbArticleId);
+        setInitialKbArticleId(null); // Reset after use
+      }
+    }, [initialKbArticleId, setInitialKbArticleId]);
+
     const selectedArticle = kbArticles.find(a => a.id === selectedArticleId);
 
     return (

@@ -23,6 +23,8 @@ export interface AppContextType {
     setIsCallModalOpen: (isOpen: boolean) => void;
     callContact: AnyContact | null;
     setCallContact: (contact: AnyContact | null) => void;
+    initialKbArticleId: string | null;
+    setInitialKbArticleId: (id: string | null) => void;
 }
 
 export interface AuthContextType {
