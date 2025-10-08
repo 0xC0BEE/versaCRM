@@ -222,8 +222,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const organizationSettingsQuery = useQuery<OrganizationSettings, Error>({ queryKey: ['organizationSettings', orgId], queryFn: () => apiClient.getOrganizationSettings(orgId!), enabled: !!orgId });
     const updateOrganizationSettingsMutation = useMutation({ mutationFn: apiClient.updateOrganizationSettings, onSuccess: onMutationSuccess(['organizationSettings', orgId]), onError: onMutationError });
     const recalculateAllScoresMutation = useMutation({
-        mutationFn: (orgId: string) => apiClient.recalculateAllScores(orgId),
-        // FIX: Replaced onMutationSuccess helper with an inline function to resolve a potential type inference issue with the useMutation hook.
+        // FIX: Passing the function directly instead of wrapping it in an arrow function helps with type inference and resolves the error.
+        mutationFn: apiClient.recalculateAllScores,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
         },

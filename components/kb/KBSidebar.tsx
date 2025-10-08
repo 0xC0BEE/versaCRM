@@ -51,7 +51,7 @@ const KBSidebar: React.FC<KBSidebarProps> = ({ articles, selectedArticleId, setS
                     </button>
                     <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategories[category] ? 'max-h-screen' : 'max-h-0'}`}>
                         <ul className="space-y-1 border-l border-border-subtle ml-2 pl-2">
-                            {/* FIX: Renamed shadowed 'articles' variable to 'categoryArticles' to avoid conflict and resolve map error. */}
+                            {/* FIX: Changed `articles.map` to `categoryArticles.map` to iterate over the correct set of articles for the current category, fixing a variable shadowing bug. */}
                             {categoryArticles.map(article => (
                                 <li key={article.id}>
                                     <button

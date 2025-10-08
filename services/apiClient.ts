@@ -277,11 +277,24 @@ const apiClient = {
     createDeal: async(dealData: Omit<Deal, 'id' | 'createdAt'>): Promise<Deal> => {
         const newDeal = { ...dealData, id: `deal_${Date.now()}`, createdAt: new Date().toISOString() };
         MOCK_DEALS.push(newDeal);
+        const contact = MOCK_CONTACTS_MUTABLE.find(c => c.id === newDeal.contactId);
+        if (contact) {
+            checkAndTriggerWorkflows('dealCreated', { deal: newDeal, contact });
+        }
         return newDeal;
     },
     updateDeal: async(dealData: Deal): Promise<Deal> => {
         const index = MOCK_DEALS.findIndex(d => d.id === dealData.id);
-        if(index > -1) MOCK_DEALS[index] = dealData;
+        if(index > -1) {
+            const oldDeal = { ...MOCK_DEALS[index] };
+            MOCK_DEALS[index] = dealData;
+            if (oldDeal.stageId !== dealData.stageId) {
+                const contact = MOCK_CONTACTS_MUTABLE.find(c => c.id === dealData.contactId);
+                if (contact) {
+                     checkAndTriggerWorkflows('dealStageChanged', { deal: dealData, oldDeal, contact });
+                }
+            }
+        }
         return dealData;
     },
     deleteDeal: async(dealId: string): Promise<void> => {
@@ -390,11 +403,24 @@ const apiClient = {
     createTicket: async (data: Omit<Ticket, 'id'|'createdAt'|'updatedAt'|'replies'>) => {
         const newTicket = { ...data, id: `tkt_${Date.now()}`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), replies: [] };
         MOCK_TICKETS.push(newTicket);
+        const contact = MOCK_CONTACTS_MUTABLE.find(c => c.id === newTicket.contactId);
+        if (contact) {
+            checkAndTriggerWorkflows('ticketCreated', { ticket: newTicket, contact });
+        }
         return newTicket;
     },
     updateTicket: async(data: Ticket) => {
          const index = MOCK_TICKETS.findIndex(t => t.id === data.id);
-        if(index > -1) MOCK_TICKETS[index] = { ...data, updatedAt: new Date().toISOString() };
+        if(index > -1) {
+            const oldTicket = { ...MOCK_TICKETS[index] };
+            MOCK_TICKETS[index] = { ...data, updatedAt: new Date().toISOString() };
+             if (oldTicket.status !== data.status) {
+                const contact = MOCK_CONTACTS_MUTABLE.find(c => c.id === data.contactId);
+                if (contact) {
+                    checkAndTriggerWorkflows('ticketStatusChanged', { ticket: data, oldTicket, contact });
+                }
+            }
+        }
         return MOCK_TICKETS[index];
     },
     // FIX: Refactored `addTicketReply` to accept a single object argument (`{ ticketId, reply }`) for consistency with other mutation functions in the API client, resolving a type mismatch with `useMutation`.
@@ -444,7 +470,7 @@ const apiClient = {
         campaignSchedulerService.processScheduledCampaigns(newDate);
         return newDate;
     },
-
+    
     getLandingPages: async(orgId: string) => MOCK_LANDING_PAGES,
     createLandingPage: async(data: any) => {const newPage = {...data, id: `lp_${Date.now()}`}; MOCK_LANDING_PAGES.push(newPage); return newPage;},
     updateLandingPage: async(data: LandingPage) => {const i = MOCK_LANDING_PAGES.findIndex(p=>p.id===data.id); if(i>-1) MOCK_LANDING_PAGES[i]=data; return data;},
