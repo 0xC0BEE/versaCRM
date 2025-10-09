@@ -3,7 +3,7 @@ import React from 'react';
 // --- Core App & Context Types ---
 
 // FIX: Added 'Tickets', 'LandingPages', and 'CampaignReport' to the Page union type.
-export type Page = 'Dashboard' | 'Organizations' | 'OrganizationDetails' | 'Contacts' | 'Profiles' | 'Deals' | 'Interactions' | 'Calendar' | 'Tasks' | 'Reports' | 'Settings' | 'Inventory' | 'Team' | 'Workflows' | 'Campaigns' | 'SyncedEmail' | 'ApiDocs' | 'Forms' | 'Tickets' | 'LandingPages' | 'CampaignReport' | 'KnowledgeBase';
+export type Page = 'Dashboard' | 'Organizations' | 'OrganizationDetails' | 'Contacts' | 'Deals' | 'Interactions' | 'Calendar' | 'Tasks' | 'Reports' | 'Settings' | 'Inventory' | 'Team' | 'Workflows' | 'Campaigns' | 'SyncedEmail' | 'ApiDocs' | 'Forms' | 'Tickets' | 'LandingPages' | 'CampaignReport' | 'KnowledgeBase';
 
 export type Theme = 'light' | 'dark' | 'system';
 
@@ -645,6 +645,7 @@ export interface PublicFormField {
     type: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'checkbox' | 'file';
     required: boolean;
     options?: string[];
+    placeholder?: string;
 }
 
 // --- Landing Pages ---
@@ -681,6 +682,17 @@ export interface CustomTheme {
         border: string;
     };
 }
+
+// --- Analytics ---
+export interface AnonymousSession {
+    sessionId: string;
+    organizationId: string;
+    pageviews: {
+        url: string;
+        timestamp: string;
+    }[];
+}
+
 
 // --- Knowledge Base ---
 export interface KBArticleType {

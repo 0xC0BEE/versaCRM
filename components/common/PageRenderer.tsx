@@ -32,7 +32,6 @@ const PageRenderer: React.FC = () => {
         case 'OrganizationDetails':
             return <OrganizationDetailPage />;
         case 'Contacts':
-        case 'Profiles': // Handles deprecated page name
             return <ContactsPage />;
         case 'Deals':
             return <DealsPage />;

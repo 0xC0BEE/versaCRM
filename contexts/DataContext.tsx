@@ -124,6 +124,7 @@ interface DataContextType {
     updateOrderMutation: any;
     deleteOrderMutation: any;
     createTransactionMutation: any;
+    trackPageViewMutation: any;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -269,8 +270,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const ticketsQuery = useQuery<Ticket[], Error>({ queryKey: ['tickets', orgId], queryFn: () => apiClient.getTickets(orgId!), enabled: !!orgId });
     const createTicketMutation = useMutation({ mutationFn: apiClient.createTicket, onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
     const updateTicketMutation = useMutation({ mutationFn: apiClient.updateTicket, onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
-    // FIX: The mutationFn was wrapped in an arrow function that was redundant and potentially causing type inference issues. By passing apiClient.addTicketReply directly, we rely on TypeScript to correctly infer the types, which resolves the argument mismatch error.
     const addTicketReplyMutation = useMutation({
+        // FIX: The mutation function expects a single object argument. Passing the API client method directly ensures the correct signature.
         mutationFn: apiClient.addTicketReply,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tickets', orgId] });
@@ -330,6 +331,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const updateOrderMutation = useMutation({ mutationFn: apiClient.updateOrder, onSuccess: onMutationSuccess(['contacts', orgId]), onError: onMutationError });
     const deleteOrderMutation = useMutation({ mutationFn: apiClient.deleteOrder, onSuccess: onMutationSuccess(['contacts', orgId]), onError: onMutationError });
     const createTransactionMutation = useMutation({ mutationFn: apiClient.createTransaction, onSuccess: onMutationSuccess(['contacts', orgId]), onError: onMutationError });
+    
+    // --- ANALYTICS ---
+    const trackPageViewMutation = useMutation({ mutationFn: apiClient.trackPageView });
 
 
     const value = {
@@ -359,6 +363,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         customReportsQuery, createCustomReportMutation, updateCustomReportMutation, deleteCustomReportMutation,
         dashboardWidgetsQuery, addDashboardWidgetMutation, removeDashboardWidgetMutation,
         createOrderMutation, updateOrderMutation, deleteOrderMutation, createTransactionMutation,
+        trackPageViewMutation,
     };
 
     return (

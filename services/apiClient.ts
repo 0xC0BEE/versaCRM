@@ -1,7 +1,7 @@
 // This is a mock API client to simulate a backend.
 // In a real application, this would make HTTP requests to a server.
 import {
-    MOCK_USERS, MOCK_ORGANIZATIONS, MOCK_CONTACTS_MUTABLE, MOCK_ROLES, MOCK_TASKS, MOCK_CALENDAR_EVENTS, MOCK_PRODUCTS, MOCK_DEALS, MOCK_DEAL_STAGES, MOCK_EMAIL_TEMPLATES, MOCK_INTERACTIONS, MOCK_WORKFLOWS, MOCK_ADVANCED_WORKFLOWS, MOCK_ORGANIZATION_SETTINGS, MOCK_API_KEYS, MOCK_TICKETS, MOCK_FORMS, MOCK_CAMPAIGNS, MOCK_DOCUMENTS, MOCK_LANDING_PAGES, MOCK_CUSTOM_REPORTS, MOCK_DASHBOARD_WIDGETS, MOCK_SUPPLIERS, MOCK_WAREHOUSES
+    MOCK_USERS, MOCK_ORGANIZATIONS, MOCK_CONTACTS_MUTABLE, MOCK_ROLES, MOCK_TASKS, MOCK_CALENDAR_EVENTS, MOCK_PRODUCTS, MOCK_DEALS, MOCK_DEAL_STAGES, MOCK_EMAIL_TEMPLATES, MOCK_INTERACTIONS, MOCK_WORKFLOWS, MOCK_ADVANCED_WORKFLOWS, MOCK_ORGANIZATION_SETTINGS, MOCK_API_KEYS, MOCK_TICKETS, MOCK_FORMS, MOCK_CAMPAIGNS, MOCK_DOCUMENTS, MOCK_LANDING_PAGES, MOCK_CUSTOM_REPORTS, MOCK_DASHBOARD_WIDGETS, MOCK_SUPPLIERS, MOCK_WAREHOUSES, MOCK_ANONYMOUS_SESSIONS
 } from './mockData';
 import {
     User, Organization, AnyContact, ContactStatus, CustomRole, Task, CalendarEvent, Product, Deal, DealStage, EmailTemplate, Interaction, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, Document, LandingPage, CustomReport, ReportDataSource, FilterCondition, DashboardWidget, Industry, Supplier, Warehouse
@@ -443,18 +443,39 @@ const apiClient = {
             MOCK_FORMS.splice(index, 1);
         }
     },
-    submitPublicForm: async ({formId, submissionData}: any) => {
+    submitPublicForm: async ({formId, submissionData, sessionId}: {formId: string, submissionData: any, sessionId?: string}) => {
         const newContact: AnyContact = {
             id: `contact_${Date.now()}`,
             organizationId: 'org_1',
-            contactName: submissionData.contactName,
+            contactName: submissionData.contactName || submissionData['customFields.contactName'],
             email: submissionData.email,
             phone: submissionData.phone || '',
             status: 'Lead',
             leadSource: 'Public Form',
             createdAt: new Date().toISOString(),
             customFields: submissionData.customFields || {},
+            interactions: [],
         };
+
+        if (sessionId) {
+            const sessionIndex = MOCK_ANONYMOUS_SESSIONS.findIndex(s => s.sessionId === sessionId);
+            if (sessionIndex > -1) {
+                const session = MOCK_ANONYMOUS_SESSIONS[sessionIndex];
+                const pageViewInteractions: Interaction[] = session.pageviews.map(pv => ({
+                    id: `int_pv_${Date.now()}_${Math.random()}`,
+                    organizationId: newContact.organizationId,
+                    contactId: newContact.id,
+                    userId: 'system',
+                    type: 'Site Visit',
+                    date: pv.timestamp,
+                    notes: `Viewed page: ${pv.url}`
+                }));
+                newContact.interactions = pageViewInteractions;
+                MOCK_INTERACTIONS.unshift(...pageViewInteractions);
+                MOCK_ANONYMOUS_SESSIONS.splice(sessionIndex, 1);
+            }
+        }
+
         MOCK_CONTACTS_MUTABLE.unshift(newContact);
         return newContact;
     },
@@ -475,7 +496,6 @@ const apiClient = {
     createLandingPage: async(data: any) => {const newPage = {...data, id: `lp_${Date.now()}`}; MOCK_LANDING_PAGES.push(newPage); return newPage;},
     updateLandingPage: async(data: LandingPage) => {const i = MOCK_LANDING_PAGES.findIndex(p=>p.id===data.id); if(i>-1) MOCK_LANDING_PAGES[i]=data; return data;},
     deleteLandingPage: async(id:string) => { 
-        // FIX: Mutate array in place to avoid reassigning an import.
         const index = MOCK_LANDING_PAGES.findIndex(p => p.id === id);
         if (index > -1) {
             MOCK_LANDING_PAGES.splice(index, 1);
@@ -483,7 +503,32 @@ const apiClient = {
     },
     getLandingPageBySlug: async (slug: string) => MOCK_LANDING_PAGES.find(p => p.slug === slug && p.status === 'Published') || null,
 
-    runEmailSync: async(orgId: string) => { MOCK_ORGANIZATION_SETTINGS.emailIntegration.lastSync = new Date().toISOString(); },
+    runEmailSync: async(orgId: string) => { 
+        MOCK_ORGANIZATION_SETTINGS.emailIntegration.lastSync = new Date().toISOString(); 
+        
+        // Find a contact to simulate finding an email for
+        const contactToSync = MOCK_CONTACTS_MUTABLE.find(c => c.organizationId === orgId);
+        if (contactToSync) {
+            const newEmailInteraction: Interaction = {
+                id: `int_sync_${Date.now()}`,
+                organizationId: orgId,
+                contactId: contactToSync.id,
+                userId: 'system', // Differentiates it as a synced email
+                type: 'Email',
+                date: new Date().toISOString(),
+                notes: `Subject: Re: Project Update\n\nHi ${contactToSync.contactName},\n\nJust checking in on the latest updates for our project. Let me know if you have any questions.\n\nBest,\nAlice Admin`,
+            };
+            
+            // Add to global interactions
+            MOCK_INTERACTIONS.unshift(newEmailInteraction);
+
+            // Add to contact's personal history
+            if (!contactToSync.interactions) {
+                contactToSync.interactions = [];
+            }
+            contactToSync.interactions.unshift(newEmailInteraction);
+        }
+    },
     handleNewChatMessage: async(data: any) => { /* Creates ticket */ },
 
     getCustomReports: async (orgId: string) => MOCK_CUSTOM_REPORTS,
@@ -551,7 +596,15 @@ const apiClient = {
             return newRow;
         })
         return filteredData;
-    }
+    },
+    trackPageView: async ({ sessionId, orgId, url }: { sessionId: string, orgId: string, url: string }) => {
+        let session = MOCK_ANONYMOUS_SESSIONS.find(s => s.sessionId === sessionId);
+        if (!session) {
+            session = { sessionId, organizationId: orgId, pageviews: [] };
+            MOCK_ANONYMOUS_SESSIONS.push(session);
+        }
+        session.pageviews.push({ url, timestamp: new Date().toISOString() });
+    },
 };
 
 export default apiClient;

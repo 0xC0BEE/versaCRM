@@ -5,9 +5,10 @@ import { PlusCircle } from 'lucide-react';
 
 interface FormToolboxProps {
     onFieldAdd: (field: PublicFormField) => void;
+    usedFieldIds: string[];
 }
 
-const FormToolbox: React.FC<FormToolboxProps> = ({ onFieldAdd }) => {
+const FormToolbox: React.FC<FormToolboxProps> = ({ onFieldAdd, usedFieldIds }) => {
     const { industryConfig } = useApp();
 
     const standardFields: PublicFormField[] = [
@@ -32,7 +33,12 @@ const FormToolbox: React.FC<FormToolboxProps> = ({ onFieldAdd }) => {
                 <p className="text-sm font-semibold text-text-secondary mb-2">Standard Fields</p>
                 <div className="space-y-2">
                     {standardFields.map(field => (
-                        <button key={field.id} onClick={() => onFieldAdd(field)} className="w-full p-2 text-left border border-border-subtle rounded-md bg-hover-bg flex items-center hover:border-primary/50 transition-colors">
+                        <button 
+                            key={field.id} 
+                            onClick={() => onFieldAdd(field)} 
+                            className="w-full p-2 text-left border border-border-subtle rounded-md bg-hover-bg flex items-center hover:border-primary/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border-subtle"
+                            disabled={usedFieldIds.includes(field.id)}
+                        >
                             <PlusCircle size={16} className="mr-2 text-primary" />
                             {field.label}
                         </button>
@@ -45,7 +51,12 @@ const FormToolbox: React.FC<FormToolboxProps> = ({ onFieldAdd }) => {
                     <p className="text-sm font-semibold text-text-secondary mb-2">Custom Fields</p>
                     <div className="space-y-2">
                         {customFields.map(field => (
-                            <button key={field.id} onClick={() => onFieldAdd(field)} className="w-full p-2 text-left border border-border-subtle rounded-md bg-hover-bg flex items-center hover:border-primary/50 transition-colors">
+                            <button 
+                                key={field.id} 
+                                onClick={() => onFieldAdd(field)} 
+                                className="w-full p-2 text-left border border-border-subtle rounded-md bg-hover-bg flex items-center hover:border-primary/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border-subtle"
+                                disabled={usedFieldIds.includes(field.id)}
+                            >
                                 <PlusCircle size={16} className="mr-2 text-primary" />
                                 {field.label}
                             </button>

@@ -3,7 +3,7 @@
 // FIX: Corrected date-fns imports to use the main entry point for consistency and to resolve module resolution errors.
 import { addDays, subDays } from 'date-fns';
 import {
-    User, Organization, AnyContact, CustomRole, Task, CalendarEvent, Product, Deal, DealStage, EmailTemplate, Interaction, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, Document, LandingPage, CustomReport, DashboardWidget, Supplier, Warehouse
+    User, Organization, AnyContact, CustomRole, Task, CalendarEvent, Product, Deal, DealStage, EmailTemplate, Interaction, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, Document, LandingPage, CustomReport, DashboardWidget, Supplier, Warehouse, AnonymousSession
 } from '../types';
 
 export let MOCK_ORGANIZATIONS: Organization[] = [
@@ -145,3 +145,5 @@ export let MOCK_LANDING_PAGES: LandingPage[] = [
 
 export let MOCK_CUSTOM_REPORTS: CustomReport[] = [];
 export let MOCK_DASHBOARD_WIDGETS: DashboardWidget[] = [];
+
+export let MOCK_ANONYMOUS_SESSIONS: AnonymousSession[] = [];

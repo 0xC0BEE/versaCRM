@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-// FIX: Corrected import path for apiClient.
 import apiClient from '../../services/apiClient';
 import { LandingPage, PublicForm } from '../../types';
 import Input from '../ui/Input';
@@ -16,13 +15,24 @@ const PublicLandingPage: React.FC = () => {
     const [formData, setFormData] = useState<Record<string, any>>({});
     const [isSubmitted, setIsSubmitted] = useState(false);
     
-    const { formsQuery, submitPublicFormMutation } = useData();
+    const { formsQuery, submitPublicFormMutation, trackPageViewMutation } = useData();
     const { data: forms = [] } = formsQuery;
 
     useEffect(() => {
-        const hash = window.location.hash;
-        const slugFromHash = hash.substring(2); // Remove '#/'
-        setSlug(slugFromHash);
+        const handleHashChange = () => {
+            const hash = window.location.hash;
+            const slugFromHash = hash.substring(2); // Remove '#/'
+            setSlug(slugFromHash);
+        }
+        handleHashChange(); // Initial load
+        window.addEventListener('hashchange', handleHashChange);
+        
+        // Simulate tracking script
+        const sessionId = localStorage.getItem('versa_session_id') || `anon_session_${Date.now()}`;
+        localStorage.setItem('versa_session_id', sessionId);
+        trackPageViewMutation.mutate({ sessionId, orgId: 'org_1', url: window.location.href });
+
+        return () => window.removeEventListener('hashchange', handleHashChange);
     }, []);
 
     const { data: page, isLoading, isError } = useQuery<LandingPage | null>({
@@ -32,7 +42,7 @@ const PublicLandingPage: React.FC = () => {
     });
 
     const formComponent = page?.content.find(c => c.type === 'form');
-    const formConfig = formComponent ? forms.find((f: PublicForm) => f.id === (formComponent.content as any).formId) : null;
+    const formConfig = formComponent ? (forms as PublicForm[]).find((f: PublicForm) => f.id === (formComponent.content as any).formId) : null;
 
     const handleChange = (id: string, value: any) => {
         setFormData(prev => ({ ...prev, [id]: value }));
@@ -43,21 +53,28 @@ const PublicLandingPage: React.FC = () => {
         if (!formConfig) return;
 
         for (const field of formConfig.fields) {
-            if (field.required && !formData[field.id]) {
+            if (field.required && !formData[field.id.split('.').pop()!]) {
                 toast.error(`Field "${field.label}" is required.`);
                 return;
             }
         }
-        submitPublicFormMutation.mutate({ formId: formConfig.id, submissionData: formData }, {
-            onSuccess: () => setIsSubmitted(true)
+
+        const sessionId = localStorage.getItem('versa_session_id');
+        submitPublicFormMutation.mutate({ formId: formConfig.id, submissionData: formData, sessionId }, {
+            onSuccess: () => {
+                setIsSubmitted(true);
+                localStorage.removeItem('versa_session_id'); // Clear session on conversion
+            }
         });
     };
 
     const renderField = (field: typeof formConfig.fields[0]) => {
+         const fieldId = field.id.split('.').pop()!;
          const props = {
-            key: field.id, id: field.id, label: field.label, value: formData[field.id] || '',
-            onChange: (e: React.ChangeEvent<any>) => handleChange(field.id, e.target.value),
+            key: field.id, id: field.id, label: field.label, value: formData[fieldId] || '',
+            onChange: (e: React.ChangeEvent<any>) => handleChange(fieldId, e.target.value),
             required: field.required,
+            placeholder: field.placeholder,
         };
         switch (field.type) {
             case 'textarea': return <Textarea {...props} />;
@@ -92,7 +109,7 @@ const PublicLandingPage: React.FC = () => {
                             return (
                                 <div key={comp.id} className="my-12 p-8 bg-white/80 backdrop-blur-sm rounded-lg shadow-xl text-black">
                                     {isSubmitted ? (
-                                        <div className="text-center">
+                                        <div className="text-center py-8">
                                             <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
                                             <p className="mt-4">{formConfig.actions.successMessage}</p>
                                         </div>

@@ -16,6 +16,7 @@ import AuditLogTab from './detail_tabs/AuditLogTab';
 import BillingTab from './detail_tabs/BillingTab';
 import EmailTab from './detail_tabs/EmailTab';
 import DocumentsTab from './detail_tabs/DocumentsTab';
+import WebsiteActivityTab from './detail_tabs/WebsiteActivityTab';
 
 interface ContactDetailModalProps {
     isOpen: boolean;
@@ -52,8 +53,9 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
     if (!contact) return null;
 
     const isNewContact = !contact?.id;
+    const hasWebsiteActivity = contact.interactions?.some(i => i.type === 'Site Visit');
     
-    const tabConfig = {
+    const tabConfig: Record<string, React.ReactNode> = {
         'Profile': <ProfileTab 
                         key={contact.id || `new-${newContactKey}`}
                         contact={contact!} 
@@ -73,14 +75,24 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
         'Audit Log': <AuditLogTab contact={contact!} />,
     };
 
-    const tabs = Object.keys(tabConfig).filter(tab => !isNewContact || tab === 'Profile');
+    if (hasWebsiteActivity) {
+        tabConfig['Website Activity'] = <WebsiteActivityTab contact={contact!} />;
+    }
+
+    const allTabs = ['Profile', 'Website Activity', 'History', 'Email', 'Documents', industryConfig.ordersTabName, 'Transactions', industryConfig.enrollmentsTabName, industryConfig.structuredRecordTabName, 'Relationships', 'Audit Log'];
+    
+    const tabs = allTabs.filter(tab => {
+        if (isNewContact) return tab === 'Profile';
+        if (tab === 'Website Activity' && !hasWebsiteActivity) return false;
+        return true;
+    });
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={isNewContact ? `New ${industryConfig.contactName}` : `Details for ${contact.contactName}`} size="5xl">
             <div className="flex flex-col">
                 <Tabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
                 <div className="flex-grow">
-                    {tabConfig[activeTab as keyof typeof tabConfig]}
+                    {tabConfig[activeTab]}
                 </div>
             </div>
         </Modal>

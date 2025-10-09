@@ -15,6 +15,7 @@ import RolesAndPermissionsPage from './RolesAndPermissionsPage';
 import { useAuth } from '../../contexts/AuthContext';
 import IntegrationsSettings from './IntegrationsSettings';
 import ApiAndAppsPage from './ApiAndAppsPage';
+import TrackingCodeSettings from './TrackingCodeSettings';
 
 const SettingsPage: React.FC = () => {
     const { hasPermission } = useAuth();
@@ -24,6 +25,7 @@ const SettingsPage: React.FC = () => {
         { name: 'Roles & Permissions', permission: 'settings:manage:roles' },
         { name: 'Integrations' },
         { name: 'API & Apps', permission: 'settings:manage:api' },
+        { name: 'Tracking Code' },
         { name: 'Live Chat' },
         { name: 'Lead Scoring' },
         { name: 'Contact Forms' }, 
@@ -45,6 +47,8 @@ const SettingsPage: React.FC = () => {
                 return <IntegrationsSettings />;
             case 'API & Apps':
                 return <ApiAndAppsPage />;
+            case 'Tracking Code':
+                return <TrackingCodeSettings />;
             case 'Live Chat':
                 return <LiveChatSettings />;
             case 'Lead Scoring':

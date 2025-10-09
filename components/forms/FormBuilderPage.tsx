@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PublicForm, PublicFormField, Campaign } from '../../types';
 import PageWrapper from '../layout/PageWrapper';
 import Button from '../ui/Button';
-import { ArrowLeft, Code, TestTube2 } from 'lucide-react';
+import { ArrowLeft, Code, TestTube2, Edit } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -29,14 +29,15 @@ const FormBuilderPage: React.FC<FormBuilderPageProps> = ({ formToEdit, onClose }
     const [form, setForm] = useState<Omit<PublicForm, 'id' | 'organizationId'>>(() => formToEdit || {
         name: '',
         fields: [
-            { id: 'contactName', label: 'Full Name', type: 'text', required: true },
-            { id: 'email', label: 'Email Address', type: 'text', required: true },
+            { id: 'contactName', label: 'Full Name', type: 'text', required: true, placeholder: 'Enter your full name' },
+            { id: 'email', label: 'Email Address', type: 'text', required: true, placeholder: 'you@example.com' },
         ],
         style: { buttonText: 'Submit', buttonColor: '#3b82f6' },
         actions: { successMessage: 'Thank you for your submission!' },
         submissions: 0,
     });
     
+    const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
     const [modal, setModal] = useState<'embed' | 'test' | null>(null);
 
     useEffect(() => {
@@ -45,12 +46,7 @@ const FormBuilderPage: React.FC<FormBuilderPageProps> = ({ formToEdit, onClose }
 
     const handleSave = () => {
         if (!form.name.trim()) return toast.error("Form name is required.");
-
-        const formData = {
-            ...form,
-            organizationId: authenticatedUser!.organizationId!,
-        };
-
+        const formData = { ...form, organizationId: authenticatedUser!.organizationId! };
         if (isNew) {
             createFormMutation.mutate(formData as any, { onSuccess: onClose });
         } else {
@@ -63,8 +59,45 @@ const FormBuilderPage: React.FC<FormBuilderPageProps> = ({ formToEdit, onClose }
             setForm(prev => ({ ...prev, fields: [...prev.fields, field] }));
         }
     };
-    
+
+    const handleFieldUpdate = (fieldId: string, newProps: Partial<PublicFormField>) => {
+        setForm(prev => ({
+            ...prev,
+            fields: prev.fields.map(f => f.id === fieldId ? { ...f, ...newProps } : f)
+        }));
+    };
+
     const isPending = createFormMutation.isPending || updateFormMutation.isPending;
+    const selectedField = form.fields.find(f => f.id === selectedFieldId);
+
+    const renderConfigPanel = () => {
+        if (selectedField) {
+            return (
+                <div className="space-y-4">
+                    <h4 className="font-semibold flex items-center gap-2"><Edit size={16}/> Edit Field: {selectedField.label}</h4>
+                    <Input id="field-label" label="Label" value={selectedField.label} onChange={e => handleFieldUpdate(selectedField.id, { label: e.target.value })} />
+                    <Input id="field-placeholder" label="Placeholder" value={selectedField.placeholder || ''} onChange={e => handleFieldUpdate(selectedField.id, { placeholder: e.target.value })} />
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" checked={selectedField.required} onChange={e => handleFieldUpdate(selectedField.id, { required: e.target.checked })} className="h-4 w-4 rounded border-border-subtle text-primary focus:ring-primary"/>
+                        <span>Required</span>
+                    </label>
+                </div>
+            );
+        }
+        return (
+            <div className="space-y-4">
+                 <h4 className="font-semibold">Global Form Settings</h4>
+                <Input id="form-name" label="Form Name" value={form.name} onChange={e => setForm(p => ({...p, name: e.target.value}))} />
+                <Input id="btn-text" label="Button Text" value={form.style.buttonText} onChange={e => setForm(p => ({...p, style: {...p.style, buttonText: e.target.value}}))} />
+                <Input id="btn-color" label="Button Color" type="color" value={form.style.buttonColor} onChange={e => setForm(p => ({...p, style: {...p.style, buttonColor: e.target.value}}))} className="w-24"/>
+                <Textarea id="success-msg" label="Success Message" value={form.actions.successMessage} onChange={e => setForm(p => ({...p, actions: {...p.actions, successMessage: e.target.value}}))} rows={3} />
+                <Select id="campaign-enroll" label="Enroll in Journey (Optional)" value={form.actions.enrollInCampaignId || ''} onChange={e => setForm(p => ({...p, actions: {...p.actions, enrollInCampaignId: e.target.value}}))}>
+                    <option value="">-- None --</option>
+                    {campaigns.map((c: Campaign) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </Select>
+            </div>
+        );
+    };
 
     return (
         <PageWrapper>
@@ -79,23 +112,19 @@ const FormBuilderPage: React.FC<FormBuilderPageProps> = ({ formToEdit, onClose }
             
              <div className="grid grid-cols-12 gap-4 h-[calc(100vh-12rem)]">
                 <Card className="col-span-3 p-4 overflow-y-auto">
-                    <FormToolbox onFieldAdd={handleFieldAdd} />
+                    <FormToolbox onFieldAdd={handleFieldAdd} usedFieldIds={form.fields.map(f => f.id)} />
                 </Card>
                 <div className="col-span-5 h-full flex items-center justify-center p-4 bg-card-bg rounded-card border border-border-subtle">
-                   <FormPreview form={form} setForm={setForm} />
+                   <FormPreview 
+                        form={form} 
+                        setForm={setForm} 
+                        selectedFieldId={selectedFieldId}
+                        setSelectedFieldId={setSelectedFieldId}
+                   />
                 </div>
                 <Card className="col-span-4 p-4 overflow-y-auto">
                     <h3 className="text-lg font-semibold text-text-heading mb-4">Configuration</h3>
-                    <div className="space-y-4">
-                        <Input id="form-name" label="Form Name" value={form.name} onChange={e => setForm(p => ({...p, name: e.target.value}))} />
-                        <Input id="btn-text" label="Button Text" value={form.style.buttonText} onChange={e => setForm(p => ({...p, style: {...p.style, buttonText: e.target.value}}))} />
-                        <Input id="btn-color" label="Button Color" type="color" value={form.style.buttonColor} onChange={e => setForm(p => ({...p, style: {...p.style, buttonColor: e.target.value}}))} className="w-24"/>
-                        <Textarea id="success-msg" label="Success Message" value={form.actions.successMessage} onChange={e => setForm(p => ({...p, actions: {...p.actions, successMessage: e.target.value}}))} rows={3} />
-                        <Select id="campaign-enroll" label="Enroll in Journey (Optional)" value={form.actions.enrollInCampaignId || ''} onChange={e => setForm(p => ({...p, actions: {...p.actions, enrollInCampaignId: e.target.value}}))}>
-                            <option value="">-- None --</option>
-                            {campaigns.map((c: Campaign) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </Select>
-                    </div>
+                    {renderConfigPanel()}
                 </Card>
             </div>
             
