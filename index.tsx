@@ -10,8 +10,12 @@ import { Toaster } from 'react-hot-toast';
 // FIX: Corrected the import path for DataProvider from a file path to a relative module path.
 import { DataProvider } from './contexts/DataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { startMockServer } from './services/mockApiServer';
 
 const queryClient = new QueryClient();
+
+// Start the mock API server to intercept fetch requests
+startMockServer();
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

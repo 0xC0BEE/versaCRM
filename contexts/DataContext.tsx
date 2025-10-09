@@ -271,9 +271,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const createTicketMutation = useMutation({ mutationFn: apiClient.createTicket, onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
     const updateTicketMutation = useMutation({ mutationFn: apiClient.updateTicket, onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
     const addTicketReplyMutation = useMutation({
-        // FIX: The mutation function expects a single object argument. Passing the API client method directly ensures the correct signature.
-        // FIX: Wrapped apiClient.addTicketReply in an arrow function to explicitly pass the single 'variables' object from the mutation, resolving a potential type inference issue.
-        mutationFn: (vars: { ticketId: string, reply: Omit<TicketReply, 'id' | 'timestamp'> }) => apiClient.addTicketReply(vars),
+        // FIX: Corrected the mutation function to pass a single object argument to apiClient.addTicketReply, resolving the "Expected 1 arguments, but got 2" error.
+        mutationFn: (vars: { ticketId: string; reply: Omit<TicketReply, 'id' | 'timestamp'> }) => apiClient.addTicketReply(vars),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tickets', orgId] });
         },
