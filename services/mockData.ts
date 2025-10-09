@@ -140,7 +140,30 @@ export let MOCK_DOCUMENTS: Document[] = [
 ];
 
 export let MOCK_LANDING_PAGES: LandingPage[] = [
-    { id: 'lp_1', organizationId: 'org_1', name: 'Spring Promotion', slug: 'spring-promo', status: 'Published', content: [{id: 'c1', type: 'header', content: {title: 'Spring Promo!', subtitle: 'Get 20% off.'}}], style: {backgroundColor: '#ffffff', textColor: '#000000'} }
+    { 
+        id: 'lp_1', 
+        organizationId: 'org_1', 
+        name: 'Spring Promotion', 
+        slug: 'spring-promo', 
+        status: 'Published', 
+        content: [
+            {id: 'c1', type: 'header', content: {title: 'Spring Promo!', subtitle: 'Get 20% off.'}},
+            {
+                id: 'c2_image',
+                type: 'image',
+                content: {
+                    src: 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExYzhyanVpeHNwZmJldmViejIxYmQ0dmxmbTdyY3MyaGV6N2hlajhxZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/5Sl1sMiMJTgXXTZjrL/giphy.gif',
+                    alt: 'Fun GIF'
+                }
+            },
+            {
+                id: 'c3_form',
+                type: 'form',
+                content: { formId: 'form_1' }
+            }
+        ], 
+        style: {backgroundColor: '#ffffff', textColor: '#000000'} 
+    }
 ];
 
 export let MOCK_CUSTOM_REPORTS: CustomReport[] = [];

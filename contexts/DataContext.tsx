@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 // FIX: Corrected import path for apiClient from a file path to a relative module path.
 import apiClient from '../services/apiClient';
 import { useAuth } from './AuthContext';
-import { AnyContact, Organization, User, CustomRole, Task, CalendarEvent, Product, Deal, DealStage, EmailTemplate, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, Supplier, Warehouse, Interaction, CustomReport, DashboardWidget, LandingPage } from '../types';
+import { AnyContact, Organization, User, CustomRole, Task, CalendarEvent, Product, Deal, DealStage, EmailTemplate, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, Supplier, Warehouse, Interaction, CustomReport, DashboardWidget, LandingPage, TicketReply } from '../types';
 import toast from 'react-hot-toast';
 
 interface DataContextType {
@@ -223,8 +223,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const organizationSettingsQuery = useQuery<OrganizationSettings, Error>({ queryKey: ['organizationSettings', orgId], queryFn: () => apiClient.getOrganizationSettings(orgId!), enabled: !!orgId });
     const updateOrganizationSettingsMutation = useMutation({ mutationFn: apiClient.updateOrganizationSettings, onSuccess: onMutationSuccess(['organizationSettings', orgId]), onError: onMutationError });
     const recalculateAllScoresMutation = useMutation({
-        // FIX: Wrapped the mutation function in an arrow function to ensure correct type inference and resolve potential argument mismatch errors.
-        mutationFn: (orgId: string) => apiClient.recalculateAllScores(orgId),
+        // FIX: The mutationFn wrapper was redundant. Passing the apiClient method directly is cleaner and avoids potential issues.
+        mutationFn: apiClient.recalculateAllScores,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
         },
@@ -272,7 +272,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const updateTicketMutation = useMutation({ mutationFn: apiClient.updateTicket, onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
     const addTicketReplyMutation = useMutation({
         // FIX: The mutation function expects a single object argument. Passing the API client method directly ensures the correct signature.
-        mutationFn: apiClient.addTicketReply,
+        // FIX: Wrapped apiClient.addTicketReply in an arrow function to explicitly pass the single 'variables' object from the mutation, resolving a potential type inference issue.
+        mutationFn: (vars: { ticketId: string, reply: Omit<TicketReply, 'id' | 'timestamp'> }) => apiClient.addTicketReply(vars),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tickets', orgId] });
         },

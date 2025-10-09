@@ -22,12 +22,36 @@ const LandingPageBuilderPage: React.FC<LandingPageBuilderPageProps> = ({ pageToE
     const { data: forms = [] } = formsQuery;
     const isNew = !pageToEdit;
 
-    const [page, setPage] = useState<Omit<LandingPage, 'id' | 'organizationId'>>(() => pageToEdit || {
-        name: '',
-        slug: '',
-        status: 'Draft',
-        content: [],
-        style: { backgroundColor: '#f8fafc', textColor: '#1e293b' },
+    const [page, setPage] = useState<Omit<LandingPage, 'id' | 'organizationId'>>(() => {
+        if (pageToEdit) return pageToEdit;
+
+        // Default for a new page, pre-populated as requested
+        return {
+            name: 'New Landing Page',
+            slug: 'new-page',
+            status: 'Draft',
+            content: [
+                {
+                    id: `comp_header_${Date.now()}`,
+                    type: 'header',
+                    content: { title: 'Welcome to Our New Page!', subtitle: 'This is a great place to capture leads.' }
+                },
+                {
+                    id: `comp_img_${Date.now()}`,
+                    type: 'image',
+                    content: {
+                        src: 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExYzhyanVpeHNwZmJldmViejIxYmQ0dmxmbTdyY3MyaGV6N2hlajhxZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/5Sl1sMiMJTgXXTZjrL/giphy.gif',
+                        alt: 'Welcome GIF'
+                    }
+                },
+                {
+                    id: `comp_form_${Date.now()}`,
+                    type: 'form',
+                    content: { formId: 'form_1' } // ID of the default "Contact Us Form"
+                }
+            ],
+            style: { backgroundColor: '#f8fafc', textColor: '#1e293b' },
+        };
     });
     const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
 
