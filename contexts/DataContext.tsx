@@ -223,8 +223,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const organizationSettingsQuery = useQuery<OrganizationSettings, Error>({ queryKey: ['organizationSettings', orgId], queryFn: () => apiClient.getOrganizationSettings(orgId!), enabled: !!orgId });
     const updateOrganizationSettingsMutation = useMutation({ mutationFn: apiClient.updateOrganizationSettings, onSuccess: onMutationSuccess(['organizationSettings', orgId]), onError: onMutationError });
     const recalculateAllScoresMutation = useMutation({
-        // FIX: Passing the function directly instead of wrapping it in an arrow function helps with type inference and resolves the error.
-        mutationFn: apiClient.recalculateAllScores,
+        // FIX: Wrapped the mutation function in an arrow function to ensure correct type inference and resolve potential argument mismatch errors.
+        mutationFn: (orgId: string) => apiClient.recalculateAllScores(orgId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
         },

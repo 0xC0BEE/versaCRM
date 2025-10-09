@@ -59,7 +59,12 @@ export const kbArticles: KBArticleType[] = [
                         <strong>Create a New Contact:</strong> Click the <strong>"New Contact"</strong> button on the top right. A modal will appear where you can fill in the contact's details, including any custom fields specific to your industry.
                     </li>
                     <li>
-                        <strong>View Contact Details:</strong> Click on any contact's name in the table to open their detailed 360-degree profile. Here you can see their history, deals, tickets, and more across various tabs.
+                        <strong>View Contact Details:</strong> Click on any contact's name in the table to open their detailed 360-degree profile. Here you can see everything about them across various tabs:
+                        <ul>
+                            <li className="!mt-2"><strong>Profile:</strong> Core contact information and custom fields.</li>
+                            <li className="!mt-2"><strong>History:</strong> A timeline of all interactions like emails, calls, and notes.</li>
+                            <li className="!mt-2"><strong>Website Activity:</strong> If the contact was captured via a tracked form or landing page, this tab shows you every page they viewed <em>before</em> they converted, providing valuable sales intelligence.</li>
+                        </ul>
                     </li>
                     <li>
                         <strong>Filter and Search:</strong> Use the "Add Filter" button at the top of the contacts table to narrow down your list based on specific criteria like status or lead source.
@@ -315,19 +320,24 @@ export const kbArticles: KBArticleType[] = [
                         <strong>Access Forms:</strong> Navigate to <strong>Forms</strong> in the sidebar.
                     </li>
                     <li>
-                        <strong>Create a New Form:</strong> Click <strong>"New Form"</strong> to open the builder.
+                        <strong>Create a New Form:</strong> Click <strong>"New Form"</strong> to open the interactive builder.
                     </li>
                     <li>
-                        <strong>Add Fields:</strong> Use the Toolbox on the left to add fields. You can add standard fields (Name, Email) and any custom fields you've configured for your industry.
+                        <strong>Build Your Form:</strong>
+                        <ul>
+                           <li className="!mt-2"><strong>Add Fields:</strong> Use the Toolbox on the left to add fields. You can add standard fields (Name, Email) and any custom fields you've configured for your industry.</li>
+                           <li className="!mt-2"><strong>Arrange Fields:</strong> In the central preview panel, you can drag and drop fields to reorder them.</li>
+                           <li className="!mt-2"><strong>Edit Fields:</strong> Click on a field in the preview to select it. The Configuration panel on the right will then allow you to edit its label, placeholder text, and mark it as required.</li>
+                        </ul>
                     </li>
                     <li>
-                        <strong>Configure Actions:</strong> In the configuration panel on the right, define what happens after submission. You can set a "thank you" message and, most importantly, choose a **Marketing Journey** to automatically enroll the new contact in.
+                        <strong>Configure Actions:</strong> In the configuration panel on the right (when no specific field is selected), you can define what happens after submission. You can set a custom "thank you" message and, most importantly, choose a <strong>Marketing Journey</strong> to automatically enroll the new contact in.
                     </li>
                     <li>
-                        <strong>Embed Your Form:</strong> Once saved, click <strong>"Get Embed Code"</strong> from the main forms page. Copy the HTML snippet and paste it into your website's code.
+                        <strong>Embed Your Form:</strong> Once saved, click the <strong>"Embed"</strong> icon from the main forms page. Copy the HTML snippet and paste it into your website's code where you want the form to appear.
                     </li>
                     <li>
-                        <strong>Test Your Form:</strong> Use the <strong>"Preview & Test"</strong> button to fill out and submit the form yourself. You'll see a new contact created in your CRM, an interaction logged, and the linked automation will begin.
+                        <strong>Test Your Form:</strong> Use the <strong>"Test"</strong> button to fill out and submit the form yourself. You'll see a new contact created in your CRM, an interaction logged, and the linked automation will begin.
                     </li>
                 </ol>
             </>
@@ -352,15 +362,46 @@ export const kbArticles: KBArticleType[] = [
                         <strong>Create a New Page:</strong> Click <strong>"New Landing Page"</strong>.
                     </li>
                     <li>
-                        <strong>Add Content Blocks:</strong> Use the "Components" toolbox to add sections like a Header, Text Block, Image, or a Form.
+                        <strong>Add Content Blocks:</strong> Use the "Components" toolbox on the left to add sections like a Header, Text Block, Image, or a Form.
                     </li>
                     <li>
-                        <strong>Embed a Form:</strong> When you add a "Form" block, click on it in the preview. The configuration panel on the right will allow you to select one of the public forms you've already created.
+                        <strong>Embed a Form:</strong> When you add a "Form" component, click on it in the preview. The configuration panel on the right will allow you to select one of the public forms you've already created.
                     </li>
                     <li>
-                        <strong>Publish and Share:</strong> Give your page a name and a URL slug. Once saved, you can "Publish" it. Use the "View Live Page" button to see your page and share its URL. Submissions on the live page will feed directly into your CRM.
+                        <strong>Publish and Share:</strong> Give your page a name and a URL slug (e.g., 'spring-promo'). Once saved, you can click the status badge in the table to switch it from "Draft" to "Published". Use the copy icon to get the live URL and share it.
                     </li>
                 </ol>
+            </>
+        ),
+    },
+    {
+        id: 'website-analytics',
+        title: 'Website Analytics',
+        category: 'Lead Generation',
+        content: (
+            <>
+                <h2 id="overview-analytics">Overview</h2>
+                <p>
+                    VersaCRM's Website Analytics allows you to connect anonymous visitor activity on your website to a contact's profile once they convert. This gives your sales team invaluable insight into a lead's interests before they even make the first call.
+                </p>
+                <h3 id="how-it-works">How It Works</h3>
+                <ol>
+                    <li>
+                        <strong>Install the Tracking Script:</strong> Navigate to <strong>Settings &gt; Tracking Code</strong>. Copy the provided JavaScript snippet and paste it onto every page of your external website, just before the closing <code>&lt;/body&gt;</code> tag.
+                    </li>
+                    <li>
+                        <strong>Anonymous Tracking:</strong> The script will begin tracking page views for all visitors, assigning a unique, anonymous ID to each person.
+                    </li>
+                    <li>
+                        <strong>Conversion Stitching:</strong> When a visitor submits a VersaCRM form embedded on your site, the script automatically links their entire browsing history to the new contact record that gets created.
+                    </li>
+                    <li>
+                        <strong>View the Activity Timeline:</strong> Open the new contact's profile in the CRM. A new <strong>"Website Activity"</strong> tab will appear, showing a complete timeline of the pages they viewed.
+                    </li>
+                </ol>
+                <p className="mt-4">
+                    <strong>Note:</strong> This tracking script is automatically included on all pages created with the VersaCRM <strong>Landing Page Builder</strong>, so no manual installation is necessary for those pages.
+                </p>
             </>
         ),
     },
