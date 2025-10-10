@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Deal, DealStage } from '../../types';
+import { Deal, DealStage, DealForecast } from '../../types';
 import DealCard from './DealCard';
 
 interface DealColumnProps {
@@ -8,9 +8,11 @@ interface DealColumnProps {
     onCardClick: (deal: Deal) => void;
     onDragStart: (e: React.DragEvent<HTMLDivElement>, dealId: string) => void;
     onDrop: (e: React.DragEvent<HTMLDivElement>, stageId: string) => void;
+    isForecasting: boolean;
+    onOpenForecast: (deal: Deal, forecast: DealForecast) => void;
 }
 
-const DealColumn: React.FC<DealColumnProps> = ({ stage, deals, onCardClick, onDragStart, onDrop }) => {
+const DealColumn: React.FC<DealColumnProps> = ({ stage, deals, onCardClick, onDragStart, onDrop, isForecasting, onOpenForecast }) => {
     
     const totalValue = useMemo(() => {
         return deals.reduce((sum, deal) => sum + deal.value, 0);
@@ -39,6 +41,8 @@ const DealColumn: React.FC<DealColumnProps> = ({ stage, deals, onCardClick, onDr
                         deal={deal}
                         onDragStart={onDragStart}
                         onClick={onCardClick}
+                        isForecasting={isForecasting}
+                        onOpenForecast={onOpenForecast}
                     />
                 ))}
             </div>

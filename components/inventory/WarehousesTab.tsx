@@ -1,25 +1,24 @@
-import React from 'react';
-// FIX: Corrected import path for DataContext.
+import React, { useState } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { Warehouse } from '../../types';
 import Button from '../ui/Button';
 import { Plus } from 'lucide-react';
-import toast from 'react-hot-toast';
+import WarehouseEditModal from './WarehouseEditModal';
 
 const WarehousesTab: React.FC = () => {
     const { warehousesQuery } = useData();
     const { data: warehouses = [], isLoading } = warehousesQuery;
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
 
     const handleEdit = (warehouse: Warehouse) => {
-        // In a real implementation, this would open a WarehouseEditModal
-        // FIX: Replaced unsupported toast.info with a default toast call.
-        toast(`Editing for "${warehouse.name}" is not implemented yet.`);
+        setSelectedWarehouse(warehouse);
+        setIsModalOpen(true);
     };
 
     const handleAdd = () => {
-        // In a real implementation, this would open a WarehouseEditModal
-        // FIX: Replaced unsupported toast.info with a default toast call.
-        toast("Adding a new warehouse is not implemented yet.");
+        setSelectedWarehouse(null);
+        setIsModalOpen(true);
     };
 
     return (
@@ -58,6 +57,13 @@ const WarehousesTab: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+            )}
+            {isModalOpen && (
+                 <WarehouseEditModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    warehouse={selectedWarehouse}
+                />
             )}
         </div>
     );

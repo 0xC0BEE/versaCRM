@@ -13,9 +13,9 @@ import LeadScoringSettings from './LeadScoringSettings';
 import LiveChatSettings from './LiveChatSettings';
 import RolesAndPermissionsPage from './RolesAndPermissionsPage';
 import { useAuth } from '../../contexts/AuthContext';
-import IntegrationsSettings from './IntegrationsSettings';
 import ApiAndAppsPage from './ApiAndAppsPage';
 import TrackingCodeSettings from './TrackingCodeSettings';
+import CustomObjectsSettings from './CustomObjectsSettings';
 
 const SettingsPage: React.FC = () => {
     const { hasPermission } = useAuth();
@@ -23,7 +23,7 @@ const SettingsPage: React.FC = () => {
     
     const allTabs = [
         { name: 'Roles & Permissions', permission: 'settings:manage:roles' },
-        { name: 'Integrations' },
+        { name: 'Custom Objects' },
         { name: 'API & Apps', permission: 'settings:manage:api' },
         { name: 'Tracking Code' },
         { name: 'Live Chat' },
@@ -43,8 +43,8 @@ const SettingsPage: React.FC = () => {
         switch (activeTab) {
             case 'Roles & Permissions':
                 return <RolesAndPermissionsPage />;
-            case 'Integrations':
-                return <IntegrationsSettings />;
+            case 'Custom Objects':
+                return <CustomObjectsSettings />;
             case 'API & Apps':
                 return <ApiAndAppsPage />;
             case 'Tracking Code':

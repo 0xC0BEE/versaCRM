@@ -39,8 +39,9 @@ const CampaignsPage: React.FC = () => {
     
     const handleAdvanceDay = () => {
         advanceDayMutation.mutate(simulatedDate, {
-            onSuccess: (newDate) => {
-                setSimulatedDate(newDate);
+            onSuccess: (newDateString: string) => {
+                // The API returns a string, so we must convert it back to a Date object
+                setSimulatedDate(new Date(newDateString));
             }
         });
     }

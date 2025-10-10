@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -69,6 +70,7 @@ const AiAssistantTab: React.FC = () => {
                 contents: prompt,
             });
 
+            // FIX: Access response text via .text property
             const aiMessage: Message = { sender: 'ai', text: response.text };
             setMessages(prev => [...prev, aiMessage]);
 

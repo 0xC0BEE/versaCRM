@@ -1,3 +1,4 @@
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -7,9 +8,9 @@ import { AppProvider } from './contexts/AppContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { Toaster } from 'react-hot-toast';
-// FIX: Corrected the import path for DataProvider from a file path to a relative module path.
 import { DataProvider } from './contexts/DataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+// FIX: Corrected import path for mockApiServer.
 import { startMockServer } from './services/mockApiServer';
 
 const queryClient = new QueryClient();

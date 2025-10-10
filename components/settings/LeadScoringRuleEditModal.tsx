@@ -79,7 +79,7 @@ const LeadScoringRuleEditModal: React.FC<LeadScoringRuleEditModalProps> = ({ isO
                         label="Change score by"
                         type="number"
                         value={formData.points}
-                        onChange={(e) => handleChange('points', parseInt(e.target.value) || 0)}
+                        onChange={(e) => handleChange('points', parseFloat(e.target.value) || 0)}
                         required
                         disabled={isSaving}
                     />

@@ -1,25 +1,24 @@
-import React from 'react';
-// FIX: Corrected import path for DataContext.
+import React, { useState } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { Supplier } from '../../types';
 import Button from '../ui/Button';
 import { Plus } from 'lucide-react';
-import toast from 'react-hot-toast';
+import SupplierEditModal from './SupplierEditModal';
 
 const SuppliersTab: React.FC = () => {
     const { suppliersQuery } = useData();
     const { data: suppliers = [], isLoading } = suppliersQuery;
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
 
     const handleEdit = (supplier: Supplier) => {
-        // In a real implementation, this would open a SupplierEditModal
-        // FIX: Replaced unsupported toast.info with a default toast call.
-        toast(`Editing for "${supplier.name}" is not implemented yet.`);
+        setSelectedSupplier(supplier);
+        setIsModalOpen(true);
     };
 
     const handleAdd = () => {
-        // In a real implementation, this would open a SupplierEditModal
-        // FIX: Replaced unsupported toast.info with a default toast call.
-        toast("Adding a new supplier is not implemented yet.");
+        setSelectedSupplier(null);
+        setIsModalOpen(true);
     };
 
     return (
@@ -62,6 +61,13 @@ const SuppliersTab: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+            )}
+            {isModalOpen && (
+                <SupplierEditModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    supplier={selectedSupplier}
+                />
             )}
         </div>
     );

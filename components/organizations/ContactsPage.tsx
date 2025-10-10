@@ -1,20 +1,24 @@
+
+
 import React, { useState, useMemo } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import { Plus } from 'lucide-react';
+import { Plus, Bot } from 'lucide-react';
 // FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
 // FIX: Corrected import path for useApp.
 import { useApp } from '../../contexts/AppContext';
 // FIX: Corrected the import path for types to be a valid relative path.
-import { AnyContact, ContactStatus } from '../../types';
+import { AnyContact, ContactStatus, ContactChurnPrediction } from '../../types';
 import ContactsTable from './ContactsTable';
+// FIX: Corrected import path for ContactDetailModal.
 import ContactDetailModal from './ContactDetailModal';
 import ContactFilterBar from './ContactFilterBar';
 import BulkActionsToolbar from './BulkActionsToolbar';
 import BulkStatusUpdateModal from './BulkStatusUpdateModal';
 import { useAuth } from '../../contexts/AuthContext';
+import ChurnPredictionModal from './ChurnPredictionModal';
 
 interface ContactsPageProps {
     isTabbedView?: boolean;
@@ -37,6 +41,8 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
     const [selectedContact, setSelectedContact] = useState<AnyContact | null>(null);
     const [selectedContactIds, setSelectedContactIds] = useState(new Set<string>());
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+    const [isChurning, setIsChurning] = useState(false);
+    const [churnModalData, setChurnModalData] = useState<{contact: AnyContact, prediction: ContactChurnPrediction} | null>(null);
 
     const filteredContacts = useMemo(() => {
         if (!contactFilters || contactFilters.length === 0) {
@@ -113,6 +119,10 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
             }
         });
     };
+    
+    const handleOpenChurnPrediction = (contact: AnyContact, prediction: ContactChurnPrediction) => {
+        setChurnModalData({ contact, prediction });
+    };
 
     const isMutationLoading = createContactMutation.isPending || updateContactMutation.isPending || deleteContactMutation.isPending;
 
@@ -121,9 +131,18 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
             {!isTabbedView && (
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-semibold text-text-heading">{industryConfig.contactNamePlural}</h1>
-                    <Button onClick={handleAdd} leftIcon={<Plus size={16} />}>
-                        New {industryConfig.contactName}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant={isChurning ? 'primary' : 'secondary'}
+                            onClick={() => setIsChurning(!isChurning)}
+                            leftIcon={<Bot size={16} />}
+                        >
+                            AI Churn Risk
+                        </Button>
+                        <Button onClick={handleAdd} leftIcon={<Plus size={16} />}>
+                            New {industryConfig.contactName}
+                        </Button>
+                    </div>
                 </div>
             )}
             <Card>
@@ -146,6 +165,8 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
                         isError={isError}
                         selectedContactIds={selectedContactIds}
                         setSelectedContactIds={setSelectedContactIds}
+                        isChurning={isChurning}
+                        onOpenChurnPrediction={handleOpenChurnPrediction}
                     />
                 )}
             </Card>
@@ -167,6 +188,14 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
                 onUpdate={handleBulkStatusUpdate}
                 isUpdating={bulkUpdateContactStatusMutation.isPending}
             />
+            {churnModalData && (
+                <ChurnPredictionModal
+                    isOpen={!!churnModalData}
+                    onClose={() => setChurnModalData(null)}
+                    contact={churnModalData.contact}
+                    prediction={churnModalData.prediction}
+                />
+            )}
         </>
     );
 

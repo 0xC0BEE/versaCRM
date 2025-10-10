@@ -20,6 +20,8 @@ import CampaignsPage from '../campaigns/CampaignsPage';
 import FormsPage from '../forms/FormsPage';
 import LandingPagesPage from '../landing_pages/LandingPagesPage';
 import KnowledgeBasePage from '../kb/KnowledgeBasePage';
+import CustomObjectListPage from '../custom_objects/CustomObjectListPage';
+import AppMarketplacePage from '../marketplace/AppMarketplacePage';
 
 const PageRenderer: React.FC = () => {
     const { currentPage } = useApp();
@@ -65,6 +67,10 @@ const PageRenderer: React.FC = () => {
             return <ApiDocsPage />;
         case 'KnowledgeBase':
             return <KnowledgeBasePage />;
+        case 'CustomObjects':
+            return <CustomObjectListPage />;
+        case 'AppMarketplace':
+            return <AppMarketplacePage />;
         default:
             return <DashboardPage />;
     }

@@ -13,11 +13,11 @@ const statusOptions: ContactStatus[] = ['Lead', 'Active', 'Inactive', 'Do Not Co
 
 const TriggerConfig: React.FC<TriggerConfigProps> = ({ node, updateNodeData }) => {
     
-    const [audience, setAudience] = useState<CampaignTargetAudience>(node.data.targetAudience || { status: 'Lead' });
+    const [audience, setAudience] = useState<CampaignTargetAudience>(node?.data?.targetAudience || { status: 'Lead' });
 
     useEffect(() => {
-        setAudience(node.data.targetAudience || { status: 'Lead' });
-    }, [node.id, node.data.targetAudience]);
+        setAudience(node?.data?.targetAudience || { status: 'Lead' });
+    }, [node?.id, node?.data?.targetAudience]);
 
     const handleAudienceChange = (field: keyof CampaignTargetAudience, value: any) => {
         const newAudience = { ...audience, [field]: value };

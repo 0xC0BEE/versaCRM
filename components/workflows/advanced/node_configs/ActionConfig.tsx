@@ -25,12 +25,12 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
     const { data: teamMembers = [] } = teamMembersQuery;
 
     // Use a single local state object for all form fields to prevent input lag.
-    const [localData, setLocalData] = useState(node.data);
+    const [localData, setLocalData] = useState(node?.data || {});
 
     useEffect(() => {
         // Sync local state when the selected node changes.
-        setLocalData(node.data);
-    }, [node.id, node.data]);
+        setLocalData(node?.data || {});
+    }, [node?.id, node?.data]);
 
     const handleLocalChange = (field: string, value: any) => {
         setLocalData(prev => ({ ...prev, [field]: value }));
@@ -38,7 +38,7 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
 
     const handlePersistChange = (field: string, value: any) => {
         // Persist the change to the global React Flow state.
-        if (node.data[field] !== value) {
+        if (node?.data?.[field] !== value) {
             updateNodeData({ [field]: value });
         }
     };

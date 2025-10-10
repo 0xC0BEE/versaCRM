@@ -25,7 +25,7 @@ const TriggerConfig: React.FC<TriggerConfigProps> = ({ node, updateNodeData }) =
 
     return (
         <div className="space-y-4">
-            <Select id="trigger-type" label="Trigger Event" value={node.data.nodeType} onChange={handleTypeChange}>
+            <Select id="trigger-type" label="Trigger Event" value={node?.data?.nodeType || ''} onChange={handleTypeChange}>
                 {triggerTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </Select>
             {/* Additional options for specific triggers could go here */}

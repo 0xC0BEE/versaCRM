@@ -1,12 +1,15 @@
+
+
 import React from 'react';
 // FIX: Corrected the import path for types to be a valid relative path.
-import { AnyContact } from '../../types';
+import { AnyContact, ContactChurnPrediction } from '../../types';
 // FIX: Corrected import path for useApp.
 import { useApp } from '../../contexts/AppContext';
 import { useAuth } from '../../contexts/AuthContext';
 // FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import { Phone } from 'lucide-react';
+import ChurnPredictionDisplay from './ChurnPredictionDisplay';
 
 interface ContactsTableProps {
     contacts: AnyContact[];
@@ -14,9 +17,11 @@ interface ContactsTableProps {
     isError: boolean;
     selectedContactIds: Set<string>;
     setSelectedContactIds: (ids: Set<string>) => void;
+    isChurning?: boolean;
+    onOpenChurnPrediction?: (contact: AnyContact, prediction: ContactChurnPrediction) => void;
 }
 
-const ContactsTable: React.FC<ContactsTableProps> = ({ contacts, onRowClick, isError, selectedContactIds, setSelectedContactIds }) => {
+const ContactsTable: React.FC<ContactsTableProps> = ({ contacts, onRowClick, isError, selectedContactIds, setSelectedContactIds, isChurning, onOpenChurnPrediction }) => {
     const { industryConfig, setCallContact, setIsCallModalOpen } = useApp();
     const { hasPermission } = useAuth();
     const { organizationSettingsQuery } = useData();
@@ -73,12 +78,13 @@ const ContactsTable: React.FC<ContactsTableProps> = ({ contacts, onRowClick, isE
                         <th scope="col" className="px-6 py-3 font-medium">Phone</th>
                         <th scope="col" className="px-6 py-3 font-medium">Status</th>
                         <th scope="col" className="px-6 py-3 font-medium text-center">Lead Score</th>
+                        {isChurning && <th scope="col" className="px-6 py-3 font-medium text-center">Churn Risk</th>}
                         <th scope="col" className="px-6 py-3 font-medium">Created At</th>
                     </tr>
                 </thead>
                 <tbody>
                     {isError && (
-                        <tr><td colSpan={7} className="text-center p-8 text-error">
+                        <tr><td colSpan={isChurning ? 8 : 7} className="text-center p-8 text-error">
                             Failed to load {industryConfig.contactNamePlural.toLowerCase()}. Please try again later.
                         </td></tr>
                     )}
@@ -138,11 +144,16 @@ const ContactsTable: React.FC<ContactsTableProps> = ({ contacts, onRowClick, isE
                             <td className="px-6 py-4 font-semibold text-text-primary text-center cursor-pointer" onClick={() => onRowClick(contact)}>
                                 {contact.leadScore || 0}
                             </td>
+                            {isChurning && (
+                                <td className="px-6 py-4 text-center">
+                                    <ChurnPredictionDisplay contact={contact} onOpenPrediction={onOpenChurnPrediction!} />
+                                </td>
+                            )}
                             <td className="px-6 py-4 cursor-pointer" onClick={() => onRowClick(contact)}>{new Date(contact.createdAt).toLocaleDateString()}</td>
                         </tr>
                     ))}
                     {!isError && contacts.length === 0 && (
-                        <tr><td colSpan={7} className="text-center p-8">
+                        <tr><td colSpan={isChurning ? 8 : 7} className="text-center p-8">
                              <p className="text-text-secondary">No {industryConfig.contactNamePlural.toLowerCase()} found.</p>
                         </td></tr>
                     )}

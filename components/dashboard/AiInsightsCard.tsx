@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import Card from '../ui/Card';
@@ -32,6 +33,7 @@ const AiInsightsCard: React.FC<AiInsightsCardProps> = ({ dashboardData, isLoadin
                 model: 'gemini-2.5-flash',
                 contents: prompt,
             });
+            // FIX: Access response text via .text property
             setInsight(response.text);
         } catch (error) {
             console.error("AI Insight Generation Error:", error);

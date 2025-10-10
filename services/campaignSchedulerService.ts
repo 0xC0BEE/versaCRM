@@ -1,3 +1,4 @@
+
 // FIX: Corrected import path for mockData.
 import { MOCK_CAMPAIGNS, MOCK_CONTACTS_MUTABLE, MOCK_EMAIL_TEMPLATES, MOCK_TASKS, MOCK_USERS } from './mockData';
 import { AnyContact, Campaign, CampaignEnrollment, Edge, Interaction, Node, Task } from '../types';
@@ -88,12 +89,10 @@ export const campaignSchedulerService = {
                 const campaign = MOCK_CAMPAIGNS.find(c => c.id === enrollment.campaignId);
                 if (!campaign || campaign.status !== 'Active') continue;
 
-                // FIX: Changed 'let' to 'const' to allow TypeScript to correctly infer the non-nullable type within the async closure.
                 const currentNode = campaign.nodes.find(n => n.id === enrollment.currentNodeId);
                 if (!currentNode) continue;
 
                 (async () => {
-                    // FIX: Add a type guard for `currentNode` inside the async closure, as TypeScript can't infer it from the outer scope.
                     if (!currentNode) return;
                     let nextNodeId: string | null = null;
                     
@@ -116,17 +115,10 @@ export const campaignSchedulerService = {
                             break;
                     }
                     
-                    // Now that we have the next node, handle its logic
                     const nextNode = nextNodeId ? campaign.nodes.find(n => n.id === nextNodeId) : null;
                     
-                    // FIX: To prevent race conditions from async operations, find the 'live' enrollment object from the contact before modifying it.
-                    // This ensures we don't update a stale object if the enrollments array was modified by a parallel process.
                     const liveEnrollment = (contact.campaignEnrollments || []).find(e => e.campaignId === enrollment.campaignId);
-
-                    // If the enrollment was removed, stop processing.
-                    if (!liveEnrollment) {
-                        return;
-                    }
+                    if (!liveEnrollment) return;
 
                     if (nextNode) {
                         if (nextNode.data.nodeType === 'wait') {
@@ -138,8 +130,6 @@ export const campaignSchedulerService = {
                             // It's an action/condition to be executed on the next run
                             liveEnrollment.waitUntil = currentDate.toISOString();
                             liveEnrollment.currentNodeId = nextNodeId!;
-                             // Re-run scheduler for immediate actions after a wait
-                            // FIX: Replaced `this.processScheduledCampaigns` with `campaignSchedulerService.processScheduledCampaigns` to correctly reference the method and avoid `this` being undefined in the async function's scope.
                             campaignSchedulerService.processScheduledCampaigns(currentDate);
                         }
                     } else {

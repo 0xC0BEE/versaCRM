@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { AnyContact } from '../../../types';
 import Button from '../../ui/Button';
 import { Plus, Users } from 'lucide-react';
-// FIX: Corrected import path for DataContext.
 import { useData } from '../../../contexts/DataContext';
 
 interface RelationshipsTabProps {
@@ -38,12 +37,10 @@ const RelationshipsTab: React.FC<RelationshipsTabProps> = ({ contact, isReadOnly
                             <div key={index} className="p-3 bg-card-bg/50 rounded-md border border-border-subtle">
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <p className="font-semibold text-text-primary">{relatedContact?.contactName || 'Unknown Contact'}</p>
-                                        <p className="text-sm text-text-secondary">{relatedContact?.email}</p>
+                                        <p className="font-semibold text-text-primary">{relatedContact ? relatedContact.contactName : 'Unknown Contact'}</p>
+                                        <p className="text-xs text-text-secondary">{rel.relationshipType}</p>
                                     </div>
-                                    <span className="text-sm font-medium text-primary">
-                                        {rel.relationshipType}
-                                    </span>
+                                    {/* Actions like Edit/Delete could go here */}
                                 </div>
                             </div>
                         );
@@ -51,7 +48,7 @@ const RelationshipsTab: React.FC<RelationshipsTabProps> = ({ contact, isReadOnly
                 </div>
             ) : (
                 <div className="text-center py-12 text-text-secondary">
-                     <Users className="mx-auto h-12 w-12 text-text-secondary/50" />
+                    <Users className="mx-auto h-12 w-12 text-text-secondary/50" />
                     <p className="mt-2">No relationships found.</p>
                 </div>
             )}

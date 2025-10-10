@@ -1,4 +1,6 @@
+
 import React, { createContext, useContext, ReactNode, useMemo, useCallback, useState, useEffect } from 'react';
+// FIX: Corrected import path for types.
 import { User, AuthContextType, Permission, CustomRole } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { useQueryClient } from '@tanstack/react-query';

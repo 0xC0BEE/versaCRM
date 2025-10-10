@@ -1,3 +1,4 @@
+
 // FIX: Corrected import path for mockData.
 import { MOCK_CONTACTS_MUTABLE, MOCK_ORGANIZATION_SETTINGS } from './mockData';
 import { AnyContact, LeadScoringRule } from '../types';

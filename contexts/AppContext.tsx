@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 // FIX: Corrected import path for types.
 import { AppContextType, Industry, Page, IndustryConfig, FilterCondition, AnyContact } from '../types';
@@ -24,6 +25,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [isCallModalOpen, setIsCallModalOpen] = useState(false);
     const [callContact, setCallContact] = useState<AnyContact | null>(null);
     const [initialKbArticleId, setInitialKbArticleId] = useState<string | null>(null);
+    const [currentCustomObjectDefId, setCurrentCustomObjectDefId] = useState<string | null>(null);
     
     // When the user logs out, reset the page to Dashboard.
     useEffect(() => {
@@ -60,7 +62,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setCallContact,
         initialKbArticleId,
         setInitialKbArticleId,
-    }), [currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, contactFilters, setContactFilters, simulatedDate, setSimulatedDate, reportToEditId, setReportToEditId, isCallModalOpen, setIsCallModalOpen, callContact, setCallContact, initialKbArticleId, setInitialKbArticleId]);
+        currentCustomObjectDefId,
+        setCurrentCustomObjectDefId,
+    }), [currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, contactFilters, setContactFilters, simulatedDate, setSimulatedDate, reportToEditId, setReportToEditId, isCallModalOpen, setIsCallModalOpen, callContact, setCallContact, initialKbArticleId, setInitialKbArticleId, currentCustomObjectDefId, setCurrentCustomObjectDefId]);
 
     return (
         <AppContext.Provider value={value}>

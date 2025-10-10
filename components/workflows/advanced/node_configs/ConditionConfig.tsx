@@ -12,11 +12,11 @@ interface ConditionConfigProps {
 const ConditionConfig: React.FC<ConditionConfigProps> = ({ node, updateNodeData }) => {
     const { industryConfig } = useApp();
 
-    const [localCondition, setLocalCondition] = useState(node.data.condition || { field: '', operator: 'is', value: '' });
+    const [localCondition, setLocalCondition] = useState(node?.data?.condition || { field: '', operator: 'is', value: '' });
 
     useEffect(() => {
-        setLocalCondition(node.data.condition || { field: '', operator: 'is', value: '' });
-    }, [node.id, node.data.condition]);
+        setLocalCondition(node?.data?.condition || { field: '', operator: 'is', value: '' });
+    }, [node?.id, node?.data?.condition]);
 
     const handleLocalChange = (field: string, value: any) => {
         setLocalCondition(prev => ({ ...prev, [field]: value }));

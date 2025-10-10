@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
 // FIX: Corrected import path for types.

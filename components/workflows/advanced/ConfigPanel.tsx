@@ -25,8 +25,14 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ selectedNode, setNodes }) => 
     const updateNodeData = (data: Record<string, any>) => {
         setNodes(nds => nds.map(node => {
             if (node.id === selectedNode.id) {
-                // Create a new data object to ensure reactflow detects the change
-                node.data = { ...node.data, ...data };
+                // Create a new node object with updated data to ensure React Flow detects the change
+                return {
+                    ...node,
+                    data: {
+                        ...(node.data || {}),
+                        ...data,
+                    },
+                };
             }
             return node;
         }));
@@ -47,7 +53,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ selectedNode, setNodes }) => 
 
     return (
         <div>
-            <h3 className="text-lg font-semibold text-text-heading mb-4">Configure: {selectedNode.data.label}</h3>
+            <h3 className="text-lg font-semibold text-text-heading mb-4">Configure: {selectedNode.data?.label}</h3>
             {renderConfig()}
         </div>
     );

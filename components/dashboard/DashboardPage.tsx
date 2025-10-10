@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 // FIX: Corrected import path for DataContext.
@@ -13,6 +14,7 @@ import TeamMemberDashboard from './TeamMemberDashboard';
 import ContactCard from './ContactCard';
 import ReviewPromptCard from './ReviewPromptCard';
 import Tabs from '../ui/Tabs';
+// FIX: Corrected import path for ContactDetailModal.
 import ContactDetailModal from '../organizations/ContactDetailModal';
 // FIX: Corrected import path for types
 import { AnyContact } from '../../types';

@@ -1,175 +1,127 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { AnyContact, EmailTemplate } from '../../../types';
-import Button from '../../ui/Button';
-import Input from '../../ui/Input';
-import Select from '../../ui/Select';
-import Textarea from '../../ui/Textarea';
-import { Send, Bot, Loader } from 'lucide-react';
-// FIX: Corrected import path for DataContext.
 import { useData } from '../../../contexts/DataContext';
 import { useAuth } from '../../../contexts/AuthContext';
-import { useApp } from '../../../contexts/AppContext';
+import Input from '../../ui/Input';
+import Textarea from '../../ui/Textarea';
+import Button from '../../ui/Button';
+import Select from '../../ui/Select';
+import { Send } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { GoogleGenAI, Type } from '@google/genai';
+import { replacePlaceholders } from '../../../utils/textUtils';
 
 interface EmailTabProps {
     contact: AnyContact;
-    setActiveTab: (tab: string) => void;
-    isReadOnly: boolean;
+    initialTemplateId?: string;
 }
 
-const EmailTab: React.FC<EmailTabProps> = ({ contact, setActiveTab, isReadOnly }) => {
+const EmailTab: React.FC<EmailTabProps> = ({ contact, initialTemplateId }) => {
     const { createInteractionMutation, emailTemplatesQuery } = useData();
-    const { data: templates = [] } = emailTemplatesQuery;
     const { authenticatedUser } = useAuth();
-    const { industryConfig } = useApp();
+    const { data: templates = [] } = emailTemplatesQuery;
 
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
-    const [selectedTemplateId, setSelectedTemplateId] = useState('');
-    const [aiPrompt, setAiPrompt] = useState('');
-    const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
+    const [selectedTemplateId, setSelectedTemplateId] = useState(initialTemplateId || '');
 
-    useEffect(() => {
-        if (selectedTemplateId) {
-            const template = templates.find((t: EmailTemplate) => t.id === selectedTemplateId);
-            if (template) {
-                // Replace placeholders
-                let populatedSubject = template.subject.replace('{{contactName}}', contact.contactName);
-                let populatedBody = template.body
-                    .replace('{{contactName}}', contact.contactName)
-                    .replace('{{userName}}', authenticatedUser?.name || '')
-                    .replace('{{organizationName}}', industryConfig.organizationName);
-
-                setSubject(populatedSubject);
-                setBody(populatedBody);
-            }
-        }
-    }, [selectedTemplateId, templates, contact, authenticatedUser, industryConfig]);
-
-     const handleGenerateDraft = async () => {
-        if (!aiPrompt.trim()) {
-            toast.error("Please enter a prompt for the AI.");
-            return;
-        }
-        setIsGeneratingDraft(true);
-        try {
-            const ai = new GoogleGenAI({apiKey: process.env.API_KEY!});
-            const fullPrompt = `You are a CRM assistant. The user wants to write an email to a contact named ${contact.contactName}.
-            User's prompt: "${aiPrompt}".
-            Generate a professional and friendly email.
-            Return a JSON object with two keys: "subject" (a string) and "body" (a string).`;
+    const applyTemplate = (templateId: string) => {
+        const template = (templates as EmailTemplate[]).find(t => t.id === templateId);
+        if (template) {
+            const orgName = 'Your Company'; // Placeholder
+            const userName = authenticatedUser?.name || 'Support';
+            let processedSubject = replacePlaceholders(template.subject, contact);
+            let processedBody = replacePlaceholders(template.body, contact);
+            processedBody = processedBody.replace(/\{\{userName\}\}/g, userName);
+            processedSubject = processedSubject.replace(/\{\{organizationName\}\}/g, orgName);
+            processedBody = processedBody.replace(/\{\{organizationName\}\}/g, orgName);
             
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: fullPrompt,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: {
-                            subject: { type: Type.STRING },
-                            body: { type: Type.STRING },
-                        }
-                    },
-                    thinkingConfig: { thinkingBudget: 0 },
-                }
-            });
-
-            let jsonString = response.text.trim();
-            const match = jsonString.match(/```json\n([\s\S]*?)\n```/);
-            if (match && match[1]) {
-                jsonString = match[1];
-            }
-
-            const parsed = JSON.parse(jsonString);
-            setSubject(parsed.subject || '');
-            setBody(parsed.body || '');
-            toast.success("Draft generated!");
-
-        } catch (error) {
-            console.error("AI Draft Error:", error);
-            toast.error("Failed to generate draft. The AI response might be malformed.");
-        } finally {
-            setIsGeneratingDraft(false);
+            setSubject(processedSubject);
+            setBody(processedBody);
+        } else {
+            setSubject('');
+            setBody('');
         }
     };
 
-    const handleSend = () => {
+    useEffect(() => {
+        if (initialTemplateId) {
+            setSelectedTemplateId(initialTemplateId);
+            applyTemplate(initialTemplateId);
+        }
+    }, [initialTemplateId]);
+
+    const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const templateId = e.target.value;
+        setSelectedTemplateId(templateId);
+        applyTemplate(templateId);
+    };
+
+    const handleSendEmail = () => {
         if (!subject.trim() || !body.trim()) {
-            toast.error("Subject and body are required.");
+            toast.error("Subject and body cannot be empty.");
             return;
         }
 
-        const notes = `Subject: ${subject}\n\n${body}`;
-
         createInteractionMutation.mutate({
-            type: 'Email',
-            notes,
-            date: new Date().toISOString(),
             contactId: contact.id,
-            userId: authenticatedUser!.id,
             organizationId: contact.organizationId,
+            userId: authenticatedUser!.id,
+            type: 'Email',
+            date: new Date().toISOString(),
+            notes: `Subject: ${subject}\n\n${body}`,
         }, {
             onSuccess: () => {
-                toast.success("Email sent and logged successfully!");
+                toast.success("Email sent and logged!");
                 setSubject('');
                 setBody('');
                 setSelectedTemplateId('');
-                setActiveTab('History');
             }
         });
     };
 
-    if (isReadOnly) {
-        return (
-            <div className="text-center py-12 text-text-secondary">
-                <p>Cannot send email to a new contact before they are saved.</p>
-            </div>
-        );
-    }
-    
     return (
         <div className="mt-4 max-h-[55vh] overflow-y-auto p-1 pr-4 space-y-4">
-            <div className="p-4 border rounded-lg border-border-subtle bg-hover-bg">
-                <h4 className="font-semibold text-sm flex items-center mb-2">
-                    <Bot size={16} className="mr-2 text-primary" />
-                    Draft with AI
-                </h4>
-                <div className="flex items-center gap-2">
-                    <Input 
-                        id="ai-prompt"
-                        label=""
-                        placeholder="e.g., Follow up on our last meeting"
-                        value={aiPrompt}
-                        onChange={e => setAiPrompt(e.target.value)}
-                        className="flex-grow"
-                        disabled={isGeneratingDraft}
-                    />
-                    <Button size="md" variant="secondary" onClick={handleGenerateDraft} disabled={isGeneratingDraft}>
-                        {isGeneratingDraft ? <Loader size={16} className="animate-spin" /> : 'Generate'}
-                    </Button>
-                </div>
-            </div>
-            <div>
+            <h4 className="font-semibold">Compose Email</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                    id="email-to"
+                    label="To"
+                    value={contact.email}
+                    disabled
+                />
                 <Select
-                    id="template-select"
-                    label="Or Use a Template"
+                    id="email-template"
+                    label="Use Template (Optional)"
                     value={selectedTemplateId}
-                    onChange={(e) => setSelectedTemplateId(e.target.value)}
+                    onChange={handleTemplateChange}
                 >
                     <option value="">-- No Template --</option>
-                    {templates.map((template: EmailTemplate) => (
-                        <option key={template.id} value={template.id}>{template.name}</option>
+                    {(templates as EmailTemplate[]).map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
                     ))}
                 </Select>
             </div>
-            <Input id="email-to" label="To" value={contact.email} disabled />
-            <Input id="email-from" label="From" value={authenticatedUser?.email || ''} disabled />
-            <Input id="email-subject" label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} required />
-            <Textarea id="email-body" label="Body" value={body} onChange={(e) => setBody(e.target.value)} rows={8} required />
+            <Input
+                id="email-subject"
+                label="Subject"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                disabled={createInteractionMutation.isPending}
+            />
+            <Textarea
+                id="email-body"
+                label="Body"
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                rows={8}
+                disabled={createInteractionMutation.isPending}
+            />
             <div className="flex justify-end">
-                <Button onClick={handleSend} leftIcon={<Send size={16} />} disabled={createInteractionMutation.isPending}>
+                <Button
+                    onClick={handleSendEmail}
+                    disabled={createInteractionMutation.isPending}
+                    leftIcon={<Send size={16} />}
+                >
                     {createInteractionMutation.isPending ? 'Sending...' : 'Send Email'}
                 </Button>
             </div>

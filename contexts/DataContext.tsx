@@ -1,130 +1,131 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-// FIX: Corrected import path for apiClient from a file path to a relative module path.
 import apiClient from '../services/apiClient';
 import { useAuth } from './AuthContext';
-import { AnyContact, Organization, User, CustomRole, Task, CalendarEvent, Product, Deal, DealStage, EmailTemplate, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, Supplier, Warehouse, Interaction, CustomReport, DashboardWidget, LandingPage, TicketReply } from '../types';
+import {
+    AnyContact, ContactStatus, Organization, User, CustomRole, Task, CalendarEvent, Product, Deal, DealStage, EmailTemplate, Interaction, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, Document, LandingPage, CustomReport, ReportDataSource, FilterCondition, DashboardWidget, Industry, Supplier, Warehouse, TicketReply, CustomObjectDefinition, CustomObjectRecord, AppMarketplaceItem, InstalledApp,
+    Order, Transaction, DashboardData
+} from '../types';
 import toast from 'react-hot-toast';
 
+// Define the shape of the context
 interface DataContextType {
+    // Queries
     organizationsQuery: any;
+    contactsQuery: any;
+    teamMembersQuery: any;
+    rolesQuery: any;
+    tasksQuery: any;
+    calendarEventsQuery: any;
+    productsQuery: any;
+    suppliersQuery: any;
+    warehousesQuery: any;
+    dealStagesQuery: any;
+    dealsQuery: any;
+    emailTemplatesQuery: any;
+    allInteractionsQuery: any;
+    syncedEmailsQuery: any;
+    workflowsQuery: any;
+    advancedWorkflowsQuery: any;
+    organizationSettingsQuery: any;
+    apiKeysQuery: any;
+    ticketsQuery: any;
+    formsQuery: any;
+    campaignsQuery: any;
+    landingPagesQuery: any;
+    customReportsQuery: any;
+    dashboardWidgetsQuery: any;
+    customObjectDefsQuery: any;
+    customObjectRecordsQuery: (defId: string | null) => any;
+    marketplaceAppsQuery: any;
+    installedAppsQuery: any;
+    dashboardDataQuery: any;
+
+    // Mutations
     createOrganizationMutation: any;
     updateOrganizationMutation: any;
     deleteOrganizationMutation: any;
-    
-    contactsQuery: any;
     createContactMutation: any;
     updateContactMutation: any;
     deleteContactMutation: any;
     bulkDeleteContactsMutation: any;
     bulkUpdateContactStatusMutation: any;
-
-    teamMembersQuery: any;
     createUserMutation: any;
     updateUserMutation: any;
     deleteUserMutation: any;
-
-    rolesQuery: any;
     createRoleMutation: any;
     updateRoleMutation: any;
     deleteRoleMutation: any;
-
-    tasksQuery: any;
+    createInteractionMutation: any;
+    updateInteractionMutation: any;
     createTaskMutation: any;
     updateTaskMutation: any;
     deleteTaskMutation: any;
-    
-    calendarEventsQuery: any;
     createCalendarEventMutation: any;
     updateCalendarEventMutation: any;
-
-    productsQuery: any;
     createProductMutation: any;
     updateProductMutation: any;
     deleteProductMutation: any;
-    suppliersQuery: any;
-    warehousesQuery: any;
-
-    dealsQuery: any;
-    dealStagesQuery: any;
+    createSupplierMutation: any;
+    updateSupplierMutation: any;
+    deleteSupplierMutation: any;
+    createWarehouseMutation: any;
+    updateWarehouseMutation: any;
+    deleteWarehouseMutation: any;
     createDealMutation: any;
     updateDealMutation: any;
     deleteDealMutation: any;
-    
-    emailTemplatesQuery: any;
     createEmailTemplateMutation: any;
     updateEmailTemplateMutation: any;
     deleteEmailTemplateMutation: any;
-    
-    allInteractionsQuery: any;
-    createInteractionMutation: any;
-    updateInteractionMutation: any;
-
-    dashboardDataQuery: any;
-    
     updateCustomFieldsMutation: any;
-    
-    workflowsQuery: any;
-    createWorkflowMutation: any;
-    updateWorkflowMutation: any;
-    advancedWorkflowsQuery: any;
-    createAdvancedWorkflowMutation: any;
-    updateAdvancedWorkflowMutation: any;
-    deleteAdvancedWorkflowMutation: any;
-
-    organizationSettingsQuery: any;
     updateOrganizationSettingsMutation: any;
     recalculateAllScoresMutation: any;
     connectEmailMutation: any;
     disconnectEmailMutation: any;
     connectVoipMutation: any;
     disconnectVoipMutation: any;
-    
-    apiKeysQuery: any;
+    runEmailSyncMutation: any;
+    createWorkflowMutation: any;
+    updateWorkflowMutation: any;
+    createAdvancedWorkflowMutation: any;
+    updateAdvancedWorkflowMutation: any;
+    deleteAdvancedWorkflowMutation: any;
     createApiKeyMutation: any;
     deleteApiKeyMutation: any;
-
-    ticketsQuery: any;
     createTicketMutation: any;
     updateTicketMutation: any;
     addTicketReplyMutation: any;
-
-    formsQuery: any;
     createFormMutation: any;
     updateFormMutation: any;
     deleteFormMutation: any;
     submitPublicFormMutation: any;
-
-    campaignsQuery: any;
     createCampaignMutation: any;
     updateCampaignMutation: any;
-    deleteCampaignMutation: any;
     launchCampaignMutation: any;
     advanceDayMutation: any;
-    
-    landingPagesQuery: any;
     createLandingPageMutation: any;
     updateLandingPageMutation: any;
     deleteLandingPageMutation: any;
-
-    syncedEmailsQuery: any;
-    runEmailSyncMutation: any;
-    
-    handleNewChatMessageMutation: any;
-
-    customReportsQuery: any;
+    trackPageViewMutation: any;
     createCustomReportMutation: any;
     updateCustomReportMutation: any;
     deleteCustomReportMutation: any;
-    dashboardWidgetsQuery: any;
     addDashboardWidgetMutation: any;
     removeDashboardWidgetMutation: any;
-
     createOrderMutation: any;
     updateOrderMutation: any;
     deleteOrderMutation: any;
     createTransactionMutation: any;
-    trackPageViewMutation: any;
+    createCustomObjectDefMutation: any;
+    updateCustomObjectDefMutation: any;
+    deleteCustomObjectDefMutation: any;
+    createCustomObjectRecordMutation: any;
+    updateCustomObjectRecordMutation: any;
+    deleteCustomObjectRecordMutation: any;
+    installAppMutation: any;
+    uninstallAppMutation: any;
+    handleNewChatMessageMutation: any;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -138,233 +139,168 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const { authenticatedUser, hasPermission } = useAuth();
     const orgId = authenticatedUser?.organizationId;
 
-    const onMutationSuccess = (queryKey: string | (string | undefined)[]) => () => {
-        queryClient.invalidateQueries({ queryKey: Array.isArray(queryKey) ? queryKey.filter(Boolean) as string[] : [queryKey] });
+    // --- GENERIC MUTATION HANDLERS ---
+    const onMutationSuccess = (queryKey: string | string[]) => () => {
+        queryClient.invalidateQueries({ queryKey: Array.isArray(queryKey) ? queryKey : [queryKey] });
     };
     const onMutationError = (error: Error) => {
-        toast.error(error.message || 'An error occurred');
+        toast.error(error.message || 'An unexpected error occurred.');
     };
 
-    // --- ORGANIZATIONS ---
-    const organizationsQuery = useQuery({ queryKey: ['organizations'], queryFn: apiClient.getOrganizations, enabled: !!authenticatedUser });
-    const createOrganizationMutation = useMutation({ mutationFn: apiClient.createOrganization, onSuccess: onMutationSuccess('organizations'), onError: onMutationError });
-    const updateOrganizationMutation = useMutation({ mutationFn: apiClient.updateOrganization, onSuccess: onMutationSuccess('organizations'), onError: onMutationError });
-    const deleteOrganizationMutation = useMutation({ mutationFn: apiClient.deleteOrganization, onSuccess: onMutationSuccess('organizations'), onError: onMutationError });
-
-    // --- CONTACTS ---
+    // --- QUERIES ---
+    const organizationsQuery = useQuery({ queryKey: ['organizations'], queryFn: apiClient.getOrganizations });
     const contactsQuery = useQuery<AnyContact[], Error>({ queryKey: ['contacts', orgId], queryFn: () => apiClient.getContacts(orgId!), enabled: !!orgId });
-    const createContactMutation = useMutation({ mutationFn: apiClient.createContact, onSuccess: onMutationSuccess(['contacts', orgId]), onError: onMutationError });
-    const updateContactMutation = useMutation({ mutationFn: apiClient.updateContact, onSuccess: onMutationSuccess(['contacts', orgId]), onError: onMutationError });
-    const deleteContactMutation = useMutation({ mutationFn: apiClient.deleteContact, onSuccess: onMutationSuccess(['contacts', orgId]), onError: onMutationError });
-    const bulkDeleteContactsMutation = useMutation({ mutationFn: apiClient.bulkDeleteContacts, onSuccess: onMutationSuccess(['contacts', orgId]), onError: onMutationError });
-    const bulkUpdateContactStatusMutation = useMutation({ mutationFn: apiClient.bulkUpdateContactStatus, onSuccess: onMutationSuccess(['contacts', orgId]), onError: onMutationError });
-
-    // --- TEAM & ROLES ---
     const teamMembersQuery = useQuery<User[], Error>({ queryKey: ['teamMembers', orgId], queryFn: () => apiClient.getTeamMembers(orgId!), enabled: !!orgId });
-    const createUserMutation = useMutation({ mutationFn: apiClient.createUser, onSuccess: onMutationSuccess(['teamMembers', orgId]), onError: onMutationError });
-    const updateUserMutation = useMutation({ mutationFn: apiClient.updateUser, onSuccess: onMutationSuccess(['teamMembers', orgId]), onError: onMutationError });
-    const deleteUserMutation = useMutation({ mutationFn: apiClient.deleteUser, onSuccess: onMutationSuccess(['teamMembers', orgId]), onError: onMutationError });
-
     const rolesQuery = useQuery<CustomRole[], Error>({ queryKey: ['roles', orgId], queryFn: () => apiClient.getRoles(orgId!), enabled: !!orgId });
-    const createRoleMutation = useMutation({ mutationFn: apiClient.createRole, onSuccess: onMutationSuccess(['roles', orgId]), onError: onMutationError });
-    const updateRoleMutation = useMutation({ mutationFn: apiClient.updateRole, onSuccess: onMutationSuccess(['roles', orgId]), onError: onMutationError });
-    const deleteRoleMutation = useMutation({ mutationFn: apiClient.deleteRole, onSuccess: onMutationSuccess(['roles', orgId]), onError: onMutationError });
-
-    // --- TASKS ---
     const tasksQuery = useQuery<Task[], Error>({ queryKey: ['tasks', orgId, authenticatedUser?.id], queryFn: () => apiClient.getTasks(orgId!, authenticatedUser!.id, hasPermission('contacts:read:all')), enabled: !!orgId && !!authenticatedUser });
-    const createTaskMutation = useMutation({ mutationFn: apiClient.createTask, onSuccess: onMutationSuccess(['tasks', orgId, authenticatedUser?.id]), onError: onMutationError });
-    const updateTaskMutation = useMutation({ mutationFn: apiClient.updateTask, onSuccess: onMutationSuccess(['tasks', orgId, authenticatedUser?.id]), onError: onMutationError });
-    const deleteTaskMutation = useMutation({ mutationFn: apiClient.deleteTask, onSuccess: onMutationSuccess(['tasks', orgId, authenticatedUser?.id]), onError: onMutationError });
-
-    // --- CALENDAR ---
-    const calendarEventsQuery = useQuery<CalendarEvent[], Error>({ queryKey: ['calendarEvents', orgId, authenticatedUser?.id], queryFn: () => apiClient.getCalendarEvents(orgId!, authenticatedUser!.id), enabled: !!orgId && !!authenticatedUser });
-    const createCalendarEventMutation = useMutation({ mutationFn: apiClient.createCalendarEvent, onSuccess: onMutationSuccess(['calendarEvents', orgId, authenticatedUser?.id]), onError: onMutationError });
-    const updateCalendarEventMutation = useMutation({ mutationFn: apiClient.updateCalendarEvent, onSuccess: onMutationSuccess(['calendarEvents', orgId, authenticatedUser?.id]), onError: onMutationError });
-
-    // --- INVENTORY ---
+    const calendarEventsQuery = useQuery<CalendarEvent[], Error>({ queryKey: ['calendarEvents', orgId], queryFn: () => apiClient.getCalendarEvents(orgId!), enabled: !!orgId });
     const productsQuery = useQuery<Product[], Error>({ queryKey: ['products', orgId], queryFn: () => apiClient.getProducts(orgId!), enabled: !!orgId });
-    const createProductMutation = useMutation({ mutationFn: apiClient.createProduct, onSuccess: onMutationSuccess(['products', orgId]), onError: onMutationError });
-    const updateProductMutation = useMutation({ mutationFn: apiClient.updateProduct, onSuccess: onMutationSuccess(['products', orgId]), onError: onMutationError });
-    const deleteProductMutation = useMutation({ mutationFn: apiClient.deleteProduct, onSuccess: onMutationSuccess(['products', orgId]), onError: onMutationError });
     const suppliersQuery = useQuery<Supplier[], Error>({ queryKey: ['suppliers', orgId], queryFn: () => apiClient.getSuppliers(orgId!), enabled: !!orgId });
     const warehousesQuery = useQuery<Warehouse[], Error>({ queryKey: ['warehouses', orgId], queryFn: () => apiClient.getWarehouses(orgId!), enabled: !!orgId });
-    
-    // --- DEALS ---
     const dealStagesQuery = useQuery<DealStage[], Error>({ queryKey: ['dealStages', orgId], queryFn: () => apiClient.getDealStages(orgId!), enabled: !!orgId });
     const dealsQuery = useQuery<Deal[], Error>({ queryKey: ['deals', orgId], queryFn: () => apiClient.getDeals(orgId!), enabled: !!orgId });
-    const createDealMutation = useMutation({ mutationFn: apiClient.createDeal, onSuccess: onMutationSuccess(['deals', orgId]), onError: onMutationError });
-    const updateDealMutation = useMutation({ mutationFn: apiClient.updateDeal, onSuccess: onMutationSuccess(['deals', orgId]), onError: onMutationError });
-    const deleteDealMutation = useMutation({ mutationFn: apiClient.deleteDeal, onSuccess: onMutationSuccess(['deals', orgId]), onError: onMutationError });
-    
-    // --- TEMPLATES ---
     const emailTemplatesQuery = useQuery<EmailTemplate[], Error>({ queryKey: ['emailTemplates', orgId], queryFn: () => apiClient.getEmailTemplates(orgId!), enabled: !!orgId });
-    const createEmailTemplateMutation = useMutation({ mutationFn: apiClient.createEmailTemplate, onSuccess: onMutationSuccess(['emailTemplates', orgId]), onError: onMutationError });
-    const updateEmailTemplateMutation = useMutation({ mutationFn: apiClient.updateEmailTemplate, onSuccess: onMutationSuccess(['emailTemplates', orgId]), onError: onMutationError });
-    const deleteEmailTemplateMutation = useMutation({ mutationFn: apiClient.deleteEmailTemplate, onSuccess: onMutationSuccess(['emailTemplates', orgId]), onError: onMutationError });
-
-    // --- INTERACTIONS ---
-    const allInteractionsQuery = useQuery({ queryKey: ['allInteractions', orgId], queryFn: () => apiClient.getInteractions(orgId!), enabled: !!orgId });
-    const createInteractionMutation = useMutation({ mutationFn: apiClient.createInteraction, onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
-        queryClient.invalidateQueries({ queryKey: ['allInteractions', orgId] });
-        queryClient.invalidateQueries({ queryKey: ['contactInteractions'] });
-    }, onError: onMutationError });
-    const updateInteractionMutation = useMutation({ mutationFn: apiClient.updateInteraction, onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
-        queryClient.invalidateQueries({ queryKey: ['allInteractions', orgId] });
-        queryClient.invalidateQueries({ queryKey: ['contactInteractions'] });
-    }, onError: onMutationError });
-
-    // --- DASHBOARD ---
-    const dashboardDataQuery = useQuery({ queryKey: ['dashboardData', orgId], queryFn: () => apiClient.getDashboardData(orgId!), enabled: !!orgId });
-    
-    // --- SETTINGS ---
-    const updateCustomFieldsMutation = useMutation({ mutationFn: apiClient.updateCustomFields, onSuccess: onMutationSuccess(['industryConfig']), onError: onMutationError });
-    const organizationSettingsQuery = useQuery<OrganizationSettings, Error>({ queryKey: ['organizationSettings', orgId], queryFn: () => apiClient.getOrganizationSettings(orgId!), enabled: !!orgId });
-    const updateOrganizationSettingsMutation = useMutation({ mutationFn: apiClient.updateOrganizationSettings, onSuccess: onMutationSuccess(['organizationSettings', orgId]), onError: onMutationError });
-    const recalculateAllScoresMutation = useMutation({
-        // FIX: The mutationFn wrapper was redundant. Passing the apiClient method directly is cleaner and avoids potential issues.
-        mutationFn: apiClient.recalculateAllScores,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
-        },
-        onError: onMutationError
-    });
-    // FIX: Wrapped apiClient calls in arrow functions to correctly handle arguments from mutate calls.
-    const connectEmailMutation = useMutation({
-        mutationFn: (email: string) => apiClient.updateOrganizationSettings({ emailIntegration: { isConnected: true, connectedEmail: email } }),
-        onSuccess: onMutationSuccess(['organizationSettings', orgId]),
-        onError: onMutationError
-    });
-    const disconnectEmailMutation = useMutation({
-        mutationFn: () => apiClient.updateOrganizationSettings({ emailIntegration: { isConnected: false, connectedEmail: undefined, lastSync: undefined } }),
-        onSuccess: onMutationSuccess(['organizationSettings', orgId]),
-        onError: onMutationError
-    });
-    const connectVoipMutation = useMutation({
-        mutationFn: (provider: string) => apiClient.updateOrganizationSettings({ voip: { isConnected: true, provider } }),
-        onSuccess: onMutationSuccess(['organizationSettings', orgId]),
-        onError: onMutationError
-    });
-    const disconnectVoipMutation = useMutation({
-        mutationFn: () => apiClient.updateOrganizationSettings({ voip: { isConnected: false, provider: undefined } }),
-        onSuccess: onMutationSuccess(['organizationSettings', orgId]),
-        onError: onMutationError
-    });
-    
-    // --- WORKFLOWS ---
+    const allInteractionsQuery = useQuery<Interaction[], Error>({ queryKey: ['allInteractions', orgId], queryFn: () => apiClient.getInteractions(orgId!), enabled: !!orgId && hasPermission('contacts:read:all') });
+    const syncedEmailsQuery = useQuery<Interaction[], Error>({ queryKey: ['syncedEmails', orgId], queryFn: async () => { const all = await apiClient.getInteractions(orgId!); return all.filter(i => i.type === 'Email' && i.notes.includes('(Synced via')); }, enabled: !!orgId && hasPermission('contacts:read:all') });
     const workflowsQuery = useQuery<Workflow[], Error>({ queryKey: ['workflows', orgId], queryFn: () => apiClient.getWorkflows(orgId!), enabled: !!orgId });
-    const createWorkflowMutation = useMutation({ mutationFn: apiClient.createWorkflow, onSuccess: onMutationSuccess(['workflows', orgId]), onError: onMutationError });
-    const updateWorkflowMutation = useMutation({ mutationFn: apiClient.updateWorkflow, onSuccess: onMutationSuccess(['workflows', orgId]), onError: onMutationError });
     const advancedWorkflowsQuery = useQuery<AdvancedWorkflow[], Error>({ queryKey: ['advancedWorkflows', orgId], queryFn: () => apiClient.getAdvancedWorkflows(orgId!), enabled: !!orgId });
-    const createAdvancedWorkflowMutation = useMutation({ mutationFn: apiClient.createAdvancedWorkflow, onSuccess: onMutationSuccess(['advancedWorkflows', orgId]), onError: onMutationError });
-    const updateAdvancedWorkflowMutation = useMutation({ mutationFn: apiClient.updateAdvancedWorkflow, onSuccess: onMutationSuccess(['advancedWorkflows', orgId]), onError: onMutationError });
-    const deleteAdvancedWorkflowMutation = useMutation({ mutationFn: apiClient.deleteAdvancedWorkflow, onSuccess: onMutationSuccess(['advancedWorkflows', orgId]), onError: onMutationError });
-
-    // --- API KEYS ---
+    const organizationSettingsQuery = useQuery<OrganizationSettings, Error>({ queryKey: ['organizationSettings', orgId], queryFn: () => apiClient.getOrganizationSettings(orgId!), enabled: !!orgId });
     const apiKeysQuery = useQuery<ApiKey[], Error>({ queryKey: ['apiKeys', orgId], queryFn: () => apiClient.getApiKeys(orgId!), enabled: !!orgId });
-    const createApiKeyMutation = useMutation({ mutationFn: apiClient.createApiKey, onSuccess: onMutationSuccess(['apiKeys', orgId]), onError: onMutationError });
-    const deleteApiKeyMutation = useMutation({ mutationFn: apiClient.deleteApiKey, onSuccess: onMutationSuccess(['apiKeys', orgId]), onError: onMutationError });
-    
-    // --- TICKETS ---
     const ticketsQuery = useQuery<Ticket[], Error>({ queryKey: ['tickets', orgId], queryFn: () => apiClient.getTickets(orgId!), enabled: !!orgId });
-    const createTicketMutation = useMutation({ mutationFn: apiClient.createTicket, onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
-    const updateTicketMutation = useMutation({ mutationFn: apiClient.updateTicket, onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
-    const addTicketReplyMutation = useMutation({
-        // FIX: Corrected the mutation function to pass a single object argument to apiClient.addTicketReply, resolving the "Expected 1 arguments, but got 2" error.
-        mutationFn: (vars: { ticketId: string; reply: Omit<TicketReply, 'id' | 'timestamp'> }) => apiClient.addTicketReply(vars),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['tickets', orgId] });
-        },
-        onError: onMutationError
-    });
-
-    // --- FORMS ---
     const formsQuery = useQuery<PublicForm[], Error>({ queryKey: ['forms', orgId], queryFn: () => apiClient.getForms(orgId!), enabled: !!orgId });
-    const createFormMutation = useMutation({ mutationFn: apiClient.createForm, onSuccess: onMutationSuccess(['forms', orgId]), onError: onMutationError });
-    const updateFormMutation = useMutation({ mutationFn: apiClient.updateForm, onSuccess: onMutationSuccess(['forms', orgId]), onError: onMutationError });
-    const deleteFormMutation = useMutation({ mutationFn: apiClient.deleteForm, onSuccess: onMutationSuccess(['forms', orgId]), onError: onMutationError });
-    const submitPublicFormMutation = useMutation({ mutationFn: apiClient.submitPublicForm, onSuccess: onMutationSuccess(['contacts', orgId]), onError: onMutationError });
-
-    // --- LANDING PAGES ---
-    const landingPagesQuery = useQuery<LandingPage[], Error>({ queryKey: ['landingPages', orgId], queryFn: () => apiClient.getLandingPages(orgId!), enabled: !!orgId });
-    const createLandingPageMutation = useMutation({ mutationFn: apiClient.createLandingPage, onSuccess: onMutationSuccess(['landingPages', orgId]), onError: onMutationError });
-    const updateLandingPageMutation = useMutation({ mutationFn: apiClient.updateLandingPage, onSuccess: onMutationSuccess(['landingPages', orgId]), onError: onMutationError });
-    const deleteLandingPageMutation = useMutation({ mutationFn: apiClient.deleteLandingPage, onSuccess: onMutationSuccess(['landingPages', orgId]), onError: onMutationError });
-    
-    // --- CAMPAIGNS ---
     const campaignsQuery = useQuery<Campaign[], Error>({ queryKey: ['campaigns', orgId], queryFn: () => apiClient.getCampaigns(orgId!), enabled: !!orgId });
-    const createCampaignMutation = useMutation({ mutationFn: apiClient.createCampaign, onSuccess: onMutationSuccess(['campaigns', orgId]), onError: onMutationError });
-    const updateCampaignMutation = useMutation({ mutationFn: apiClient.updateCampaign, onSuccess: onMutationSuccess(['campaigns', orgId]), onError: onMutationError });
-    const deleteCampaignMutation = useMutation({ mutationFn: (id: string) => Promise.resolve(), onSuccess: onMutationSuccess(['campaigns', orgId]), onError: onMutationError });
-    const launchCampaignMutation = useMutation({ mutationFn: apiClient.launchCampaign, onSuccess: onMutationSuccess(['campaigns', orgId, 'contacts']), onError: onMutationError });
-    const advanceDayMutation = useMutation({ mutationFn: apiClient.advanceDay, onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['campaigns', orgId] });
-        queryClient.invalidateQueries({ queryKey: ['contacts', orgId] });
-    }, onError: onMutationError });
-    
-    // --- LIVE CHAT ---
-    const handleNewChatMessageMutation = useMutation({ mutationFn: apiClient.handleNewChatMessage, onSuccess: onMutationSuccess(['tickets', orgId]), onError: onMutationError });
-
-    // --- EMAIL SYNC ---
-    const syncedEmailsQuery = useQuery<Interaction[], Error>({ queryKey: ['syncedEmails', orgId], queryFn: () => apiClient.getInteractions(orgId!).then(ints => ints.filter(i => i.userId === 'system')), enabled: !!orgId });
-    const runEmailSyncMutation = useMutation({ mutationFn: (orgId: string) => apiClient.runEmailSync(orgId), onSuccess: () => {
-        onMutationSuccess(['syncedEmails', orgId])();
-        onMutationSuccess(['organizationSettings', orgId])();
-    }, onError: onMutationError });
-
-    // --- CUSTOM REPORTS & WIDGETS ---
+    const landingPagesQuery = useQuery<LandingPage[], Error>({ queryKey: ['landingPages', orgId], queryFn: () => apiClient.getLandingPages(orgId!), enabled: !!orgId });
     const customReportsQuery = useQuery<CustomReport[], Error>({ queryKey: ['customReports', orgId], queryFn: () => apiClient.getCustomReports(orgId!), enabled: !!orgId });
-    const createCustomReportMutation = useMutation({ mutationFn: apiClient.createCustomReport, onSuccess: onMutationSuccess(['customReports', orgId]), onError: onMutationError });
-    const updateCustomReportMutation = useMutation({ mutationFn: apiClient.updateCustomReport, onSuccess: onMutationSuccess(['customReports', orgId]), onError: onMutationError });
-    const deleteCustomReportMutation = useMutation({ mutationFn: apiClient.deleteCustomReport, onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['customReports', orgId] });
-        queryClient.invalidateQueries({ queryKey: ['dashboardWidgets', orgId] });
-    }, onError: onMutationError });
-
     const dashboardWidgetsQuery = useQuery<DashboardWidget[], Error>({ queryKey: ['dashboardWidgets', orgId], queryFn: () => apiClient.getDashboardWidgets(orgId!), enabled: !!orgId });
-    const addDashboardWidgetMutation = useMutation({ mutationFn: apiClient.addDashboardWidget, onSuccess: onMutationSuccess(['dashboardWidgets', orgId]), onError: onMutationError });
-    const removeDashboardWidgetMutation = useMutation({ mutationFn: apiClient.removeDashboardWidget, onSuccess: onMutationSuccess(['dashboardWidgets', orgId]), onError: onMutationError });
+    const dashboardDataQuery = useQuery<DashboardData, Error>({ queryKey: ['dashboardData', orgId], queryFn: () => apiClient.getDashboardData(orgId!), enabled: !!orgId });
+    const customObjectDefsQuery = useQuery<CustomObjectDefinition[], Error>({ queryKey: ['customObjectDefs', orgId], queryFn: () => apiClient.getCustomObjectDefs(orgId!), enabled: !!orgId });
+    const customObjectRecordsQuery = (defId: string | null) => useQuery<CustomObjectRecord[], Error>({ queryKey: ['customObjectRecords', defId], queryFn: () => apiClient.getCustomObjectRecords(defId!), enabled: !!defId });
+    const marketplaceAppsQuery = useQuery<AppMarketplaceItem[], Error>({ queryKey: ['marketplaceApps'], queryFn: () => apiClient.getMarketplaceApps(orgId!), enabled: !!orgId });
+    const installedAppsQuery = useQuery<InstalledApp[], Error>({ queryKey: ['installedApps', orgId], queryFn: () => apiClient.getInstalledApps(orgId!), enabled: !!orgId });
 
-    // --- ORDERS & TRANSACTIONS ---
-    const createOrderMutation = useMutation({ mutationFn: apiClient.createOrder, onSuccess: onMutationSuccess(['contacts', orgId]), onError: onMutationError });
-    const updateOrderMutation = useMutation({ mutationFn: apiClient.updateOrder, onSuccess: onMutationSuccess(['contacts', orgId]), onError: onMutationError });
-    const deleteOrderMutation = useMutation({ mutationFn: apiClient.deleteOrder, onSuccess: onMutationSuccess(['contacts', orgId]), onError: onMutationError });
-    const createTransactionMutation = useMutation({ mutationFn: apiClient.createTransaction, onSuccess: onMutationSuccess(['contacts', orgId]), onError: onMutationError });
+    // --- MUTATIONS ---
+    const useGenericMutation = <TVariables, TData>(mutationFn: (variables: TVariables) => Promise<TData>, successKey: string | string[]) => useMutation<TData, Error, TVariables>({ mutationFn, onSuccess: onMutationSuccess(successKey), onError: onMutationError });
     
-    // --- ANALYTICS ---
-    const trackPageViewMutation = useMutation({ mutationFn: apiClient.trackPageView });
+    // Mutations wrapped in arrow functions to ensure correct argument passing
+    const createOrganizationMutation = useGenericMutation((vars: Omit<Organization, 'id' | 'createdAt'>) => apiClient.createOrganization(vars), 'organizations');
+    const updateOrganizationMutation = useGenericMutation((vars: Organization) => apiClient.updateOrganization(vars), 'organizations');
+    const deleteOrganizationMutation = useGenericMutation((id: string) => apiClient.deleteOrganization(id), 'organizations');
+    
+    const createContactMutation = useGenericMutation((vars: Omit<AnyContact, 'id'>) => apiClient.createContact(vars), 'contacts');
+    const updateContactMutation = useGenericMutation((vars: AnyContact) => apiClient.updateContact(vars), 'contacts');
+    const deleteContactMutation = useGenericMutation((id: string) => apiClient.deleteContact(id), 'contacts');
+    const bulkDeleteContactsMutation = useGenericMutation((ids: string[]) => apiClient.bulkDeleteContacts(ids), 'contacts');
+    const bulkUpdateContactStatusMutation = useGenericMutation((vars: {ids: string[], status: ContactStatus}) => apiClient.bulkUpdateContactStatus(vars), 'contacts');
+    
+    const createUserMutation = useGenericMutation((vars: Omit<User, 'id'>) => apiClient.createUser(vars), 'teamMembers');
+    const updateUserMutation = useGenericMutation((vars: User) => apiClient.updateUser(vars), 'teamMembers');
+    const deleteUserMutation = useGenericMutation((id: string) => apiClient.deleteUser(id), 'teamMembers');
+    
+    const createRoleMutation = useGenericMutation((vars: Omit<CustomRole, 'id'>) => apiClient.createRole(vars), 'roles');
+    const updateRoleMutation = useGenericMutation((vars: CustomRole) => apiClient.updateRole(vars), 'roles');
+    const deleteRoleMutation = useGenericMutation((id: string) => apiClient.deleteRole(id), 'roles');
+    
+    const createInteractionMutation = useGenericMutation((vars: Omit<Interaction, 'id'>) => apiClient.createInteraction(vars), ['allInteractions', 'contacts']);
+    const updateInteractionMutation = useGenericMutation((vars: Interaction) => apiClient.updateInteraction(vars), ['allInteractions', 'contacts']);
+    
+    const createTaskMutation = useGenericMutation((vars: Omit<Task, 'id' | 'isCompleted'>) => apiClient.createTask(vars), 'tasks');
+    const updateTaskMutation = useGenericMutation((vars: Task) => apiClient.updateTask(vars), 'tasks');
+    const deleteTaskMutation = useGenericMutation((id: string) => apiClient.deleteTask(id), 'tasks');
+    
+    const createCalendarEventMutation = useGenericMutation((vars: Omit<CalendarEvent, 'id'>) => apiClient.createCalendarEvent(vars), 'calendarEvents');
+    const updateCalendarEventMutation = useGenericMutation((vars: CalendarEvent) => apiClient.updateCalendarEvent(vars), 'calendarEvents');
+    
+    const createProductMutation = useGenericMutation((vars: Omit<Product, 'id'>) => apiClient.createProduct(vars), 'products');
+    const updateProductMutation = useGenericMutation((vars: Product) => apiClient.updateProduct(vars), 'products');
+    const deleteProductMutation = useGenericMutation((id: string) => apiClient.deleteProduct(id), 'products');
 
+    const createSupplierMutation = useGenericMutation((vars: Omit<Supplier, 'id'>) => apiClient.createSupplier(vars), 'suppliers');
+    const updateSupplierMutation = useGenericMutation((vars: Supplier) => apiClient.updateSupplier(vars), 'suppliers');
+    const deleteSupplierMutation = useGenericMutation((id: string) => apiClient.deleteSupplier(id), 'suppliers');
 
-    const value = {
-        organizationsQuery, createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation,
-        contactsQuery, createContactMutation, updateContactMutation, deleteContactMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation,
-        teamMembersQuery, createUserMutation, updateUserMutation, deleteUserMutation,
-        rolesQuery, createRoleMutation, updateRoleMutation, deleteRoleMutation,
-        tasksQuery, createTaskMutation, updateTaskMutation, deleteTaskMutation,
-        calendarEventsQuery, createCalendarEventMutation, updateCalendarEventMutation,
-        productsQuery, createProductMutation, updateProductMutation, deleteProductMutation, suppliersQuery, warehousesQuery,
-        dealsQuery, dealStagesQuery, createDealMutation, updateDealMutation, deleteDealMutation,
-        emailTemplatesQuery, createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation,
-        allInteractionsQuery, createInteractionMutation, updateInteractionMutation,
-        dashboardDataQuery,
-        updateCustomFieldsMutation,
-        workflowsQuery, createWorkflowMutation, updateWorkflowMutation,
-        advancedWorkflowsQuery, createAdvancedWorkflowMutation, updateAdvancedWorkflowMutation, deleteAdvancedWorkflowMutation,
-        organizationSettingsQuery, updateOrganizationSettingsMutation, recalculateAllScoresMutation,
-        connectEmailMutation, disconnectEmailMutation, connectVoipMutation, disconnectVoipMutation,
-        apiKeysQuery, createApiKeyMutation, deleteApiKeyMutation,
-        ticketsQuery, createTicketMutation, updateTicketMutation, addTicketReplyMutation,
-        formsQuery, createFormMutation, updateFormMutation, deleteFormMutation, submitPublicFormMutation,
-        campaignsQuery, createCampaignMutation, updateCampaignMutation, deleteCampaignMutation, launchCampaignMutation, advanceDayMutation,
-        landingPagesQuery, createLandingPageMutation, updateLandingPageMutation, deleteLandingPageMutation,
-        syncedEmailsQuery, runEmailSyncMutation,
-        handleNewChatMessageMutation,
-        customReportsQuery, createCustomReportMutation, updateCustomReportMutation, deleteCustomReportMutation,
-        dashboardWidgetsQuery, addDashboardWidgetMutation, removeDashboardWidgetMutation,
-        createOrderMutation, updateOrderMutation, deleteOrderMutation, createTransactionMutation,
-        trackPageViewMutation,
-    };
+    const createWarehouseMutation = useGenericMutation((vars: Omit<Warehouse, 'id'>) => apiClient.createWarehouse(vars), 'warehouses');
+    const updateWarehouseMutation = useGenericMutation((vars: Warehouse) => apiClient.updateWarehouse(vars), 'warehouses');
+    const deleteWarehouseMutation = useGenericMutation((id: string) => apiClient.deleteWarehouse(id), 'warehouses');
+    
+    const createDealMutation = useGenericMutation((vars: Omit<Deal, 'id' | 'createdAt'>) => apiClient.createDeal(vars), 'deals');
+    const updateDealMutation = useGenericMutation((vars: Deal) => apiClient.updateDeal(vars), 'deals');
+    const deleteDealMutation = useGenericMutation((id: string) => apiClient.deleteDeal(id), 'deals');
+    
+    const createEmailTemplateMutation = useGenericMutation((vars: Omit<EmailTemplate, 'id'>) => apiClient.createEmailTemplate(vars), 'emailTemplates');
+    const updateEmailTemplateMutation = useGenericMutation((vars: EmailTemplate) => apiClient.updateEmailTemplate(vars), 'emailTemplates');
+    const deleteEmailTemplateMutation = useGenericMutation((id: string) => apiClient.deleteEmailTemplate(id), 'emailTemplates');
+    
+    const updateCustomFieldsMutation = useGenericMutation((vars: { industry: Industry, fields: any[] }) => apiClient.updateCustomFields(vars), 'industryConfig');
+    const updateOrganizationSettingsMutation = useGenericMutation((vars: Partial<OrganizationSettings>) => apiClient.updateOrganizationSettings(vars), 'organizationSettings');
+    const recalculateAllScoresMutation = useGenericMutation((id: string) => apiClient.recalculateAllScores(id), 'contacts');
+    
+    const connectEmailMutation = useGenericMutation((email: string) => apiClient.updateOrganizationSettings({ emailIntegration: { isConnected: true, connectedEmail: email, lastSync: new Date().toISOString() } }), 'organizationSettings');
+    const disconnectEmailMutation = useGenericMutation(() => apiClient.updateOrganizationSettings({ emailIntegration: { isConnected: false, connectedEmail: undefined, lastSync: undefined } }), 'organizationSettings');
+    const connectVoipMutation = useGenericMutation((provider: string) => apiClient.updateOrganizationSettings({ voip: { isConnected: true, provider } }), 'organizationSettings');
+    const disconnectVoipMutation = useGenericMutation(() => apiClient.updateOrganizationSettings({ voip: { isConnected: false, provider: undefined } }), 'organizationSettings');
+    const runEmailSyncMutation = useGenericMutation((id: string) => apiClient.runEmailSync(id), 'syncedEmails');
+    
+    const createWorkflowMutation = useGenericMutation((vars: Omit<Workflow, 'id'>) => apiClient.createWorkflow(vars), 'workflows');
+    const updateWorkflowMutation = useGenericMutation((vars: Workflow) => apiClient.updateWorkflow(vars), 'workflows');
+    const createAdvancedWorkflowMutation = useGenericMutation((vars: Omit<AdvancedWorkflow, 'id'>) => apiClient.createAdvancedWorkflow(vars), 'advancedWorkflows');
+    const updateAdvancedWorkflowMutation = useGenericMutation((vars: AdvancedWorkflow) => apiClient.updateAdvancedWorkflow(vars), 'advancedWorkflows');
+    const deleteAdvancedWorkflowMutation = useGenericMutation((id: string) => apiClient.deleteAdvancedWorkflow(id), 'advancedWorkflows');
+    
+    const createApiKeyMutation = useGenericMutation((vars: { orgId: string, name: string }) => apiClient.createApiKey(vars), 'apiKeys');
+    const deleteApiKeyMutation = useGenericMutation((id: string) => apiClient.deleteApiKey(id), 'apiKeys');
+    
+    const createTicketMutation = useGenericMutation((vars: Omit<Ticket, 'id'|'createdAt'|'updatedAt'|'replies'>) => apiClient.createTicket(vars), 'tickets');
+    const updateTicketMutation = useGenericMutation((vars: Ticket) => apiClient.updateTicket(vars), 'tickets');
+    const addTicketReplyMutation = useGenericMutation((vars: { ticketId: string, reply: Omit<TicketReply, 'id' | 'timestamp'> }) => apiClient.addTicketReply(vars), 'tickets');
+    
+    const createFormMutation = useGenericMutation((vars: any) => apiClient.createForm(vars), 'forms');
+    const updateFormMutation = useGenericMutation((vars: PublicForm) => apiClient.updateForm(vars), 'forms');
+    const deleteFormMutation = useGenericMutation((id: string) => apiClient.deleteForm(id), 'forms');
+    const submitPublicFormMutation = useGenericMutation((vars: any) => apiClient.submitPublicForm(vars), 'contacts');
+    
+    const createCampaignMutation = useGenericMutation((vars: any) => apiClient.createCampaign(vars), 'campaigns');
+    const updateCampaignMutation = useGenericMutation((vars: Campaign) => apiClient.updateCampaign(vars), 'campaigns');
+    const launchCampaignMutation = useGenericMutation((id: string) => apiClient.launchCampaign(id), 'campaigns');
+    const advanceDayMutation = useGenericMutation((date: Date) => apiClient.advanceDay(date), ['campaigns', 'contacts']);
+    
+    const createLandingPageMutation = useGenericMutation((vars: any) => apiClient.createLandingPage(vars), 'landingPages');
+    const updateLandingPageMutation = useGenericMutation((vars: LandingPage) => apiClient.updateLandingPage(vars), 'landingPages');
+    const deleteLandingPageMutation = useGenericMutation((id: string) => apiClient.deleteLandingPage(id), 'landingPages');
+    
+    const trackPageViewMutation = useMutation({ mutationFn: (vars: { sessionId: string, orgId: string, url: string }) => apiClient.trackPageView(vars), onError: onMutationError });
+    
+    const createCustomReportMutation = useGenericMutation((vars: any) => apiClient.createCustomReport(vars), 'customReports');
+    const updateCustomReportMutation = useGenericMutation((vars: CustomReport) => apiClient.updateCustomReport(vars), 'customReports');
+    const deleteCustomReportMutation = useGenericMutation((id: string) => apiClient.deleteCustomReport(id), ['customReports', 'dashboardWidgets']);
+    
+    const addDashboardWidgetMutation = useGenericMutation((id: string) => apiClient.addDashboardWidget(id), 'dashboardWidgets');
+    const removeDashboardWidgetMutation = useGenericMutation((id: string) => apiClient.removeDashboardWidget(id), 'dashboardWidgets');
+    
+    const createOrderMutation = useGenericMutation((vars: Omit<Order, 'id'>) => apiClient.createOrder(vars), 'contacts');
+    const updateOrderMutation = useGenericMutation((vars: Order) => apiClient.updateOrder(vars), 'contacts');
+    const deleteOrderMutation = useGenericMutation((vars: { contactId: string, orderId: string }) => apiClient.deleteOrder(vars), 'contacts');
+    const createTransactionMutation = useGenericMutation((vars: { contactId: string, data: Omit<Transaction, 'id'> }) => apiClient.createTransaction(vars), 'contacts');
+
+    const createCustomObjectDefMutation = useGenericMutation((vars: Omit<CustomObjectDefinition, 'id'>) => apiClient.createCustomObjectDef(vars), 'customObjectDefs');
+    const updateCustomObjectDefMutation = useGenericMutation((vars: CustomObjectDefinition) => apiClient.updateCustomObjectDef(vars), 'customObjectDefs');
+    const deleteCustomObjectDefMutation = useGenericMutation((id: string) => apiClient.deleteCustomObjectDef(id), 'customObjectDefs');
+
+    const createCustomObjectRecordMutation = useGenericMutation((vars: Omit<CustomObjectRecord, 'id'>) => apiClient.createCustomObjectRecord(vars), 'customObjectRecords');
+    const updateCustomObjectRecordMutation = useGenericMutation((vars: CustomObjectRecord) => apiClient.updateCustomObjectRecord(vars), 'customObjectRecords');
+    const deleteCustomObjectRecordMutation = useMutation({ mutationFn: (id: string) => apiClient.deleteCustomObjectRecord(id), onSuccess: (data, id) => { queryClient.invalidateQueries({ queryKey: ['customObjectRecords'] }); }, onError: onMutationError });
+
+    const installAppMutation = useGenericMutation((id: string) => apiClient.installApp(id), 'installedApps');
+    const uninstallAppMutation = useGenericMutation((id: string) => apiClient.uninstallApp(id), 'installedApps');
+
+    const handleNewChatMessageMutation = useGenericMutation((vars: any) => apiClient.handleNewChatMessage(vars), ['tickets', 'contacts']);
+
+    const value = useMemo(() => ({
+        organizationsQuery, contactsQuery, teamMembersQuery, rolesQuery, tasksQuery, calendarEventsQuery, productsQuery, suppliersQuery, warehousesQuery, dealStagesQuery, dealsQuery, emailTemplatesQuery, allInteractionsQuery, syncedEmailsQuery, workflowsQuery, advancedWorkflowsQuery, organizationSettingsQuery, apiKeysQuery, ticketsQuery, formsQuery, campaignsQuery, landingPagesQuery, customReportsQuery, dashboardWidgetsQuery, customObjectDefsQuery, customObjectRecordsQuery, marketplaceAppsQuery, installedAppsQuery, dashboardDataQuery,
+        createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation, createContactMutation, updateContactMutation, deleteContactMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation, createUserMutation, updateUserMutation, deleteUserMutation, createRoleMutation, updateRoleMutation, deleteRoleMutation, createInteractionMutation, updateInteractionMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createCalendarEventMutation, updateCalendarEventMutation, createProductMutation, updateProductMutation, deleteProductMutation, createSupplierMutation, updateSupplierMutation, deleteSupplierMutation, createWarehouseMutation, updateWarehouseMutation, deleteWarehouseMutation, createDealMutation, updateDealMutation, deleteDealMutation, createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation, updateCustomFieldsMutation, updateOrganizationSettingsMutation, recalculateAllScoresMutation, connectEmailMutation, disconnectEmailMutation, connectVoipMutation, disconnectVoipMutation, runEmailSyncMutation, createWorkflowMutation, updateWorkflowMutation, createAdvancedWorkflowMutation, updateAdvancedWorkflowMutation, deleteAdvancedWorkflowMutation, createApiKeyMutation, deleteApiKeyMutation, createTicketMutation, updateTicketMutation, addTicketReplyMutation, createFormMutation, updateFormMutation, deleteFormMutation, submitPublicFormMutation, createCampaignMutation, updateCampaignMutation, launchCampaignMutation, advanceDayMutation, createLandingPageMutation, updateLandingPageMutation, deleteLandingPageMutation, trackPageViewMutation, createCustomReportMutation, updateCustomReportMutation, deleteCustomReportMutation, addDashboardWidgetMutation, removeDashboardWidgetMutation, createOrderMutation, updateOrderMutation, deleteOrderMutation, createTransactionMutation, createCustomObjectDefMutation, updateCustomObjectDefMutation, deleteCustomObjectDefMutation, createCustomObjectRecordMutation, updateCustomObjectRecordMutation, deleteCustomObjectRecordMutation, installAppMutation, uninstallAppMutation, handleNewChatMessageMutation
+    }), [
+        organizationsQuery, contactsQuery, teamMembersQuery, rolesQuery, tasksQuery, calendarEventsQuery, productsQuery, suppliersQuery, warehousesQuery, dealStagesQuery, dealsQuery, emailTemplatesQuery, allInteractionsQuery, syncedEmailsQuery, workflowsQuery, advancedWorkflowsQuery, organizationSettingsQuery, apiKeysQuery, ticketsQuery, formsQuery, campaignsQuery, landingPagesQuery, customReportsQuery, dashboardWidgetsQuery, customObjectDefsQuery, customObjectRecordsQuery, marketplaceAppsQuery, installedAppsQuery, dashboardDataQuery,
+        createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation, createContactMutation, updateContactMutation, deleteContactMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation, createUserMutation, updateUserMutation, deleteUserMutation, createRoleMutation, updateRoleMutation, deleteRoleMutation, createInteractionMutation, updateInteractionMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createCalendarEventMutation, updateCalendarEventMutation, createProductMutation, updateProductMutation, deleteProductMutation, createSupplierMutation, updateSupplierMutation, deleteSupplierMutation, createWarehouseMutation, updateWarehouseMutation, deleteWarehouseMutation, createDealMutation, updateDealMutation, deleteDealMutation, createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation, updateCustomFieldsMutation, updateOrganizationSettingsMutation, recalculateAllScoresMutation, connectEmailMutation, disconnectEmailMutation, connectVoipMutation, disconnectVoipMutation, runEmailSyncMutation, createWorkflowMutation, updateWorkflowMutation, createAdvancedWorkflowMutation, updateAdvancedWorkflowMutation, deleteAdvancedWorkflowMutation, createApiKeyMutation, deleteApiKeyMutation, createTicketMutation, updateTicketMutation, addTicketReplyMutation, createFormMutation, updateFormMutation, deleteFormMutation, submitPublicFormMutation, createCampaignMutation, updateCampaignMutation, launchCampaignMutation, advanceDayMutation, createLandingPageMutation, updateLandingPageMutation, deleteLandingPageMutation, trackPageViewMutation, createCustomReportMutation, updateCustomReportMutation, deleteCustomReportMutation, addDashboardWidgetMutation, removeDashboardWidgetMutation, createOrderMutation, updateOrderMutation, deleteOrderMutation, createTransactionMutation, createCustomObjectDefMutation, updateCustomObjectDefMutation, deleteCustomObjectDefMutation, createCustomObjectRecordMutation, updateCustomObjectRecordMutation, deleteCustomObjectRecordMutation, installAppMutation, uninstallAppMutation, handleNewChatMessageMutation
+    ]);
 
     return (
         <DataContext.Provider value={value}>
@@ -373,7 +309,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     );
 };
 
-export const useData = () => {
+export const useData = (): DataContextType => {
     const context = useContext(DataContext);
     if (context === undefined) {
         throw new Error('useData must be used within a DataProvider');

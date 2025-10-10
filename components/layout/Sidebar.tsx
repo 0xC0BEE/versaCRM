@@ -1,11 +1,15 @@
+
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
+// FIX: Corrected import path for types.
 import { Page, Permission } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import {
     Home, Building, Users, Briefcase, Inbox, Calendar, BarChart2, Settings, Package, Handshake,
-    LifeBuoy, Zap, Mails, ClipboardList, BookOpen, LayoutTemplate, Bot, HelpCircle
+    LifeBuoy, Zap, Mails, ClipboardList, BookOpen, LayoutTemplate, Bot, HelpCircle, Shapes
 } from 'lucide-react';
+import { useData } from '../../contexts/DataContext';
+import * as LucideIcons from 'lucide-react';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -20,6 +24,7 @@ interface NavItem {
     label?: string;
     permission?: Permission;
     isSuperAdminOnly?: boolean;
+    customObjectDefId?: string;
 }
 
 // FIX: Added NavSection interface to strongly type navSections array.
@@ -30,11 +35,18 @@ interface NavSection {
 
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
-    const { currentPage, setCurrentPage, industryConfig } = useApp();
+    const { currentPage, setCurrentPage, industryConfig, setCurrentCustomObjectDefId } = useApp();
     const { hasPermission, authenticatedUser } = useAuth();
+    const { customObjectDefsQuery } = useData();
+    const { data: customObjectDefs = [] } = customObjectDefsQuery;
 
-    const handleNavigation = (page: Page) => {
+    const handleNavigation = (page: Page, customObjectDefId?: string) => {
         setCurrentPage(page);
+        if (customObjectDefId) {
+            setCurrentCustomObjectDefId(customObjectDefId);
+        } else {
+            setCurrentCustomObjectDefId(null);
+        }
         if (window.innerWidth < 1024) {
             setIsOpen(false);
         }
@@ -42,8 +54,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
     const isSuperAdmin = authenticatedUser?.roleId === 'role_super';
 
+    const customNavSection: NavSection | null = customObjectDefs.length > 0 ? {
+        title: 'Custom',
+        items: customObjectDefs.map((def: any) => ({
+            page: 'CustomObjects',
+            icon: (LucideIcons as any)[def.icon] || Shapes,
+            label: def.namePlural,
+            customObjectDefId: def.id
+        }))
+    } : null;
+
     // FIX: Applied NavSection[] type to resolve type inference issues.
-    const navSections: NavSection[] = [
+    let navSections: NavSection[] = [
         {
             title: 'Core',
             items: [
@@ -54,6 +76,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                 { page: 'Calendar', icon: Calendar, permission: 'contacts:read:own' },
             ]
         },
+    ];
+
+    if (customNavSection) {
+        navSections.push(customNavSection);
+    }
+
+    navSections = navSections.concat([
         {
             title: 'Business',
             items: [
@@ -89,11 +118,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
             title: 'Admin',
             items: [
                 { page: 'Team', icon: Users, permission: 'settings:manage:team' },
+                { page: 'AppMarketplace', icon: Shapes, label: 'App Marketplace', permission: 'settings:manage:apps'},
                 { page: 'Settings', icon: Settings, permission: 'settings:access' },
                  { page: 'Organizations', icon: Building, isSuperAdminOnly: true },
             ]
         }
-    ];
+    ]);
 
     return (
         <div className={`flex flex-col flex-shrink-0 w-64 bg-card-bg border-r border-border-subtle transition-all duration-300`}>
@@ -126,8 +156,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                                 <div className="mt-2 space-y-1">
                                     {accessibleItems.map((item: NavItem) => (
                                         <button
-                                            key={item.page}
-                                            onClick={() => handleNavigation(item.page)}
+                                            key={item.label || item.page}
+                                            onClick={() => handleNavigation(item.page, item.customObjectDefId)}
                                             className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md w-full text-left ${
                                                 currentPage === item.page
                                                     ? 'bg-primary/10 text-primary'

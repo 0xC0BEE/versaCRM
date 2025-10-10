@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 // FIX: Imported correct types.
 // FIX: Corrected import path for types.

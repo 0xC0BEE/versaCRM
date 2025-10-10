@@ -19,13 +19,13 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
     };
 
     const renderActionOptions = () => {
-        switch (node.data.nodeType as JourneyExecutionType) {
+        switch (node?.data?.nodeType as JourneyExecutionType) {
             case 'sendEmail':
                 return (
                     <Select
                         id="email-template"
                         label="Email Template"
-                        value={node.data.emailTemplateId || ''}
+                        value={node?.data?.emailTemplateId || ''}
                         onChange={(e) => handleDataChange('emailTemplateId', e.target.value)}
                     >
                         <option value="">Select a template...</option>
@@ -39,7 +39,7 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
                         label="Wait for (days)"
                         type="number"
                         min="1"
-                        value={node.data.days || 1}
+                        value={node?.data?.days || 1}
                         onChange={(e) => handleDataChange('days', parseInt(e.target.value) || 1)}
                     />
                 );
@@ -48,7 +48,7 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
                     <Input
                         id="task-title"
                         label="Task Title"
-                        value={node.data.taskTitle || ''}
+                        value={node?.data?.taskTitle || ''}
                         onChange={(e) => handleDataChange('taskTitle', e.target.value)}
                         placeholder="e.g., Follow up with {{contactName}}"
                     />

@@ -1,16 +1,19 @@
 import React, { useMemo } from 'react';
-import { Deal, AnyContact } from '../../types';
+import { Deal, AnyContact, DealForecast } from '../../types';
 // FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import { Handshake } from 'lucide-react';
+import DealForecastDisplay from './DealForecast';
 
 interface DealCardProps {
     deal: Deal;
     onDragStart: (e: React.DragEvent<HTMLDivElement>, dealId: string) => void;
     onClick: (deal: Deal) => void;
+    isForecasting: boolean;
+    onOpenForecast: (deal: Deal, forecast: DealForecast) => void;
 }
 
-const DealCard: React.FC<DealCardProps> = ({ deal, onDragStart, onClick }) => {
+const DealCard: React.FC<DealCardProps> = ({ deal, onDragStart, onClick, isForecasting, onOpenForecast }) => {
     const { contactsQuery } = useData();
     const { data: contacts = [] } = contactsQuery;
 
@@ -32,7 +35,11 @@ const DealCard: React.FC<DealCardProps> = ({ deal, onDragStart, onClick }) => {
                 <p className="text-sm font-bold text-primary">
                     {deal.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                 </p>
-                <Handshake size={14} className="text-text-secondary" />
+                 {isForecasting ? (
+                    <DealForecastDisplay deal={deal} onOpenForecast={onOpenForecast} />
+                ) : (
+                    <Handshake size={14} className="text-text-secondary" />
+                )}
             </div>
         </div>
     );
