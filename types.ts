@@ -80,7 +80,6 @@ export interface OrderLineItem {
 
 export interface Order {
     id: string;
-    // FIX: Add contactId to associate orders with contacts
     contactId: string;
     orderDate: string;
     status: 'Pending' | 'Completed' | 'Cancelled';
@@ -486,9 +485,20 @@ export interface ReportVisualization {
 
 export interface DashboardWidget {
     id: string;
+    widgetId: string; // Unique identifier for the widget type/instance
     organizationId: string;
-    reportId: string;
+    reportId?: string; // Only for custom report widgets
 }
+
+export interface DashboardLayout {
+    i: string; // Corresponds to widgetId
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    static?: boolean;
+}
+
 
 export interface Supplier {
     id: string;

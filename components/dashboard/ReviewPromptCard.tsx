@@ -11,9 +11,9 @@ interface ReviewPromptCardProps {
 
 const ReviewPromptCard: React.FC<ReviewPromptCardProps> = ({ contact, onReviewClick }) => {
     return (
-        <Card className="card-hover bg-success/5 border-success/20">
-             <div className="flex flex-col justify-between h-full">
-                <div>
+        <Card className="bg-success/5 border-success/20 h-full">
+             <div className="flex flex-col h-full">
+                <div className="flex-grow">
                      <div className="flex items-start gap-3">
                         <div className="p-2 rounded-full bg-success/10">
                             <FileText className="h-5 w-5 text-success" />

@@ -4,7 +4,7 @@ import {
 } from './mockData';
 import { industryConfigs } from '../config/industryConfig';
 import { generateDashboardData } from './reportGenerator';
-import { AnyContact, Deal, DealForecast, Interaction, ContactChurnPrediction, NextBestAction, CampaignEnrollment, AnonymousSession, CustomReport, LandingPage, PublicForm, Campaign } from '../types';
+import { AnyContact, Deal, DealForecast, Interaction, ContactChurnPrediction, NextBestAction, CampaignEnrollment, AnonymousSession, CustomReport, LandingPage, PublicForm, Campaign, DashboardWidget } from '../types';
 import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
 import { recalculateScoreForContact, recalculateAllScores } from './leadScoringService';
@@ -311,6 +311,15 @@ const router = async (url: URL, config: RequestInit): Promise<Response> => {
         MOCK_WORKFLOWS.push(newWorkflow);
         return new Response(JSON.stringify(newWorkflow), { status: 201 });
     }
+    const workflowMatch = pathname.match(/^\/api\/v1\/workflows\/([\w_]+)$/);
+    if (workflowMatch) {
+        const [, id] = workflowMatch;
+        const index = MOCK_WORKFLOWS.findIndex(w => w.id === id);
+        if (index > -1 && method === 'PUT') {
+            MOCK_WORKFLOWS[index] = { ...MOCK_WORKFLOWS[index], ...body };
+            return new Response(JSON.stringify(MOCK_WORKFLOWS[index]));
+        }
+    }
     if (pathname === '/api/v1/advanced-workflows' && method === 'GET') return new Response(JSON.stringify(MOCK_ADVANCED_WORKFLOWS));
     if (pathname === '/api/v1/advanced-workflows' && method === 'POST') {
         const newWorkflow = { ...body, id: `adv_wf_${Date.now()}` };
@@ -450,8 +459,7 @@ const router = async (url: URL, config: RequestInit): Promise<Response> => {
     }
     if(pathname === '/api/v1/scheduler/advance-day' && method === 'POST') {
         const { currentDate } = body;
-        const newDate = new Date(currentDate);
-        newDate.setDate(newDate.getDate() + 1);
+        const newDate = new Date(new Date(currentDate).getTime() + 24 * 60 * 60 * 1000); // Advance by one full day
         campaignSchedulerService.processScheduledCampaigns(newDate);
         return new Response(JSON.stringify(newDate.toISOString()));
     }
@@ -466,6 +474,21 @@ const router = async (url: URL, config: RequestInit): Promise<Response> => {
         const [, slug] = publicLPMatch;
         const page = MOCK_LANDING_PAGES.find(p => p.slug === slug && p.status === 'Published');
         return new Response(JSON.stringify(page || null));
+    }
+    const landingPageMatch = pathname.match(/^\/api\/v1\/landing-pages\/([\w_]+)$/);
+    if (landingPageMatch) {
+        const [, id] = landingPageMatch;
+        const index = MOCK_LANDING_PAGES.findIndex(p => p.id === id);
+        if (index === -1) return new Response(JSON.stringify({ message: 'Landing Page not found' }), { status: 404 });
+        
+        if (method === 'PUT') {
+            MOCK_LANDING_PAGES[index] = { ...MOCK_LANDING_PAGES[index], ...body };
+            return new Response(JSON.stringify(MOCK_LANDING_PAGES[index]));
+        }
+        if (method === 'DELETE') {
+            MOCK_LANDING_PAGES.splice(index, 1);
+            return new Response(null, { status: 204 });
+        }
     }
     
     // --- CUSTOM REPORTS ---
@@ -516,7 +539,13 @@ const router = async (url: URL, config: RequestInit): Promise<Response> => {
     // --- WIDGETS ---
     if (pathname === '/api/v1/dashboard/widgets' && method === 'GET') return new Response(JSON.stringify(MOCK_DASHBOARD_WIDGETS));
     if (pathname === '/api/v1/dashboard/widgets' && method === 'POST') {
-        const newWidget = { id: `widget_${Date.now()}`, organizationId: body.organizationId || 'org_1', reportId: body.reportId };
+        // FIX: Added missing widgetId to align with the DashboardWidget type.
+        const newWidget: DashboardWidget = {
+            id: `widget_${Date.now()}`,
+            widgetId: `report-widget-${body.reportId}`,
+            organizationId: body.organizationId || 'org_1',
+            reportId: body.reportId
+        };
         MOCK_DASHBOARD_WIDGETS.push(newWidget);
         return new Response(JSON.stringify(newWidget), { status: 201 });
     }

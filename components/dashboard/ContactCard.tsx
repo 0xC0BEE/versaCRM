@@ -12,9 +12,9 @@ interface ContactCardProps {
 
 const ContactCard: React.FC<ContactCardProps> = ({ contact, aiSuggestion, onEmailClick }) => {
     return (
-        <Card className={`card-hover ${aiSuggestion ? 'animate-pulse-predictive' : ''}`}>
-            <div className="flex flex-col justify-between h-full">
-                <div>
+        <Card className={`h-full ${aiSuggestion ? 'animate-pulse-predictive' : ''}`}>
+            <div className="flex flex-col h-full">
+                <div className="flex-grow">
                     <div className="flex items-center mb-3">
                         <div className="w-10 h-10 rounded-full mr-3 bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center">
                             {contact.avatar ? (
@@ -24,7 +24,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, aiSuggestion, onEmai
                             )}
                         </div>
                         <div>
-                            <h4 className="font-semibold text-text-primary text-lg">{contact.contactName}</h4>
+                            <h4 className="font-semibold text-text-primary">{contact.contactName}</h4>
                             <p className="text-sm text-text-secondary">{contact.email}</p>
                         </div>
                     </div>

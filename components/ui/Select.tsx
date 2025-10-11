@@ -4,10 +4,17 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
     label?: string;
     id: string;
     className?: string;
+    size?: 'sm' | 'md';
 }
 
-const Select: React.FC<SelectProps> = ({ label, id, className, children, ...props }) => {
-    const baseClasses = "mt-1 block w-full pl-3 pr-10 py-2 text-sm bg-card-bg/80 border border-border-subtle focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm rounded-input transition-all";
+const Select: React.FC<SelectProps> = ({ label, id, className, children, size = 'md', ...props }) => {
+    
+    const sizeClasses = {
+        sm: 'h-8 text-sm rounded-[8px] px-2',
+        md: 'h-10 text-sm rounded-input pl-3 pr-10 py-2'
+    };
+    
+    const baseClasses = `mt-1 block w-full bg-card-bg/80 border border-border-subtle focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all ${sizeClasses[size]}`;
 
     return (
         <div className={className}>

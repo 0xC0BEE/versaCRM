@@ -405,6 +405,64 @@ export const kbArticles: KBArticleType[] = [
             </>
         ),
     },
+    
+    // --- PLATFORM & EXTENSIBILITY ---
+    {
+        id: 'custom-objects',
+        title: 'Custom Objects',
+        category: 'Platform & Extensibility',
+        content: (
+            <>
+                <h2 id="overview-co">Overview</h2>
+                <p>
+                    Custom Objects are a powerful feature that transforms VersaCRM into a truly extensible platform. They allow you to create entirely new data objects beyond just Contacts and Deals, tailoring the CRM to the unique needs of your business. For example, a real estate agency could create a "Property" object, or a legal firm could create a "Case" object.
+                </p>
+                <h3 id="how-to-use-co">How to Use It</h3>
+                <ol>
+                    <li>
+                        <strong>Define a New Object:</strong> Go to <strong>Settings &gt; Custom Objects</strong> and click "New Object". Give your object a singular and plural name (e.g., "Property", "Properties") and choose an icon to represent it.
+                    </li>
+                    <li>
+                        <strong>Manage Fields:</strong> After creating the object, click "Manage Fields". Here, you can add all the custom fields specific to this object using a familiar field builder (e.g., "Address", "Price", "Square Footage").
+                    </li>
+                    <li>
+                        <strong>Access Your New Object:</strong> Once created, your new object (e.g., "Properties") will automatically appear in the main sidebar under a "Custom" section.
+                    </li>
+                    <li>
+                        <strong>Manage Records:</strong> Click on your new object in the sidebar to view a dynamically generated list page. From here, you can create, view, edit, and delete records for your custom object just like you would for standard contacts or deals.
+                    </li>
+                </ol>
+            </>
+        ),
+    },
+    {
+        id: 'app-marketplace',
+        title: 'App Marketplace',
+        category: 'Platform & Extensibility',
+        content: (
+            <>
+                <h2 id="overview-apps">Overview</h2>
+                <p>
+                    The App Marketplace is your hub for connecting VersaCRM to the other tools you use. It allows you to discover, install, and manage third-party integrations, turning your CRM into the central command center for your entire software ecosystem.
+                </p>
+                <h3 id="how-to-use-apps">How to Use It</h3>
+                <ol>
+                    <li>
+                        <strong>Access the Marketplace:</strong> Navigate to <strong>App Marketplace</strong> from the sidebar (under the "Admin" section).
+                    </li>
+                    <li>
+                        <strong>Discover Apps:</strong> On the "Discover" tab, you can browse a gallery of available applications like Slack, QuickBooks, and Google Calendar.
+                    </li>
+                    <li>
+                        <strong>Install an App:</strong> Click "Learn More" on any app to view its details. From the detail modal, click "Install App".
+                    </li>
+                    <li>
+                        <strong>Manage Installed Apps:</strong> The "Installed Apps" tab shows you all the applications you have connected. From here, you can click "Configure" to manage an app's settings or "Uninstall" it.
+                    </li>
+                </ol>
+            </>
+        ),
+    },
 
     // --- ANALYTICS ---
     {
@@ -444,6 +502,40 @@ export const kbArticles: KBArticleType[] = [
             </>
         ),
     },
+     {
+        id: 'custom-dashboard',
+        title: 'Customizable Dashboard',
+        category: 'Analytics',
+        content: (
+            <>
+                <h2 id="overview-dash">Overview</h2>
+                <p>
+                    The Advanced Dashboard Canvas transforms your dashboard into a fully interactive and customizable business intelligence hub. You can rearrange, resize, and add the reports that matter most to you, creating a personalized command center.
+                </p>
+                <h3 id="how-to-use-dash">How to Use It</h3>
+                <ol>
+                    <li>
+                        <strong>Enter Edit Mode:</strong> On the Dashboard, click the <strong>"Edit Layout"</strong> button. The dashboard will switch to an interactive canvas mode.
+                    </li>
+                    <li>
+                        <strong>Rearrange Widgets:</strong> Simply click and drag any widget (like a KPI card or a chart) to a new position on the grid.
+                    </li>
+                    <li>
+                        <strong>Resize Widgets:</strong> Hover over the bottom-right corner of any widget and drag the handle to resize it, making important information more prominent.
+                    </li>
+                    <li>
+                        <strong>Add New Widgets:</strong> In edit mode, an "Add Widget" button will appear. Click it to open a modal where you can select any of your saved Custom Reports to add to the dashboard.
+                    </li>
+                     <li>
+                        <strong>Remove Widgets:</strong> In edit mode, an "X" icon appears on each widget. Click it to remove the widget from your dashboard.
+                    </li>
+                    <li>
+                        <strong>Save Your Layout:</strong> Once you are happy with the arrangement, click <strong>"Save Layout"</strong>. Your custom layout, including all positions and sizes, will be saved and restored every time you visit.
+                    </li>
+                </ol>
+            </>
+        ),
+    },
     {
         id: 'campaign-reports',
         title: 'Campaign Reports',
@@ -473,6 +565,100 @@ export const kbArticles: KBArticleType[] = [
         ),
     },
 
+    // --- AI & PREDICTIVE INTELLIGENCE ---
+    {
+        id: 'deal-forecasting',
+        title: 'AI Deal Forecasting',
+        category: 'AI & Predictive Intelligence',
+        content: (
+            <>
+                <h2 id="overview-deal-ai">Overview</h2>
+                <p>
+                    The AI Deal Forecasting feature transforms your sales pipeline into an intelligent advisor. It analyzes your open deals and predicts the likelihood of each one closing successfully, allowing your team to focus their efforts where they will have the most impact.
+                </p>
+                <h3 id="how-to-use-deal-ai">How to Use It</h3>
+                <ol>
+                    <li>
+                        <strong>Activate the Forecast:</strong> Navigate to the <strong>Deals</strong> page. Click the "AI Forecast" button at the top right.
+                    </li>
+                    <li>
+                        <strong>View Win Probability:</strong> Each deal card will now display a color-coded "Win Probability" badge (Green for High, Yellow for Medium, Red for Low), giving you an at-a-glance overview of your pipeline's health.
+                    </li>
+                    <li>
+                        <strong>Get a Detailed Analysis:</strong> Click on any probability badge to open the "Deal Forecast Analysis" modal.
+                    </li>
+                    <li>
+                        <strong>Understand the "Why":</strong> The modal provides a detailed breakdown of the AI's reasoning, listing the key <strong>Positive Factors</strong> (strengths) and <strong>Negative Factors</strong> (risks) influencing the score.
+                    </li>
+                    <li>
+                        <strong>Take Action:</strong> The modal also provides a clear, AI-generated <strong>"Next Best Action"</strong>—a specific, actionable recommendation on what step to take next to improve the deal's chances of success.
+                    </li>
+                </ol>
+            </>
+        ),
+    },
+    {
+        id: 'churn-prediction',
+        title: 'AI Churn Prediction',
+        category: 'AI & Predictive Intelligence',
+        content: (
+            <>
+                <h2 id="overview-churn-ai">Overview</h2>
+                <p>
+                    The AI Churn Prediction feature is a proactive tool for customer retention. It analyzes contact behavior to identify customers who are at risk of leaving, allowing your support and account management teams to intervene before it's too late.
+                </p>
+                <h3 id="how-to-use-churn-ai">How to Use It</h3>
+                <ol>
+                    <li>
+                        <strong>Activate Churn Risk:</strong> Navigate to the <strong>Contacts</strong> page. Click the "AI Churn Risk" button at the top right.
+                    </li>
+                    <li>
+                        <strong>Identify At-Risk Contacts:</strong> A new "Churn Risk" column will appear in the contacts table. Each active contact will display a color-coded badge indicating their risk level (Low, Medium, or High).
+                    </li>
+                    <li>
+                        <strong>Get a Detailed Analysis:</strong> Click on any risk badge to open the "Churn Prediction Analysis" modal.
+                    </li>
+                    <li>
+                        <strong>Understand the Factors:</strong> The modal breaks down the AI's reasoning, listing <strong>Retention Factors</strong> (positive signals) and <strong>Churn Risks</strong> (red flags).
+                    </li>
+                    <li>
+                        <strong>Take Action:</strong> The modal provides a clear, AI-generated <strong>"Next Best Action"</strong>—a specific, actionable recommendation to help you mitigate the risk and retain the customer.
+                    </li>
+                </ol>
+            </>
+        ),
+    },
+    {
+        id: 'next-best-action',
+        title: 'Next Best Action',
+        category: 'AI & Predictive Intelligence',
+        content: (
+            <>
+                <h2 id="overview-nba">Overview</h2>
+                <p>
+                    The "Next Best Action" feature is the culmination of our AI efforts. It's an intelligent recommendation engine that analyzes a contact's complete profile—including their deal forecasts and churn risk—to suggest the single most impactful action you can take at that moment.
+                </p>
+                <h3 id="how-to-use-nba">How to Use It</h3>
+                <ol>
+                    <li>
+                        <strong>View a Contact:</strong> Open any contact's detail modal from the Contacts page or anywhere else in the CRM.
+                    </li>
+                    <li>
+                        <strong>See the Recommendation:</strong> At the top of the modal, the "Next Best Action" component will appear, displaying the AI's suggestion and the reason behind it. For example, it might suggest calling a high-scoring lead or emailing a high-churn-risk customer.
+                    </li>
+                    <li>
+                        <strong>Take Action with One Click:</strong> Click the <strong>"Take Action"</strong> button. The system will intelligently perform the suggested action for you:
+                        <ul>
+                            <li className="!mt-2">If the suggestion is to **make a call**, it will open the VoIP Call Control modal, ready to dial.</li>
+                            <li className="!mt-2">If the suggestion is to **send an email**, it will switch you to the Email tab and pre-populate the composer with the recommended template.</li>
+                        </ul>
+                    </li>
+                </ol>
+            </>
+        ),
+    },
+
+
     // --- INTEGRATIONS ---
     {
         id: 'email-sync',
@@ -487,7 +673,7 @@ export const kbArticles: KBArticleType[] = [
                 <h3 id="how-to-use-email">How to Use It</h3>
                 <ol>
                     <li>
-                        <strong>Connect Your Account:</strong> Navigate to <strong>Settings &gt; Integrations</strong>. Click the "Connect Email Account" button to simulate the secure connection process.
+                        <strong>Connect Your Account:</strong> Navigate to <strong>Settings &gt; API & Apps &gt; Integrations</strong>. Click the "Connect Email Account" button to simulate the secure connection process.
                     </li>
                     <li>
                         <strong>Trigger a Sync:</strong> Go to the new <strong>Synced Email</strong> page in the sidebar. Click the <strong>"Sync Now"</strong> button.
@@ -512,7 +698,7 @@ export const kbArticles: KBArticleType[] = [
                 <h3 id="how-to-use-voip">How to Use It</h3>
                 <ol>
                     <li>
-                        <strong>Connect Your Provider:</strong> Go to <strong>Settings &gt; Integrations</strong> and click "Connect Provider" in the VoIP section.
+                        <strong>Connect Your Provider:</strong> Go to <strong>Settings &gt; API & Apps &gt; Integrations</strong> and click "Connect Provider" in the VoIP section.
                     </li>
                     <li>
                         <strong>Make a Call:</strong> Find any phone number in the application (e.g., on a contact's profile or in the contacts table). If the integration is active, you'll see a phone icon. Click the number or the icon to launch the in-app Call Control modal.
@@ -593,7 +779,7 @@ export const kbArticles: KBArticleType[] = [
     },
     {
         id: 'api-access',
-        title: 'API & App Marketplace',
+        title: 'API Access',
         category: 'Administration',
         content: (
             <>
@@ -608,9 +794,6 @@ export const kbArticles: KBArticleType[] = [
                     </li>
                     <li>
                         <strong>Consult the Documentation:</strong> Navigate to the <strong>API Docs</strong> page from the sidebar. This page provides all the information a developer needs to start using the API, including authentication instructions and example endpoints.
-                    </li>
-                    <li>
-                        <strong>Explore the App Marketplace:</strong> The "API & Apps" page also features a simulated App Marketplace, showcasing how you could connect to popular third-party services like Slack or QuickBooks in the future.
                     </li>
                 </ol>
             </>

@@ -6,10 +6,11 @@ interface ModalProps {
     onClose: () => void;
     title: string;
     children: ReactNode;
+    footer?: ReactNode;
     size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl';
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 'md' }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer, size = 'md' }) => {
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
@@ -53,9 +54,14 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 
                         <X className="h-6 w-6" />
                     </button>
                 </div>
-                <div className="p-6 overflow-y-auto">
+                <div className="p-6 overflow-y-auto flex-grow">
                     {children}
                 </div>
+                {footer && (
+                    <div className="flex-shrink-0 p-4 border-t border-border-subtle bg-bg-primary rounded-b-card">
+                        {footer}
+                    </div>
+                )}
             </div>
         </div>
     );

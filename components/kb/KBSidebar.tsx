@@ -1,6 +1,4 @@
-
 import React, { useMemo, useState } from 'react';
-// FIX: Import KBArticleType to fix type inference issues.
 import { KBArticleType } from '../../types';
 import { ChevronDown } from 'lucide-react';
 
@@ -39,7 +37,6 @@ const KBSidebar: React.FC<KBSidebarProps> = ({ articles, selectedArticleId, setS
 
     return (
         <div className="p-4">
-            {/* FIX: Use Object.keys().map() to avoid type inference issues with Object.entries() */}
             {Object.keys(articlesByCategory).map((category) => {
                 const categoryArticles = articlesByCategory[category];
                 return (

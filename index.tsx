@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -10,7 +9,6 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { Toaster } from 'react-hot-toast';
 import { DataProvider } from './contexts/DataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
-// FIX: Corrected import path for mockApiServer.
 import { startMockServer } from './services/mockApiServer';
 
 const queryClient = new QueryClient();
@@ -33,7 +31,7 @@ root.render(
                 <App />
               </DataProvider>
             </NotificationProvider>
-            <Toaster position="bottom-right" />  {/* Moved global for better access */}
+            <Toaster position="bottom-right" />
           </AppProvider>
         </AuthProvider>
       </ThemeProvider>

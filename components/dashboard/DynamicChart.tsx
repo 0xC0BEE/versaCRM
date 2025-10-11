@@ -3,15 +3,17 @@ import {
     BarChart, Bar, LineChart, Line, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
 } from 'recharts';
 import { useTheme } from '../../contexts/ThemeContext';
+import Card from '../ui/Card';
 
 interface DynamicChartProps {
     type: 'bar' | 'line' | 'pie';
     data: any[];
+    title: string;
 }
 
 const PIE_COLORS = ['#3b82f6', '#10b981', '#f97316', '#a855f7', '#ec4899'];
 
-const DynamicChart: React.FC<DynamicChartProps> = ({ type, data }) => {
+const DynamicChart: React.FC<DynamicChartProps> = ({ type, data, title }) => {
     const { theme } = useTheme();
     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     const tickColor = isDark ? '#9ca3af' : '#6b7280';
@@ -20,13 +22,12 @@ const DynamicChart: React.FC<DynamicChartProps> = ({ type, data }) => {
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
           return (
-            <div className="glass-overlay p-3 rounded-lg shadow-lg">
+            <div className="bg-card-bg p-3 rounded-lg shadow-lg border border-border-subtle">
               <p className="label font-semibold">{`${label}`}</p>
               <p className="intro text-sm">{`${payload[0].name} : ${payload[0].value}`}</p>
             </div>
           );
         }
-        // Returning a fragment is safer than null for some third-party libraries
         return <></>; 
       };
     
@@ -53,11 +54,11 @@ const DynamicChart: React.FC<DynamicChartProps> = ({ type, data }) => {
         switch (type) {
             case 'bar':
                 return (
-                    <BarChart data={data}>
+                    <BarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                         <defs>
                             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="rgb(var(--color-accent-blue))" stopOpacity={0.7}/>
-                                <stop offset="95%" stopColor="rgb(var(--color-accent-blue))" stopOpacity={0.1}/>
+                                <stop offset="5%" stopColor="rgb(var(--primary))" stopOpacity={0.7}/>
+                                <stop offset="95%" stopColor="rgb(var(--primary))" stopOpacity={0.1}/>
                             </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke={strokeColor} />
@@ -69,7 +70,7 @@ const DynamicChart: React.FC<DynamicChartProps> = ({ type, data }) => {
                 );
             case 'line':
                 return (
-                    <LineChart data={data}>
+                    <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke={strokeColor}/>
                         <XAxis dataKey="name" tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
@@ -80,13 +81,13 @@ const DynamicChart: React.FC<DynamicChartProps> = ({ type, data }) => {
             case 'pie':
                 return (
                      <PieChart>
-                        <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={'80%'} label>
+                        <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="45%" outerRadius={'85%'}>
                             {data.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} stroke={isDark ? '#1f2937' : '#fff'} />
                             ))}
                         </Pie>
                         <Tooltip content={<CustomTooltip />} />
-                        <Legend content={renderLegend} />
+                        <Legend verticalAlign="bottom" height={36} content={renderLegend} />
                     </PieChart>
                 );
             default:
@@ -95,11 +96,13 @@ const DynamicChart: React.FC<DynamicChartProps> = ({ type, data }) => {
     };
     
     return (
-        <div style={{ width: '100%', height: 300 }}>
-            <ResponsiveContainer>
-                {renderChart()}
-            </ResponsiveContainer>
-        </div>
+        <Card title={title} className="h-full" contentClassName="p-2 pt-0 flex-grow">
+            <div className="h-full w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    {renderChart()}
+                </ResponsiveContainer>
+            </div>
+        </Card>
     );
 };
 

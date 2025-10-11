@@ -14,10 +14,12 @@ import { useApp } from '../../contexts/AppContext';
 
 interface DashboardWidgetProps {
     widget: WidgetType;
+    isEditMode: boolean;
+    onRemove: (widgetId: string) => void;
 }
 
-const DashboardWidget: React.FC<DashboardWidgetProps> = ({ widget }) => {
-    const { customReportsQuery, removeDashboardWidgetMutation } = useData();
+const DashboardWidget: React.FC<DashboardWidgetProps> = ({ widget, isEditMode, onRemove }) => {
+    const { customReportsQuery } = useData();
     const { data: customReports = [] } = customReportsQuery;
     const { setCurrentPage, setReportToEditId } = useApp();
 
@@ -31,12 +33,6 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({ widget }) => {
         enabled: !!report,
     });
     
-    const handleRemove = () => {
-        if (window.confirm(`Are you sure you want to remove this widget from your dashboard?`)) {
-            removeDashboardWidgetMutation.mutate(widget.id);
-        }
-    }
-    
     const handleEdit = () => {
         if (report) {
             setReportToEditId(report.id);
@@ -46,11 +42,15 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({ widget }) => {
 
     if (!report) {
         return (
-            <Card>
-                <div className="text-center p-8 text-error">
+            <Card className="h-full">
+                <div className="text-center p-8 text-error flex flex-col items-center justify-center h-full">
                     <AlertTriangle className="mx-auto h-8 w-8" />
-                    <p className="mt-2 text-sm">Associated report not found. It may have been deleted.</p>
-                     <Button size="sm" variant="danger" className="mt-2" onClick={handleRemove} leftIcon={<Trash2 size={14} />}>Remove Widget</Button>
+                    <p className="mt-2 text-sm">Associated report not found.</p>
+                     {isEditMode && (
+                        <Button size="sm" variant="danger" className="mt-2" onClick={() => onRemove(widget.widgetId)} leftIcon={<Trash2 size={14} />}>
+                            Remove
+                        </Button>
+                     )}
                 </div>
             </Card>
         );
@@ -61,27 +61,29 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({ widget }) => {
         : [];
 
     return (
-        <Card title={report.name}>
-             <div className="absolute top-4 right-4 flex items-center gap-1">
-                <Button size="sm" variant="secondary" className="p-1.5 h-auto" onClick={handleEdit}>
-                    <Edit size={14} />
-                </Button>
-                <Button size="sm" variant="secondary" className="p-1.5 h-auto" onClick={handleRemove} disabled={removeDashboardWidgetMutation.isPending}>
-                    <Trash2 size={14} />
-                </Button>
-            </div>
+        <Card title={report.name} className="h-full flex flex-col">
+             {isEditMode && (
+                <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+                    <Button size="sm" variant="secondary" className="p-1.5 h-auto" onClick={handleEdit}>
+                        <Edit size={14} />
+                    </Button>
+                    <Button size="sm" variant="secondary" className="p-1.5 h-auto" onClick={() => onRemove(widget.widgetId)}>
+                        <Trash2 size={14} />
+                    </Button>
+                </div>
+             )}
             {isLoading && (
-                <div className="h-64 flex items-center justify-center text-text-secondary">
+                <div className="h-full flex-grow flex items-center justify-center text-text-secondary">
                     <Loader className="animate-spin mr-2" /> Loading data...
                 </div>
             )}
             {isError && (
-                 <div className="h-64 flex items-center justify-center text-error">
-                    <AlertTriangle className="mr-2" /> Could not load report data.
+                 <div className="h-full flex-grow flex items-center justify-center text-error">
+                    <AlertTriangle className="mr-2" /> Error loading.
                 </div>
             )}
             {reportData && (
-                <div>
+                <div className="flex-grow h-full">
                     {report.config.visualization.type === 'table' ? (
                         <CustomReportDataTable data={reportData} />
                     ) : (
