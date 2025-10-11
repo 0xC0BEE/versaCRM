@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
-import { Deal, AnyContact, DealForecast } from '../../types';
-// FIX: Corrected import path for DataContext.
+import { Deal, AnyContact, DealForecast, CustomObjectDefinition, CustomObjectRecord } from '../../types';
 import { useData } from '../../contexts/DataContext';
-import { Handshake } from 'lucide-react';
+import { Handshake, Link } from 'lucide-react';
 import DealForecastDisplay from './DealForecast';
 
 interface DealCardProps {
@@ -14,13 +13,31 @@ interface DealCardProps {
 }
 
 const DealCard: React.FC<DealCardProps> = ({ deal, onDragStart, onClick, isForecasting, onOpenForecast }) => {
-    const { contactsQuery } = useData();
+    const { contactsQuery, customObjectDefsQuery } = useData();
     const { data: contacts = [] } = contactsQuery;
+    const { data: customObjectDefs = [] } = customObjectDefsQuery;
+    
+    // Fetch records for the specific definition needed for this deal
+    const { data: relatedRecords = [] } = useData().customObjectRecordsQuery(deal.relatedObjectDefId || null);
 
     const contactName = useMemo(() => {
         const contact = (contacts as AnyContact[]).find(c => c.id === deal.contactId);
         return contact ? contact.contactName : 'Unknown Contact';
     }, [contacts, deal.contactId]);
+    
+    const relatedObjectName = useMemo(() => {
+        if (!deal.relatedObjectDefId || !deal.relatedObjectRecordId) return null;
+
+        const definition = (customObjectDefs as CustomObjectDefinition[]).find(d => d.id === deal.relatedObjectDefId);
+        if (!definition || definition.fields.length === 0) return null;
+
+        const record = (relatedRecords as CustomObjectRecord[]).find(r => r.id === deal.relatedObjectRecordId);
+        if (!record) return null;
+
+        const primaryFieldId = definition.fields[0].id;
+        return record.fields[primaryFieldId] || 'Unnamed Record';
+
+    }, [deal, customObjectDefs, relatedRecords]);
 
     return (
         <div
@@ -31,6 +48,12 @@ const DealCard: React.FC<DealCardProps> = ({ deal, onDragStart, onClick, isForec
         >
             <h4 className="font-semibold text-sm text-text-primary truncate">{deal.name}</h4>
             <p className="text-xs text-text-secondary mt-1">{contactName}</p>
+            {relatedObjectName && (
+                <p className="text-xs text-text-secondary mt-1 flex items-center gap-1">
+                    <Link size={12}/>
+                    {relatedObjectName}
+                </p>
+            )}
             <div className="mt-2 flex justify-between items-center">
                 <p className="text-sm font-bold text-primary">
                     {deal.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}

@@ -1,10 +1,9 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-// FIX: Corrected import path for apiClient.
 import apiClient from '../../../services/apiClient';
-// FIX: Corrected import path for types.
 import { AnyContact } from '../../../types';
 import { GoogleGenAI, Type } from '@google/genai';
 import Button from '../../ui/Button';

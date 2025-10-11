@@ -1,119 +1,145 @@
 import React, { useState, useMemo } from 'react';
 import PageWrapper from '../layout/PageWrapper';
+import { useData } from '../../contexts/DataContext';
+import { Deal, DealStage, DealForecast, NextBestAction, AnyContact } from '../../types';
 import Button from '../ui/Button';
 import { Plus, Bot } from 'lucide-react';
-// FIX: Corrected import path for DataContext.
-import { useData } from '../../contexts/DataContext';
-// FIX: Corrected import path for types.
-import { Deal, DealStage, DealForecast } from '../../types';
 import DealColumn from './DealColumn';
-// FIX: Corrected import path for DealEditModal.
 import DealEditModal from './DealEditModal';
-import LoadingSpinner from '../ui/LoadingSpinner';
 import DealForecastModal from './DealForecastModal';
+import ContactDetailModal from '../organizations/ContactDetailModal';
+import { useApp } from '../../contexts/AppContext';
 
 const DealsPage: React.FC = () => {
-    const { dealStagesQuery, dealsQuery, updateDealMutation } = useData();
-    const { data: stages = [], isLoading: stagesLoading } = dealStagesQuery;
+    const { dealsQuery, dealStagesQuery, updateDealMutation, contactsQuery } = useData();
+    const { setCallContact, setIsCallModalOpen } = useApp();
     const { data: deals = [], isLoading: dealsLoading } = dealsQuery;
+    const { data: stages = [], isLoading: stagesLoading } = dealStagesQuery;
+    const { data: contacts = [] } = contactsQuery;
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
     const [isForecasting, setIsForecasting] = useState(false);
-    const [forecastModalData, setForecastModalData] = useState<{deal: Deal, forecast: DealForecast} | null>(null);
+    const [forecastModalData, setForecastModalData] = useState<{ deal: Deal, forecast: DealForecast } | null>(null);
+    const [contactModalData, setContactModalData] = useState<{ contact: AnyContact | null, initialTab?: string, initialTemplateId?: string }>({ contact: null });
 
-    const handleAddDeal = () => {
+    const sortedStages = useMemo(() => {
+        return (stages as DealStage[]).sort((a, b) => a.order - b.order);
+    }, [stages]);
+    
+    const handleAdd = () => {
         setSelectedDeal(null);
         setIsModalOpen(true);
     };
-    
-    const handleEditDeal = (deal: Deal) => {
+
+    const handleCardClick = (deal: Deal) => {
         setSelectedDeal(deal);
         setIsModalOpen(true);
-    }
-
-    const handleOpenForecast = (deal: Deal, forecast: DealForecast) => {
-        setForecastModalData({ deal, forecast });
     };
-    
+
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>, dealId: string) => {
-        e.dataTransfer.setData("dealId", dealId);
+        e.dataTransfer.setData('dealId', dealId);
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>, stageId: string) => {
         e.preventDefault();
-        const dealId = e.dataTransfer.getData("dealId");
-        const deal = deals.find((d: Deal) => d.id === dealId);
-        
-        if (deal && deal.stageId !== stageId) {
-            updateDealMutation.mutate({ ...deal, stageId });
+        const dealId = e.dataTransfer.getData('dealId');
+        const dealToMove = (deals as Deal[]).find(d => d.id === dealId);
+        if (dealToMove && dealToMove.stageId !== stageId) {
+            updateDealMutation.mutate({ ...dealToMove, stageId });
         }
     };
     
-    const dealsByStage = useMemo(() => {
-        const grouped: { [key: string]: Deal[] } = {};
-        stages.forEach((stage: DealStage) => {
-            grouped[stage.id] = [];
-        });
-        deals.forEach((deal: Deal) => {
-            if (grouped[deal.stageId]) {
-                grouped[deal.stageId].push(deal);
-            }
-        });
-        return grouped;
-    }, [deals, stages]);
+    const handleOpenForecast = (deal: Deal, forecast: DealForecast) => {
+        setForecastModalData({ deal, forecast });
+    };
 
-    const isLoading = stagesLoading || dealsLoading;
+    const handleTakeAction = (action: Omit<NextBestAction, 'contactId'>) => {
+        const deal = forecastModalData?.deal;
+        if (!deal) return;
+        
+        const contact = (contacts as AnyContact[]).find(c => c.id === deal.contactId);
+        if (!contact) return;
+
+        setForecastModalData(null); // Close forecast modal
+
+        if (action.action === 'Email') {
+            setContactModalData({
+                contact: contact,
+                initialTab: 'Email',
+                initialTemplateId: action.templateId,
+            });
+        } else if (action.action === 'Call') {
+            setCallContact(contact);
+            setIsCallModalOpen(true);
+        }
+    };
+
+    const isLoading = dealsLoading || stagesLoading;
 
     return (
         <PageWrapper>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-semibold text-text-heading">Deals Pipeline</h1>
                 <div className="flex items-center gap-2">
-                    <Button 
+                    <Button
                         variant={isForecasting ? 'primary' : 'secondary'}
-                        onClick={() => setIsForecasting(!isForecasting)} 
+                        onClick={() => setIsForecasting(!isForecasting)}
                         leftIcon={<Bot size={16} />}
                     >
                         AI Forecast
                     </Button>
-                    <Button onClick={handleAddDeal} leftIcon={<Plus size={16} />}>
+                    <Button onClick={handleAdd} leftIcon={<Plus size={16} />}>
                         New Deal
                     </Button>
                 </div>
             </div>
-
-            {isLoading ? (
-                <LoadingSpinner />
-            ) : (
-                <div className="flex gap-4 overflow-x-auto pb-4">
-                    {stages.sort((a:DealStage, b:DealStage) => a.order - b.order).map((stage: DealStage) => (
+            
+            <div className="flex gap-4 overflow-x-auto pb-4">
+                {isLoading ? (
+                    <p>Loading pipeline...</p>
+                ) : (
+                    sortedStages.map(stage => (
                         <DealColumn
                             key={stage.id}
                             stage={stage}
-                            deals={dealsByStage[stage.id] || []}
-                            onCardClick={handleEditDeal}
+                            deals={(deals as Deal[]).filter(d => d.stageId === stage.id)}
+                            onCardClick={handleCardClick}
                             onDragStart={handleDragStart}
                             onDrop={handleDrop}
                             isForecasting={isForecasting}
                             onOpenForecast={handleOpenForecast}
                         />
-                    ))}
-                </div>
-            )}
-            
+                    ))
+                )}
+            </div>
+
             <DealEditModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 deal={selectedDeal}
             />
-
             {forecastModalData && (
                 <DealForecastModal
                     isOpen={!!forecastModalData}
                     onClose={() => setForecastModalData(null)}
                     deal={forecastModalData.deal}
                     forecast={forecastModalData.forecast}
+                    onTakeAction={handleTakeAction}
+                />
+            )}
+            
+            {contactModalData.contact && (
+                 <ContactDetailModal
+                    isOpen={!!contactModalData.contact}
+                    onClose={() => setContactModalData({ contact: null })}
+                    contact={contactModalData.contact}
+                    onSave={() => {}} // Not needed for this action
+                    onDelete={() => {}} // Not needed for this action
+                    isSaving={false}
+                    isDeleting={false}
+                    initialActiveTab={contactModalData.initialTab}
+                    initialTemplateId={contactModalData.initialTemplateId}
                 />
             )}
         </PageWrapper>

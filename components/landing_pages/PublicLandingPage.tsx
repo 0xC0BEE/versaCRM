@@ -9,14 +9,17 @@ import Button from '../ui/Button';
 import { useData } from '../../contexts/DataContext';
 import toast from 'react-hot-toast';
 import { CheckCircle } from 'lucide-react';
+import LiveChatWidget from '../chat/LiveChatWidget';
 
 const PublicLandingPage: React.FC = () => {
     const [slug, setSlug] = useState('');
     const [formData, setFormData] = useState<Record<string, any>>({});
     const [isSubmitted, setIsSubmitted] = useState(false);
     
-    const { formsQuery, submitPublicFormMutation, trackPageViewMutation } = useData();
+    const { formsQuery, submitPublicFormMutation, trackPageViewMutation, organizationSettingsQuery } = useData();
     const { data: forms = [] } = formsQuery;
+    const { data: settings, isLoading: settingsLoading } = organizationSettingsQuery;
+
 
     useEffect(() => {
         const handleHashChange = () => {
@@ -127,6 +130,9 @@ const PublicLandingPage: React.FC = () => {
                     }
                 })}
             </div>
+             {!settingsLoading && settings?.liveChat.isEnabled && (
+                <LiveChatWidget settings={settings.liveChat} user={null} />
+            )}
         </div>
     );
 };

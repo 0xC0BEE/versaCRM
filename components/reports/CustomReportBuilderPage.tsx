@@ -3,16 +3,14 @@ import PageWrapper from '../layout/PageWrapper';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
-import { CustomReport, ReportDataSource, FilterCondition, ReportVisualization } from '../../types';
+import { CustomReport, ReportDataSource, FilterCondition, ReportVisualization, CustomObjectDefinition } from '../../types';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
-// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
 import { Card } from '../ui/Card';
 import MultiSelect from '../ui/MultiSelect';
 import { useQuery } from '@tanstack/react-query';
-// FIX: Corrected import path for apiClient.
 import apiClient from '../../services/apiClient';
 import CustomReportDataTable from './CustomReportDataTable';
 import { processReportData } from '../../utils/reportProcessor';
@@ -24,7 +22,8 @@ interface CustomReportBuilderPageProps {
 }
 
 const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ reportToEdit, onClose }) => {
-    const { createCustomReportMutation, updateCustomReportMutation } = useData();
+    const { createCustomReportMutation, updateCustomReportMutation, customObjectDefsQuery } = useData();
+    const { data: customObjectDefs = [] } = customObjectDefsQuery;
     const { authenticatedUser } = useAuth();
     const isNew = !reportToEdit;
 
@@ -49,12 +48,26 @@ const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ repor
     const numericProductColumns = useMemo(() => ['costPrice', 'salePrice', 'stockLevel'], []);
 
     const availableColumns = useMemo(() => {
-        return config.dataSource === 'contacts' ? contactColumns : productColumns;
-    }, [config.dataSource, contactColumns, productColumns]);
+        if (config.dataSource === 'contacts') return contactColumns;
+        if (config.dataSource === 'products') return productColumns;
+        
+        const customObjectDef = (customObjectDefs as CustomObjectDefinition[]).find(def => def.id === config.dataSource);
+        if (customObjectDef) {
+            return customObjectDef.fields.map(f => f.id);
+        }
+        return [];
+    }, [config.dataSource, contactColumns, productColumns, customObjectDefs]);
     
     const numericColumns = useMemo(() => {
-        return config.dataSource === 'contacts' ? numericContactColumns : numericProductColumns;
-    }, [config.dataSource, numericContactColumns, numericProductColumns]);
+        if (config.dataSource === 'contacts') return numericContactColumns;
+        if (config.dataSource === 'products') return numericProductColumns;
+        
+        const customObjectDef = (customObjectDefs as CustomObjectDefinition[]).find(def => def.id === config.dataSource);
+        if (customObjectDef) {
+            return customObjectDef.fields.filter(f => f.type === 'number').map(f => f.id);
+        }
+        return [];
+    }, [config.dataSource, numericContactColumns, numericProductColumns, customObjectDefs]);
 
     const { data: previewData, isLoading: isPreviewLoading } = useQuery({
         queryKey: ['reportPreview', config],
@@ -81,7 +94,14 @@ const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ repor
             
             // If dataSource changes, reset columns and filters
             if (path === 'dataSource') {
-                newConfig.columns = value === 'contacts' ? ['contactName', 'email', 'status'] : ['name', 'sku', 'salePrice'];
+                if (value === 'contacts') {
+                    newConfig.columns = ['contactName', 'email', 'status'];
+                } else if (value === 'products') {
+                    newConfig.columns = ['name', 'sku', 'salePrice'];
+                } else {
+                    const def = (customObjectDefs as CustomObjectDefinition[]).find(d => d.id === value);
+                    newConfig.columns = def ? def.fields.slice(0, 3).map(f => f.id) : [];
+                }
                 newConfig.filters = [];
                 newConfig.visualization.groupByKey = undefined;
                 newConfig.visualization.metric.column = undefined;
@@ -134,6 +154,9 @@ const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ repor
                         <Select id="dataSource" label="Data Source" value={config.dataSource} onChange={e => handleConfigChange('dataSource', e.target.value)}>
                             <option value="contacts">Contacts</option>
                             <option value="products">Products</option>
+                            {(customObjectDefs as CustomObjectDefinition[]).map(def => (
+                                <option key={def.id} value={def.id}>{def.namePlural}</option>
+                            ))}
                         </Select>
                         
                         <MultiSelect label="Columns" options={availableColumns.map(c => ({ value: c, label: c }))} selectedValues={config.columns} onChange={cols => handleConfigChange('columns', cols)} />

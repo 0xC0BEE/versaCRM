@@ -1,20 +1,21 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { AnyContact, NextBestAction } from '../../types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { AnyContact, Interaction, NextBestAction } from '../../types';
 import Modal from '../ui/Modal';
 import Tabs from '../ui/Tabs';
 import ProfileTab from './detail_tabs/ProfileTab';
 import HistoryTab from './detail_tabs/HistoryTab';
 import OrdersTab from './detail_tabs/OrdersTab';
-import DocumentsTab from './detail_tabs/DocumentsTab';
-import EmailTab from './detail_tabs/EmailTab';
-import StructuredRecordsTab from './detail_tabs/StructuredRecordsTab';
 import EnrollmentsTab from './detail_tabs/EnrollmentsTab';
 import BillingTab from './detail_tabs/BillingTab';
 import RelationshipsTab from './detail_tabs/RelationshipsTab';
-import WebsiteActivityTab from './detail_tabs/WebsiteActivityTab';
 import AuditLogTab from './detail_tabs/AuditLogTab';
-import NextBestActionDisplay from './NextBestActionDisplay';
+import StructuredRecordsTab from './detail_tabs/StructuredRecordsTab';
+import DocumentsTab from './detail_tabs/DocumentsTab';
+import WebsiteActivityTab from './detail_tabs/WebsiteActivityTab';
 import { useApp } from '../../contexts/AppContext';
+import EmailTab from './detail_tabs/EmailTab';
+import NextBestActionDisplay from './NextBestActionDisplay';
+import { useData } from '../../contexts/DataContext';
 
 interface ContactDetailModalProps {
     isOpen: boolean;
@@ -24,7 +25,7 @@ interface ContactDetailModalProps {
     onDelete: (contactId: string) => void;
     isSaving: boolean;
     isDeleting: boolean;
-    initialTab?: string;
+    initialActiveTab?: string;
     initialTemplateId?: string;
 }
 
@@ -36,37 +37,50 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
     onDelete,
     isSaving,
     isDeleting,
-    initialTab = 'Profile',
+    initialActiveTab,
     initialTemplateId,
 }) => {
-    const { industryConfig, setIsCallModalOpen, setCallContact } = useApp();
-    const [activeTab, setActiveTab] = useState(initialTab);
-    const [templateId, setTemplateId] = useState<string | undefined>(initialTemplateId);
+    const { industryConfig, setCallContact, setIsCallModalOpen } = useApp();
+    const [activeTab, setActiveTab] = useState(initialActiveTab || 'Profile');
+    const [emailTemplateId, setEmailTemplateId] = useState<string | undefined>(initialTemplateId);
 
     useEffect(() => {
         if (isOpen) {
-            setActiveTab(initialTab);
-            setTemplateId(initialTemplateId);
+            setActiveTab(initialActiveTab || 'Profile');
+            setEmailTemplateId(initialTemplateId);
         }
-    }, [isOpen, initialTab, initialTemplateId]);
+    }, [isOpen, initialActiveTab, initialTemplateId]);
+
 
     const handleTakeAction = (action: NextBestAction) => {
-        if (action.type === 'CALL') {
-            setCallContact(contact);
-            setIsCallModalOpen(true);
-        }
-        if (action.type === 'EMAIL' && action.details?.templateId) {
-            setTemplateId(action.details.templateId);
+        if (action.action === 'Call') {
+            if(contact) {
+                setCallContact(contact);
+                setIsCallModalOpen(true);
+            }
+        } else if (action.action === 'Email' && action.templateId) {
+            setEmailTemplateId(action.templateId);
             setActiveTab('Email');
         }
     };
 
-    const tabs = useMemo(() => [
-        'Profile', 'History', industryConfig.ordersTabName, 'Documents', 'Email', 'Website Activity',
-        industryConfig.structuredRecordTabName, industryConfig.enrollmentsTabName, 'Billing', 'Relationships', 'Audit Log'
-    ].filter(Boolean), [industryConfig]);
+    const tabs = useMemo(() => {
+        const coreTabs = ['Profile', 'History', industryConfig.ordersTabName, industryConfig.enrollmentsTabName, 'Billing', 'Email', 'Documents'];
+        if(industryConfig.structuredRecordTypes.length > 0) {
+            coreTabs.splice(2, 0, industryConfig.structuredRecordTabName);
+        }
+        
+        const hasWebsiteActivity = contact?.interactions?.some(i => i.type === 'Site Visit');
+        if (hasWebsiteActivity) {
+            coreTabs.push('Website Activity');
+        }
+        coreTabs.push('Audit Log');
+        return coreTabs;
 
-    const renderContent = () => {
+    }, [industryConfig, contact]);
+
+
+    const renderTabContent = () => {
         if (!contact) return null;
 
         switch (activeTab) {
@@ -76,20 +90,18 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
                 return <HistoryTab contact={contact} />;
             case industryConfig.ordersTabName:
                 return <OrdersTab contact={contact} isReadOnly={false} />;
-            case 'Documents':
-                return <DocumentsTab contact={contact} isReadOnly={false} />;
-            case 'Email':
-                return <EmailTab contact={contact} initialTemplateId={templateId} />;
-            case 'Website Activity':
-                return <WebsiteActivityTab contact={contact} />;
+            case industryConfig.enrollmentsTabName:
+                return <EnrollmentsTab contact={contact} isReadOnly={false}/>;
             case industryConfig.structuredRecordTabName:
                 return <StructuredRecordsTab contact={contact} isReadOnly={false} />;
-            case industryConfig.enrollmentsTabName:
-                return <EnrollmentsTab contact={contact} isReadOnly={false} />;
             case 'Billing':
                 return <BillingTab contact={contact} isReadOnly={false} />;
-            case 'Relationships':
-                return <RelationshipsTab contact={contact} isReadOnly={false} />;
+            case 'Email':
+                return <EmailTab contact={contact} initialTemplateId={emailTemplateId} />;
+            case 'Documents':
+                return <DocumentsTab contact={contact} isReadOnly={false} />;
+            case 'Website Activity':
+                return <WebsiteActivityTab contact={contact} />;
             case 'Audit Log':
                 return <AuditLogTab contact={contact} />;
             default:
@@ -98,19 +110,18 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
     };
 
     if (!contact) return null;
-    
-    const modalTitle = contact.id ? `Edit ${contact.contactName}` : `New ${industryConfig.contactName}`;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} size="5xl">
-            {contact.id && ( // Only show for existing contacts
-                <div className="px-6 pt-4">
-                    <NextBestActionDisplay contact={contact} onTakeAction={handleTakeAction} />
-                </div>
-            )}
-            <Tabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
-            <div className="mt-6">
-                {renderContent()}
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={contact.id ? `${industryConfig.contactName}: ${contact.contactName}` : `New ${industryConfig.contactName}`}
+            size="5xl"
+        >
+            <div className="space-y-4">
+                 {contact.id && <NextBestActionDisplay contact={contact} onTakeAction={handleTakeAction} />}
+                 <Tabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+                {renderTabContent()}
             </div>
         </Modal>
     );

@@ -1,86 +1,44 @@
 import React, { useState } from 'react';
 import PageWrapper from '../layout/PageWrapper';
-// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
 import { Card } from '../ui/Card';
 import Tabs from '../ui/Tabs';
-import FormBuilder from './FormBuilder';
-import InteractionFormBuilder from './InteractionFormBuilder';
-import ThemeCustomizer from './ThemeCustomizer';
-import ThemeBuilder from './ThemeBuilder';
-import DataMigration from './DataMigration';
-import EmailTemplates from './EmailTemplates';
-import TicketSettings from './TicketSettings';
-import LeadScoringSettings from './LeadScoringSettings';
-import LiveChatSettings from './LiveChatSettings';
-import RolesAndPermissionsPage from './RolesAndPermissionsPage';
 import { useAuth } from '../../contexts/AuthContext';
-import ApiAndAppsPage from './ApiAndAppsPage';
-import TrackingCodeSettings from './TrackingCodeSettings';
-import CustomObjectsSettings from './CustomObjectsSettings';
+
+// New grouped components
+import AppearanceSettings from './AppearanceSettings';
+import ObjectsAndFieldsSettings from './ObjectsAndFieldsSettings';
+import ChannelsAndLeadGenSettings from './ChannelsAndLeadGenSettings';
+import DeveloperSettings from './DeveloperSettings';
+
+// Standalone components for tabs
+import RolesAndPermissionsPage from './RolesAndPermissionsPage';
 
 const SettingsPage: React.FC = () => {
     const { hasPermission } = useAuth();
-    const [activeTab, setActiveTab] = useState('Lead Scoring');
     
     const allTabs = [
-        { name: 'Roles & Permissions', permission: 'settings:manage:roles' },
-        { name: 'Custom Objects' },
-        { name: 'API & Apps', permission: 'settings:manage:api' },
-        { name: 'Tracking Code' },
-        { name: 'Live Chat' },
-        { name: 'Lead Scoring' },
-        { name: 'Contact Forms' }, 
-        { name: 'Interaction Forms' }, 
-        { name: 'Email Templates' },
-        { name: 'Ticket Settings' },
-        { name: 'Appearance' }, 
-        { name: 'Custom Themes' },
-        { name: 'Data Migration' }
+        { name: 'Users & Roles', permission: 'settings:manage:roles', component: <RolesAndPermissionsPage /> },
+        { name: 'Objects & Fields', component: <ObjectsAndFieldsSettings /> },
+        { name: 'Appearance', component: <AppearanceSettings /> },
+        { name: 'Channels & Lead Gen', component: <ChannelsAndLeadGenSettings /> },
+        { name: 'Developer & Data', permission: 'settings:manage:api', component: <DeveloperSettings /> },
     ];
 
-    const availableTabs = allTabs.filter(tab => !tab.permission || hasPermission(tab.permission as any)).map(tab => tab.name);
-
-    const renderContent = () => {
-        switch (activeTab) {
-            case 'Roles & Permissions':
-                return <RolesAndPermissionsPage />;
-            case 'Custom Objects':
-                return <CustomObjectsSettings />;
-            case 'API & Apps':
-                return <ApiAndAppsPage />;
-            case 'Tracking Code':
-                return <TrackingCodeSettings />;
-            case 'Live Chat':
-                return <LiveChatSettings />;
-            case 'Lead Scoring':
-                return <LeadScoringSettings />;
-            case 'Contact Forms':
-                return <FormBuilder />;
-            case 'Interaction Forms':
-                return <InteractionFormBuilder />;
-            case 'Email Templates':
-                return <EmailTemplates />;
-            case 'Ticket Settings':
-                return <TicketSettings />;
-            case 'Appearance':
-                return <ThemeCustomizer />;
-            case 'Custom Themes':
-                return <ThemeBuilder />;
-            case 'Data Migration':
-                return <DataMigration />;
-            default:
-                return null;
-        }
-    };
+    const availableTabs = allTabs.filter(tab => !tab.permission || hasPermission(tab.permission as any));
     
+    // Set initial active tab safely
+    const [activeTab, setActiveTab] = useState(availableTabs.length > 0 ? availableTabs[0].name : '');
+
+    const activeComponent = availableTabs.find(tab => tab.name === activeTab)?.component || null;
+
     return (
         <PageWrapper>
              <h1 className="text-2xl font-semibold text-text-heading mb-6">Settings</h1>
             <Card>
                 <div className="p-6">
-                    <Tabs tabs={availableTabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+                    <Tabs tabs={availableTabs.map(t => t.name)} activeTab={activeTab} setActiveTab={setActiveTab} />
                     <div className="mt-6">
-                        {renderContent()}
+                        {activeComponent}
                     </div>
                 </div>
             </Card>

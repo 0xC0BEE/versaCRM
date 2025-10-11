@@ -153,6 +153,9 @@ export const kbArticles: KBArticleType[] = [
                     <li>
                         <strong>Complete a Task:</strong> Click the checkbox next to a task to mark it as complete. It will move to the "Completed" section.
                     </li>
+                     <li>
+                        <strong>Edit & Link Tasks:</strong> Click the "Edit" button on a task to open a modal. Here you can change the title, due date, and link the task to a specific record from one of your <strong>Custom Objects</strong> (e.g., linking a task to a specific "Property" or "Case"). This provides valuable context for your to-do items.
+                    </li>
                 </ol>
                 <h3 id="how-to-use-calendar">How to Use the Calendar</h3>
                 <ol>
@@ -431,6 +434,9 @@ export const kbArticles: KBArticleType[] = [
                     <li>
                         <strong>Manage Records:</strong> Click on your new object in the sidebar to view a dynamically generated list page. From here, you can create, view, edit, and delete records for your custom object just like you would for standard contacts or deals.
                     </li>
+                    <li>
+                        <strong>Link Records:</strong> Custom Object records can be linked to other core CRM items to provide context. You can link records to <strong>Deals</strong>, <strong>Tickets</strong>, and <strong>Tasks</strong> when creating or editing those items.
+                    </li>
                 </ol>
             </>
         ),
@@ -486,8 +492,8 @@ export const kbArticles: KBArticleType[] = [
                     <li>
                         <strong>Configure Your Report:</strong>
                         <ul>
-                            <li><strong>Data Source:</strong> Choose what you want to report on (e.g., Contacts, Products, Deals).</li>
-                            <li><strong>Columns:</strong> Select the fields you want to see in your report.</li>
+                            <li><strong>Data Source:</strong> Choose what you want to report on. You can select standard sources (like Contacts, Products, Deals) or any of your own <strong>Custom Objects</strong>.</li>
+                            <li><strong>Columns:</strong> Select the fields you want to see in your report. These will dynamically update based on your chosen data source.</li>
                             <li><strong>Filters:</strong> Add conditions to narrow down your data.</li>
                             <li><strong>Visualization:</strong> Choose how to display your data: as a Table, Bar Chart, Pie Chart, or Line Chart.</li>
                         </ul>
@@ -796,6 +802,34 @@ export const kbArticles: KBArticleType[] = [
                         <strong>Consult the Documentation:</strong> Navigate to the <strong>API Docs</strong> page from the sidebar. This page provides all the information a developer needs to start using the API, including authentication instructions and example endpoints.
                     </li>
                 </ol>
+            </>
+        ),
+    },
+    {
+        id: 'ui-design-system',
+        title: 'UI & Design System',
+        category: 'Administration',
+        content: (
+            <>
+                <h2 id="overview-ui">Design Philosophy</h2>
+                <p>
+                    VersaCRM's user interface is built upon a modern, consistent, and accessible design system. Our approach is heavily inspired by the principles of industry-leading component libraries like <strong>shadcn/ui</strong>.
+                </p>
+                <h3 id="core-principles">Core Principles</h3>
+                <ol>
+                    <li>
+                        <strong>Composability:</strong> Our UI components (Buttons, Cards, Modals, etc.) are built as small, reusable blocks. This allows us to construct complex layouts with consistency and flexibility. For example, a <code>Card</code> is composed of <code>CardHeader</code>, <code>CardContent</code>, and <code>CardFooter</code>, giving developers fine-grained control over its structure.
+                    </li>
+                    <li>
+                        <strong>Accessibility (A11y):</strong> We prioritize making the application usable for everyone. This includes proper use of ARIA attributes, keyboard navigation, and sufficient color contrast.
+                    </li>
+                    <li>
+                        <strong>Theming with CSS Variables:</strong> The entire application's color scheme is controlled by a set of CSS variables. This allows for seamless switching between Light and Dark modes and enables the powerful Custom Theme Builder, which lets you define your own brand colors.
+                    </li>
+                </ol>
+                <p className="mt-4">
+                    By not being tied to a specific third-party component library and instead adopting these principles, we maintain full control over the look, feel, and performance of the application, ensuring a world-class user experience.
+                </p>
             </>
         ),
     },

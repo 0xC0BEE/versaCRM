@@ -1,20 +1,16 @@
-
-
 import React, { useState, useMemo } from 'react';
 import PageWrapper from '../layout/PageWrapper';
-// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import TaskItem from './TaskItem';
-// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
 import { Card } from '../ui/Card';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { Plus } from 'lucide-react';
-// FIX: Corrected import path for types.
 import { Task, User } from '../../types';
 import { addDays } from 'date-fns';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
+import TaskEditModal from './TaskEditModal';
 
 const MyTasksPage: React.FC = () => {
     const { authenticatedUser, hasPermission } = useAuth();
@@ -22,6 +18,8 @@ const MyTasksPage: React.FC = () => {
     const { data: tasks = [], isLoading: tasksLoading } = tasksQuery;
     const { data: teamMembers = [], isLoading: membersLoading } = teamMembersQuery;
     const [newTaskTitle, setNewTaskTitle] = useState('');
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
     const canViewAll = hasPermission('contacts:read:all');
     const pageTitle = canViewAll ? 'All Tasks' : 'My Tasks';
@@ -52,6 +50,11 @@ const MyTasksPage: React.FC = () => {
             }
         });
     };
+
+    const handleEditTask = (task: Task) => {
+        setSelectedTask(task);
+        setIsEditModalOpen(true);
+    };
     
     const { pendingTasks, completedTasks } = useMemo(() => {
         const pending = tasks.filter((task: Task) => !task.isCompleted).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
@@ -67,14 +70,14 @@ const MyTasksPage: React.FC = () => {
                     <form onSubmit={handleAddTask} className="flex gap-2">
                         <Input 
                             id="new-task"
+                            label=""
                             placeholder="Add a new task..."
                             value={newTaskTitle}
                             onChange={(e) => setNewTaskTitle(e.target.value)}
                             className="flex-grow"
                             disabled={createTaskMutation.isPending}
-                            inputSize="lg"
                         />
-                        <Button size="lg" type="submit" leftIcon={<Plus size={16} />} disabled={createTaskMutation.isPending || !newTaskTitle.trim()}>
+                        <Button size="md" type="submit" leftIcon={<Plus size={16} />} disabled={createTaskMutation.isPending || !newTaskTitle.trim()}>
                             Add
                         </Button>
                     </form>
@@ -93,6 +96,7 @@ const MyTasksPage: React.FC = () => {
                                             task={task} 
                                             animationDelay={index * 50}
                                             assigneeName={canViewAll ? userMap[task.userId] : undefined}
+                                            onEdit={handleEditTask}
                                         />
                                     ))
                                 ) : (
@@ -111,6 +115,7 @@ const MyTasksPage: React.FC = () => {
                                             task={task} 
                                             animationDelay={index * 50} 
                                             assigneeName={canViewAll ? userMap[task.userId] : undefined}
+                                            onEdit={handleEditTask}
                                         />
                                     ))}
                                 </div>
@@ -119,6 +124,11 @@ const MyTasksPage: React.FC = () => {
                     </div>
                 )}
             </Card>
+             <TaskEditModal 
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                task={selectedTask}
+            />
         </PageWrapper>
     );
 };

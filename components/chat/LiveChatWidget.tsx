@@ -3,7 +3,6 @@ import { LiveChatSettings, User } from '../../types';
 import { MessageSquare, X, Send, Bot } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import ChatBubble from './ChatBubble';
-// FIX: Imported Button component to resolve 'Cannot find name' error.
 import Button from '../ui/Button';
 
 interface LiveChatWidgetProps {
@@ -17,10 +16,16 @@ interface Message {
     timestamp: string;
 }
 
+type ChatStage = 'initial' | 'collecting_email' | 'chatting' | 'submitted';
+
 const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ settings, user }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
+    const [stage, setStage] = useState<ChatStage>('initial');
+    const [capturedEmail, setCapturedEmail] = useState('');
+    const firstUserMessageRef = useRef('');
+
     const { handleNewChatMessageMutation } = useData();
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -31,8 +36,11 @@ const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ settings, user }) => {
                 text: settings.welcomeMessage,
                 timestamp: new Date().toISOString()
             }]);
+            setStage(user ? 'chatting' : 'initial');
+            setCapturedEmail(user?.email || '');
+            firstUserMessageRef.current = '';
         }
-    }, [isOpen, settings.welcomeMessage, messages.length]);
+    }, [isOpen, settings.welcomeMessage, user, messages.length]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -40,26 +48,58 @@ const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ settings, user }) => {
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim() || !user) return;
+        if (!input.trim()) return;
 
         const userMessage: Message = { sender: 'user', text: input, timestamp: new Date().toISOString() };
         setMessages(prev => [...prev, userMessage]);
-        
-        // If it's the first user message, trigger the backend to create a ticket
-        if (messages.filter(m => m.sender === 'user').length === 0) {
-            handleNewChatMessageMutation.mutate({
-                orgId: user.organizationId,
-                contactId: user.contactId, // Can be undefined for new visitors
-                contactName: user.name,
-                contactEmail: user.email,
-                message: input,
-            });
-
-             const aiReply: Message = { sender: 'ai', text: "Thanks for your message! A new support ticket has been created and our team will get back to you shortly.", timestamp: new Date().toISOString() };
-            setTimeout(() => setMessages(prev => [...prev, aiReply]), 500);
-        }
-        
+        const currentInput = input;
         setInput('');
+
+        if (user) { // Logged-in client
+            if (messages.filter(m => m.sender === 'user').length === 0) {
+                handleNewChatMessageMutation.mutate({
+                    orgId: user.organizationId,
+                    contactId: user.contactId,
+                    contactName: user.name,
+                    contactEmail: user.email,
+                    message: currentInput,
+                });
+                const aiReply: Message = { sender: 'ai', text: "Thanks! A support ticket has been created and our team will get back to you shortly.", timestamp: new Date().toISOString() };
+                setTimeout(() => setMessages(prev => [...prev, aiReply]), 500);
+            }
+        } else { // Anonymous visitor
+            switch (stage) {
+                case 'initial':
+                    firstUserMessageRef.current = currentInput;
+                    setStage('collecting_email');
+                    const emailRequest: Message = { sender: 'ai', text: "Thanks for reaching out! What's your email address so we can follow up?", timestamp: new Date().toISOString() };
+                    setTimeout(() => setMessages(prev => [...prev, emailRequest]), 500);
+                    break;
+                case 'collecting_email':
+                    // Rudimentary email validation
+                    if (!/^\S+@\S+\.\S+$/.test(currentInput)) {
+                        const invalidEmail: Message = { sender: 'ai', text: "That doesn't look like a valid email. Could you please provide a correct one?", timestamp: new Date().toISOString() };
+                        setTimeout(() => setMessages(prev => [...prev, invalidEmail]), 500);
+                        return;
+                    }
+                    setCapturedEmail(currentInput);
+                    setStage('chatting');
+                    handleNewChatMessageMutation.mutate({
+                        orgId: 'org_1', // Hardcoded for this demo
+                        contactName: 'New Lead',
+                        contactEmail: currentInput,
+                        message: firstUserMessageRef.current,
+                    });
+                    const finalReply: Message = { sender: 'ai', text: "Perfect, thank you! A new support ticket has been created and our team will get back to you shortly.", timestamp: new Date().toISOString() };
+                    setTimeout(() => setMessages(prev => [...prev, finalReply]), 500);
+                    setStage('submitted');
+                    break;
+                case 'chatting':
+                case 'submitted':
+                    // Do nothing after submission for this simple version
+                    break;
+            }
+        }
     };
     
     const fabStyle = { backgroundColor: settings.color };
@@ -78,16 +118,14 @@ const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ settings, user }) => {
                 </button>
             </div>
             
-            <div className={`fixed bottom-6 right-6 z-50 w-80 h-[28rem] bg-card-bg rounded-card shadow-lg-new flex flex-col transition-all duration-300 origin-bottom-right ${isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'}`}>
-                {/* Header */}
-                <div className="flex-shrink-0 flex justify-between items-center p-4 text-white rounded-t-card" style={headerStyle}>
+            <div className={`fixed bottom-6 right-6 z-50 w-80 h-[28rem] bg-card-bg rounded-lg shadow-lg-new flex flex-col transition-all duration-300 origin-bottom-right ${isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'}`}>
+                <div className="flex-shrink-0 flex justify-between items-center p-4 text-white rounded-t-lg" style={headerStyle}>
                     <h3 className="font-semibold">Chat with us</h3>
                     <button onClick={() => setIsOpen(false)} className="p-1 rounded-full hover:bg-white/20" aria-label="Close chat">
                         <X size={20} />
                     </button>
                 </div>
 
-                {/* Messages */}
                 <div className="flex-grow p-4 space-y-4 overflow-y-auto">
                     {messages.map((msg, index) => (
                         <ChatBubble key={index} message={msg} />
@@ -95,18 +133,17 @@ const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ settings, user }) => {
                     <div ref={messagesEndRef} />
                 </div>
                 
-                 {/* Input */}
                  <div className="flex-shrink-0 p-3 border-t border-border-subtle">
                      <form onSubmit={handleSend} className="flex items-center gap-2">
                         <input
                             type="text"
                             value={input}
                             onChange={e => setInput(e.target.value)}
-                            placeholder="Type your message..."
-                            className="flex-grow w-full px-3 py-2 text-sm bg-hover-bg/50 border border-border-subtle rounded-input focus:outline-none focus:ring-2 focus:ring-primary"
-                            disabled={handleNewChatMessageMutation.isPending}
+                            placeholder={stage === 'collecting_email' ? 'Enter your email...' : 'Type your message...'}
+                            className="flex-grow w-full px-3 py-2 text-sm bg-hover-bg/50 border border-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                            disabled={handleNewChatMessageMutation.isPending || stage === 'submitted'}
                         />
-                        <Button type="submit" size="md" disabled={!input.trim() || handleNewChatMessageMutation.isPending}>
+                        <Button type="submit" size="md" disabled={!input.trim() || handleNewChatMessageMutation.isPending || stage === 'submitted'}>
                             <Send size={16} />
                         </Button>
                     </form>
