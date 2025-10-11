@@ -7,8 +7,8 @@ import {
 } from '../types';
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
-    { id: 'org_1', name: 'Clay Health', industry: 'Health', primaryContactEmail: 'admin@crm.com', createdAt: '2023-01-01T10:00:00Z' },
-    { id: 'org_2', name: 'Innovate Financial', industry: 'Finance', primaryContactEmail: 'finance.admin@crm.com', createdAt: '2023-02-15T11:00:00Z' },
+    { id: 'org_1', name: 'Clay Health', industry: 'Health', primaryContactEmail: 'admin@crm.com', createdAt: '2023-01-01T10:00:00Z', isSetupComplete: false },
+    { id: 'org_2', name: 'Innovate Financial', industry: 'Finance', primaryContactEmail: 'finance.admin@crm.com', createdAt: '2023-02-15T11:00:00Z', isSetupComplete: true },
 ];
 
 export const MOCK_ROLES: CustomRole[] = [
@@ -108,7 +108,8 @@ export let MOCK_ORGANIZATION_SETTINGS: OrganizationSettings = {
     leadScoringRules: [ { id: 'rule_1', event: 'interaction', points: 10, interactionType: 'Appointment' }, { id: 'rule_2', event: 'status_change', points: 20, status: 'Active' } ],
     emailIntegration: { isConnected: false },
     voip: { isConnected: false },
-    liveChat: { isEnabled: true, color: '#3b82f6', welcomeMessage: 'Welcome! How can we help?', autoCreateContact: true, newContactStatus: 'Lead', autoCreateTicket: true, newTicketPriority: 'Medium' }
+    liveChat: { isEnabled: true, color: '#3b82f6', welcomeMessage: 'Welcome! How can we help?', autoCreateContact: true, newContactStatus: 'Lead', autoCreateTicket: true, newTicketPriority: 'Medium' },
+    featureFlags: {},
 };
 
 export const MOCK_TICKETS: Ticket[] = [

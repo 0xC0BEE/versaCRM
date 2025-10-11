@@ -16,6 +16,7 @@ import { useApp } from '../../contexts/AppContext';
 import EmailTab from './detail_tabs/EmailTab';
 import NextBestActionDisplay from './NextBestActionDisplay';
 import { useData } from '../../contexts/DataContext';
+import JourneyTab from './detail_tabs/JourneyTab';
 
 interface ContactDetailModalProps {
     isOpen: boolean;
@@ -65,9 +66,9 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
     };
 
     const tabs = useMemo(() => {
-        const coreTabs = ['Profile', 'History', industryConfig.ordersTabName, industryConfig.enrollmentsTabName, 'Billing', 'Email', 'Documents'];
+        const coreTabs = ['Profile', 'Journey', 'History', industryConfig.ordersTabName, industryConfig.enrollmentsTabName, 'Billing', 'Email', 'Documents'];
         if(industryConfig.structuredRecordTypes.length > 0) {
-            coreTabs.splice(2, 0, industryConfig.structuredRecordTabName);
+            coreTabs.splice(3, 0, industryConfig.structuredRecordTabName);
         }
         
         const hasWebsiteActivity = contact?.interactions?.some(i => i.type === 'Site Visit');
@@ -86,6 +87,8 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
         switch (activeTab) {
             case 'Profile':
                 return <ProfileTab contact={contact} onSave={onSave} onDelete={onDelete} isSaving={isSaving} isDeleting={isDeleting} />;
+            case 'Journey':
+                return <JourneyTab contact={contact} />;
             case 'History':
                 return <HistoryTab contact={contact} />;
             case industryConfig.ordersTabName:

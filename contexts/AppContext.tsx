@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 // FIX: Corrected import path for types.
 import { AppContextType, Industry, Page, IndustryConfig, FilterCondition, AnyContact, Sandbox } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
@@ -7,6 +7,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 // FIX: Corrected import path for apiClient from a file path to a relative module path.
 import apiClient from '../services/apiClient';
 import { industryConfigs as fallbackConfigs } from '../config/industryConfig';
+import { useData } from './DataContext';
+import { featureFlags as defaultFlags } from '../config/featureFlags';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -27,6 +29,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [callContact, setCallContact] = useState<AnyContact | null>(null);
     const [initialKbArticleId, setInitialKbArticleId] = useState<string | null>(null);
     const [currentCustomObjectDefId, setCurrentCustomObjectDefId] = useState<string | null>(null);
+    
+    const { organizationSettingsQuery } = useData();
+    const { data: orgSettings } = organizationSettingsQuery;
 
     const { data: sandboxes = [] } = useQuery<Sandbox[]>({
         queryKey: ['sandboxes', authenticatedUser?.organizationId],
@@ -42,23 +47,24 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         }
     }, [authenticatedUser, setCurrentPage, _setCurrentEnvironment]);
 
-    const setCurrentEnvironment = (env: string) => {
+    const setCurrentEnvironment = useCallback((env: string) => {
         _setCurrentEnvironment(env);
-        // Instead of reloading the page (which crashes the sandbox),
-        // we invalidate all queries. This forces React Query to refetch
-        // all data. The mock server will use the new environment ID from
-        // localStorage for these new requests.
         queryClient.invalidateQueries();
-    };
+    }, [_setCurrentEnvironment, queryClient]);
 
     const { data } = useQuery<IndustryConfig | null>({
         queryKey: ['industryConfig', currentIndustry],
         queryFn: () => apiClient.getIndustryConfig(currentIndustry),
     });
 
-    // If the API returns null (as it's designed to), or if data is loading (undefined),
-    // we must ensure we fall back to our local configuration.
     const industryConfig = data || fallbackConfigs[currentIndustry];
+    
+    const isFeatureEnabled = useCallback((flagId: string): boolean => {
+        // Default to the flag's default state
+        const defaultState = defaultFlags.find(f => f.id === flagId)?.isEnabled || false;
+        // Org settings override the default
+        return orgSettings?.featureFlags?.[flagId] ?? defaultState;
+    }, [orgSettings]);
 
 
     const value: AppContextType = useMemo(() => ({
@@ -84,12 +90,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         currentEnvironment,
         setCurrentEnvironment,
         sandboxes: sandboxes || [],
+        isFeatureEnabled,
     }), [
         currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, 
         contactFilters, setContactFilters, simulatedDate, setSimulatedDate, reportToEditId, 
         setReportToEditId, isCallModalOpen, setIsCallModalOpen, callContact, setCallContact, 
         initialKbArticleId, setInitialKbArticleId, currentCustomObjectDefId, 
-        setCurrentCustomObjectDefId, currentEnvironment, sandboxes
+        setCurrentCustomObjectDefId, currentEnvironment, setCurrentEnvironment, sandboxes, isFeatureEnabled
     ]);
 
     return (

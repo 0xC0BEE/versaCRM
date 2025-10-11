@@ -95,6 +95,7 @@ const apiClient = {
     deleteWarehouse: (id: string): Promise<void> => fetchImpl(`${API_BASE}/warehouses/${id}`, { method: 'DELETE' }).then(handleResponse),
 
     getDealStages: (orgId: string): Promise<DealStage[]> => fetchImpl(`${API_BASE}/deal-stages?orgId=${orgId}`).then(handleResponse),
+    updateDealStages: ({ orgId, stages }: { orgId: string, stages: string[] }): Promise<DealStage[]> => fetchImpl(`${API_BASE}/deal-stages`, { method: 'PUT', body: JSON.stringify({ organizationId: orgId, stages }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     getDeals: (orgId: string): Promise<Deal[]> => fetchImpl(`${API_BASE}/deals?orgId=${orgId}`).then(handleResponse),
     createDeal: (dealData: Omit<Deal, 'id' | 'createdAt'>): Promise<Deal> => fetchImpl(`${API_BASE}/deals`, { method: 'POST', body: JSON.stringify(dealData), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateDeal: (dealData: Deal): Promise<Deal> => fetchImpl(`${API_BASE}/deals/${dealData.id}`, { method: 'PUT', body: JSON.stringify(dealData), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),

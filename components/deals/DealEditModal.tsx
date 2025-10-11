@@ -1,14 +1,17 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import { Deal, DealStage, AnyContact, User, CustomObjectDefinition, CustomObjectRecord } from '../../types';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
-import toast from 'react-hot-toast';
-import { Deal, DealStage, AnyContact, User, CustomObjectDefinition, CustomObjectRecord } from '../../types';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from '../../hooks/useForm';
-import { Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { format } from 'date-fns';
+import { Trash2, Wand2 } from 'lucide-react';
+import { GoogleGenAI } from '@google/genai';
+import { useDebounce } from '../../hooks/useDebounce';
 
 interface DealEditModalProps {
     isOpen: boolean;
@@ -18,51 +21,132 @@ interface DealEditModalProps {
 
 const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) => {
     const { 
-        createDealMutation, 
-        updateDealMutation, 
-        deleteDealMutation, 
-        dealStagesQuery, 
         contactsQuery, 
-        teamMembersQuery,
-        customObjectDefsQuery
+        teamMembersQuery, 
+        dealStagesQuery, 
+        customObjectDefsQuery,
+        createDealMutation,
+        updateDealMutation,
+        deleteDealMutation
     } = useData();
     const { authenticatedUser } = useAuth();
-    const { data: stages = [] } = dealStagesQuery;
+    const isNew = !deal;
+
     const { data: contacts = [] } = contactsQuery;
     const { data: teamMembers = [] } = teamMembersQuery;
+    const { data: dealStages = [] } = dealStagesQuery;
     const { data: customObjectDefs = [] } = customObjectDefsQuery;
-    const isNew = !deal;
     
+    const allRecordsQuery = useData().customObjectRecordsQuery(null); // Fetch all for suggestions
+    const { data: allRecords = [] } = allRecordsQuery;
+
+
     const [selectedDefId, setSelectedDefId] = useState(deal?.relatedObjectDefId || '');
     const { data: relatedRecords = [] } = useData().customObjectRecordsQuery(selectedDefId);
 
+    const [aiSuggestion, setAiSuggestion] = useState<{ defId: string, recordId: string, recordName: string } | null>(null);
 
     const initialState = useMemo(() => ({
         name: '',
         value: 0,
-        stageId: stages[0]?.id || '',
         contactId: '',
+        stageId: (dealStages as DealStage[])[0]?.id || '',
+        assignedToId: '',
         expectedCloseDate: new Date().toISOString().split('T')[0],
-        assignedToId: authenticatedUser?.id,
         relatedObjectDefId: '',
         relatedObjectRecordId: '',
-    }), [stages, authenticatedUser]);
+    }), [dealStages]);
 
-    const formDependency = useMemo(() => (deal ? { ...initialState, ...deal } : null), [deal, initialState]);
+    const formDependency = useMemo(() => {
+        if (!deal) return null;
+        return {
+            ...initialState,
+            ...deal,
+            expectedCloseDate: format(new Date(deal.expectedCloseDate), 'yyyy-MM-dd'),
+        };
+    }, [deal, initialState]);
 
-    const { formData, handleChange } = useForm(initialState, formDependency);
+    const { formData, handleChange, setFormData } = useForm(initialState, formDependency);
     
+    const debouncedDealName = useDebounce(formData.name, 500);
+
+    const generateSuggestion = useCallback(async (dealName: string) => {
+        if (!dealName.trim() || !allRecords || allRecords.length === 0) {
+            setAiSuggestion(null);
+            return;
+        }
+
+        try {
+            const ai = new GoogleGenAI({apiKey: process.env.API_KEY!});
+            
+            const recordsWithPrimaryField = allRecords.map((rec: CustomObjectRecord) => {
+                const def = customObjectDefs.find((d: CustomObjectDefinition) => d.id === rec.objectDefId);
+                const primaryFieldId = def?.fields[0]?.id;
+                return {
+                    defId: rec.objectDefId,
+                    recordId: rec.id,
+                    name: primaryFieldId ? rec.fields[primaryFieldId] : 'Unnamed Record'
+                };
+            }).filter((rec: {name: string}) => rec.name !== 'Unnamed Record');
+
+            if (recordsWithPrimaryField.length === 0) return;
+
+            const prompt = `From the deal name "${dealName}", find the best matching record from this list: ${JSON.stringify(recordsWithPrimaryField)}. Respond with ONLY the JSON object for the single best match, or an empty JSON object {} if no good match is found.`;
+            
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+            });
+
+            const text = response.text;
+            const match = JSON.parse(text.trim());
+            
+            if (match.recordId) {
+                setAiSuggestion({ ...match, recordName: match.name });
+            } else {
+                setAiSuggestion(null);
+            }
+        } catch (error) {
+            console.error("AI Suggestion error:", error);
+            setAiSuggestion(null);
+        }
+
+    }, [allRecords, customObjectDefs]);
+
+    useEffect(() => {
+        if (isNew && isOpen) {
+            generateSuggestion(debouncedDealName);
+        }
+    }, [debouncedDealName, isNew, isOpen, generateSuggestion]);
+
+
     useEffect(() => {
         if (deal?.relatedObjectDefId) {
             setSelectedDefId(deal.relatedObjectDefId);
         }
-    }, [deal]);
+         if (!isOpen) { // Reset suggestion on close
+            setAiSuggestion(null);
+        }
+    }, [deal, isOpen]);
 
     const handleDefChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newDefId = e.target.value;
         setSelectedDefId(newDefId);
         handleChange('relatedObjectDefId', newDefId);
         handleChange('relatedObjectRecordId', ''); // Reset record selection
+    };
+    
+    const applyAiSuggestion = () => {
+        if (aiSuggestion) {
+            setSelectedDefId(aiSuggestion.defId);
+            setFormData(prev => ({
+                ...prev,
+                relatedObjectDefId: aiSuggestion.defId,
+                relatedObjectRecordId: aiSuggestion.recordId,
+            }));
+            setAiSuggestion(null);
+            toast.success("AI suggestion applied!");
+        }
     };
 
     const handleSave = () => {
@@ -71,132 +155,78 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
             return;
         }
 
+        const dealData = {
+            ...formData,
+            value: Number(formData.value),
+            organizationId: authenticatedUser!.organizationId!,
+        };
+
         if (isNew) {
-            createDealMutation.mutate({
-                ...formData,
-                organizationId: authenticatedUser!.organizationId!,
-            }, {
-                onSuccess: onClose
-            });
+            createDealMutation.mutate(dealData, { onSuccess: onClose });
         } else {
-            updateDealMutation.mutate({
-                ...deal!,
-                ...formData
-            }, {
-                onSuccess: onClose
-            });
+            updateDealMutation.mutate({ ...deal!, ...dealData }, { onSuccess: onClose });
+        }
+    };
+
+    const handleDelete = () => {
+        if (deal && window.confirm(`Are you sure you want to delete the deal "${deal.name}"?`)) {
+            deleteDealMutation.mutate(deal.id, { onSuccess: onClose });
         }
     };
     
-    const handleDelete = () => {
-        if (deal && window.confirm(`Are you sure you want to delete the deal "${deal.name}"?`)) {
-            deleteDealMutation.mutate(deal.id, {
-                onSuccess: onClose
-            });
-        }
-    };
-
     const isPending = createDealMutation.isPending || updateDealMutation.isPending || deleteDealMutation.isPending;
-    const primaryFieldId = customObjectDefs.find((d: CustomObjectDefinition) => d.id === selectedDefId)?.fields[0]?.id;
+    const primaryFieldId = (customObjectDefs as CustomObjectDefinition[]).find(d => d.id === selectedDefId)?.fields[0]?.id;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={isNew ? 'Create New Deal' : `Edit Deal: ${deal?.name}`} size="2xl">
-            <div className="space-y-4">
-                <Input
-                    id="deal-name"
-                    label="Deal Name"
-                    value={formData.name}
-                    onChange={e => handleChange('name', e.target.value)}
-                    required
-                    disabled={isPending}
-                />
+        <Modal isOpen={isOpen} onClose={onClose} title={isNew ? 'Create New Deal' : `Edit Deal: ${deal?.name}`}>
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                <Input id="deal-name" label="Deal Name" value={formData.name} onChange={e => handleChange('name', e.target.value)} required disabled={isPending} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input
-                        id="deal-value"
-                        label="Value"
-                        type="number"
-                        value={formData.value}
-                        onChange={e => handleChange('value', parseFloat(e.target.value) || 0)}
-                        required
-                        disabled={isPending}
-                    />
-                    <Select
-                        id="deal-stage"
-                        label="Stage"
-                        value={formData.stageId}
-                        onChange={e => handleChange('stageId', e.target.value)}
-                        disabled={isPending}
-                    >
-                        {stages.map((s: DealStage) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </Select>
+                    <Input id="deal-value" label="Value" type="number" value={formData.value} onChange={e => handleChange('value', e.target.value)} disabled={isPending} />
+                    <Input id="deal-close-date" label="Expected Close Date" type="date" value={formData.expectedCloseDate} onChange={e => handleChange('expectedCloseDate', e.target.value)} required disabled={isPending} />
                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Select
-                        id="deal-contact"
-                        label="Contact"
-                        value={formData.contactId}
-                        onChange={e => handleChange('contactId', e.target.value)}
-                        required
-                        disabled={isPending}
-                    >
-                        <option value="">Select a contact...</option>
-                        {contacts.map((c: AnyContact) => <option key={c.id} value={c.id}>{c.contactName}</option>)}
-                    </Select>
-                     <Input
-                        id="deal-close-date"
-                        label="Expected Close Date"
-                        type="date"
-                        value={formData.expectedCloseDate.split('T')[0]}
-                        onChange={e => handleChange('expectedCloseDate', e.target.value)}
-                        disabled={isPending}
-                    />
-                </div>
-                 <Select
-                    id="deal-assigned-to"
-                    label="Assigned To"
-                    value={formData.assignedToId || ''}
-                    onChange={e => handleChange('assignedToId', e.target.value)}
-                    disabled={isPending}
-                >
-                    <option value="">Unassigned</option>
-                    {teamMembers.map((m: User) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                <Select id="deal-contact" label="Contact" value={formData.contactId} onChange={e => handleChange('contactId', e.target.value)} required disabled={isPending}>
+                    <option value="">Select a contact...</option>
+                    {(contacts as AnyContact[]).map(c => <option key={c.id} value={c.id}>{c.contactName}</option>)}
                 </Select>
-
-                <div className="pt-4 border-t border-border-subtle">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Select id="deal-stage" label="Stage" value={formData.stageId} onChange={e => handleChange('stageId', e.target.value)} required disabled={isPending}>
+                        {(dealStages as DealStage[]).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </Select>
+                     <Select id="deal-assignee" label="Assigned To" value={formData.assignedToId} onChange={e => handleChange('assignedToId', e.target.value)} disabled={isPending}>
+                        <option value="">Unassigned</option>
+                        {(teamMembers as User[]).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                    </Select>
+                </div>
+                 <div className="pt-4 border-t border-border-subtle">
                      <label className="block text-sm font-medium text-text-primary mb-1">Link to Record (Optional)</label>
+                     {aiSuggestion && (
+                         <div className="p-2 mb-2 bg-primary/10 rounded-md flex items-center justify-between">
+                            <p className="text-sm text-primary flex items-center gap-2"><Wand2 size={16}/> AI Suggestion: Link to "{aiSuggestion.recordName}"?</p>
+                            <Button size="sm" onClick={applyAiSuggestion}>Link Now</Button>
+                         </div>
+                     )}
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Select
-                            id="related-object-def"
-                            label=""
-                            value={formData.relatedObjectDefId}
-                            onChange={handleDefChange}
-                        >
+                        <Select id="related-object-def" label="" value={formData.relatedObjectDefId} onChange={handleDefChange}>
                             <option value="">Select Object Type...</option>
-                            {customObjectDefs.map((def: CustomObjectDefinition) => <option key={def.id} value={def.id}>{def.nameSingular}</option>)}
+                            {(customObjectDefs as CustomObjectDefinition[]).map(def => <option key={def.id} value={def.id}>{def.nameSingular}</option>)}
                         </Select>
                         {selectedDefId && (
-                            <Select
-                                id="related-object-record"
-                                label=""
-                                value={formData.relatedObjectRecordId}
-                                onChange={e => handleChange('relatedObjectRecordId', e.target.value)}
-                                disabled={relatedRecords.isLoading}
-                            >
+                            <Select id="related-object-record" label="" value={formData.relatedObjectRecordId} onChange={e => handleChange('relatedObjectRecordId', e.target.value)} disabled={relatedRecords.isLoading}>
                                 <option value="">Select Record...</option>
-                                {primaryFieldId && relatedRecords.map((rec: CustomObjectRecord) => (
+                                {primaryFieldId && (relatedRecords as CustomObjectRecord[]).map(rec => (
                                     <option key={rec.id} value={rec.id}>{rec.fields[primaryFieldId]}</option>
                                 ))}
                             </Select>
                         )}
                     </div>
                 </div>
-
             </div>
              <div className="mt-6 flex justify-between items-center">
-                 <div>
+                <div>
                     {!isNew && (
                         <Button variant="danger" onClick={handleDelete} disabled={isPending} leftIcon={<Trash2 size={16} />}>
-                           {deleteDealMutation.isPending ? 'Deleting...' : 'Delete'}
+                            {deleteDealMutation.isPending ? 'Deleting...' : 'Delete'}
                         </Button>
                     )}
                 </div>

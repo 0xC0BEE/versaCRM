@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { CustomObjectDefinition, CustomObjectRecord, CustomField } from '../../types';
 import Modal from '../ui/Modal';
@@ -24,18 +25,14 @@ const CustomObjectEditModal: React.FC<CustomObjectEditModalProps> = ({ isOpen, o
     const isNew = !record;
 
     const initialState = useMemo(() => {
-        const initialFields = definition.fields.reduce((acc, field) => {
-            acc[field.id] = '';
-            return acc;
-        }, {} as Record<string, any>);
-        
+        const initialFields: Record<string, any> = {};
+        definition.fields.forEach(field => {
+            initialFields[field.id] = '';
+        });
         return { fields: initialFields };
-    }, [definition]);
-    
-    // Create dependency for useForm hook
-    const formDependency = useMemo(() => (record ? { fields: record.fields } : null), [record]);
+    }, [definition.fields]);
 
-    const { formData, handleChange, setFormData } = useForm(initialState, formDependency);
+    const { formData, handleChange, setFormData } = useForm(initialState, record);
 
     const handleFieldChange = (fieldId: string, value: any) => {
         setFormData(prev => ({
@@ -48,21 +45,25 @@ const CustomObjectEditModal: React.FC<CustomObjectEditModalProps> = ({ isOpen, o
     };
 
     const handleSave = () => {
-        // Basic validation: Check if the first required field is filled
-        const firstRequiredField = definition.fields.find(f => f.type !== 'checkbox'); // Simple assumption
-        if (firstRequiredField && !formData.fields[firstRequiredField.id]?.trim()) {
-            toast.error(`Field "${firstRequiredField.label}" is required.`);
-            return;
+        // Basic validation: check if the first field (usually primary) is filled
+        if (definition.fields.length > 0) {
+            const primaryFieldId = definition.fields[0].id;
+            if (!formData.fields[primaryFieldId] || String(formData.fields[primaryFieldId]).trim() === '') {
+                toast.error(`"${definition.fields[0].label}" is required.`);
+                return;
+            }
         }
+        
+        const recordData = {
+            ...formData,
+            organizationId: authenticatedUser!.organizationId,
+            objectDefId: definition.id,
+        };
 
         if (isNew) {
-            createCustomObjectRecordMutation.mutate({
-                objectDefId: definition.id,
-                organizationId: authenticatedUser!.organizationId,
-                fields: formData.fields,
-            }, { onSuccess: onClose });
+            createCustomObjectRecordMutation.mutate(recordData as any, { onSuccess: onClose });
         } else {
-            updateCustomObjectRecordMutation.mutate({ ...record!, fields: formData.fields }, { onSuccess: onClose });
+            updateCustomObjectRecordMutation.mutate({ ...record!, ...recordData }, { onSuccess: onClose });
         }
     };
 
@@ -85,16 +86,14 @@ const CustomObjectEditModal: React.FC<CustomObjectEditModalProps> = ({ isOpen, o
             disabled: isPending,
         };
         switch (field.type) {
-            case 'textarea':
-                return <Textarea {...props} rows={4} />;
+            case 'textarea': return <Textarea {...props} />;
             case 'select': return (
                 <Select {...props}>
                     <option value="">-- Select --</option>
                     {field.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                 </Select>
             );
-            default:
-                return <Input {...props} type={field.type} />;
+            default: return <Input {...props} type={field.type} />;
         }
     };
 
@@ -113,9 +112,7 @@ const CustomObjectEditModal: React.FC<CustomObjectEditModalProps> = ({ isOpen, o
                 </div>
                 <div className="flex space-x-2">
                     <Button variant="secondary" onClick={onClose} disabled={isPending}>Cancel</Button>
-                    <Button onClick={handleSave} disabled={isPending}>
-                        {isPending ? 'Saving...' : 'Save'}
-                    </Button>
+                    <Button onClick={handleSave} disabled={isPending}>{isPending ? 'Saving...' : 'Save'}</Button>
                 </div>
             </div>
         </Modal>

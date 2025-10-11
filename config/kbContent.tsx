@@ -76,6 +76,43 @@ export const kbArticles: KBArticleType[] = [
             </>
         ),
     },
+     {
+        id: 'customer-journey',
+        title: 'Customer Journey Visualizer',
+        category: 'Core Features',
+        content: (
+            <>
+                <h2 id="overview-journey">Overview</h2>
+                <p>
+                    The Customer Journey Visualizer provides the ultimate 360-degree view of a contact. It's a single, chronological timeline that displays every touchpoint a contact has had with your organization, from their very first anonymous website visit to their latest support ticket.
+                </p>
+                <h3 id="how-to-use-journey">How to Use It</h3>
+                <ol>
+                    <li>
+                        <strong>Access the Journey:</strong> Open any contact's detail modal from the <strong>Contacts</strong> page.
+                    </li>
+                    <li>
+                        <strong>Navigate to the Journey Tab:</strong> Click on the new <strong>"Journey"</strong> tab.
+                    </li>
+                    <li>
+                        <strong>Analyze the Timeline:</strong> You will see a vertical timeline of every event in the contact's history, sorted from most recent to oldest. Each event type has a unique icon and color, making it easy to distinguish between marketing, sales, and support interactions. Events include:
+                        <ul>
+                            <li className="!mt-2">Anonymous Website Visits</li>
+                            <li className="!mt-2">Form Submissions</li>
+                            <li className="!mt-2">Campaign Enrollments</li>
+                            <li className="!mt-2">Deals being created or won</li>
+                            <li className="!mt-2">Support tickets being opened or closed</li>
+                            <li className="!mt-2">Tasks being completed</li>
+                            <li className="!mt-2">Manually logged calls, emails, and meetings</li>
+                        </ul>
+                    </li>
+                </ol>
+                <p className="mt-4">
+                    This powerful view allows anyone in your organization to instantly understand the complete context of a customer's relationship with your company, leading to more informed and effective conversations.
+                </p>
+            </>
+        ),
+    },
     {
         id: 'deals-pipeline',
         title: 'Deals Pipeline',

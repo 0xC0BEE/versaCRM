@@ -3,21 +3,23 @@ import PageWrapper from '../layout/PageWrapper';
 // FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
 import { Card } from '../ui/Card';
 import Button from '../ui/Button';
-import { Plus, Play, BarChart2, Zap, Trash2 } from 'lucide-react';
+import { Plus, Play, BarChart2, Zap, Trash2, Wand2 } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { Campaign } from '../../types';
 import { useApp } from '../../contexts/AppContext';
 import CampaignBuilderPage from './CampaignBuilderPage';
 import CampaignReportPage from './CampaignReportPage';
 import toast from 'react-hot-toast';
+import AiContentStudioModal from '../ai/AiContentStudioModal';
 
 const CampaignsPage: React.FC = () => {
     const { campaignsQuery, launchCampaignMutation, advanceDayMutation } = useData();
-    const { simulatedDate, setSimulatedDate } = useApp();
+    const { simulatedDate, setSimulatedDate, isFeatureEnabled } = useApp();
     const { data: campaigns = [], isLoading: campaignsLoading } = campaignsQuery;
 
     const [view, setView] = useState<'list' | 'builder' | 'report'>('list');
     const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+    const [isAiStudioOpen, setIsAiStudioOpen] = useState(false);
 
     const handleNew = () => {
         setSelectedCampaign(null);
@@ -77,6 +79,11 @@ const CampaignsPage: React.FC = () => {
                      <Button variant="secondary" onClick={handleAdvanceDay} disabled={advanceDayMutation.isPending}>
                         Advance Day
                     </Button>
+                    {isFeatureEnabled('aiContentStudio') && (
+                        <Button variant="secondary" onClick={() => setIsAiStudioOpen(true)} leftIcon={<Wand2 size={16}/>}>
+                            AI Content Studio
+                        </Button>
+                    )}
                     <Button onClick={handleNew} leftIcon={<Plus size={16} />}>
                         New Campaign
                     </Button>
@@ -145,6 +152,11 @@ const CampaignsPage: React.FC = () => {
                     </div>
                 )}
             </Card>
+
+            <AiContentStudioModal 
+                isOpen={isAiStudioOpen}
+                onClose={() => setIsAiStudioOpen(false)}
+            />
         </PageWrapper>
     );
 };

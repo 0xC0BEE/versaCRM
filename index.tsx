@@ -25,14 +25,14 @@ root.render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <AppProvider>
-            <NotificationProvider>
-              <DataProvider>
+          <DataProvider>
+            <AppProvider>
+              <NotificationProvider>
                 <App />
-              </DataProvider>
-            </NotificationProvider>
-            <Toaster position="bottom-right" />
-          </AppProvider>
+              </NotificationProvider>
+              <Toaster position="bottom-right" />
+            </AppProvider>
+          </DataProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

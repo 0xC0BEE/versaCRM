@@ -1,12 +1,30 @@
-import React, { useState } from 'react';
-// FIX: Corrected import path for Sidebar.
+import React, { useState, useMemo } from 'react';
 import Sidebar from '../layout/Sidebar';
 import Header from '../layout/Header';
-// FIX: Corrected import path for PageRenderer.
 import PageRenderer from '../common/PageRenderer';
+import { useData } from '../../contexts/DataContext';
+import { useAuth } from '../../contexts/AuthContext';
+import OnboardingWizard from '../onboarding/OnboardingWizard';
+import LoadingSpinner from '../ui/LoadingSpinner';
 
 const OrganizationConsole: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const { organizationsQuery } = useData();
+    const { authenticatedUser } = useAuth();
+    
+    const { data: organizations = [], isLoading: orgsLoading } = organizationsQuery;
+
+    const currentOrg = useMemo(() => {
+        return organizations.find((o: any) => o.id === authenticatedUser?.organizationId);
+    }, [organizations, authenticatedUser]);
+
+    if (orgsLoading) {
+        return <div className="h-screen w-screen flex items-center justify-center"><LoadingSpinner /></div>
+    }
+
+    if (currentOrg && !currentOrg.isSetupComplete) {
+        return <OnboardingWizard organization={currentOrg} />;
+    }
 
     return (
         <div className="h-screen flex overflow-hidden bg-bg-primary text-text-primary">

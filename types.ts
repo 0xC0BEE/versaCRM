@@ -46,6 +46,7 @@ export interface Organization {
     industry: Industry;
     primaryContactEmail: string;
     createdAt: string;
+    isSetupComplete: boolean;
 }
 
 export interface User {
@@ -284,6 +285,13 @@ export interface IndustryConfig {
     };
 }
 
+export interface FeatureFlag {
+    id: string;
+    name: string;
+    description: string;
+    isEnabled: boolean;
+}
+
 // Context Types
 export interface AppContextType {
     currentPage: Page;
@@ -308,6 +316,7 @@ export interface AppContextType {
     currentEnvironment: string;
     setCurrentEnvironment: (env: string) => void;
     sandboxes: Sandbox[];
+    isFeatureEnabled: (flagId: string) => boolean;
 }
 
 export interface AuthContextType {
@@ -617,6 +626,7 @@ export interface OrganizationSettings {
         provider?: string;
     };
     liveChat: LiveChatSettings;
+    featureFlags: Record<string, boolean>;
 }
 export interface LeadScoringRule {
     id: string;
@@ -713,4 +723,129 @@ export interface Sandbox {
     name: string;
     createdAt: string;
     organizationId: string;
+}
+
+// DataContext Types
+export interface DataContextType {
+    // Queries
+    organizationsQuery: any;
+    contactsQuery: any;
+    teamMembersQuery: any;
+    rolesQuery: any;
+    tasksQuery: any;
+    calendarEventsQuery: any;
+    productsQuery: any;
+    suppliersQuery: any;
+    warehousesQuery: any;
+    dealStagesQuery: any;
+    dealsQuery: any;
+    emailTemplatesQuery: any;
+    allInteractionsQuery: any;
+    syncedEmailsQuery: any;
+    workflowsQuery: any;
+    advancedWorkflowsQuery: any;
+    organizationSettingsQuery: any;
+    apiKeysQuery: any;
+    ticketsQuery: any;
+    formsQuery: any;
+    campaignsQuery: any;
+    landingPagesQuery: any;
+    customReportsQuery: any;
+    dashboardWidgetsQuery: any;
+    customObjectDefsQuery: any;
+    customObjectRecordsQuery: (defId: string | null) => any;
+    marketplaceAppsQuery: any;
+    installedAppsQuery: any;
+    dashboardDataQuery: any;
+    sandboxesQuery: any;
+
+    // Mutations
+    createOrganizationMutation: any;
+    updateOrganizationMutation: any;
+    deleteOrganizationMutation: any;
+    createContactMutation: any;
+    updateContactMutation: any;
+    deleteContactMutation: any;
+    bulkDeleteContactsMutation: any;
+    bulkUpdateContactStatusMutation: any;
+    createUserMutation: any;
+    updateUserMutation: any;
+    deleteUserMutation: any;
+    createRoleMutation: any;
+    updateRoleMutation: any;
+    deleteRoleMutation: any;
+    createInteractionMutation: any;
+    updateInteractionMutation: any;
+    createTaskMutation: any;
+    updateTaskMutation: any;
+    deleteTaskMutation: any;
+    createCalendarEventMutation: any;
+    updateCalendarEventMutation: any;
+    createProductMutation: any;
+    updateProductMutation: any;
+    deleteProductMutation: any;
+    createSupplierMutation: any;
+    updateSupplierMutation: any;
+    deleteSupplierMutation: any;
+    createWarehouseMutation: any;
+    updateWarehouseMutation: any;
+    deleteWarehouseMutation: any;
+    createDealMutation: any;
+    updateDealMutation: any;
+    deleteDealMutation: any;
+    updateDealStagesMutation: any;
+    createEmailTemplateMutation: any;
+    updateEmailTemplateMutation: any;
+    deleteEmailTemplateMutation: any;
+    updateCustomFieldsMutation: any;
+    updateOrganizationSettingsMutation: any;
+    recalculateAllScoresMutation: any;
+    connectEmailMutation: any;
+    disconnectEmailMutation: any;
+    connectVoipMutation: any;
+    disconnectVoipMutation: any;
+    runEmailSyncMutation: any;
+    createWorkflowMutation: any;
+    updateWorkflowMutation: any;
+    createAdvancedWorkflowMutation: any;
+    updateAdvancedWorkflowMutation: any;
+    deleteAdvancedWorkflowMutation: any;
+    createApiKeyMutation: any;
+    deleteApiKeyMutation: any;
+    createTicketMutation: any;
+    updateTicketMutation: any;
+    addTicketReplyMutation: any;
+    createFormMutation: any;
+    updateFormMutation: any;
+    deleteFormMutation: any;
+    submitPublicFormMutation: any;
+    createCampaignMutation: any;
+    updateCampaignMutation: any;
+    launchCampaignMutation: any;
+    advanceDayMutation: any;
+    createLandingPageMutation: any;
+    updateLandingPageMutation: any;
+    deleteLandingPageMutation: any;
+    trackPageViewMutation: any;
+    createCustomReportMutation: any;
+    updateCustomReportMutation: any;
+    deleteCustomReportMutation: any;
+    addDashboardWidgetMutation: any;
+    removeDashboardWidgetMutation: any;
+    createOrderMutation: any;
+    updateOrderMutation: any;
+    deleteOrderMutation: any;
+    createTransactionMutation: any;
+    createCustomObjectDefMutation: any;
+    updateCustomObjectDefMutation: any;
+    deleteCustomObjectDefMutation: any;
+    createCustomObjectRecordMutation: any;
+    updateCustomObjectRecordMutation: any;
+    deleteCustomObjectRecordMutation: any;
+    installAppMutation: any;
+    uninstallAppMutation: any;
+    handleNewChatMessageMutation: any;
+    createSandboxMutation: any;
+    refreshSandboxMutation: any;
+    deleteSandboxMutation: any;
 }

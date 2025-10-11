@@ -3,6 +3,7 @@ import ApiAndAppsPage from './ApiAndAppsPage';
 import TrackingCodeSettings from './TrackingCodeSettings';
 import DataMigration from './DataMigration';
 import SandboxSettings from './SandboxSettings';
+import FeatureFlagsSettings from './FeatureFlagsSettings';
 
 const DeveloperSettings: React.FC = () => {
     return (
@@ -10,6 +11,9 @@ const DeveloperSettings: React.FC = () => {
             <ApiAndAppsPage />
             <div className="border-t border-border-subtle pt-8">
                 <TrackingCodeSettings />
+            </div>
+             <div className="border-t border-border-subtle pt-8">
+                <FeatureFlagsSettings />
             </div>
             <div className="border-t border-border-subtle pt-8">
                 <DataMigration />
