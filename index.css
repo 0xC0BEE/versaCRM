@@ -4,23 +4,23 @@
   /* Transitions */
   --transition-spring: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* Light Mode Palette */
-  --bg-primary-light: 248 250 252;
-  --card-bg-light: 255 255 255;
-  --text-primary-light: 29 41 59;
-  --text-secondary-light: 100 116 139;
-  --text-heading-light: 29 41 59; /* Same as primary by default */
-  --border-subtle-light: 100 100 100; /* Transparent Black for subtlety */
-  --hover-bg-light: 59 130 246;
+  /* Light Mode Palette (shadcn/ui inspired) */
+  --bg-primary-light: 248 250 252; /* slate-50 */
+  --card-bg-light: 255 255 255; /* white */
+  --text-primary-light: 15 23 42; /* slate-900 */
+  --text-secondary-light: 71 85 105; /* slate-600 */
+  --text-heading-light: 15 23 42;
+  --border-subtle-light: 226 232 240; /* slate-200 */
+  --hover-bg-light: 241 245 249; /* slate-100 */
   
-  /* Dark Mode Palette */
-  --bg-primary-dark: 15 23 42;
-  --card-bg-dark: 30 41 55;
-  --text-primary-dark: 241 245 249;
-  --text-secondary-dark: 148 163 184;
-  --text-heading-dark: 241 245 249; /* Same as primary by default */
-  --border-subtle-dark: 200 200 200; /* Transparent White for subtlety */
-  --hover-bg-dark: 59 130 246;
+  /* Dark Mode Palette (shadcn/ui inspired) */
+  --bg-primary-dark: 2 6 23; /* near black */
+  --card-bg-dark: 15 23 42; /* slate-900 */
+  --text-primary-dark: 248 250 252; /* slate-50 */
+  --text-secondary-dark: 148 163 184; /* slate-400 */
+  --text-heading-dark: 248 250 252;
+  --border-subtle-dark: 48 59 83; /* slate-800 */
+  --hover-bg-dark: 30 41 59; /* slate-800 */
   
   /* Accent Colors (Shared) */
   --primary: 59 130 246;
@@ -29,8 +29,8 @@
   --success: 16 185 129;
   --success-hover: 5 150 105;
   --success-glow: 16 185 129;
-  --error: 239 68 68;
-  --error-hover: 220 38 38;
+  --error: 220 38 38; /* red-600 */
+  --error-hover: 185 28 28; /* red-700 */
   --warning: 245 158 11;
   --warning-hover: 217 119 6;
 
@@ -57,7 +57,7 @@
 }
 
 body {
-  background-image: linear-gradient(135deg, rgb(var(--bg-primary)) 0%, color-mix(in srgb, rgb(var(--bg-primary)) 85%, rgb(var(--text-secondary))) 100%);
+  background-color: rgb(var(--bg-primary));
 }
 
 
@@ -69,29 +69,6 @@ body {
 
 /* Base body styles are now in index.html for Tailwind compatibility */
 
-/* Ripple effect for buttons */
-.ripple {
-  position: relative;
-  overflow: hidden;
-}
-
-.ripple::after {
-  content: '';
-  position: absolute;
-  border-radius: 50%;
-  transform: scale(0);
-  background-color: rgba(255, 255, 255, 0.4);
-  animation: ripple-animation 400ms linear;
-}
-
-@keyframes ripple-animation {
-  to {
-    transform: scale(4);
-    opacity: 0;
-  }
-}
-
-/* Keyframes defined in tailwind config now, but can be here too */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -113,20 +90,6 @@ body {
 @tailwind components;
 @tailwind utilities;
 
-@layer components {
-  /* Global card hover effect with 3D perspective */
-  .card-hover {
-    perspective: 1000px;
-    transition: var(--transition-spring);
-  }
-  .card-hover:hover {
-    transform: translateY(-2px) rotateX(2deg);
-    box-shadow: 0 10px 24px rgba(0,0,0,0.15);
-  }
-  .dark .card-hover:hover {
-     box-shadow: 0 10px 24px rgba(0,0,0,0.2);
-  }
-}
 
 /* Custom scrollbar for horizontal tabs */
 .custom-scrollbar::-webkit-scrollbar {
@@ -154,80 +117,34 @@ body {
 }
 
 /* Fix for native date picker theming */
-input[type="date"] {
+input[type="date"],
+input[type="color"] {
     color-scheme: light;
 }
 
-.dark input[type="date"] {
+.dark input[type="date"],
+.dark input[type="color"] {
     color-scheme: dark;
 }
 
 /* --- React Big Calendar Overrides --- */
-
-/* Main container */
 .rbc-calendar {
-  border-radius: 16px; /* --rounded-card */
+  border-radius: var(--radius-lg);
   border: 1px solid rgb(var(--border-subtle) / 0.3);
   background-color: rgb(var(--card-bg));
   color: rgb(var(--text-primary));
   height: 100% !important;
 }
 
-/* Toolbar */
-.rbc-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  padding: 10px;
-  border-bottom: 1px solid rgb(var(--border-subtle) / 0.3);
-}
-
-.rbc-toolbar .rbc-toolbar-label {
-  font-weight: 600;
-  font-size: 1.25rem; /* 20px */
-  color: rgb(var(--text-heading));
-}
-
-/* Button Groups */
-.rbc-btn-group {
-  display: inline-flex;
-  gap: 4px;
-}
-
-.rbc-btn-group button {
-  display: inline-block;
-  padding: 6px 14px;
-  font-size: 14px;
-  font-weight: 500;
+.rbc-toolbar button {
   border: 1px solid rgb(var(--border-subtle) / 0.3);
-  border-radius: 10px; /* --rounded-input */
-  background-color: rgb(var(--card-bg));
-  color: rgb(var(--text-primary));
-  transition: all 0.2s ease-in-out;
+  border-radius: var(--radius-md);
 }
 
-.rbc-btn-group button:hover {
-  background-color: rgb(var(--hover-bg) / 0.1);
-  border-color: rgb(var(--border-subtle) / 0.5);
-  color: rgb(var(--text-primary));
+.rbc-event {
+  border-radius: var(--radius-sm);
 }
-
-.rbc-btn-group button.rbc-active {
-  background-color: rgb(var(--primary));
-  color: white;
-  border-color: rgb(var(--primary));
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-}
-
-.rbc-btn-group button:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgb(var(--primary) / 0.5);
-}
-
-
-/* Calendar Grid and Headers */
+/* ... other calendar styles remain similar but will inherit new colors ... */
 .rbc-header {
   padding: 12px 3px;
   text-align: center;
@@ -248,81 +165,8 @@ input[type="date"] {
   border-top: 1px solid rgb(var(--border-subtle) / 0.3);
 }
 
-
-/* Day cells */
-.rbc-date-cell {
-  padding: 6px;
-  text-align: right;
-  color: rgb(var(--text-secondary));
-}
-.rbc-date-cell.rbc-now {
-    font-weight: 600;
-    color: rgb(var(--primary));
-}
-
-
-/* Today's Date Highlight */
-.rbc-day-bg.rbc-today {
-  background-color: rgb(var(--primary) / 0.08);
-}
-
-/* Days outside of the current month */
-.rbc-off-range-bg {
-  background: repeating-linear-gradient(
-    -45deg,
-    transparent,
-    transparent 4px,
-    rgb(var(--border-subtle) / 0.05) 4px,
-    rgb(var(--border-subtle) / 0.05) 5px
-  );
-}
-.rbc-off-range .rbc-date-cell {
-  color: rgb(var(--text-secondary) / 0.4);
-}
-
-/* Events */
-.rbc-event {
-  border: none;
-  box-shadow: none;
-  border-radius: 6px;
-  padding: 4px 8px;
-  background-color: rgb(var(--primary));
-  color: white;
-  font-size: 13px;
-  transition: all 0.2s ease-in-out;
-}
-
-.rbc-event:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.rbc-event.rbc-selected {
-  background-color: rgb(var(--primary-active));
-}
-
-.rbc-show-more {
-  color: rgb(var(--primary));
-  font-size: 12px;
-}
-
-/* Agenda View */
-.rbc-agenda-view table.rbc-agenda-table {
-  border: 1px solid rgb(var(--border-subtle) / 0.3);
-  border-radius: 10px;
-}
-.rbc-agenda-view table.rbc-agenda-table thead {
-    display: none;
-}
-.rbc-agenda-view table.rbc-agenda-table tbody > tr:first-child > td {
-    padding-top: 12px;
-}
-
-.rbc-agenda-date-cell, .rbc-agenda-time-cell {
-    border-right: 1px solid rgb(var(--border-subtle) / 0.3);
-}
-.rbc-agenda-date-cell {
-    font-weight: 600;
+.rbc-today {
+  background-color: rgb(var(--hover-bg)) !important;
 }
 
 /* --- React Grid Layout Overrides --- */
@@ -350,18 +194,15 @@ input[type="date"] {
   transition: none;
   z-index: 3;
   will-change: transform;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.25);
 }
 
 .react-grid-item.react-grid-placeholder {
   background: rgb(var(--primary) / 0.1);
-  border: 2px dashed rgb(var(--primary) / 0.5);
-  border-radius: 16px; /* --rounded-card */
+  border: 1px dashed rgb(var(--primary) / 0.5);
+  border-radius: var(--radius-lg);
   transition-duration: 100ms;
   z-index: 2;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -o-user-select: none;
   user-select: none;
 }
 
@@ -372,23 +213,30 @@ input[type="date"] {
   bottom: 0px;
   right: 0px;
   cursor: se-resize;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><circle cx="5" cy="5" r="5" fill="rgba(0, 0, 0, 0.4)"/></svg>');
-  background-position: bottom right;
-  background-repeat: no-repeat;
+  background-image: none;
+  opacity: 0;
+  transition: opacity 0.2s;
 }
-.dark .react-grid-item > .react-resizable-handle {
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><circle cx="5" cy="5" r="5" fill="rgba(255, 255, 255, 0.4)"/></svg>');
+
+.layout.is-editing .react-grid-item > .react-resizable-handle {
+  opacity: 1;
+  z-index: 10; /* Ensure handle is on top of card content */
 }
+
 .react-grid-item > .react-resizable-handle::after {
     content: "";
     position: absolute;
-    right: 3px;
-    bottom: 3px;
-    width: 5px;
-    height: 5px;
+    right: 4px;
+    bottom: 4px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid rgb(var(--text-secondary) / 0.5);
+    border-bottom: 2px solid rgb(var(--text-secondary) / 0.5);
+    transform: rotate(45deg);
 }
+
 
 .layout.is-editing .react-grid-item > div {
     border: 1px dashed rgb(var(--primary) / 0.5);
-    border-radius: 16px; /* --rounded-card */
+    border-radius: var(--radius-lg);
 }

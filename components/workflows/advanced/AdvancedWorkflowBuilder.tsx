@@ -10,7 +10,8 @@ import toast from 'react-hot-toast';
 import WorkflowCanvas from './WorkflowCanvas';
 import Toolbox from './Toolbox';
 import ConfigPanel from './ConfigPanel';
-import Card from '../../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
+import { Card } from '../../ui/Card';
 
 interface AdvancedWorkflowBuilderProps {
     workflow: AdvancedWorkflow | null;

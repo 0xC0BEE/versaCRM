@@ -1,7 +1,8 @@
 import React from 'react';
 // FIX: Corrected the import path for types to be a valid relative path.
 import { FinancialReportData } from '../../types';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card, CardHeader, CardTitle, CardContent }' and refactored usage to resolve module export error.
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import KpiCard from '../dashboard/KpiCard';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
@@ -20,30 +21,35 @@ const FinancialReport: React.FC<FinancialReportProps> = ({ data }) => {
                 <KpiCard title="Net Balance" value={data.netBalance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} iconName="Scale" />
             </div>
 
-             <Card title="Payments by Method">
-                <div style={{ width: '100%', height: 350 }}>
-                    <ResponsiveContainer>
-                        <PieChart>
-                            <Pie
-                                data={data.paymentsByMethod}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                outerRadius={120}
-                                fill="#8884d8"
-                                dataKey="amount"
-                                nameKey="name"
-                                label
-                            >
-                                {data.paymentsByMethod.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip formatter={(value) => (value as number).toLocaleString('en-US', { style: 'currency', currency: 'USD' })} />
-                            <Legend />
-                        </PieChart>
-                    </ResponsiveContainer>
-                </div>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Payments by Method</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div style={{ width: '100%', height: 350 }}>
+                        <ResponsiveContainer>
+                            <PieChart>
+                                <Pie
+                                    data={data.paymentsByMethod}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    outerRadius={120}
+                                    fill="#8884d8"
+                                    dataKey="amount"
+                                    nameKey="name"
+                                    label
+                                >
+                                    {data.paymentsByMethod.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip formatter={(value) => (value as number).toLocaleString('en-US', { style: 'currency', currency: 'USD' })} />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </CardContent>
             </Card>
         </div>
     );

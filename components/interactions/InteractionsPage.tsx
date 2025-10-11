@@ -1,7 +1,9 @@
 
+
 import React from 'react';
 import PageWrapper from '../layout/PageWrapper';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
+import { Card } from '../ui/Card';
 // FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import InteractionsTimeline from '../common/InteractionsTimeline';

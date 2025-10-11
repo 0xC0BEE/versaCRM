@@ -6,7 +6,8 @@ import { ArrowLeft, Code, TestTube2, Edit } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
+import { Card } from '../ui/Card';
 import FormToolbox from './FormToolbox';
 import FormPreview from './FormPreview';
 import Input from '../ui/Input';

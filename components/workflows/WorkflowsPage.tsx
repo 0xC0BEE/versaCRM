@@ -1,7 +1,9 @@
 
+
 import React, { useState, useMemo } from 'react';
 import PageWrapper from '../layout/PageWrapper';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
+import { Card } from '../ui/Card';
 import Button from '../ui/Button';
 import { Plus, Zap, Code, Trash2, TestTube2 } from 'lucide-react';
 // FIX: Corrected import path for DataContext.

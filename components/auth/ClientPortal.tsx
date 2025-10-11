@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LogOut } from 'lucide-react';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
+import { Card } from '../ui/Card';
 import Tabs from '../ui/Tabs';
 import ClientProfileTab from './client_portal/ProfileTab';
 import ClientHistoryTab from './client_portal/HistoryTab';

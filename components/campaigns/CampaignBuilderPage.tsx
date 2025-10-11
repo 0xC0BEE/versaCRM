@@ -7,7 +7,8 @@ import { ArrowLeft } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
+import { Card } from '../ui/Card';
 import JourneyToolbox from './journey/Toolbox';
 import JourneyCanvas from './journey/JourneyCanvas';
 import JourneyConfigPanel from './journey/ConfigPanel';

@@ -5,7 +5,8 @@ import { ArrowLeft } from 'lucide-react';
 import Button from '../ui/Button';
 import { useData } from '../../contexts/DataContext';
 import KpiCard from '../dashboard/KpiCard';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card, CardHeader, CardTitle, CardContent }' and refactored usage to resolve module export error.
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import CampaignFunnelChart from './CampaignFunnelChart';
 import CampaignEngagementTimeline from './CampaignEngagementTimeline';
 import Tabs from '../ui/Tabs';
@@ -89,11 +90,21 @@ const CampaignReportPage: React.FC<CampaignReportPageProps> = ({ campaign, onBac
                 </div>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <Card title="Campaign Funnel">
-                        <CampaignFunnelChart stats={campaign.stats} />
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Campaign Funnel</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CampaignFunnelChart stats={campaign.stats} />
+                        </CardContent>
                     </Card>
-                     <Card title="Engagement Timeline (First 48h)">
-                        <CampaignEngagementTimeline interactions={interactions} campaignStartDate={new Date()} />
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Engagement Timeline (First 48h)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CampaignEngagementTimeline interactions={interactions} campaignStartDate={new Date()} />
+                        </CardContent>
                     </Card>
                 </div>
 

@@ -1,7 +1,9 @@
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import PageWrapper from '../layout/PageWrapper';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card, CardHeader, CardTitle, CardContent }' and refactored usage to resolve module export error.
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import Button from '../ui/Button';
 import { Download, Plus, Check, Edit, Trash2, Eye } from 'lucide-react';
 // FIX: Corrected import path for DataContext.
@@ -145,35 +147,40 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
                 </div>
             </Card>
 
-            <Card title="My Custom Reports" className="mt-6">
-                 {customReports.length > 0 ? (
-                    <div className="divide-y divide-border-subtle">
-                        {(customReports as CustomReport[]).map((report: CustomReport) => {
-                            const widgetExists = dashboardWidgets.some((w: any) => w.reportId === report.id);
-                            return (
-                                <div key={report.id} className="p-3 flex justify-between items-center">
-                                    <p className="font-medium">{report.name}</p>
-                                    <div className="flex items-center gap-2">
-                                        <Button 
-                                            size="sm" 
-                                            variant="secondary"
-                                            onClick={() => addDashboardWidgetMutation.mutate(report.id)}
-                                            disabled={widgetExists || addDashboardWidgetMutation.isPending}
-                                            leftIcon={widgetExists ? <Check size={14} /> : <Plus size={14} />}
-                                        >
-                                            {widgetExists ? 'Added' : 'Add to Dashboard'}
-                                        </Button>
-                                        <Button size="sm" variant="secondary" onClick={() => handlePreview(report)}><Eye size={14} /></Button>
-                                        <Button size="sm" variant="secondary" onClick={() => handleEdit(report)}><Edit size={14} /></Button>
-                                        <Button size="sm" variant="danger" onClick={() => handleDelete(report.id)} disabled={deleteCustomReportMutation.isPending}><Trash2 size={14} /></Button>
+            <Card className="mt-6">
+                <CardHeader>
+                    <CardTitle>My Custom Reports</CardTitle>
+                </CardHeader>
+                <div className="border-t border-border-subtle">
+                    {customReports.length > 0 ? (
+                        <div className="divide-y divide-border-subtle">
+                            {(customReports as CustomReport[]).map((report: CustomReport) => {
+                                const widgetExists = dashboardWidgets.some((w: any) => w.reportId === report.id);
+                                return (
+                                    <div key={report.id} className="p-4 px-6 flex justify-between items-center">
+                                        <p className="font-medium">{report.name}</p>
+                                        <div className="flex items-center gap-2">
+                                            <Button 
+                                                size="sm" 
+                                                variant="secondary"
+                                                onClick={() => addDashboardWidgetMutation.mutate(report.id)}
+                                                disabled={widgetExists || addDashboardWidgetMutation.isPending}
+                                                leftIcon={widgetExists ? <Check size={14} /> : <Plus size={14} />}
+                                            >
+                                                {widgetExists ? 'Added' : 'Add to Dashboard'}
+                                            </Button>
+                                            <Button size="sm" variant="secondary" onClick={() => handlePreview(report)}><Eye size={14} /></Button>
+                                            <Button size="sm" variant="secondary" onClick={() => handleEdit(report)}><Edit size={14} /></Button>
+                                            <Button size="sm" variant="danger" onClick={() => handleDelete(report.id)} disabled={deleteCustomReportMutation.isPending}><Trash2 size={14} /></Button>
+                                        </div>
                                     </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                ) : (
-                    <p className="text-sm text-text-secondary text-center p-6">You haven't created any custom reports yet.</p>
-                )}
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-text-secondary text-center p-6">You haven't created any custom reports yet.</p>
+                    )}
+                </div>
             </Card>
             
             {isPreviewModalOpen && selectedReport && (

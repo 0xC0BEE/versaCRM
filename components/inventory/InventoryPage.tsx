@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PageWrapper from '../layout/PageWrapper';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
+import { Card } from '../ui/Card';
 import Tabs from '../ui/Tabs';
 import ProductsTab from './ProductsTab';
 import SuppliersTab from './SuppliersTab';

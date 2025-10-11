@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import PageWrapper from '../layout/PageWrapper';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
+import { Card } from '../ui/Card';
 import Button from '../ui/Button';
 import { useData } from '../../contexts/DataContext';
 import { AppMarketplaceItem, InstalledApp } from '../../types';
@@ -27,7 +28,7 @@ const AppMarketplacePage: React.FC = () => {
             {(marketplaceApps as AppMarketplaceItem[]).map(app => {
                 const isInstalled = installedAppMap.has(app.id);
                 return (
-                    <Card key={app.id} className="flex flex-col">
+                    <Card key={app.id} className="flex flex-col p-4">
                         <div className="flex items-start gap-4">
                             <img src={app.logo} alt={`${app.name} logo`} className="w-12 h-12 flex-shrink-0" />
                             <div>

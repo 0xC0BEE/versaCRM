@@ -8,7 +8,8 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
+import { Card } from '../ui/Card';
 import MultiSelect from '../ui/MultiSelect';
 import { useQuery } from '@tanstack/react-query';
 // FIX: Corrected import path for apiClient.
@@ -127,7 +128,8 @@ const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ repor
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card title="Report Configuration" className="lg:col-span-1">
+                <Card className="lg:col-span-1 p-6">
+                    <h2 className="text-xl font-semibold mb-4">Report Configuration</h2>
                     <div className="space-y-4">
                         <Select id="dataSource" label="Data Source" value={config.dataSource} onChange={e => handleConfigChange('dataSource', e.target.value)}>
                             <option value="contacts">Contacts</option>
@@ -184,7 +186,8 @@ const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ repor
                     </div>
                 </Card>
 
-                <Card title="Live Preview" className="lg:col-span-2">
+                <Card className="lg:col-span-2 p-6">
+                    <h2 className="text-xl font-semibold mb-4">Live Preview</h2>
                     {isPreviewLoading ? (
                         <div className="h-96 flex items-center justify-center">Loading preview...</div>
                     ) : !previewData || previewData.length === 0 ? (

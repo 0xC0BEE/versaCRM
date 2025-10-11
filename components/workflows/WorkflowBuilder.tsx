@@ -11,7 +11,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from '../../hooks/useForm';
 import { useApp } from '../../contexts/AppContext';
 import toast from 'react-hot-toast';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
+import { Card } from '../ui/Card';
 
 interface WorkflowBuilderProps {
     workflow: Workflow | null;

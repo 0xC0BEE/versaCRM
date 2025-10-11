@@ -3,7 +3,8 @@ import { useApp } from '../../contexts/AppContext';
 import { useData } from '../../contexts/DataContext';
 import { CustomObjectRecord, CustomObjectDefinition } from '../../types';
 import PageWrapper from '../layout/PageWrapper';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
+import { Card } from '../ui/Card';
 import Button from '../ui/Button';
 import { Plus } from 'lucide-react';
 import CustomObjectEditModal from './CustomObjectEditModal';

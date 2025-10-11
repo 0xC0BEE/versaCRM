@@ -3,7 +3,7 @@ import {
     BarChart, Bar, LineChart, Line, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
 } from 'recharts';
 import { useTheme } from '../../contexts/ThemeContext';
-import Card from '../ui/Card';
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 
 interface DynamicChartProps {
     type: 'bar' | 'line' | 'pie';
@@ -96,12 +96,15 @@ const DynamicChart: React.FC<DynamicChartProps> = ({ type, data, title }) => {
     };
     
     return (
-        <Card title={title} className="h-full" contentClassName="p-2 pt-0 flex-grow">
-            <div className="h-full w-full">
+        <Card className="h-full flex flex-col">
+            <CardHeader>
+                <CardTitle>{title}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-grow h-full w-full p-2 pt-0">
                 <ResponsiveContainer width="100%" height="100%">
                     {renderChart()}
                 </ResponsiveContainer>
-            </div>
+            </CardContent>
         </Card>
     );
 };

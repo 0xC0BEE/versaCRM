@@ -6,7 +6,8 @@ import LoadingSpinner from '../ui/LoadingSpinner';
 import KpiCard from './KpiCard';
 import { Task, Deal, CalendarEvent, DealStage } from '../../types';
 import { format, isFuture } from 'date-fns';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card, CardHeader, CardTitle, CardContent }' and refactored usage to resolve module export error.
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { useApp } from '../../contexts/AppContext';
 import Button from '../ui/Button';
 
@@ -52,48 +53,58 @@ const TeamMemberDashboard: React.FC<TeamMemberDashboardProps> = ({ isTabbedView 
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card title="My Pending Tasks">
-                    <div className="max-h-96 overflow-y-auto">
-                        {pendingTasks.length > 0 ? (
-                            <ul className="divide-y divide-border-subtle">
-                                {pendingTasks.slice(0, 10).map(task => (
-                                    <li key={task.id} className="py-3">
-                                        <p className="text-sm font-medium text-text-primary">{task.title}</p>
-                                        <p className="text-xs text-text-secondary">Due: {format(new Date(task.dueDate), 'PP')}</p>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-sm text-text-secondary py-4 text-center">No pending tasks!</p>
-                        )}
-                        {pendingTasks.length > 10 && (
-                             <div className="text-center mt-4">
-                                <Button size="sm" variant="secondary" onClick={() => setCurrentPage('Tasks')}>View All</Button>
-                            </div>
-                        )}
-                    </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>My Pending Tasks</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="max-h-96 overflow-y-auto">
+                            {pendingTasks.length > 0 ? (
+                                <ul className="divide-y divide-border-subtle">
+                                    {pendingTasks.slice(0, 10).map(task => (
+                                        <li key={task.id} className="py-3">
+                                            <p className="text-sm font-medium text-text-primary">{task.title}</p>
+                                            <p className="text-xs text-text-secondary">Due: {format(new Date(task.dueDate), 'PP')}</p>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-text-secondary py-4 text-center">No pending tasks!</p>
+                            )}
+                            {pendingTasks.length > 10 && (
+                                <div className="text-center mt-4">
+                                    <Button size="sm" variant="secondary" onClick={() => setCurrentPage('Tasks')}>View All</Button>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
                 </Card>
 
-                <Card title="My Upcoming Appointments">
-                     <div className="max-h-96 overflow-y-auto">
-                        {upcomingAppointments.length > 0 ? (
-                             <ul className="divide-y divide-border-subtle">
-                                {upcomingAppointments.slice(0, 10).map(event => (
-                                    <li key={event.id} className="py-3">
-                                        <p className="text-sm font-medium text-text-primary">{event.title}</p>
-                                        <p className="text-xs text-text-secondary">{format(new Date(event.start), 'Pp')}</p>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-sm text-text-secondary py-4 text-center">No upcoming appointments.</p>
-                        )}
-                        {upcomingAppointments.length > 10 && (
-                            <div className="text-center mt-4">
-                                <Button size="sm" variant="secondary" onClick={() => setCurrentPage('Calendar')}>View Calendar</Button>
-                            </div>
-                        )}
-                    </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>My Upcoming Appointments</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="max-h-96 overflow-y-auto">
+                            {upcomingAppointments.length > 0 ? (
+                                <ul className="divide-y divide-border-subtle">
+                                    {upcomingAppointments.slice(0, 10).map(event => (
+                                        <li key={event.id} className="py-3">
+                                            <p className="text-sm font-medium text-text-primary">{event.title}</p>
+                                            <p className="text-xs text-text-secondary">{format(new Date(event.start), 'Pp')}</p>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-text-secondary py-4 text-center">No upcoming appointments.</p>
+                            )}
+                            {upcomingAppointments.length > 10 && (
+                                <div className="text-center mt-4">
+                                    <Button size="sm" variant="secondary" onClick={() => setCurrentPage('Calendar')}>View Calendar</Button>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
                 </Card>
             </div>
         </div>

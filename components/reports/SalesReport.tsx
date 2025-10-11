@@ -1,7 +1,8 @@
 import React from 'react';
 // FIX: Corrected the import path for types to be a valid relative path.
 import { SalesReportData } from '../../types';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card, CardHeader, CardTitle }' and refactored usage to resolve module export error.
+import { Card, CardHeader, CardTitle } from '../ui/Card';
 import KpiCard from '../dashboard/KpiCard';
 
 interface SalesReportProps {
@@ -17,28 +18,33 @@ const SalesReport: React.FC<SalesReportProps> = ({ data }) => {
                 <KpiCard title="Average Order Value" value={data.averageOrderValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} iconName="Percent" />
             </div>
 
-            <Card title="Sales by Product" className="overflow-x-auto">
-                 <table className="w-full text-sm text-left text-text-secondary">
-                    <thead className="text-xs text-text-secondary uppercase bg-card-bg/50">
-                        <tr>
-                            <th scope="col" className="px-6 py-3">Product Name</th>
-                            <th scope="col" className="px-6 py-3">Quantity Sold</th>
-                            <th scope="col" className="px-6 py-3">Total Revenue</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data.salesByProduct.map(product => (
-                            <tr key={product.name} className="border-b border-border-subtle">
-                                <td className="px-6 py-4 font-medium text-text-primary">{product.name}</td>
-                                <td className="px-6 py-4">{product.quantity}</td>
-                                <td className="px-6 py-4">{product.revenue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Sales by Product</CardTitle>
+                </CardHeader>
+                <div className="overflow-x-auto border-t border-border-subtle">
+                    <table className="w-full text-sm text-left text-text-secondary">
+                        <thead className="text-xs text-text-secondary uppercase bg-card-bg/50">
+                            <tr>
+                                <th scope="col" className="px-6 py-3">Product Name</th>
+                                <th scope="col" className="px-6 py-3">Quantity Sold</th>
+                                <th scope="col" className="px-6 py-3">Total Revenue</th>
                             </tr>
-                        ))}
-                         {data.salesByProduct.length === 0 && (
-                            <tr><td colSpan={3} className="text-center p-8">No product sales in this period.</td></tr>
-                         )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {data.salesByProduct.map(product => (
+                                <tr key={product.name} className="border-b border-border-subtle">
+                                    <td className="px-6 py-4 font-medium text-text-primary">{product.name}</td>
+                                    <td className="px-6 py-4">{product.quantity}</td>
+                                    <td className="px-6 py-4">{product.revenue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
+                                </tr>
+                            ))}
+                            {data.salesByProduct.length === 0 && (
+                                <tr><td colSpan={3} className="text-center p-8">No product sales in this period.</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </Card>
         </div>
     );

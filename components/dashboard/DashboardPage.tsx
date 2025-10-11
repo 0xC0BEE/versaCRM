@@ -1,11 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import { useData } from '../../contexts/DataContext';
 import { useApp } from '../../contexts/AppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import KpiCard from './KpiCard';
-import Card from '../ui/Card';
+import { Card } from '../ui/Card';
 import DynamicChart from './DynamicChart';
 import AiInsightsCard from './AiInsightsCard';
 import TeamMemberDashboard from './TeamMemberDashboard';
@@ -19,7 +19,7 @@ import { Responsive, WidthProvider } from 'react-grid-layout';
 import { defaultLayouts } from '../../config/layouts';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import Button from '../ui/Button';
-import { Layout, Plus, Edit, Save, RefreshCw } from 'lucide-react';
+import { Plus, Edit, Save, RefreshCw } from 'lucide-react';
 import Select from '../ui/Select';
 import Modal from '../ui/Modal';
 import toast from 'react-hot-toast';
@@ -29,7 +29,7 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 type Layouts = { [key: string]: DashboardLayout[] };
 
 const DashboardPage: React.FC = () => {
-    const { authenticatedUser } = useAuth();
+    const { authenticatedUser, hasPermission } = useAuth();
     const { industryConfig, setCurrentPage, setReportToEditId } = useApp();
     const { dashboardDataQuery, contactsQuery, customReportsQuery, dashboardWidgetsQuery, removeDashboardWidgetMutation, addDashboardWidgetMutation } = useData();
 
@@ -38,15 +38,17 @@ const DashboardPage: React.FC = () => {
     
     const [isEditMode, setIsEditMode] = useState(false);
     const [isAddWidgetModalOpen, setIsAddWidgetModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState('Organization');
 
     const { data: dashboardData, isLoading: isDashboardLoading } = dashboardDataQuery;
     const { data: contacts = [], isLoading: isContactsLoading } = contactsQuery;
     const { data: customReports = [] } = customReportsQuery;
     const { data: widgets = [], isLoading: isWidgetsLoading } = dashboardWidgetsQuery;
     
+    const canSeeOrgDashboard = hasPermission('settings:access');
+
     const currentLayouts = useMemo(() => {
         const layoutsForActiveKey = userLayouts[activeLayoutKey] || defaultLayouts[activeLayoutKey];
-        // Ensure every item in the layout corresponds to an existing widget
         const allWidgetIds = new Set([
             ...industryConfig.dashboard.kpis.map(k => `kpi-${k.key}`),
             ...industryConfig.dashboard.charts.map(c => `chart-${c.dataKey}`),
@@ -139,7 +141,6 @@ const DashboardPage: React.FC = () => {
                 const newLayouts = { ...currentLayouts };
                 const newLayoutItemBase = { i: newWidget.widgetId, y: Infinity };
 
-                // Add to each breakpoint with appropriate widths, placing at the bottom
                 newLayouts.lg = [...(newLayouts.lg || []), { ...newLayoutItemBase, x: (newLayouts.lg.length * 6) % 12, w: 6, h: 8 }];
                 newLayouts.md = [...(newLayouts.md || []), { ...newLayoutItemBase, x: (newLayouts.md.length * 5) % 10, w: 5, h: 8 }];
                 newLayouts.sm = [...(newLayouts.sm || []), { ...newLayoutItemBase, x: 0, w: 6, h: 8 }];
@@ -159,7 +160,6 @@ const DashboardPage: React.FC = () => {
     
     const allItems = useMemo(() => {
         const itemIds = new Set<string>();
-        // FIX: Replaced `Object.values().forEach()` with a `for...in` loop to ensure proper type inference for `layout`, resolving a TypeScript error where `layout` was typed as `unknown`.
         for (const breakpoint in currentLayouts) {
             const layout = currentLayouts[breakpoint];
             layout.forEach(item => itemIds.add(item.i));
@@ -167,13 +167,14 @@ const DashboardPage: React.FC = () => {
         return Array.from(itemIds);
     }, [currentLayouts]);
 
-
     const isLoading = isDashboardLoading || isContactsLoading || isWidgetsLoading;
-    if (isLoading) return <LoadingSpinner />;
-    if (!dashboardData) return <div>No dashboard data available.</div>;
 
-    return (
-        <PageWrapper>
+    if (!canSeeOrgDashboard) {
+        return <TeamMemberDashboard />;
+    }
+
+    const renderOrgDashboard = () => (
+        <>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-text-heading">Organization Dashboard</h1>
                 <div className="flex items-center gap-2">
@@ -196,24 +197,36 @@ const DashboardPage: React.FC = () => {
                 </div>
             </div>
             
-            <ResponsiveGridLayout
-                className={`layout ${isEditMode ? 'is-editing' : ''}`}
-                layouts={currentLayouts}
-                breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-                rowHeight={30}
-                onLayoutChange={onLayoutChange}
-                isDraggable={isEditMode}
-                isResizable={isEditMode}
-                margin={[16, 16]}
-                containerPadding={[0, 0]}
-            >
-                {allItems.map(itemId => (
-                    <div key={itemId}>
-                       {renderWidget(itemId)}
-                    </div>
-                ))}
-            </ResponsiveGridLayout>
+            {isLoading ? <LoadingSpinner /> : (
+                <ResponsiveGridLayout
+                    className={`layout ${isEditMode ? 'is-editing' : ''}`}
+                    layouts={currentLayouts}
+                    breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                    cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+                    rowHeight={30}
+                    onLayoutChange={onLayoutChange}
+                    isDraggable={isEditMode}
+                    isResizable={isEditMode}
+                    margin={[16, 16]}
+                    containerPadding={[0, 0]}
+                >
+                    {allItems.map(itemId => (
+                        <div key={itemId}>
+                           {renderWidget(itemId)}
+                        </div>
+                    ))}
+                </ResponsiveGridLayout>
+            )}
+        </>
+    );
+
+    return (
+        <PageWrapper>
+            <div className="mb-6 border-b border-border-subtle">
+                <Tabs tabs={["Organization", "My Dashboard"]} activeTab={activeTab} setActiveTab={setActiveTab} />
+            </div>
+            
+            {activeTab === 'Organization' ? renderOrgDashboard() : <TeamMemberDashboard isTabbedView />}
 
             <Modal
                 isOpen={isAddWidgetModalOpen}

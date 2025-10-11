@@ -3,22 +3,16 @@ import React, { InputHTMLAttributes } from 'react';
 interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
     label?: string;
     id: string;
-    inputSize?: 'md' | 'lg';
 }
 
-const Input: React.FC<InputProps> = ({ label, id, className, inputSize = 'md', ...props }) => {
+const Input: React.FC<InputProps> = ({ label, id, className, ...props }) => {
     
-    const sizeClasses = {
-        md: "px-3 py-2 sm:text-sm", // 14px
-        lg: "p-3 text-base", // 15px
-    };
-
-    const baseClasses = `mt-1 block w-full bg-card-bg/50 border border-border-subtle rounded-input shadow-sm-new placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-slate-500/10 disabled:cursor-not-allowed transition-all ${sizeClasses[inputSize]}`;
+    const baseClasses = `flex h-10 w-full rounded-md border border-border-subtle bg-card-bg px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`;
 
     return (
         <div className={className}>
             {label && (
-                <label htmlFor={id} className="block text-sm font-medium text-text-primary">
+                <label htmlFor={id} className="block text-sm font-medium text-text-primary mb-1">
                     {label} {props.required && <span className="text-error">*</span>}
                 </label>
             )}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PageWrapper from '../layout/PageWrapper';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
+import { Card } from '../ui/Card';
 import KBSidebar from './KBSidebar';
 import KBArticle from './KBArticle';
 import { kbArticles } from '../../config/kbContent';

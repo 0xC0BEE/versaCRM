@@ -1,6 +1,7 @@
 import React from 'react';
 import { ContactsReportData } from '../../types';
-import Card from '../ui/Card';
+// FIX: Changed default import of 'Card' to a named import '{ Card, CardHeader, CardTitle, CardContent }' and refactored usage to resolve module export error.
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import KpiCard from '../dashboard/KpiCard';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useApp } from '../../contexts/AppContext';
@@ -25,55 +26,65 @@ const ContactsReport: React.FC<ContactsReportProps> = ({ data }) => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card title={`${industryConfig.contactNamePlural} by Status`}>
-                    <div style={{ width: '100%', height: 300 }}>
-                        <ResponsiveContainer>
-                            <BarChart data={data.contactsByStatus}>
-                                 <defs>
-                                    <linearGradient id="contactsStatus" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.7}/>
-                                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1}/>
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke={strokeColor} />
-                                <XAxis dataKey="name" tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
-                                <YAxis tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: isDark ? '#1f2937' : '#ffffff',
-                                        border: `1px solid ${strokeColor}`,
-                                        borderRadius: 'var(--radius-input)'
-                                    }}
-                                />
-                                <Bar dataKey="count" fill="url(#contactsStatus)" name="Count" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{`${industryConfig.contactNamePlural} by Status`}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div style={{ width: '100%', height: 300 }}>
+                            <ResponsiveContainer>
+                                <BarChart data={data.contactsByStatus}>
+                                    <defs>
+                                        <linearGradient id="contactsStatus" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#8884d8" stopOpacity={0.7}/>
+                                            <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={strokeColor} />
+                                    <XAxis dataKey="name" tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                    <YAxis tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: isDark ? '#1f2937' : '#ffffff',
+                                            border: `1px solid ${strokeColor}`,
+                                            borderRadius: 'var(--radius-input)'
+                                        }}
+                                    />
+                                    <Bar dataKey="count" fill="url(#contactsStatus)" name="Count" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </CardContent>
                 </Card>
-                <Card title={`${industryConfig.contactNamePlural} by Lead Source`}>
-                    <div style={{ width: '100%', height: 300 }}>
-                        <ResponsiveContainer>
-                            <BarChart data={data.contactsByLeadSource}>
-                                 <defs>
-                                    <linearGradient id="leadSource" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.7}/>
-                                        <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.1}/>
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke={strokeColor} />
-                                <XAxis dataKey="name" tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
-                                <YAxis tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: isDark ? '#1f2937' : '#ffffff',
-                                        border: `1px solid ${strokeColor}`,
-                                        borderRadius: 'var(--radius-input)'
-                                    }}
-                                />
-                                <Bar dataKey="count" fill="url(#leadSource)" name="Count" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{`${industryConfig.contactNamePlural} by Lead Source`}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div style={{ width: '100%', height: 300 }}>
+                            <ResponsiveContainer>
+                                <BarChart data={data.contactsByLeadSource}>
+                                    <defs>
+                                        <linearGradient id="leadSource" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.7}/>
+                                            <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.1}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={strokeColor} />
+                                    <XAxis dataKey="name" tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                    <YAxis tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: isDark ? '#1f2937' : '#ffffff',
+                                            border: `1px solid ${strokeColor}`,
+                                            borderRadius: 'var(--radius-input)'
+                                        }}
+                                    />
+                                    <Bar dataKey="count" fill="url(#leadSource)" name="Count" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </CardContent>
                 </Card>
             </div>
         </div>
