@@ -4,7 +4,8 @@ import apiClient from '../services/apiClient';
 import { useAuth } from './AuthContext';
 import {
     AnyContact, ContactStatus, Organization, User, CustomRole, Task, CalendarEvent, Product, Deal, DealStage, EmailTemplate, Interaction, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, Document, LandingPage, CustomReport, ReportDataSource, FilterCondition, DashboardWidget, Industry, Supplier, Warehouse, TicketReply, CustomObjectDefinition, CustomObjectRecord, AppMarketplaceItem, InstalledApp,
-    Order, Transaction, DashboardData
+    Order, Transaction, DashboardData,
+    Sandbox
 } from '../types';
 import toast from 'react-hot-toast';
 
@@ -40,6 +41,7 @@ interface DataContextType {
     marketplaceAppsQuery: any;
     installedAppsQuery: any;
     dashboardDataQuery: any;
+    sandboxesQuery: any;
 
     // Mutations
     createOrganizationMutation: any;
@@ -126,6 +128,9 @@ interface DataContextType {
     installAppMutation: any;
     uninstallAppMutation: any;
     handleNewChatMessageMutation: any;
+    createSandboxMutation: any;
+    refreshSandboxMutation: any;
+    deleteSandboxMutation: any;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -177,6 +182,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const customObjectRecordsQuery = (defId: string | null) => useQuery<CustomObjectRecord[], Error>({ queryKey: ['customObjectRecords', defId], queryFn: () => apiClient.getCustomObjectRecords(defId!), enabled: !!defId });
     const marketplaceAppsQuery = useQuery<AppMarketplaceItem[], Error>({ queryKey: ['marketplaceApps'], queryFn: () => apiClient.getMarketplaceApps(orgId!), enabled: !!orgId });
     const installedAppsQuery = useQuery<InstalledApp[], Error>({ queryKey: ['installedApps', orgId], queryFn: () => apiClient.getInstalledApps(orgId!), enabled: !!orgId });
+    const sandboxesQuery = useQuery<Sandbox[], Error>({ queryKey: ['sandboxes', orgId], queryFn: () => apiClient.getSandboxes(orgId!), enabled: !!orgId });
 
     // --- MUTATIONS ---
     const useGenericMutation = <TVariables, TData>(mutationFn: (variables: TVariables) => Promise<TData>, successKey: string | string[]) => useMutation<TData, Error, TVariables>({ mutationFn, onSuccess: onMutationSuccess(successKey), onError: onMutationError });
@@ -293,13 +299,41 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const uninstallAppMutation = useGenericMutation((id: string) => apiClient.uninstallApp(id), 'installedApps');
 
     const handleNewChatMessageMutation = useGenericMutation((vars: any) => apiClient.handleNewChatMessage(vars), ['tickets', 'contacts']);
+    
+    const createSandboxMutation = useMutation({
+        mutationFn: (vars: { orgId: string, name: string }) => apiClient.createSandbox(vars),
+        onSuccess: () => {
+            toast.success("Sandbox created successfully!");
+            queryClient.invalidateQueries({ queryKey: ['sandboxes'] });
+        },
+        onError: onMutationError,
+    });
+
+    const refreshSandboxMutation = useMutation({
+        mutationFn: (sandboxId: string) => apiClient.refreshSandbox(sandboxId),
+        onSuccess: () => {
+            toast.success("Sandbox refreshed successfully.");
+            queryClient.invalidateQueries({ queryKey: ['sandboxes'] });
+        },
+        onError: onMutationError,
+    });
+
+    const deleteSandboxMutation = useMutation({
+        mutationFn: (id: string) => apiClient.deleteSandbox(id),
+        onSuccess: () => {
+            toast.success("Sandbox deleted successfully.");
+            queryClient.invalidateQueries({ queryKey: ['sandboxes'] });
+        },
+        onError: onMutationError,
+    });
+
 
     const value = useMemo(() => ({
-        organizationsQuery, contactsQuery, teamMembersQuery, rolesQuery, tasksQuery, calendarEventsQuery, productsQuery, suppliersQuery, warehousesQuery, dealStagesQuery, dealsQuery, emailTemplatesQuery, allInteractionsQuery, syncedEmailsQuery, workflowsQuery, advancedWorkflowsQuery, organizationSettingsQuery, apiKeysQuery, ticketsQuery, formsQuery, campaignsQuery, landingPagesQuery, customReportsQuery, dashboardWidgetsQuery, customObjectDefsQuery, customObjectRecordsQuery, marketplaceAppsQuery, installedAppsQuery, dashboardDataQuery,
-        createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation, createContactMutation, updateContactMutation, deleteContactMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation, createUserMutation, updateUserMutation, deleteUserMutation, createRoleMutation, updateRoleMutation, deleteRoleMutation, createInteractionMutation, updateInteractionMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createCalendarEventMutation, updateCalendarEventMutation, createProductMutation, updateProductMutation, deleteProductMutation, createSupplierMutation, updateSupplierMutation, deleteSupplierMutation, createWarehouseMutation, updateWarehouseMutation, deleteWarehouseMutation, createDealMutation, updateDealMutation, deleteDealMutation, createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation, updateCustomFieldsMutation, updateOrganizationSettingsMutation, recalculateAllScoresMutation, connectEmailMutation, disconnectEmailMutation, connectVoipMutation, disconnectVoipMutation, runEmailSyncMutation, createWorkflowMutation, updateWorkflowMutation, createAdvancedWorkflowMutation, updateAdvancedWorkflowMutation, deleteAdvancedWorkflowMutation, createApiKeyMutation, deleteApiKeyMutation, createTicketMutation, updateTicketMutation, addTicketReplyMutation, createFormMutation, updateFormMutation, deleteFormMutation, submitPublicFormMutation, createCampaignMutation, updateCampaignMutation, launchCampaignMutation, advanceDayMutation, createLandingPageMutation, updateLandingPageMutation, deleteLandingPageMutation, trackPageViewMutation, createCustomReportMutation, updateCustomReportMutation, deleteCustomReportMutation, addDashboardWidgetMutation, removeDashboardWidgetMutation, createOrderMutation, updateOrderMutation, deleteOrderMutation, createTransactionMutation, createCustomObjectDefMutation, updateCustomObjectDefMutation, deleteCustomObjectDefMutation, createCustomObjectRecordMutation, updateCustomObjectRecordMutation, deleteCustomObjectRecordMutation, installAppMutation, uninstallAppMutation, handleNewChatMessageMutation
+        organizationsQuery, contactsQuery, teamMembersQuery, rolesQuery, tasksQuery, calendarEventsQuery, productsQuery, suppliersQuery, warehousesQuery, dealStagesQuery, dealsQuery, emailTemplatesQuery, allInteractionsQuery, syncedEmailsQuery, workflowsQuery, advancedWorkflowsQuery, organizationSettingsQuery, apiKeysQuery, ticketsQuery, formsQuery, campaignsQuery, landingPagesQuery, customReportsQuery, dashboardWidgetsQuery, customObjectDefsQuery, customObjectRecordsQuery, marketplaceAppsQuery, installedAppsQuery, dashboardDataQuery, sandboxesQuery,
+        createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation, createContactMutation, updateContactMutation, deleteContactMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation, createUserMutation, updateUserMutation, deleteUserMutation, createRoleMutation, updateRoleMutation, deleteRoleMutation, createInteractionMutation, updateInteractionMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createCalendarEventMutation, updateCalendarEventMutation, createProductMutation, updateProductMutation, deleteProductMutation, createSupplierMutation, updateSupplierMutation, deleteSupplierMutation, createWarehouseMutation, updateWarehouseMutation, deleteWarehouseMutation, createDealMutation, updateDealMutation, deleteDealMutation, createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation, updateCustomFieldsMutation, updateOrganizationSettingsMutation, recalculateAllScoresMutation, connectEmailMutation, disconnectEmailMutation, connectVoipMutation, disconnectVoipMutation, runEmailSyncMutation, createWorkflowMutation, updateWorkflowMutation, createAdvancedWorkflowMutation, updateAdvancedWorkflowMutation, deleteAdvancedWorkflowMutation, createApiKeyMutation, deleteApiKeyMutation, createTicketMutation, updateTicketMutation, addTicketReplyMutation, createFormMutation, updateFormMutation, deleteFormMutation, submitPublicFormMutation, createCampaignMutation, updateCampaignMutation, launchCampaignMutation, advanceDayMutation, createLandingPageMutation, updateLandingPageMutation, deleteLandingPageMutation, trackPageViewMutation, createCustomReportMutation, updateCustomReportMutation, deleteCustomReportMutation, addDashboardWidgetMutation, removeDashboardWidgetMutation, createOrderMutation, updateOrderMutation, deleteOrderMutation, createTransactionMutation, createCustomObjectDefMutation, updateCustomObjectDefMutation, deleteCustomObjectDefMutation, createCustomObjectRecordMutation, updateCustomObjectRecordMutation, deleteCustomObjectRecordMutation, installAppMutation, uninstallAppMutation, handleNewChatMessageMutation, createSandboxMutation, refreshSandboxMutation, deleteSandboxMutation
     }), [
-        organizationsQuery, contactsQuery, teamMembersQuery, rolesQuery, tasksQuery, calendarEventsQuery, productsQuery, suppliersQuery, warehousesQuery, dealStagesQuery, dealsQuery, emailTemplatesQuery, allInteractionsQuery, syncedEmailsQuery, workflowsQuery, advancedWorkflowsQuery, organizationSettingsQuery, apiKeysQuery, ticketsQuery, formsQuery, campaignsQuery, landingPagesQuery, customReportsQuery, dashboardWidgetsQuery, customObjectDefsQuery, customObjectRecordsQuery, marketplaceAppsQuery, installedAppsQuery, dashboardDataQuery,
-        createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation, createContactMutation, updateContactMutation, deleteContactMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation, createUserMutation, updateUserMutation, deleteUserMutation, createRoleMutation, updateRoleMutation, deleteRoleMutation, createInteractionMutation, updateInteractionMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createCalendarEventMutation, updateCalendarEventMutation, createProductMutation, updateProductMutation, deleteProductMutation, createSupplierMutation, updateSupplierMutation, deleteSupplierMutation, createWarehouseMutation, updateWarehouseMutation, deleteWarehouseMutation, createDealMutation, updateDealMutation, deleteDealMutation, createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation, updateCustomFieldsMutation, updateOrganizationSettingsMutation, recalculateAllScoresMutation, connectEmailMutation, disconnectEmailMutation, connectVoipMutation, disconnectVoipMutation, runEmailSyncMutation, createWorkflowMutation, updateWorkflowMutation, createAdvancedWorkflowMutation, updateAdvancedWorkflowMutation, deleteAdvancedWorkflowMutation, createApiKeyMutation, deleteApiKeyMutation, createTicketMutation, updateTicketMutation, addTicketReplyMutation, createFormMutation, updateFormMutation, deleteFormMutation, submitPublicFormMutation, createCampaignMutation, updateCampaignMutation, launchCampaignMutation, advanceDayMutation, createLandingPageMutation, updateLandingPageMutation, deleteLandingPageMutation, trackPageViewMutation, createCustomReportMutation, updateCustomReportMutation, deleteCustomReportMutation, addDashboardWidgetMutation, removeDashboardWidgetMutation, createOrderMutation, updateOrderMutation, deleteOrderMutation, createTransactionMutation, createCustomObjectDefMutation, updateCustomObjectDefMutation, deleteCustomObjectDefMutation, createCustomObjectRecordMutation, updateCustomObjectRecordMutation, deleteCustomObjectRecordMutation, installAppMutation, uninstallAppMutation, handleNewChatMessageMutation
+        organizationsQuery, contactsQuery, teamMembersQuery, rolesQuery, tasksQuery, calendarEventsQuery, productsQuery, suppliersQuery, warehousesQuery, dealStagesQuery, dealsQuery, emailTemplatesQuery, allInteractionsQuery, syncedEmailsQuery, workflowsQuery, advancedWorkflowsQuery, organizationSettingsQuery, apiKeysQuery, ticketsQuery, formsQuery, campaignsQuery, landingPagesQuery, customReportsQuery, dashboardWidgetsQuery, customObjectDefsQuery, customObjectRecordsQuery, marketplaceAppsQuery, installedAppsQuery, dashboardDataQuery, sandboxesQuery,
+        createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation, createContactMutation, updateContactMutation, deleteContactMutation, bulkDeleteContactsMutation, bulkUpdateContactStatusMutation, createUserMutation, updateUserMutation, deleteUserMutation, createRoleMutation, updateRoleMutation, deleteRoleMutation, createInteractionMutation, updateInteractionMutation, createTaskMutation, updateTaskMutation, deleteTaskMutation, createCalendarEventMutation, updateCalendarEventMutation, createProductMutation, updateProductMutation, deleteProductMutation, createSupplierMutation, updateSupplierMutation, deleteSupplierMutation, createWarehouseMutation, updateWarehouseMutation, deleteWarehouseMutation, createDealMutation, updateDealMutation, deleteDealMutation, createEmailTemplateMutation, updateEmailTemplateMutation, deleteEmailTemplateMutation, updateCustomFieldsMutation, updateOrganizationSettingsMutation, recalculateAllScoresMutation, connectEmailMutation, disconnectEmailMutation, connectVoipMutation, disconnectVoipMutation, runEmailSyncMutation, createWorkflowMutation, updateWorkflowMutation, createAdvancedWorkflowMutation, updateAdvancedWorkflowMutation, deleteAdvancedWorkflowMutation, createApiKeyMutation, deleteApiKeyMutation, createTicketMutation, updateTicketMutation, addTicketReplyMutation, createFormMutation, updateFormMutation, deleteFormMutation, submitPublicFormMutation, createCampaignMutation, updateCampaignMutation, launchCampaignMutation, advanceDayMutation, createLandingPageMutation, updateLandingPageMutation, deleteLandingPageMutation, trackPageViewMutation, createCustomReportMutation, updateCustomReportMutation, deleteCustomReportMutation, addDashboardWidgetMutation, removeDashboardWidgetMutation, createOrderMutation, updateOrderMutation, deleteOrderMutation, createTransactionMutation, createCustomObjectDefMutation, updateCustomObjectDefMutation, deleteCustomObjectDefMutation, createCustomObjectRecordMutation, updateCustomObjectRecordMutation, deleteCustomObjectRecordMutation, installAppMutation, uninstallAppMutation, handleNewChatMessageMutation, createSandboxMutation, refreshSandboxMutation, deleteSandboxMutation
     ]);
 
     return (

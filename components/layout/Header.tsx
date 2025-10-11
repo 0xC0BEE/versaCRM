@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Bell, LogOut, Menu, Search } from 'lucide-react';
+import { Bell, LogOut, Menu, Search, ChevronsUpDown, Check, FlaskConical } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import NotificationsPanel from './NotificationsPanel';
 import SmartSearchModal from '../search/SmartSearchModal';
 // FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
+import { useApp } from '../../contexts/AppContext';
 
 interface HeaderProps {
     toggleSidebar?: () => void;
@@ -15,14 +16,35 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     const { authenticatedUser, logout } = useAuth();
     const { unreadCount } = useNotifications();
     const { rolesQuery } = useData();
+    const { sandboxes, currentEnvironment, setCurrentEnvironment } = useApp();
     const { data: roles = [] } = rolesQuery;
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isEnvSwitcherOpen, setIsEnvSwitcherOpen] = useState(false);
 
     const roleName = roles.find((r: any) => r.id === authenticatedUser?.roleId)?.name || (authenticatedUser?.isClient ? 'Client' : '');
+    const isSandbox = currentEnvironment !== 'production';
+
+    const environments = [
+        { id: 'production', name: 'Production' },
+        ...sandboxes,
+    ];
+
+    const handleEnvChange = (envId: string) => {
+        if (envId !== currentEnvironment) {
+            setCurrentEnvironment(envId);
+        }
+        setIsEnvSwitcherOpen(false);
+    };
 
     return (
         <>
+            {isSandbox && (
+                <div className="bg-yellow-400 text-yellow-900 text-center text-sm font-semibold py-1.5 px-4 flex items-center justify-center gap-2">
+                    <FlaskConical size={14} />
+                    You are in Sandbox Mode. Changes here will not affect your live data.
+                </div>
+            )}
             <header className="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-card-bg shadow-sm border-b border-border-subtle">
                 <button
                     type="button"
@@ -66,6 +88,34 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                                 )}
                             </button>
                             {isNotificationsOpen && <NotificationsPanel onClose={() => setIsNotificationsOpen(false)} />}
+                        </div>
+
+                        {/* Environment Switcher */}
+                         <div className="relative ml-3">
+                            <button
+                                onClick={() => setIsEnvSwitcherOpen(!isEnvSwitcherOpen)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium hover:bg-hover-bg border border-transparent hover:border-border-subtle"
+                            >
+                                {isSandbox && <FlaskConical size={14} className="text-yellow-500"/>}
+                                <span className="max-w-[100px] truncate">{environments.find(e => e.id === currentEnvironment)?.name || 'Production'}</span>
+                                <ChevronsUpDown size={14} className="text-text-secondary" />
+                            </button>
+                             {isEnvSwitcherOpen && (
+                                <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md shadow-lg bg-card-bg ring-1 ring-border-subtle focus:outline-none z-20">
+                                    <div className="py-1">
+                                        {environments.map(env => (
+                                            <button
+                                                key={env.id}
+                                                onClick={() => handleEnvChange(env.id)}
+                                                className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-hover-bg flex items-center justify-between"
+                                            >
+                                                <span>{env.name}</span>
+                                                {currentEnvironment === env.id && <Check size={16} className="text-primary" />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Profile dropdown */}

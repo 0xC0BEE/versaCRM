@@ -3,7 +3,7 @@ import {
     Organization, User, CustomRole, AnyContact, Interaction, Product, Deal, DealStage, Task, CalendarEvent, 
     EmailTemplate, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, 
     LandingPage, Document, CustomReport, DashboardWidget, Supplier, Warehouse, CustomObjectDefinition, 
-    CustomObjectRecord, AppMarketplaceItem, InstalledApp
+    CustomObjectRecord, AppMarketplaceItem, InstalledApp, Sandbox
 } from '../types';
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
@@ -134,6 +134,7 @@ export const MOCK_APP_MARKETPLACE_ITEMS: AppMarketplaceItem[] = [
     { id: 'app_gcal', name: 'Google Calendar', description: 'Two-way sync for your CRM and Google Calendar events.', longDescription: 'Never miss a meeting. This integration provides a seamless two-way sync between your VersaCRM calendar and your Google Calendar. Events created in one system will instantly appear in the other, keeping your schedule perfectly aligned.', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg', category: 'Productivity', developer: 'Google', website: 'https://calendar.google.com/' }
 ];
 export const MOCK_INSTALLED_APPS: InstalledApp[] = [];
+export const MOCK_SANDBOXES: Sandbox[] = [];
 
 
 // Export mutable arrays for services that modify data in place

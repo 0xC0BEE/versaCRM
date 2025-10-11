@@ -1,12 +1,12 @@
 import { setFetchImplementation } from './apiClient';
 import { 
-    MOCK_ORGANIZATIONS, MOCK_USERS, MOCK_ROLES, MOCK_CONTACTS_MUTABLE as contacts,
+    MOCK_ORGANIZATIONS, MOCK_USERS, MOCK_ROLES, MOCK_CONTACTS_MUTABLE,
     MOCK_INTERACTIONS, MOCK_PRODUCTS, MOCK_DEALS, MOCK_DEAL_STAGES, MOCK_TASKS,
     MOCK_CALENDAR_EVENTS, MOCK_EMAIL_TEMPLATES, MOCK_WORKFLOWS, MOCK_ADVANCED_WORKFLOWS,
-    MOCK_ORGANIZATION_SETTINGS as settings, MOCK_API_KEYS, MOCK_TICKETS, MOCK_FORMS, MOCK_CAMPAIGNS,
+    MOCK_ORGANIZATION_SETTINGS, MOCK_API_KEYS, MOCK_TICKETS, MOCK_FORMS, MOCK_CAMPAIGNS,
     MOCK_LANDING_PAGES, MOCK_DOCUMENTS, MOCK_CUSTOM_REPORTS, MOCK_DASHBOARD_WIDGETS,
     MOCK_SUPPLIERS, MOCK_WAREHOUSES, MOCK_CUSTOM_OBJECT_DEFINITIONS, MOCK_CUSTOM_OBJECT_RECORDS,
-    MOCK_ANONYMOUS_SESSIONS, MOCK_APP_MARKETPLACE_ITEMS, MOCK_INSTALLED_APPS
+    MOCK_ANONYMOUS_SESSIONS, MOCK_APP_MARKETPLACE_ITEMS, MOCK_INSTALLED_APPS, MOCK_SANDBOXES
 } from './mockData';
 import { industryConfigs } from '../config/industryConfig';
 import { generateDashboardData } from './reportGenerator';
@@ -14,15 +14,17 @@ import { checkAndTriggerWorkflows } from './workflowService';
 import { recalculateScoreForContact } from './leadScoringService';
 import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
+import { Sandbox } from '../types';
 
-let MOCK_CONTACTS = [...contacts];
+// Hydrate the in-memory sandbox list from localStorage to persist it across reloads.
+MOCK_SANDBOXES.splice(0, MOCK_SANDBOXES.length, ...JSON.parse(localStorage.getItem('sandboxesList') || '[]'));
 
 // A simple in-memory representation of the backend
-const db = {
+const mainDB = {
     organizations: MOCK_ORGANIZATIONS,
     users: MOCK_USERS,
     roles: MOCK_ROLES,
-    contacts: MOCK_CONTACTS,
+    contacts: MOCK_CONTACTS_MUTABLE,
     interactions: MOCK_INTERACTIONS,
     products: MOCK_PRODUCTS,
     deals: MOCK_DEALS,
@@ -32,7 +34,7 @@ const db = {
     emailTemplates: MOCK_EMAIL_TEMPLATES,
     workflows: MOCK_WORKFLOWS,
     advancedWorkflows: MOCK_ADVANCED_WORKFLOWS,
-    settings: settings,
+    settings: MOCK_ORGANIZATION_SETTINGS,
     apiKeys: MOCK_API_KEYS,
     tickets: MOCK_TICKETS,
     forms: MOCK_FORMS,
@@ -48,6 +50,17 @@ const db = {
     anonymousSessions: MOCK_ANONYMOUS_SESSIONS,
     marketplaceApps: MOCK_APP_MARKETPLACE_ITEMS,
     installedApps: MOCK_INSTALLED_APPS,
+    sandboxes: MOCK_SANDBOXES,
+};
+
+let sandboxedDBs: { [key: string]: typeof mainDB } = JSON.parse(localStorage.getItem('sandboxedDBs') || '{}');
+
+const getActiveDb = () => {
+    const env = JSON.parse(localStorage.getItem('currentEnvironment') || '"production"');
+    if (env !== 'production' && sandboxedDBs[env]) {
+        return sandboxedDBs[env];
+    }
+    return mainDB;
 };
 
 const respond = (data: any, status = 200) => {
@@ -58,6 +71,7 @@ const respond = (data: any, status = 200) => {
 };
 
 const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<Response> => {
+    const db = getActiveDb();
     const urlString = url.toString();
     const method = config?.method || 'GET';
     const body = config?.body ? JSON.parse(config.body as string) : {};
@@ -66,6 +80,53 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
 
     const path = new URL(urlString, window.location.origin).pathname;
     const searchParams = new URL(urlString, window.location.origin).searchParams;
+
+    // --- SANDBOXES ---
+    if (path.startsWith('/api/v1/sandboxes')) {
+        const sandboxId = path.split('/')[4];
+
+        if (path.includes('/refresh')) {
+            if (sandboxedDBs[sandboxId]) {
+                console.log(`[Mock API] Refreshing sandbox ${sandboxId}`);
+                sandboxedDBs[sandboxId] = JSON.parse(JSON.stringify(mainDB));
+                sandboxedDBs[sandboxId].sandboxes = mainDB.sandboxes;
+                localStorage.setItem('sandboxedDBs', JSON.stringify(sandboxedDBs));
+                return respond(null, 204);
+            }
+            return respond({ message: 'Sandbox not found' }, 404);
+        }
+
+        if (method === 'DELETE' && sandboxId) {
+            const index = mainDB.sandboxes.findIndex(s => s.id === sandboxId);
+            if (index > -1) {
+                mainDB.sandboxes.splice(index, 1);
+                delete sandboxedDBs[sandboxId];
+                localStorage.setItem('sandboxedDBs', JSON.stringify(sandboxedDBs));
+                localStorage.setItem('sandboxesList', JSON.stringify(mainDB.sandboxes));
+                return respond(null, 204);
+            }
+            return respond({ message: 'Sandbox not found' }, 404);
+        }
+
+        if (method === 'GET') {
+            return respond(mainDB.sandboxes.filter(s => s.organizationId === searchParams.get('orgId')));
+        }
+        if (method === 'POST') {
+            const newSandbox = {
+                id: `sbx_${Date.now()}`,
+                createdAt: new Date().toISOString(),
+                name: body.name,
+                organizationId: body.orgId,
+            };
+            mainDB.sandboxes.push(newSandbox);
+            localStorage.setItem('sandboxesList', JSON.stringify(mainDB.sandboxes));
+            sandboxedDBs[newSandbox.id] = JSON.parse(JSON.stringify(mainDB));
+            sandboxedDBs[newSandbox.id].sandboxes = mainDB.sandboxes;
+            localStorage.setItem('sandboxedDBs', JSON.stringify(sandboxedDBs));
+            return respond(newSandbox);
+        }
+    }
+
 
     // --- AUTH ---
     if (path.endsWith('/login')) {

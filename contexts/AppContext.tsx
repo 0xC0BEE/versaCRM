@@ -1,10 +1,9 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 // FIX: Corrected import path for types.
-import { AppContextType, Industry, Page, IndustryConfig, FilterCondition, AnyContact } from '../types';
+import { AppContextType, Industry, Page, IndustryConfig, FilterCondition, AnyContact, Sandbox } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { useAuth } from './AuthContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 // FIX: Corrected import path for apiClient from a file path to a relative module path.
 import apiClient from '../services/apiClient';
 import { industryConfigs as fallbackConfigs } from '../config/industryConfig';
@@ -17,8 +16,10 @@ interface AppProviderProps {
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const { authenticatedUser } = useAuth();
+    const queryClient = useQueryClient();
     const [currentPage, setCurrentPage] = useLocalStorage<Page>('page', 'Dashboard');
     const [currentIndustry, setCurrentIndustry] = useLocalStorage<Industry>('industry', 'Health');
+    const [currentEnvironment, _setCurrentEnvironment] = useLocalStorage<string>('currentEnvironment', 'production');
     const [contactFilters, setContactFilters] = useState<FilterCondition[]>([]);
     const [simulatedDate, setSimulatedDate] = useState(new Date());
     const [reportToEditId, setReportToEditId] = useState<string | null>(null);
@@ -26,13 +27,29 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [callContact, setCallContact] = useState<AnyContact | null>(null);
     const [initialKbArticleId, setInitialKbArticleId] = useState<string | null>(null);
     const [currentCustomObjectDefId, setCurrentCustomObjectDefId] = useState<string | null>(null);
+
+    const { data: sandboxes = [] } = useQuery<Sandbox[]>({
+        queryKey: ['sandboxes', authenticatedUser?.organizationId],
+        queryFn: () => apiClient.getSandboxes(authenticatedUser!.organizationId),
+        enabled: !!authenticatedUser,
+    });
     
-    // When the user logs out, reset the page to Dashboard.
+    // When the user logs out, reset the page to Dashboard and environment to production.
     useEffect(() => {
         if (!authenticatedUser) {
             setCurrentPage('Dashboard');
+            _setCurrentEnvironment('production');
         }
-    }, [authenticatedUser, setCurrentPage]);
+    }, [authenticatedUser, setCurrentPage, _setCurrentEnvironment]);
+
+    const setCurrentEnvironment = (env: string) => {
+        _setCurrentEnvironment(env);
+        // Instead of reloading the page (which crashes the sandbox),
+        // we invalidate all queries. This forces React Query to refetch
+        // all data. The mock server will use the new environment ID from
+        // localStorage for these new requests.
+        queryClient.invalidateQueries();
+    };
 
     const { data } = useQuery<IndustryConfig | null>({
         queryKey: ['industryConfig', currentIndustry],
@@ -64,7 +81,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setInitialKbArticleId,
         currentCustomObjectDefId,
         setCurrentCustomObjectDefId,
-    }), [currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, contactFilters, setContactFilters, simulatedDate, setSimulatedDate, reportToEditId, setReportToEditId, isCallModalOpen, setIsCallModalOpen, callContact, setCallContact, initialKbArticleId, setInitialKbArticleId, currentCustomObjectDefId, setCurrentCustomObjectDefId]);
+        currentEnvironment,
+        setCurrentEnvironment,
+        sandboxes: sandboxes || [],
+    }), [
+        currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, 
+        contactFilters, setContactFilters, simulatedDate, setSimulatedDate, reportToEditId, 
+        setReportToEditId, isCallModalOpen, setIsCallModalOpen, callContact, setCallContact, 
+        initialKbArticleId, setInitialKbArticleId, currentCustomObjectDefId, 
+        setCurrentCustomObjectDefId, currentEnvironment, sandboxes
+    ]);
 
     return (
         <AppContext.Provider value={value}>

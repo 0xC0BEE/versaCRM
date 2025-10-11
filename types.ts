@@ -305,6 +305,9 @@ export interface AppContextType {
     setInitialKbArticleId: (id: string | null) => void;
     currentCustomObjectDefId: string | null;
     setCurrentCustomObjectDefId: (id: string | null) => void;
+    currentEnvironment: string;
+    setCurrentEnvironment: (env: string) => void;
+    sandboxes: Sandbox[];
 }
 
 export interface AuthContextType {
@@ -704,3 +707,10 @@ export type WorkflowNodeType = 'trigger' | 'action' | 'condition';
 
 export type JourneyNodeType = 'journeyTrigger' | 'journeyAction' | 'journeyCondition';
 export type JourneyExecutionType = 'targetAudience' | 'sendEmail' | 'wait' | 'ifEmailOpened' | 'createTask';
+
+export interface Sandbox {
+    id: string;
+    name: string;
+    createdAt: string;
+    organizationId: string;
+}

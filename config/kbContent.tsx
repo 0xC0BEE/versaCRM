@@ -833,4 +833,41 @@ export const kbArticles: KBArticleType[] = [
             </>
         ),
     },
+     {
+        id: 'sandbox-environments',
+        title: 'Sandbox Environments',
+        category: 'Administration',
+        content: (
+            <>
+                <h2 id="overview-sandbox">Overview</h2>
+                <p>
+                    Sandbox Environments are safe, isolated copies of your production environment. They are an essential tool for enterprise-grade CRM management, allowing you to test changes, train users, and validate configurations without any risk to your live business data.
+                </p>
+                <h3 id="how-to-use-sandbox">How to Use It</h3>
+                <ol>
+                    <li>
+                        <strong>Create a Sandbox:</strong> Navigate to <strong>Settings &gt; Developer & Data</strong>. In the "Sandboxes" section, give your new sandbox a name and click "Create Sandbox". This will create a full copy of your current production data and settings.
+                    </li>
+                    <li>
+                        <strong>Switch Environments:</strong> A new environment switcher dropdown will appear in the main header, next to your profile name. Use this to switch between your "Production" environment and any sandboxes you've created.
+                    </li>
+                    <li>
+                        <strong>Work in the Sandbox:</strong> When you switch to a sandbox, a prominent banner will appear at the top of the application, reminding you that you are in a safe testing environment. You can now make any changes you want—create test contacts, modify workflows, build new custom objects—without affecting your real data.
+                    </li>
+                     <li>
+                        <strong>Refresh a Sandbox:</strong> In the Sandbox settings, click the "Refresh" button next to a sandbox. This will completely overwrite the sandbox with a fresh copy of your current production data. This is useful for starting a new round of testing.
+                    </li>
+                     <li>
+                        <strong>Delete a Sandbox:</strong> Click the "Delete" button to permanently remove a sandbox environment you no longer need.
+                    </li>
+                    <li>
+                        <strong>Switch Back to Production:</strong> When you're done testing, simply use the environment switcher to return to "Production". All your live data will be exactly as you left it.
+                    </li>
+                </ol>
+                <p className="mt-4">
+                    <strong>Note:</strong> Changes made in a sandbox are not automatically moved to production. You must manually replicate any successful changes (like a new workflow) in your production environment.
+                </p>
+            </>
+        ),
+    },
 ];

@@ -1,7 +1,8 @@
 import {
     User, Organization, AnyContact, ContactStatus, CustomRole, Task, CalendarEvent, Product, Deal, DealStage, EmailTemplate, Interaction, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, Document, LandingPage, CustomReport, ReportDataSource, FilterCondition, DashboardWidget, Industry, Supplier, Warehouse, TicketReply, CustomObjectDefinition, CustomObjectRecord, AppMarketplaceItem, InstalledApp, DealForecast, ContactChurnPrediction, NextBestAction, Order, Transaction,
     // FIX: Added missing import for the 'DashboardData' type.
-    DashboardData
+    DashboardData,
+    Sandbox
 } from '../types';
 
 // Create a mutable reference to the fetch implementation that can be overridden by the mock server.
@@ -193,6 +194,12 @@ const apiClient = {
     getInstalledApps: (orgId: string): Promise<InstalledApp[]> => fetchImpl(`${API_BASE}/marketplace/installed?orgId=${orgId}`).then(handleResponse),
     installApp: (appId: string): Promise<InstalledApp> => fetchImpl(`${API_BASE}/marketplace/install`, { method: 'POST', body: JSON.stringify({ appId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     uninstallApp: (installedAppId: string): Promise<void> => fetchImpl(`${API_BASE}/marketplace/uninstall/${installedAppId}`, { method: 'DELETE' }).then(handleResponse),
+    
+    // --- SANDBOXES ---
+    getSandboxes: (orgId: string): Promise<Sandbox[]> => fetchImpl(`${API_BASE}/sandboxes?orgId=${orgId}`).then(handleResponse),
+    createSandbox: (data: { orgId: string, name: string }): Promise<Sandbox> => fetchImpl(`${API_BASE}/sandboxes`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    refreshSandbox: (sandboxId: string): Promise<void> => fetchImpl(`${API_BASE}/sandboxes/${sandboxId}/refresh`, { method: 'POST' }).then(handleResponse),
+    deleteSandbox: (sandboxId: string): Promise<void> => fetchImpl(`${API_BASE}/sandboxes/${sandboxId}`, { method: 'DELETE' }).then(handleResponse),
 };
 
 export default apiClient;
