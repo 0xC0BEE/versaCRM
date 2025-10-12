@@ -28,7 +28,12 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 type Layouts = { [key: string]: DashboardLayout[] };
 
-const DashboardPage: React.FC = () => {
+// FIX: Added props interface to accept isTabbedView.
+interface DashboardPageProps {
+    isTabbedView?: boolean;
+}
+
+const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) => {
     const { authenticatedUser, hasPermission } = useAuth();
     const { industryConfig, setCurrentPage, setReportToEditId } = useApp();
     const { dashboardDataQuery, contactsQuery, customReportsQuery, dashboardWidgetsQuery, removeDashboardWidgetMutation, addDashboardWidgetMutation } = useData();
@@ -175,27 +180,30 @@ const DashboardPage: React.FC = () => {
 
     const renderOrgDashboard = () => (
         <>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-text-heading">Organization Dashboard</h1>
-                <div className="flex items-center gap-2">
-                    {isEditMode ? (
-                        <>
-                            <Button size="sm" variant="secondary" onClick={() => setIsAddWidgetModalOpen(true)} leftIcon={<Plus size={14} />}>Add Widget</Button>
-                            <Button size="sm" variant="secondary" onClick={handleResetLayout} leftIcon={<RefreshCw size={14}/>}>Reset Layout</Button>
-                            <Button size="sm" onClick={() => setIsEditMode(false)} leftIcon={<Save size={14}/>}>Save Layout</Button>
-                        </>
-                    ) : (
-                        <>
-                            <Select id="layout-select" label="" value={activeLayoutKey} onChange={e => handleLayoutKeyChange(e.target.value)} size="sm" className="w-40">
-                                <option value="standard">Standard View</option>
-                                <option value="analytics">Analytics Focus</option>
-                                <option value="compact">Compact View</option>
-                            </Select>
-                            <Button size="sm" variant="secondary" onClick={() => setIsEditMode(true)} leftIcon={<Edit size={14} />}>Edit Layout</Button>
-                        </>
-                    )}
+            {/* FIX: Conditionally render title based on isTabbedView */}
+            {!isTabbedView && (
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-3xl font-bold text-text-heading">Organization Dashboard</h1>
+                    <div className="flex items-center gap-2">
+                        {isEditMode ? (
+                            <>
+                                <Button size="sm" variant="secondary" onClick={() => setIsAddWidgetModalOpen(true)} leftIcon={<Plus size={14} />}>Add Widget</Button>
+                                <Button size="sm" variant="secondary" onClick={handleResetLayout} leftIcon={<RefreshCw size={14}/>}>Reset Layout</Button>
+                                <Button size="sm" onClick={() => setIsEditMode(false)} leftIcon={<Save size={14}/>}>Save Layout</Button>
+                            </>
+                        ) : (
+                            <>
+                                <Select id="layout-select" label="" value={activeLayoutKey} onChange={e => handleLayoutKeyChange(e.target.value)} size="sm" className="w-40">
+                                    <option value="standard">Standard View</option>
+                                    <option value="analytics">Analytics Focus</option>
+                                    <option value="compact">Compact View</option>
+                                </Select>
+                                <Button size="sm" variant="secondary" onClick={() => setIsEditMode(true)} leftIcon={<Edit size={14} />}>Edit Layout</Button>
+                            </>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
             
             {isLoading ? <LoadingSpinner /> : (
                 <ResponsiveGridLayout
@@ -219,6 +227,11 @@ const DashboardPage: React.FC = () => {
             )}
         </>
     );
+
+    // FIX: Add conditional rendering for tabbed view to avoid showing nested tabs.
+    if (isTabbedView) {
+        return <div className="p-1">{renderOrgDashboard()}</div>;
+    }
 
     return (
         <PageWrapper>

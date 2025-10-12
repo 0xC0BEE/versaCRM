@@ -1,6 +1,7 @@
 import React, { SelectHTMLAttributes } from 'react';
 
-interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+// FIX: Omit the conflicting 'size' property from the base HTMLSelectElement attributes.
+interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
     label?: string;
     id: string;
     className?: string;

@@ -252,7 +252,10 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
 
         if (method === 'GET') {
             const defId = searchParams.get('defId');
-            return respond(db.customObjectRecords.filter(r => r.objectDefId === defId));
+            if (defId) {
+                return respond(db.customObjectRecords.filter(r => r.objectDefId === defId));
+            }
+            return respond(db.customObjectRecords);
         }
         if (method === 'POST') {
             const newRecord = { ...body, id: `rec_${Date.now()}` };

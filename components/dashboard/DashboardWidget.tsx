@@ -90,7 +90,8 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({ widget, isEditMode, o
                         {report.config.visualization.type === 'table' ? (
                             <CustomReportDataTable data={reportData} />
                         ) : (
-                            <CustomReportChart data={chartData} visualizationType={report.config.visualization.type} />
+                            // FIX: Pass the report name as the title prop to CustomReportChart.
+                            <CustomReportChart data={chartData} visualizationType={report.config.visualization.type} title={report.name} />
                         )}
                     </div>
                 )}

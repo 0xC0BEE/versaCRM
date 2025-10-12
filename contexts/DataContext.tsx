@@ -180,7 +180,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const dashboardWidgetsQuery = useQuery<DashboardWidget[], Error>({ queryKey: ['dashboardWidgets', orgId], queryFn: () => apiClient.getDashboardWidgets(orgId!), enabled: !!orgId });
     const dashboardDataQuery = useQuery<DashboardData, Error>({ queryKey: ['dashboardData', orgId], queryFn: () => apiClient.getDashboardData(orgId!), enabled: !!orgId });
     const customObjectDefsQuery = useQuery<CustomObjectDefinition[], Error>({ queryKey: ['customObjectDefs', orgId], queryFn: () => apiClient.getCustomObjectDefs(orgId!), enabled: !!orgId });
-    const customObjectRecordsQuery = (defId: string | null) => useQuery<CustomObjectRecord[], Error>({ queryKey: ['customObjectRecords', defId], queryFn: () => apiClient.getCustomObjectRecords(defId!), enabled: !!defId });
+    // FIX: Enable query even when defId is null to fetch all records.
+    const customObjectRecordsQuery = (defId: string | null) => useQuery<CustomObjectRecord[], Error>({ queryKey: ['customObjectRecords', defId], queryFn: () => apiClient.getCustomObjectRecords(defId), enabled: defId !== undefined });
     const marketplaceAppsQuery = useQuery<AppMarketplaceItem[], Error>({ queryKey: ['marketplaceApps'], queryFn: () => apiClient.getMarketplaceApps(orgId!), enabled: !!orgId });
     const installedAppsQuery = useQuery<InstalledApp[], Error>({ queryKey: ['installedApps', orgId], queryFn: () => apiClient.getInstalledApps(orgId!), enabled: !!orgId });
     const sandboxesQuery = useQuery<Sandbox[], Error>({ queryKey: ['sandboxes', orgId], queryFn: () => apiClient.getSandboxes(orgId!), enabled: !!orgId });

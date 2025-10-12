@@ -11,7 +11,6 @@ import ReactFlow, {
   applyNodeChanges,
   applyEdgeChanges,
   NodeMouseHandler,
-  PaneEvent,
   useReactFlow,
 } from 'reactflow';
 import WorkflowNode from './WorkflowNode';
@@ -28,7 +27,7 @@ interface WorkflowCanvasProps {
     setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
     setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
     onNodeClick: NodeMouseHandler;
-    onPaneClick: PaneEvent;
+    onPaneClick: (event: React.MouseEvent) => void;
 }
 
 let id = 2; // Start from 2 since 1 is the default trigger

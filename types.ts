@@ -427,18 +427,25 @@ export interface Campaign {
     edges: Edge[]; // ReactFlow edges
 }
 
+// FIX: Added missing properties to CampaignEnrollment to match usage in components.
 export interface CampaignEnrollment {
+    id: string;
     campaignId: string;
     contactId: string;
     currentNodeId: string;
     waitUntil: string;
+    programName: string;
+    startDate: string;
+    endDate?: string;
+    status: 'Active' | 'Completed';
 }
 
 // Marketing & Forms
 export interface PublicFormField {
     id: string;
     label: string;
-    type: 'text' | 'textarea' | 'select';
+    // FIX: Widened the type to allow for more field types, matching CustomField.
+    type: 'text' | 'textarea' | 'select' | 'number' | 'date' | 'checkbox' | 'file';
     required: boolean;
     placeholder?: string;
     options?: string[];

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Modal from '../ui/Modal';
 import { CustomReport } from '../../types';
@@ -36,8 +35,8 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({ isOpen, onClose
                     <Loader className="animate-spin text-primary" />
                 ) : reportData ? (
                     isChart ? (
-                        // FIX: Cast visualization type to satisfy component props, which is safe due to the `isChart` check.
-                        <CustomReportChart data={chartData} visualizationType={report.config.visualization.type as 'bar' | 'line' | 'pie'} />
+                        // FIX: Pass the report name as the title prop.
+                        <CustomReportChart data={chartData} visualizationType={report.config.visualization.type as 'bar' | 'line' | 'pie'} title={report.name} />
                     ) : (
                         <CustomReportDataTable data={reportData} />
                     )

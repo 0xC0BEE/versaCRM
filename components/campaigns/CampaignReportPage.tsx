@@ -10,7 +10,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import CampaignFunnelChart from './CampaignFunnelChart';
 import CampaignEngagementTimeline from './CampaignEngagementTimeline';
 import Tabs from '../ui/Tabs';
-import ContactsTable from '../contacts/ContactsTable';
+// FIX: Corrected import path to the non-deprecated ContactsTable component.
+import ContactsTable from '../organizations/ContactsTable';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
 interface CampaignReportPageProps {

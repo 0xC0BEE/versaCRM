@@ -185,7 +185,10 @@ const apiClient = {
     updateCustomObjectDef: (data: CustomObjectDefinition): Promise<CustomObjectDefinition> => fetchImpl(`${API_BASE}/custom-object-definitions/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteCustomObjectDef: (id: string): Promise<void> => fetchImpl(`${API_BASE}/custom-object-definitions/${id}`, { method: 'DELETE' }).then(handleResponse),
 
-    getCustomObjectRecords: (defId: string): Promise<CustomObjectRecord[]> => fetchImpl(`${API_BASE}/custom-object-records?defId=${defId}`).then(handleResponse),
+    getCustomObjectRecords: (defId: string | null): Promise<CustomObjectRecord[]> => {
+        const url = defId ? `${API_BASE}/custom-object-records?defId=${defId}` : `${API_BASE}/custom-object-records`;
+        return fetchImpl(url).then(handleResponse);
+    },
     createCustomObjectRecord: (data: Omit<CustomObjectRecord, 'id'>): Promise<CustomObjectRecord> => fetchImpl(`${API_BASE}/custom-object-records`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateCustomObjectRecord: (data: CustomObjectRecord): Promise<CustomObjectRecord> => fetchImpl(`${API_BASE}/custom-object-records/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteCustomObjectRecord: (id: string): Promise<void> => fetchImpl(`${API_BASE}/custom-object-records/${id}`, { method: 'DELETE' }).then(handleResponse),

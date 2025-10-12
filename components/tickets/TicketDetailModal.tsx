@@ -53,7 +53,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({ isOpen, onClose, 
         relatedObjectRecordId: '',
     }), []);
     
-    const { formData, setFormData, handleChange } = useForm(initialState, ticket);
+    // FIX: Create a memoized dependency that merges the initial state with the ticket prop.
+    // This provides default values for optional fields and ensures type compatibility with useForm.
+    const formDependency = useMemo(() => (ticket ? { ...initialState, ...ticket } : null), [ticket, initialState]);
+    
+    const { formData, setFormData, handleChange } = useForm(initialState, formDependency);
     const debouncedSubject = useDebounce(formData.subject, 500);
 
     const [selectedDefId, setSelectedDefId] = useState(ticket?.relatedObjectDefId || '');
@@ -88,7 +92,9 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({ isOpen, onClose, 
             });
 
             const text = response.text;
-            const match = JSON.parse(text.trim());
+            // Clean the response to remove markdown code block fences before parsing
+            const cleanedText = text.trim().replace(/^```json\s*/, '').replace(/```$/, '').trim();
+            const match = JSON.parse(cleanedText);
             
             if (match.recordId) {
                 setAiSuggestion({ ...match, recordName: match.name });
@@ -109,19 +115,18 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({ isOpen, onClose, 
     }, [debouncedSubject, isNew, isOpen, generateSuggestion]);
 
 
+     // FIX: Removed manual setFormData calls, as useForm now handles dependency updates automatically.
      useEffect(() => {
         if (isOpen) {
             if (ticket) {
-                setFormData(ticket);
                 setSelectedDefId(ticket.relatedObjectDefId || '');
             } else {
-                setFormData(initialState);
                 setSelectedDefId('');
             }
             setActiveTab('Replies');
             setAiSuggestion(null);
         }
-    }, [isOpen, ticket, setFormData, initialState]);
+    }, [isOpen, ticket]);
 
 
     const handleSaveNew = () => {

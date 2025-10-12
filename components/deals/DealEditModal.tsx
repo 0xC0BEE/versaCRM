@@ -99,7 +99,9 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
             });
 
             const text = response.text;
-            const match = JSON.parse(text.trim());
+            // Clean the response to remove markdown code block fences before parsing
+            const cleanedText = text.trim().replace(/^```json\s*/, '').replace(/```$/, '').trim();
+            const match = JSON.parse(cleanedText);
             
             if (match.recordId) {
                 setAiSuggestion({ ...match, recordName: match.name });

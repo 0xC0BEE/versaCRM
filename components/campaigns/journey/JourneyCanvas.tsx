@@ -10,7 +10,6 @@ import ReactFlow, {
   applyNodeChanges,
   applyEdgeChanges,
   NodeMouseHandler,
-  PaneEvent,
   useReactFlow,
 } from 'reactflow';
 import JourneyNode from './JourneyNode';
@@ -27,7 +26,7 @@ interface JourneyCanvasProps {
     setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
     setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
     onNodeClick: NodeMouseHandler;
-    onPaneClick: PaneEvent;
+    onPaneClick: (event: React.MouseEvent) => void;
 }
 
 let idCounter = 10; // Start high to avoid conflicts with mock data

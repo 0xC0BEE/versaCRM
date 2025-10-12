@@ -15,7 +15,8 @@ const OrganizationDashboardTab: React.FC<OrganizationDashboardTabProps> = ({ org
     // FIX: Completed the JSX to resolve syntax error.
     return (
         <div>
-            <DashboardPage isTabbedView={true} />
+            {/* FIX: DashboardPage now handles its own layout logic, so isTabbedView is no longer needed here. */}
+            <DashboardPage />
         </div>
     );
 };

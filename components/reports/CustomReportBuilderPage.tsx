@@ -218,7 +218,8 @@ const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ repor
                     ) : config.visualization.type === 'table' ? (
                         <CustomReportDataTable data={previewData} />
                     ) : (
-                        <CustomReportChart data={chartData} visualizationType={config.visualization.type} />
+                        // FIX: Pass the report name as the title prop.
+                        <CustomReportChart data={chartData} visualizationType={config.visualization.type} title={name} />
                     )}
                 </Card>
             </div>

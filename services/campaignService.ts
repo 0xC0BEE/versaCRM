@@ -41,11 +41,16 @@ export const campaignService = {
                         console.error(`[CampaignService] Campaign "${campaign.name}" is missing a trigger node.`);
                         continue;
                     }
+                     // FIX: Add missing properties to CampaignEnrollment
                      const enrollment: CampaignEnrollment = {
+                        id: `enroll_${Date.now()}`,
                         campaignId: campaign.id,
                         contactId: contact.id,
                         currentNodeId: triggerNode.id,
                         waitUntil: new Date().toISOString(),
+                        programName: campaign.name,
+                        startDate: new Date().toISOString(),
+                        status: 'Active',
                     };
                     if (!contact.campaignEnrollments) contact.campaignEnrollments = [];
                     contact.campaignEnrollments.push(enrollment);
@@ -83,11 +88,16 @@ export const campaignService = {
 
         contactsToEnroll.forEach(contact => {
             // FIX: Replaced 'currentStepIndex' with 'currentNodeId' to match the CampaignEnrollment type.
+            // FIX: Add missing properties to CampaignEnrollment
             const enrollment: CampaignEnrollment = {
+                id: `enroll_${Date.now()}_${contact.id}`,
                 campaignId: campaign.id,
                 contactId: contact.id,
                 currentNodeId: triggerNode.id,
                 waitUntil: new Date().toISOString(),
+                programName: campaign.name,
+                startDate: new Date().toISOString(),
+                status: 'Active',
             };
             if (!contact.campaignEnrollments) {
                 contact.campaignEnrollments = [];
