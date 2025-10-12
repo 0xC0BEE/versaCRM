@@ -7,7 +7,7 @@ import LoadingSpinner from '../ui/LoadingSpinner';
 import KpiCard from './KpiCard';
 import { Card } from '../ui/Card';
 import DynamicChart from './DynamicChart';
-import AiInsightsCard from './AiInsightsCard';
+import GrowthCopilotCard from './GrowthCopilotCard';
 import TeamMemberDashboard from './TeamMemberDashboard';
 import ContactCard from './ContactCard';
 import ReviewPromptCard from './ReviewPromptCard';
@@ -57,7 +57,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
         const allWidgetIds = new Set([
             ...industryConfig.dashboard.kpis.map(k => `kpi-${k.key}`),
             ...industryConfig.dashboard.charts.map(c => `chart-${c.dataKey}`),
-            'ai-insights', 'featured-contact', 'review-prompt',
+            'growth-copilot', 'featured-contact', 'review-prompt',
             ...widgets.map((w: WidgetType) => w.widgetId)
         ]);
         const filteredLayouts: Layouts = {};
@@ -115,7 +115,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
             return <DynamicChart title={chartConfig.title} type={chartConfig.type} data={dashboardData?.charts[chartKey as keyof typeof dashboardData.charts] ?? []} />;
         }
         switch(widgetId) {
-            case 'ai-insights': return <AiInsightsCard dashboardData={dashboardData} isLoading={isDashboardLoading} />;
+            case 'growth-copilot': return <GrowthCopilotCard />;
             case 'featured-contact': return featuredContact ? <ContactCard contact={featuredContact} aiSuggestion="AI Suggestion: Time to reconnect." onEmailClick={() => openContactModal(featuredContact)} /> : null;
             case 'review-prompt': return requiresReviewContact ? <ReviewPromptCard contact={requiresReviewContact} onReviewClick={() => openContactModal(requiresReviewContact)} /> : null;
             default:
