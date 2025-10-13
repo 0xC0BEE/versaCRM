@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Modal from '../ui/Modal';
 import Tabs from '../ui/Tabs';
@@ -15,12 +14,13 @@ import { Loader, Wand2 } from 'lucide-react';
 interface AiContentStudioModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onGenerate: (content: string) => void;
 }
 
 type ContentType = 'Email Template' | 'Landing Page Copy';
 type Tone = 'Professional' | 'Friendly' | 'Persuasive' | 'Informative';
 
-const AiContentStudioModal: React.FC<AiContentStudioModalProps> = ({ isOpen, onClose }) => {
+const AiContentStudioModal: React.FC<AiContentStudioModalProps> = ({ isOpen, onClose, onGenerate }) => {
     const { createEmailTemplateMutation } = useData();
     const { authenticatedUser } = useAuth();
     const [activeTab, setActiveTab] = useState<ContentType>('Email Template');
@@ -42,7 +42,7 @@ const AiContentStudioModal: React.FC<AiContentStudioModalProps> = ({ isOpen, onC
         if (activeTab === 'Email Template') {
             prompt += `Generate a compelling subject line and body for an email template. The goal of the email is: "${topic}". The tone should be ${tone}.`;
         } else {
-            prompt += `Generate a headline, a subtitle, and body text for a landing page. The topic of the page is: "${topic}". The tone should be ${tone}. Structure the response with "Headline:", "Subtitle:", and "Body:" sections.`;
+            prompt += `Generate a block of text for a landing page or document. The topic is: "${topic}". The tone should be ${tone}. Respond with only the body text, without any titles or headers.`;
         }
 
         try {
@@ -85,6 +85,14 @@ const AiContentStudioModal: React.FC<AiContentStudioModalProps> = ({ isOpen, onC
         });
     };
 
+    const handleInsertContent = () => {
+        if (result) {
+            onGenerate(result.body);
+            toast.success("Content inserted!");
+            onClose();
+        }
+    };
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="AI Content Studio" size="3xl">
             <div className="flex flex-col md:flex-row gap-6 min-h-[60vh]">
@@ -93,7 +101,7 @@ const AiContentStudioModal: React.FC<AiContentStudioModalProps> = ({ isOpen, onC
                     <Tabs tabs={['Email Template', 'Landing Page Copy']} activeTab={activeTab} setActiveTab={(t) => { setActiveTab(t as ContentType); setResult(null); }} />
                     <Textarea
                         id="ai-topic"
-                        label={activeTab === 'Email Template' ? 'Email Goal or Topic' : 'Landing Page Topic'}
+                        label={activeTab === 'Email Template' ? 'Email Goal or Topic' : 'Content Topic'}
                         value={topic}
                         onChange={e => setTopic(e.target.value)}
                         placeholder={activeTab === 'Email Template' ? "e.g., Follow up after a demo" : "e.g., Announce our new Spring promotion for product X"}
@@ -124,14 +132,13 @@ const AiContentStudioModal: React.FC<AiContentStudioModalProps> = ({ isOpen, onC
                             <Textarea id="result-body" label={activeTab === 'Email Template' ? 'Generated Body' : 'Generated Content'} value={result.body} readOnly rows={15} />
                             
                             <div className="flex justify-end">
-                                {activeTab === 'Email Template' && (
+                                {activeTab === 'Email Template' ? (
                                     <Button onClick={handleSaveTemplate} disabled={createEmailTemplateMutation.isPending}>
                                         Save as Template
                                     </Button>
-                                )}
-                                 {activeTab === 'Landing Page Copy' && (
-                                    <Button onClick={() => { navigator.clipboard.writeText(result.body); toast.success("Copied to clipboard!"); }}>
-                                        Copy Content
+                                ) : (
+                                    <Button onClick={handleInsertContent}>
+                                        Insert Content
                                     </Button>
                                 )}
                             </div>

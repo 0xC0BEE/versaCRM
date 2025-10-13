@@ -29,6 +29,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [callContact, setCallContact] = useState<AnyContact | null>(null);
     const [initialKbArticleId, setInitialKbArticleId] = useState<string | null>(null);
     const [currentCustomObjectDefId, setCurrentCustomObjectDefId] = useState<string | null>(null);
+    const [isLiveCopilotOpen, setIsLiveCopilotOpen] = useState(false);
     
     const { organizationSettingsQuery } = useData();
     const { data: orgSettings } = organizationSettingsQuery;
@@ -91,12 +92,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setCurrentEnvironment,
         sandboxes: sandboxes || [],
         isFeatureEnabled,
+        isLiveCopilotOpen,
+        setIsLiveCopilotOpen,
     }), [
         currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, 
         contactFilters, setContactFilters, simulatedDate, setSimulatedDate, reportToEditId, 
         setReportToEditId, isCallModalOpen, setIsCallModalOpen, callContact, setCallContact, 
         initialKbArticleId, setInitialKbArticleId, currentCustomObjectDefId, 
-        setCurrentCustomObjectDefId, currentEnvironment, setCurrentEnvironment, sandboxes, isFeatureEnabled
+        setCurrentCustomObjectDefId, currentEnvironment, setCurrentEnvironment, sandboxes, isFeatureEnabled,
+        isLiveCopilotOpen, setIsLiveCopilotOpen
     ]);
 
     return (

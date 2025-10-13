@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Bell, LogOut, Menu, Search, ChevronsUpDown, Check, FlaskConical } from 'lucide-react';
+import { Bell, LogOut, Menu, Search, ChevronsUpDown, Check, FlaskConical, Mic } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import NotificationsPanel from './NotificationsPanel';
 import SmartSearchModal from '../search/SmartSearchModal';
@@ -16,7 +16,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     const { authenticatedUser, logout } = useAuth();
     const { unreadCount } = useNotifications();
     const { rolesQuery } = useData();
-    const { sandboxes, currentEnvironment, setCurrentEnvironment } = useApp();
+    const { sandboxes, currentEnvironment, setCurrentEnvironment, setIsLiveCopilotOpen } = useApp();
     const { data: roles = [] } = rolesQuery;
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -75,6 +75,14 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                         </div>
                     </div>
                     <div className="ml-4 flex items-center md:ml-6">
+                        <button
+                            type="button"
+                            className="p-1 rounded-full text-text-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                            onClick={() => setIsLiveCopilotOpen(true)}
+                            aria-label="Activate Voice Co-pilot"
+                        >
+                            <Mic className="h-6 w-6" />
+                        </button>
                         <div className="relative">
                             <button
                                 type="button"

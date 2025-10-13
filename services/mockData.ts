@@ -3,7 +3,7 @@ import {
     Organization, User, CustomRole, AnyContact, Interaction, Product, Deal, DealStage, Task, CalendarEvent, 
     EmailTemplate, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, 
     LandingPage, Document, CustomReport, DashboardWidget, Supplier, Warehouse, CustomObjectDefinition, 
-    CustomObjectRecord, AppMarketplaceItem, InstalledApp, Sandbox
+    CustomObjectRecord, AppMarketplaceItem, InstalledApp, Sandbox, DocumentTemplate
 } from '../types';
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
@@ -118,6 +118,25 @@ export const MOCK_TICKETS: Ticket[] = [
 
 export const MOCK_LANDING_PAGES: LandingPage[] = [
     { id: 'lp_1', organizationId: 'org_1', name: 'Spring Promotion', slug: 'spring-promo', status: 'Published', content: [], style: { backgroundColor: '#ffffff', textColor: '#000000' } },
+];
+
+export const MOCK_DOCUMENT_TEMPLATES: DocumentTemplate[] = [
+    { id: 'dt_1', organizationId: 'org_1', name: 'Standard Proposal', content: [] },
+    { 
+        id: 'dt_2', 
+        organizationId: 'org_1', 
+        name: 'Sales Quote', 
+        content: [
+            { id: 'block_1', type: 'header', content: { title: 'Sales Quote for {{contact.contactName}}', subtitle: 'Prepared for: {{deal.name}}' }},
+            { id: 'block_2', type: 'lineItems', content: {
+                items: [
+                    { productId: 'prod_1', name: 'Standard Consultation', quantity: 2, unitPrice: 150 },
+                    { productId: 'prod_2', name: 'Advanced Screening', quantity: 1, unitPrice: 450 }
+                ],
+                taxRate: 8.5
+            }}
+        ] 
+    },
 ];
 
 export const MOCK_CUSTOM_REPORTS: CustomReport[] = [];

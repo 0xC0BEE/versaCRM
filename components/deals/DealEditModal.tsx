@@ -9,9 +9,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from '../../hooks/useForm';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
-import { Trash2, Wand2 } from 'lucide-react';
+import { Trash2, Wand2, FileText } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import { useDebounce } from '../../hooks/useDebounce';
+import DocumentGenerationModal from '../documents/DocumentGenerationModal';
 
 interface DealEditModalProps {
     isOpen: boolean;
@@ -45,6 +46,7 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
     const { data: relatedRecords = [] } = useData().customObjectRecordsQuery(selectedDefId);
 
     const [aiSuggestion, setAiSuggestion] = useState<{ defId: string, recordId: string, recordName: string } | null>(null);
+    const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
 
     const initialState = useMemo(() => ({
         name: '',
@@ -180,64 +182,80 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
     const primaryFieldId = (customObjectDefs as CustomObjectDefinition[]).find(d => d.id === selectedDefId)?.fields[0]?.id;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={isNew ? 'Create New Deal' : `Edit Deal: ${deal?.name}`}>
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                <Input id="deal-name" label="Deal Name" value={formData.name} onChange={e => handleChange('name', e.target.value)} required disabled={isPending} />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input id="deal-value" label="Value" type="number" value={formData.value} onChange={e => handleChange('value', e.target.value)} disabled={isPending} />
-                    <Input id="deal-close-date" label="Expected Close Date" type="date" value={formData.expectedCloseDate} onChange={e => handleChange('expectedCloseDate', e.target.value)} required disabled={isPending} />
-                </div>
-                <Select id="deal-contact" label="Contact" value={formData.contactId} onChange={e => handleChange('contactId', e.target.value)} required disabled={isPending}>
-                    <option value="">Select a contact...</option>
-                    {(contacts as AnyContact[]).map(c => <option key={c.id} value={c.id}>{c.contactName}</option>)}
-                </Select>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Select id="deal-stage" label="Stage" value={formData.stageId} onChange={e => handleChange('stageId', e.target.value)} required disabled={isPending}>
-                        {(dealStages as DealStage[]).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        <>
+            <Modal isOpen={isOpen && !isGeneratorOpen} onClose={onClose} title={isNew ? 'Create New Deal' : `Edit Deal: ${deal?.name}`}>
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                    <Input id="deal-name" label="Deal Name" value={formData.name} onChange={e => handleChange('name', e.target.value)} required disabled={isPending} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input id="deal-value" label="Value" type="number" value={formData.value} onChange={e => handleChange('value', e.target.value)} disabled={isPending} />
+                        <Input id="deal-close-date" label="Expected Close Date" type="date" value={formData.expectedCloseDate} onChange={e => handleChange('expectedCloseDate', e.target.value)} required disabled={isPending} />
+                    </div>
+                    <Select id="deal-contact" label="Contact" value={formData.contactId} onChange={e => handleChange('contactId', e.target.value)} required disabled={isPending}>
+                        <option value="">Select a contact...</option>
+                        {(contacts as AnyContact[]).map(c => <option key={c.id} value={c.id}>{c.contactName}</option>)}
                     </Select>
-                     <Select id="deal-assignee" label="Assigned To" value={formData.assignedToId} onChange={e => handleChange('assignedToId', e.target.value)} disabled={isPending}>
-                        <option value="">Unassigned</option>
-                        {(teamMembers as User[]).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                    </Select>
-                </div>
-                 <div className="pt-4 border-t border-border-subtle">
-                     <label className="block text-sm font-medium text-text-primary mb-1">Link to Record (Optional)</label>
-                     {aiSuggestion && (
-                         <div className="p-2 mb-2 bg-primary/10 rounded-md flex items-center justify-between">
-                            <p className="text-sm text-primary flex items-center gap-2"><Wand2 size={16}/> AI Suggestion: Link to "{aiSuggestion.recordName}"?</p>
-                            <Button size="sm" onClick={applyAiSuggestion}>Link Now</Button>
-                         </div>
-                     )}
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Select id="related-object-def" label="" value={formData.relatedObjectDefId} onChange={handleDefChange}>
-                            <option value="">Select Object Type...</option>
-                            {(customObjectDefs as CustomObjectDefinition[]).map(def => <option key={def.id} value={def.id}>{def.nameSingular}</option>)}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Select id="deal-stage" label="Stage" value={formData.stageId} onChange={e => handleChange('stageId', e.target.value)} required disabled={isPending}>
+                            {(dealStages as DealStage[]).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </Select>
-                        {selectedDefId && (
-                            <Select id="related-object-record" label="" value={formData.relatedObjectRecordId} onChange={e => handleChange('relatedObjectRecordId', e.target.value)} disabled={relatedRecords.isLoading}>
-                                <option value="">Select Record...</option>
-                                {primaryFieldId && (relatedRecords as CustomObjectRecord[]).map(rec => (
-                                    <option key={rec.id} value={rec.id}>{rec.fields[primaryFieldId]}</option>
-                                ))}
-                            </Select>
+                        <Select id="deal-assignee" label="Assigned To" value={formData.assignedToId} onChange={e => handleChange('assignedToId', e.target.value)} disabled={isPending}>
+                            <option value="">Unassigned</option>
+                            {(teamMembers as User[]).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                        </Select>
+                    </div>
+                    <div className="pt-4 border-t border-border-subtle">
+                        <label className="block text-sm font-medium text-text-primary mb-1">Link to Record (Optional)</label>
+                        {aiSuggestion && (
+                            <div className="p-2 mb-2 bg-primary/10 rounded-md flex items-center justify-between">
+                                <p className="text-sm text-primary flex items-center gap-2"><Wand2 size={16}/> AI Suggestion: Link to "{aiSuggestion.recordName}"?</p>
+                                <Button size="sm" onClick={applyAiSuggestion}>Link Now</Button>
+                            </div>
                         )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Select id="related-object-def" label="" value={formData.relatedObjectDefId} onChange={handleDefChange}>
+                                <option value="">Select Object Type...</option>
+                                {(customObjectDefs as CustomObjectDefinition[]).map(def => <option key={def.id} value={def.id}>{def.nameSingular}</option>)}
+                            </Select>
+                            {selectedDefId && (
+                                <Select id="related-object-record" label="" value={formData.relatedObjectRecordId} onChange={e => handleChange('relatedObjectRecordId', e.target.value)} disabled={relatedRecords.isLoading}>
+                                    <option value="">Select Record...</option>
+                                    {primaryFieldId && (relatedRecords as CustomObjectRecord[]).map(rec => (
+                                        <option key={rec.id} value={rec.id}>{rec.fields[primaryFieldId]}</option>
+                                    ))}
+                                </Select>
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
-             <div className="mt-6 flex justify-between items-center">
-                <div>
-                    {!isNew && (
-                        <Button variant="danger" onClick={handleDelete} disabled={isPending} leftIcon={<Trash2 size={16} />}>
-                            {deleteDealMutation.isPending ? 'Deleting...' : 'Delete'}
-                        </Button>
-                    )}
+                <div className="mt-6 flex justify-between items-center">
+                    <div>
+                        {!isNew && (
+                            <Button variant="danger" onClick={handleDelete} disabled={isPending} leftIcon={<Trash2 size={16} />}>
+                                {deleteDealMutation.isPending ? 'Deleting...' : 'Delete'}
+                            </Button>
+                        )}
+                    </div>
+                    <div className="flex space-x-2">
+                         {!isNew && (
+                            <Button variant="secondary" onClick={() => setIsGeneratorOpen(true)} leftIcon={<FileText size={16} />}>
+                                Generate Document
+                            </Button>
+                        )}
+                        <Button variant="secondary" onClick={onClose} disabled={isPending}>Cancel</Button>
+                        <Button onClick={handleSave} disabled={isPending}>{isPending ? 'Saving...' : 'Save Deal'}</Button>
+                    </div>
                 </div>
-                <div className="flex space-x-2">
-                    <Button variant="secondary" onClick={onClose} disabled={isPending}>Cancel</Button>
-                    <Button onClick={handleSave} disabled={isPending}>{isPending ? 'Saving...' : 'Save Deal'}</Button>
-                </div>
-            </div>
-        </Modal>
+            </Modal>
+
+            {deal && isGeneratorOpen && (
+                <DocumentGenerationModal
+                    isOpen={isGeneratorOpen}
+                    onClose={() => setIsGeneratorOpen(false)}
+                    deal={deal}
+                    contact={(contacts as AnyContact[]).find(c => c.id === deal.contactId)}
+                />
+            )}
+        </>
     );
 };
 

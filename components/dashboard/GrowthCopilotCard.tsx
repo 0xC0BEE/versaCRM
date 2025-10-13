@@ -2,13 +2,14 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { GoogleGenAI, FunctionDeclaration, GenerateContentResponse, Part, Type, Content } from '@google/genai';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/Card';
 import Button from '../ui/Button';
-import { Bot, Loader, Send, User as UserIcon, AlertTriangle } from 'lucide-react';
+import { Bot, Loader, Send, User as UserIcon, AlertTriangle, Mic } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import toast from 'react-hot-toast';
 import AiGeneratedChart from './AiGeneratedChart';
 import { copilotTools } from '../../config/copilotTools';
 import { Deal, DealStage, AnyContact, Ticket } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { useApp } from '../../contexts/AppContext';
 
 interface Message {
     sender: 'user' | 'ai';
@@ -53,6 +54,7 @@ const GrowthCopilotCard: React.FC = () => {
     
     const { contactsQuery, dealsQuery, ticketsQuery, dealStagesQuery, createTaskMutation } = useData();
     const { authenticatedUser } = useAuth();
+    const { setIsLiveCopilotOpen } = useApp();
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const getCRMContext = useCallback(() => {
@@ -171,9 +173,15 @@ Your response MUST be a single, valid JSON object:
     };
 
     const handleFinalResponse = (finalResponse: GenerateContentResponse) => {
-        const aiResponse: AiResponse = JSON.parse(finalResponse.text);
-        const aiMessage: Message = { sender: 'ai', content: aiResponse };
-        setMessages(prev => [...prev, aiMessage]);
+        try {
+            const aiResponse: AiResponse = JSON.parse(finalResponse.text);
+            const aiMessage: Message = { sender: 'ai', content: aiResponse };
+            setMessages(prev => [...prev, aiMessage]);
+        } catch(e) {
+            console.error("Growth Co-pilot Error: Failed to parse AI JSON response.", finalResponse.text, e);
+            toast.error("The AI returned an invalid response. Please try again.");
+            setMessages(prev => [...prev, { sender: 'ai', content: { insight: "I'm sorry, I wasn't able to formulate a proper response.", chartType: 'list', data: [] } }]);
+        }
     };
 
     const handleSend = async (prompt?: string) => {
@@ -194,8 +202,8 @@ Your response MUST be a single, valid JSON object:
                 contents: fullPrompt,
                 config: { 
                     tools: [{ functionDeclarations: copilotTools }],
-                    responseMimeType: "application/json",
-                    responseSchema: aiResponseSchema,
+                    // responseMimeType: "application/json", // Temporarily remove to debug function calling
+                    // responseSchema: aiResponseSchema,
                 },
             });
 
@@ -315,9 +323,21 @@ Your response MUST be a single, valid JSON object:
                 </div>
             </CardContent>
             <CardFooter className="p-2 pt-2 border-t border-border-subtle">
-                 <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2 w-full">
+                 <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-1 w-full">
                     <input type="text" value={input} onChange={e => setInput(e.target.value)} placeholder="Ask about your data or give a command..." className="flex-grow w-full px-3 py-2 text-sm bg-hover-bg/50 border border-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-primary" disabled={isLoading || isAnalyzing || !!pendingAction} />
-                    <Button type="submit" size="md" disabled={isLoading || isAnalyzing || !input.trim() || !!pendingAction}><Send size={16} /></Button>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsLiveCopilotOpen(true)}
+                        disabled={isLoading || isAnalyzing || !!pendingAction}
+                        aria-label="Activate voice co-pilot"
+                    >
+                        <Mic size={18} className="text-text-secondary" />
+                    </Button>
+                    <Button type="submit" size="icon" disabled={isLoading || isAnalyzing || !input.trim() || !!pendingAction} aria-label="Send message">
+                        <Send size={16} />
+                    </Button>
                 </form>
             </CardFooter>
         </Card>

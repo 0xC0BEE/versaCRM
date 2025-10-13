@@ -62,7 +62,8 @@ export const kbArticles: KBArticleType[] = [
                         <strong>View Contact Details:</strong> Click on any contact's name in the table to open their detailed 360-degree profile. Here you can see everything about them across various tabs:
                         <ul>
                             <li className="!mt-2"><strong>Profile:</strong> Core contact information and custom fields.</li>
-                            <li className="!mt-2"><strong>History:</strong> A timeline of all interactions like emails, calls, and notes.</li>
+                            <li className="!mt-2"><strong>Journey:</strong> A complete chronological timeline of every interaction. See the "Customer Journey Visualizer" article for more details.</li>
+                            <li className="!mt-2"><strong>History:</strong> A filtered timeline of all interactions like emails, calls, and notes.</li>
                             <li className="!mt-2"><strong>Website Activity:</strong> If the contact was captured via a tracked form or landing page, this tab shows you every page they viewed <em>before</em> they converted, providing valuable sales intelligence.</li>
                         </ul>
                     </li>
@@ -92,7 +93,7 @@ export const kbArticles: KBArticleType[] = [
                         <strong>Access the Journey:</strong> Open any contact's detail modal from the <strong>Contacts</strong> page.
                     </li>
                     <li>
-                        <strong>Navigate to the Journey Tab:</strong> Click on the new <strong>"Journey"</strong> tab.
+                        <strong>Navigate to the Journey Tab:</strong> Click on the <strong>"Journey"</strong> tab.
                     </li>
                     <li>
                         <strong>Analyze the Timeline:</strong> You will see a vertical timeline of every event in the contact's history, sorted from most recent to oldest. Each event type has a unique icon and color, making it easy to distinguish between marketing, sales, and support interactions. Events include:
@@ -136,6 +137,9 @@ export const kbArticles: KBArticleType[] = [
                     </li>
                     <li>
                         <strong>View Deal Details:</strong> Click on any deal card to open a modal where you can edit its details, update its value, or change its stage.
+                    </li>
+                     <li>
+                        <strong>Generate Documents:</strong> From the Deal edit modal, you can click <strong>"Generate Document"</strong> to create a professional proposal or quote using a pre-defined template, automatically populated with this deal's information.
                     </li>
                 </ol>
             </>
@@ -229,6 +233,42 @@ export const kbArticles: KBArticleType[] = [
                     </li>
                     <li>
                         <strong>Manage Suppliers & Warehouses:</strong> Use the "Suppliers" and "Warehouses" tabs to keep a directory of your vendors and storage locations.
+                    </li>
+                </ol>
+            </>
+        ),
+    },
+
+    // --- SALES ENABLEMENT ---
+    {
+        id: 'document-generator',
+        title: 'Document & Proposal Generator',
+        category: 'Sales Enablement',
+        content: (
+            <>
+                <h2 id="overview-docs">Overview</h2>
+                <p>
+                    The Document & Proposal Generator is a powerful sales enablement tool that allows you to create professional, data-driven documents like quotes, proposals, and contracts directly within VersaCRM. It eliminates manual data entry, reduces errors, and ensures brand consistency.
+                </p>
+                <h3 id="how-to-use-docs">How to Use It</h3>
+                <ol>
+                    <li>
+                        <strong>Create a Template:</strong> Navigate to <strong>Documents</strong> in the sidebar. Click "New Template" to open the Document Builder.
+                    </li>
+                    <li>
+                        <strong>Build Your Template:</strong>
+                         <ul>
+                            <li className="!mt-2"><strong>Add Content Blocks:</strong> Use the Toolbox on the left to add blocks like Headers, Text, Images, and Line Item tables.</li>
+                            <li className="!mt-2"><strong>Use Dynamic Data:</strong> When editing a Text block, use the "Placeholders" section in the right-hand panel to insert variables like <code>&#123;&#123;contact.contactName&#125;&#125;</code> or <code>&#123;&#123;deal.value&#125;&#125;</code>. These will be automatically filled with live data upon generation.</li>
+                             <li className="!mt-2"><strong>Create Quotes:</strong> Add a "Line Items" block. In the configuration panel, you can add products directly from your Inventory, set quantities, and specify a tax rate. The totals are calculated automatically.</li>
+                            <li className="!mt-2"><strong>Generate with AI:</strong> For any Text or Image block, use the "Generate with AI" button in the configuration panel to open the AI Content or Image Studio and create bespoke content on the fly.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Generate a Document from a Deal:</strong> Open any deal from the <strong>Deals</strong> pipeline. Click the <strong>"Generate Document"</strong> button.
+                    </li>
+                    <li>
+                        <strong>Preview and Download:</strong> In the generation modal, select your saved template. A live preview will be generated with all data placeholders filled in. Click "Download" to get the final document.
                     </li>
                 </ol>
             </>

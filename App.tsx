@@ -6,6 +6,7 @@ import TeamMemberConsole from './components/auth/TeamMemberConsole';
 import ClientPortal from './components/auth/ClientPortal';
 import CallControlModal from './components/voip/CallControlModal';
 import PublicLandingPage from './components/landing_pages/PublicLandingPage';
+import LiveCopilotModal from './components/copilot/LiveCopilotModal';
 
 function App() {
     const { authenticatedUser, hasPermission } = useAuth();
@@ -47,6 +48,7 @@ function App() {
         <>
             {renderApp()}
             <CallControlModal />
+            <LiveCopilotModal />
         </>
     );
 }

@@ -6,7 +6,7 @@ import { Page, Permission } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import {
     Home, Building, Users, Briefcase, Inbox, Calendar, BarChart2, Settings, Package, Handshake,
-    LifeBuoy, Zap, Mails, ClipboardList, BookOpen, LayoutTemplate, Bot, HelpCircle, Shapes
+    LifeBuoy, Zap, Mails, ClipboardList, BookOpen, LayoutTemplate, Bot, HelpCircle, Shapes, FileText
 } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import * as LucideIcons from 'lucide-react';
@@ -90,6 +90,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                 { page: 'Campaigns', icon: Zap, permission: 'automations:manage' },
                 { page: 'Forms', icon: ClipboardList, permission: 'automations:manage' },
                 { page: 'LandingPages', icon: LayoutTemplate, permission: 'automations:manage' },
+                { page: 'Documents', icon: FileText, permission: 'deals:read' },
                 { page: 'Workflows', icon: Bot, permission: 'automations:manage' },
                 { page: 'Interactions', icon: Inbox, permission: 'contacts:read:all' },
                 { page: 'SyncedEmail', icon: Mails, permission: 'contacts:read:all' },

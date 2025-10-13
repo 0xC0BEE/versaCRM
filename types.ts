@@ -6,7 +6,7 @@ export type { Node, Edge };
 
 // Basic Types
 export type Industry = 'Health' | 'Finance' | 'Legal' | 'Generic';
-export type Page = 'Dashboard' | 'Organizations' | 'OrganizationDetails' | 'Contacts' | 'Deals' | 'Tickets' | 'Interactions' | 'SyncedEmail' | 'Campaigns' | 'Forms' | 'LandingPages' | 'Calendar' | 'Tasks' | 'Reports' | 'Inventory' | 'Team' | 'Workflows' | 'Settings' | 'ApiDocs' | 'KnowledgeBase' | 'CustomObjects' | 'AppMarketplace';
+export type Page = 'Dashboard' | 'Organizations' | 'OrganizationDetails' | 'Contacts' | 'Deals' | 'Tickets' | 'Interactions' | 'SyncedEmail' | 'Campaigns' | 'Forms' | 'LandingPages' | 'Documents' | 'Calendar' | 'Tasks' | 'Reports' | 'Inventory' | 'Team' | 'Workflows' | 'Settings' | 'ApiDocs' | 'KnowledgeBase' | 'CustomObjects' | 'AppMarketplace';
 export type Theme = 'light' | 'dark' | 'system';
 export type ReportType = 'sales' | 'inventory' | 'financial' | 'contacts' | 'team' | 'deals';
 export type ContactStatus = 'Lead' | 'Active' | 'Needs Attention' | 'Inactive' | 'Do Not Contact';
@@ -208,6 +208,19 @@ export interface Document {
     dataUrl: string; // Base64 encoded
 }
 
+export interface DocumentBlock {
+    id: string;
+    type: 'header' | 'text' | 'image' | 'lineItems';
+    content: any;
+}
+
+export interface DocumentTemplate {
+    id: string;
+    organizationId: string;
+    name: string;
+    content: DocumentBlock[];
+}
+
 export interface OrderLineItem {
     productId: string;
     description: string;
@@ -317,6 +330,8 @@ export interface AppContextType {
     setCurrentEnvironment: (env: string) => void;
     sandboxes: Sandbox[];
     isFeatureEnabled: (flagId: string) => boolean;
+    isLiveCopilotOpen: boolean;
+    setIsLiveCopilotOpen: (isOpen: boolean) => void;
 }
 
 export interface AuthContextType {
@@ -765,6 +780,7 @@ export interface DataContextType {
     installedAppsQuery: any;
     dashboardDataQuery: any;
     sandboxesQuery: any;
+    documentTemplatesQuery: any;
 
     // Mutations
     createOrganizationMutation: any;
@@ -855,4 +871,7 @@ export interface DataContextType {
     createSandboxMutation: any;
     refreshSandboxMutation: any;
     deleteSandboxMutation: any;
+    createDocumentTemplateMutation: any;
+    updateDocumentTemplateMutation: any;
+    deleteDocumentTemplateMutation: any;
 }

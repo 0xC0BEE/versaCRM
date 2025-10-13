@@ -49,6 +49,12 @@ const CampaignsPage: React.FC = () => {
         });
     }
 
+    // FIX: Add a handler for the 'onGenerate' prop on AiContentStudioModal to copy generated content to the clipboard.
+    const handleContentGenerated = (content: string) => {
+        navigator.clipboard.writeText(content);
+        toast.success("Content copied to clipboard!");
+    };
+
     if (view === 'builder') {
         return (
             <CampaignBuilderPage
@@ -156,6 +162,7 @@ const CampaignsPage: React.FC = () => {
             <AiContentStudioModal 
                 isOpen={isAiStudioOpen}
                 onClose={() => setIsAiStudioOpen(false)}
+                onGenerate={handleContentGenerated}
             />
         </PageWrapper>
     );

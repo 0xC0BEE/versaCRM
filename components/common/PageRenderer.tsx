@@ -22,6 +22,7 @@ import LandingPagesPage from '../landing_pages/LandingPagesPage';
 import KnowledgeBasePage from '../kb/KnowledgeBasePage';
 import CustomObjectListPage from '../custom_objects/CustomObjectListPage';
 import AppMarketplacePage from '../marketplace/AppMarketplacePage';
+import DocumentsPage from '../documents/DocumentsPage';
 
 const PageRenderer: React.FC = () => {
     const { currentPage } = useApp();
@@ -49,6 +50,8 @@ const PageRenderer: React.FC = () => {
             return <FormsPage />;
         case 'LandingPages':
             return <LandingPagesPage />;
+        case 'Documents':
+            return <DocumentsPage />;
         case 'Calendar':
             return <CalendarPage />;
         case 'Tasks':

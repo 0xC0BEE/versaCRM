@@ -2,7 +2,8 @@ import {
     User, Organization, AnyContact, ContactStatus, CustomRole, Task, CalendarEvent, Product, Deal, DealStage, EmailTemplate, Interaction, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, Document, LandingPage, CustomReport, ReportDataSource, FilterCondition, DashboardWidget, Industry, Supplier, Warehouse, TicketReply, CustomObjectDefinition, CustomObjectRecord, AppMarketplaceItem, InstalledApp, DealForecast, ContactChurnPrediction, NextBestAction, Order, Transaction,
     // FIX: Added missing import for the 'DashboardData' type.
     DashboardData,
-    Sandbox
+    Sandbox,
+    DocumentTemplate
 } from '../types';
 
 // Create a mutable reference to the fetch implementation that can be overridden by the mock server.
@@ -154,6 +155,15 @@ const apiClient = {
     deleteLandingPage: (id:string): Promise<void> => fetchImpl(`${API_BASE}/landing-pages/${id}`, { method: 'DELETE' }).then(handleResponse),
     getLandingPageBySlug: (slug: string): Promise<LandingPage | null> => fetchImpl(`${API_BASE}/public/landing-pages/${slug}`).then(handleResponse),
     
+    // --- DOCUMENTS ---
+    getDocuments: (contactId: string): Promise<Document[]> => fetchImpl(`${API_BASE}/documents?contactId=${contactId}`).then(handleResponse),
+    uploadDocument: (data: Omit<Document, 'id'|'uploadDate'>): Promise<Document> => fetchImpl(`${API_BASE}/documents`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    deleteDocument: (id: string): Promise<void> => fetchImpl(`${API_BASE}/documents/${id}`, { method: 'DELETE' }).then(handleResponse),
+    getDocumentTemplates: (orgId: string): Promise<DocumentTemplate[]> => fetchImpl(`${API_BASE}/document-templates?orgId=${orgId}`).then(handleResponse),
+    createDocumentTemplate: (data: Omit<DocumentTemplate, 'id'>): Promise<DocumentTemplate> => fetchImpl(`${API_BASE}/document-templates`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    updateDocumentTemplate: (data: DocumentTemplate): Promise<DocumentTemplate> => fetchImpl(`${API_BASE}/document-templates/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    deleteDocumentTemplate: (id: string): Promise<void> => fetchImpl(`${API_BASE}/document-templates/${id}`, { method: 'DELETE' }).then(handleResponse),
+
     // --- OTHER ---
     runEmailSync: (orgId: string): Promise<{ success: boolean }> => fetchImpl(`${API_BASE}/integrations/email/sync`, { method: 'POST' }).then(handleResponse),
     handleNewChatMessage: (data: any): Promise<Ticket> => fetchImpl(`${API_BASE}/integrations/chat`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
@@ -166,10 +176,6 @@ const apiClient = {
     getDashboardWidgets: (orgId: string): Promise<DashboardWidget[]> => fetchImpl(`${API_BASE}/dashboard/widgets?orgId=${orgId}`).then(handleResponse),
     addDashboardWidget: (reportId: string): Promise<DashboardWidget> => fetchImpl(`${API_BASE}/dashboard/widgets`, { method: 'POST', body: JSON.stringify({ reportId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     removeDashboardWidget: (id: string): Promise<void> => fetchImpl(`${API_BASE}/dashboard/widgets/${id}`, { method: 'DELETE' }).then(handleResponse),
-    
-    getDocuments: (contactId: string): Promise<Document[]> => fetchImpl(`${API_BASE}/documents?contactId=${contactId}`).then(handleResponse),
-    uploadDocument: (data: Omit<Document, 'id'|'uploadDate'>): Promise<Document> => fetchImpl(`${API_BASE}/documents`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-    deleteDocument: (id: string): Promise<void> => fetchImpl(`${API_BASE}/documents/${id}`, { method: 'DELETE' }).then(handleResponse),
     
     generateCustomReport: (config: { dataSource: ReportDataSource, columns: string[], filters: FilterCondition[] }, orgId: string): Promise<any[]> => fetchImpl(`${API_BASE}/reports/custom/generate`, { method: 'POST', body: JSON.stringify({ config, orgId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     trackPageView: ({ sessionId, orgId, url }: { sessionId: string, orgId: string, url: string }): Promise<void> => fetchImpl(`${API_BASE}/tracking/pageview`, { method: 'POST', body: JSON.stringify({ sessionId, orgId, url }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),

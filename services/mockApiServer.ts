@@ -6,7 +6,7 @@ import {
     MOCK_ORGANIZATION_SETTINGS, MOCK_API_KEYS, MOCK_TICKETS, MOCK_FORMS, MOCK_CAMPAIGNS,
     MOCK_LANDING_PAGES, MOCK_DOCUMENTS, MOCK_CUSTOM_REPORTS, MOCK_DASHBOARD_WIDGETS,
     MOCK_SUPPLIERS, MOCK_WAREHOUSES, MOCK_CUSTOM_OBJECT_DEFINITIONS, MOCK_CUSTOM_OBJECT_RECORDS,
-    MOCK_ANONYMOUS_SESSIONS, MOCK_APP_MARKETPLACE_ITEMS, MOCK_INSTALLED_APPS, MOCK_SANDBOXES
+    MOCK_ANONYMOUS_SESSIONS, MOCK_APP_MARKETPLACE_ITEMS, MOCK_INSTALLED_APPS, MOCK_SANDBOXES, MOCK_DOCUMENT_TEMPLATES
 } from './mockData';
 import { industryConfigs } from '../config/industryConfig';
 import { generateDashboardData } from './reportGenerator';
@@ -33,6 +33,7 @@ const mainDB = {
     tasks: MOCK_TASKS,
     calendarEvents: MOCK_CALENDAR_EVENTS,
     emailTemplates: MOCK_EMAIL_TEMPLATES,
+    documentTemplates: MOCK_DOCUMENT_TEMPLATES,
     workflows: MOCK_WORKFLOWS,
     advancedWorkflows: MOCK_ADVANCED_WORKFLOWS,
     settings: MOCK_ORGANIZATION_SETTINGS,
@@ -271,6 +272,31 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
         }
         if (method === 'DELETE' && recordId) {
             db.customObjectRecords = db.customObjectRecords.filter(r => r.id !== recordId);
+            return respond(null, 204);
+        }
+    }
+
+    // --- DOCUMENT TEMPLATES ---
+    if (path.startsWith('/api/v1/document-templates')) {
+        const templateId = path.split('/')[4];
+        if (method === 'GET') {
+            const orgId = searchParams.get('orgId');
+            return respond(db.documentTemplates.filter(t => t.organizationId === orgId));
+        }
+        if (method === 'POST') {
+            const newTemplate = { ...body, id: `dt_${Date.now()}` };
+            db.documentTemplates.push(newTemplate);
+            return respond(newTemplate);
+        }
+        if (method === 'PUT' && templateId) {
+            const index = db.documentTemplates.findIndex(t => t.id === templateId);
+            if (index > -1) {
+                db.documentTemplates[index] = { ...db.documentTemplates[index], ...body };
+                return respond(db.documentTemplates[index]);
+            }
+        }
+        if (method === 'DELETE' && templateId) {
+            db.documentTemplates = db.documentTemplates.filter(t => t.id !== templateId);
             return respond(null, 204);
         }
     }
