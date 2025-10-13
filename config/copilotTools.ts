@@ -55,8 +55,32 @@ export const summarizeTicketsTool: FunctionDeclaration = {
     },
 };
 
+export const createTaskTool: FunctionDeclaration = {
+  name: 'createTask',
+  description: 'Creates a new task and assigns it to the current user. Use this for reminders or to-do items related to a contact.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      title: {
+        type: Type.STRING,
+        description: 'The title of the task.',
+      },
+      dueDate: {
+        type: Type.STRING,
+        description: 'The due date for the task in ISO 8601 format (YYYY-MM-DDTHH:mm:ss.sssZ). Use the current date and user prompts like "tomorrow" or "next week" to calculate this.',
+      },
+      contactName: {
+        type: Type.STRING,
+        description: 'The full name of the contact the task is related to.',
+      },
+    },
+    required: ['title', 'dueDate', 'contactName'],
+  },
+};
+
 export const copilotTools: FunctionDeclaration[] = [
   findDealsTool,
   findContactsTool,
   summarizeTicketsTool,
+  createTaskTool,
 ];
