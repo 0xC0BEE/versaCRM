@@ -3,7 +3,8 @@ import {
     Organization, User, CustomRole, AnyContact, Interaction, Product, Deal, DealStage, Task, CalendarEvent, 
     EmailTemplate, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, 
     LandingPage, Document, CustomReport, DashboardWidget, Supplier, Warehouse, CustomObjectDefinition, 
-    CustomObjectRecord, AppMarketplaceItem, InstalledApp, Sandbox, DocumentTemplate
+    CustomObjectRecord, AppMarketplaceItem, InstalledApp, Sandbox, DocumentTemplate,
+    ProjectPhase, Project, ProjectTemplate
 } from '../types';
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
@@ -58,7 +59,7 @@ export const MOCK_PRODUCTS: Product[] = [
 export const MOCK_TASKS: Task[] = [
     { id: 'task_1', organizationId: 'org_1', title: 'Follow up with John Patient', dueDate: '2023-05-20T10:00:00Z', isCompleted: false, userId: 'user_team_1', contactId: 'contact_1' },
     { id: 'task_2', organizationId: 'org_1', title: 'Prepare proposal for Jane Doe', dueDate: '2023-05-18T10:00:00Z', isCompleted: false, userId: 'user_admin_1', contactId: 'contact_2' },
-    { id: 'task_3', organizationId: 'org_1', title: 'Review quarterly report', dueDate: '2023-05-15T10:00:00Z', isCompleted: true, userId: 'user_admin_1' },
+    { id: 'task_3', organizationId: 'org_1', title: 'Onboarding call for Wellness Program', dueDate: '2023-05-15T10:00:00Z', isCompleted: true, userId: 'user_admin_1', projectId: 'proj_1' },
 ];
 
 export const MOCK_CALENDAR_EVENTS: CalendarEvent[] = [
@@ -139,9 +140,53 @@ export const MOCK_DOCUMENT_TEMPLATES: DocumentTemplate[] = [
     },
 ];
 
+export const MOCK_PROJECT_PHASES: ProjectPhase[] = [
+    { id: 'phase_1', organizationId: 'org_1', name: 'Not Started', order: 1 },
+    { id: 'phase_2', organizationId: 'org_1', name: 'Onboarding', order: 2 },
+    { id: 'phase_3', organizationId: 'org_1', name: 'In Progress', order: 3 },
+    { id: 'phase_4', organizationId: 'org_1', name: 'Completed', order: 4 },
+];
+
+export const MOCK_PROJECT_TEMPLATES: ProjectTemplate[] = [
+    { id: 'pt_1', organizationId: 'org_1', name: 'Standard Client Onboarding', defaultTasks: [
+        { title: 'Kick-off call', daysAfterStart: 1 },
+        { title: 'Send welcome packet', daysAfterStart: 2 },
+        { title: 'First progress check-in', daysAfterStart: 7 },
+    ]},
+    { id: 'pt_2', organizationId: 'org_1', name: 'Equipment Installation', defaultTasks: [
+        { title: 'Site survey', daysAfterStart: 2 },
+        { title: 'Schedule installation', daysAfterStart: 3 },
+        { title: 'Perform installation', daysAfterStart: 10 },
+        { title: 'Post-installation training', daysAfterStart: 11 },
+    ]},
+];
+
+export const MOCK_PROJECTS: Project[] = [
+    { id: 'proj_1', organizationId: 'org_1', name: 'Onboarding for Wellness Program', phaseId: 'phase_3', contactId: 'contact_2', dealId: 'deal_1', createdAt: '2023-07-01T10:00:00Z', assignedToId: 'user_admin_1',
+      comments: [
+        { id: 'comment_1', userId: 'user_admin_1', message: 'Kick-off call scheduled for next week.', timestamp: '2023-07-02T11:00:00Z'},
+        { id: 'comment_2', userId: 'user_team_1', message: 'I\'ve sent the welcome packet to the client.', timestamp: '2023-07-03T15:30:00Z'},
+      ],
+      notes: '### Project Brief\nThis project is to onboard the new client, Innovate Financial, for their Corporate Wellness Program.\n\n**Key Stakeholders:**\n- Jane Doe (Client)\n- Alice Admin (Project Lead)\n\n**Timeline:**\n- Kick-off: Week 1\n- Implementation: Weeks 2-3\n- Go-live: Week 4'
+    },
+];
+
+export const MOCK_PROJECT_DOCUMENTS: Document[] = [
+    {
+        id: 'doc_proj_1',
+        organizationId: 'org_1',
+        projectId: 'proj_1',
+        fileName: 'Statement_of_Work_Wellness.pdf',
+        fileType: 'application/pdf',
+        uploadDate: new Date().toISOString(),
+        dataUrl: 'about:blank' // Placeholder
+    }
+];
+
+
 export const MOCK_CUSTOM_REPORTS: CustomReport[] = [];
 export const MOCK_DASHBOARD_WIDGETS: DashboardWidget[] = [];
-export const MOCK_DOCUMENTS: Document[] = [];
+export const MOCK_DOCUMENTS: Document[] = [...MOCK_PROJECT_DOCUMENTS];
 export const MOCK_API_KEYS: ApiKey[] = [];
 export const MOCK_SUPPLIERS: Supplier[] = [];
 export const MOCK_WAREHOUSES: Warehouse[] = [];

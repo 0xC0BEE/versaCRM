@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
 // FIX: Corrected import path for types.
@@ -6,7 +7,7 @@ import { Page, Permission } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import {
     Home, Building, Users, Briefcase, Inbox, Calendar, BarChart2, Settings, Package, Handshake,
-    LifeBuoy, Zap, Mails, ClipboardList, BookOpen, LayoutTemplate, Bot, HelpCircle, Shapes, FileText
+    LifeBuoy, Zap, Mails, ClipboardList, BookOpen, LayoutTemplate, Bot, HelpCircle, Shapes, FileText, FolderKanban
 } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import * as LucideIcons from 'lucide-react';
@@ -86,6 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         {
             title: 'Business',
             items: [
+                { page: 'Projects', icon: FolderKanban, permission: 'deals:read' },
                 { page: 'Tickets', icon: LifeBuoy, permission: 'tickets:read' },
                 { page: 'Campaigns', icon: Zap, permission: 'automations:manage' },
                 { page: 'Forms', icon: ClipboardList, permission: 'automations:manage' },

@@ -6,7 +6,7 @@ export type { Node, Edge };
 
 // Basic Types
 export type Industry = 'Health' | 'Finance' | 'Legal' | 'Generic';
-export type Page = 'Dashboard' | 'Organizations' | 'OrganizationDetails' | 'Contacts' | 'Deals' | 'Tickets' | 'Interactions' | 'SyncedEmail' | 'Campaigns' | 'Forms' | 'LandingPages' | 'Documents' | 'Calendar' | 'Tasks' | 'Reports' | 'Inventory' | 'Team' | 'Workflows' | 'Settings' | 'ApiDocs' | 'KnowledgeBase' | 'CustomObjects' | 'AppMarketplace';
+export type Page = 'Dashboard' | 'Organizations' | 'OrganizationDetails' | 'Contacts' | 'Deals' | 'Tickets' | 'Interactions' | 'SyncedEmail' | 'Campaigns' | 'Forms' | 'LandingPages' | 'Documents' | 'Projects' | 'Calendar' | 'Tasks' | 'Reports' | 'Inventory' | 'Team' | 'Workflows' | 'Settings' | 'ApiDocs' | 'KnowledgeBase' | 'CustomObjects' | 'AppMarketplace';
 export type Theme = 'light' | 'dark' | 'system';
 export type ReportType = 'sales' | 'inventory' | 'financial' | 'contacts' | 'team' | 'deals';
 export type ContactStatus = 'Lead' | 'Active' | 'Needs Attention' | 'Inactive' | 'Do Not Contact';
@@ -145,6 +145,7 @@ export interface Task {
     isCompleted: boolean;
     userId: string;
     contactId?: string;
+    projectId?: string;
     relatedObjectDefId?: string;
     relatedObjectRecordId?: string;
 }
@@ -201,7 +202,8 @@ export interface Ticket {
 export interface Document {
     id: string;
     organizationId: string;
-    contactId: string;
+    contactId?: string;
+    projectId?: string;
     fileName: string;
     fileType: string;
     uploadDate: string;
@@ -254,6 +256,45 @@ export interface AuditLogEntry {
     userId: string;
     userName: string;
     change: string;
+}
+
+export interface ProjectPhase {
+  id: string;
+  organizationId: string;
+  name: string;
+  order: number;
+}
+
+export interface ProjectTemplateTask {
+  title: string;
+  daysAfterStart: number;
+}
+
+export interface ProjectTemplate {
+  id: string;
+  organizationId: string;
+  name: string;
+  defaultTasks: ProjectTemplateTask[];
+}
+
+export interface ProjectComment {
+  id: string;
+  userId: string;
+  message: string;
+  timestamp: string;
+}
+
+export interface Project {
+  id: string;
+  organizationId: string;
+  name: string;
+  phaseId: string;
+  contactId: string;
+  dealId?: string;
+  createdAt: string;
+  assignedToId?: string;
+  comments?: ProjectComment[];
+  notes?: string;
 }
 
 
@@ -781,6 +822,8 @@ export interface DataContextType {
     dashboardDataQuery: any;
     sandboxesQuery: any;
     documentTemplatesQuery: any;
+    projectsQuery: any;
+    projectPhasesQuery: any;
 
     // Mutations
     createOrganizationMutation: any;
@@ -874,4 +917,8 @@ export interface DataContextType {
     createDocumentTemplateMutation: any;
     updateDocumentTemplateMutation: any;
     deleteDocumentTemplateMutation: any;
+    createProjectMutation: any;
+    updateProjectMutation: any;
+    deleteProjectMutation: any;
+    addProjectCommentMutation: any;
 }

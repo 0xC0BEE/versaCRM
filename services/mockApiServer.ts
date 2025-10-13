@@ -6,7 +6,8 @@ import {
     MOCK_ORGANIZATION_SETTINGS, MOCK_API_KEYS, MOCK_TICKETS, MOCK_FORMS, MOCK_CAMPAIGNS,
     MOCK_LANDING_PAGES, MOCK_DOCUMENTS, MOCK_CUSTOM_REPORTS, MOCK_DASHBOARD_WIDGETS,
     MOCK_SUPPLIERS, MOCK_WAREHOUSES, MOCK_CUSTOM_OBJECT_DEFINITIONS, MOCK_CUSTOM_OBJECT_RECORDS,
-    MOCK_ANONYMOUS_SESSIONS, MOCK_APP_MARKETPLACE_ITEMS, MOCK_INSTALLED_APPS, MOCK_SANDBOXES, MOCK_DOCUMENT_TEMPLATES
+    MOCK_ANONYMOUS_SESSIONS, MOCK_APP_MARKETPLACE_ITEMS, MOCK_INSTALLED_APPS, MOCK_SANDBOXES, MOCK_DOCUMENT_TEMPLATES,
+    MOCK_PROJECTS, MOCK_PROJECT_PHASES, MOCK_PROJECT_TEMPLATES
 } from './mockData';
 import { industryConfigs } from '../config/industryConfig';
 import { generateDashboardData } from './reportGenerator';
@@ -53,6 +54,9 @@ const mainDB = {
     marketplaceApps: MOCK_APP_MARKETPLACE_ITEMS,
     installedApps: MOCK_INSTALLED_APPS,
     sandboxes: MOCK_SANDBOXES,
+    projects: MOCK_PROJECTS,
+    projectPhases: MOCK_PROJECT_PHASES,
+    projectTemplates: MOCK_PROJECT_TEMPLATES,
 };
 
 let sandboxedDBs: { [key: string]: typeof mainDB } = JSON.parse(localStorage.getItem('sandboxedDBs') || '{}');
@@ -301,6 +305,74 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
         }
     }
 
+    // --- PROJECTS ---
+    if (path.startsWith('/api/v1/projects')) {
+        const projectId = path.split('/')[4];
+
+        if (projectId && path.includes('/comments')) {
+            const projectIndex = db.projects.findIndex(p => p.id === projectId);
+            if (projectIndex > -1) {
+                const newComment = {
+                    ...body,
+                    id: `comment_${Date.now()}`,
+                    timestamp: new Date().toISOString()
+                };
+                if (!db.projects[projectIndex].comments) {
+                    db.projects[projectIndex].comments = [];
+                }
+                db.projects[projectIndex].comments!.push(newComment);
+                return respond(db.projects[projectIndex]);
+            }
+            return respond({ message: 'Project not found' }, 404);
+        }
+
+        if (projectId) {
+            if (method === 'PUT') {
+                const index = db.projects.findIndex(p => p.id === projectId);
+                if (index > -1) {
+                    db.projects[index] = body;
+                    return respond(body);
+                }
+            }
+            if (method === 'DELETE') {
+                db.projects = db.projects.filter(p => p.id !== projectId);
+                return respond(null, 204);
+            }
+        }
+        if (method === 'GET') {
+            const orgId = searchParams.get('orgId');
+            return respond(db.projects.filter(p => p.organizationId === orgId));
+        }
+        if (method === 'POST') {
+            const newProject = { ...body, id: `proj_${Date.now()}`, createdAt: new Date().toISOString() };
+            db.projects.push(newProject);
+            // If created from a template, create tasks
+            const template = db.projectTemplates.find(t => t.id === body.templateId);
+            if (template) {
+                template.defaultTasks.forEach(taskTemplate => {
+                    const newTask = {
+                        id: `task_${Date.now()}_${Math.random()}`,
+                        organizationId: newProject.organizationId,
+                        title: taskTemplate.title,
+                        dueDate: new Date(new Date().getTime() + taskTemplate.daysAfterStart * 24 * 60 * 60 * 1000).toISOString(),
+                        isCompleted: false,
+                        userId: newProject.assignedToId || db.users.find(u => u.organizationId === newProject.organizationId)?.id || '',
+                        projectId: newProject.id,
+                        contactId: newProject.contactId,
+                    };
+                    db.tasks.push(newTask);
+                });
+            }
+            return respond(newProject);
+        }
+    }
+    if (path.startsWith('/api/v1/project-phases')) {
+        if (method === 'GET') {
+            const orgId = searchParams.get('orgId');
+            return respond(db.projectPhases.filter(p => p.organizationId === orgId));
+        }
+    }
+
 
     // --- DASHBOARD ---
     if (path.endsWith('/dashboard')) {
@@ -441,6 +513,28 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
          }
     }
     
+    // --- DOCUMENTS ---
+     if (path.startsWith('/api/v1/documents')) {
+        const docId = path.split('/').pop();
+        if(method === 'GET') {
+            const contactId = searchParams.get('contactId');
+            const projectId = searchParams.get('projectId');
+            let docs = db.documents;
+            if (contactId) docs = docs.filter(d => d.contactId === contactId);
+            if (projectId) docs = docs.filter(d => d.projectId === projectId);
+            return respond(docs);
+        }
+        if (method === 'POST') {
+            const newDoc = { ...body, id: `doc_${Date.now()}`, uploadDate: new Date().toISOString() };
+            db.documents.push(newDoc);
+            return respond(newDoc);
+        }
+        if(method === 'DELETE') {
+            db.documents = db.documents.filter(d => d.id !== docId);
+            return respond(null, 204);
+        }
+    }
+    
     // --- OTHER GETS ---
     if (path.endsWith('/calendar-events')) return respond(db.calendarEvents);
     if (path.endsWith('/products')) return respond(db.products);
@@ -456,7 +550,6 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     }
     if (path.endsWith('/reports/custom')) return respond(db.customReports);
     if (path.endsWith('/dashboard/widgets')) return respond(db.dashboardWidgets);
-    if (path.endsWith('/documents')) return respond(db.documents.filter(d => d.contactId === searchParams.get('contactId')));
 
     // --- OTHER POSTS ---
     if (path.endsWith('/reports/custom/generate')) return respond(db.contacts.slice(0, 10)); // Simplified

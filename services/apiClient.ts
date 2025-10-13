@@ -3,7 +3,11 @@ import {
     // FIX: Added missing import for the 'DashboardData' type.
     DashboardData,
     Sandbox,
-    DocumentTemplate
+    DocumentTemplate,
+    // FIX: Added missing imports for Project and ProjectPhase types
+    Project,
+    ProjectPhase,
+    ProjectComment
 } from '../types';
 
 // Create a mutable reference to the fetch implementation that can be overridden by the mock server.
@@ -156,7 +160,12 @@ const apiClient = {
     getLandingPageBySlug: (slug: string): Promise<LandingPage | null> => fetchImpl(`${API_BASE}/public/landing-pages/${slug}`).then(handleResponse),
     
     // --- DOCUMENTS ---
-    getDocuments: (contactId: string): Promise<Document[]> => fetchImpl(`${API_BASE}/documents?contactId=${contactId}`).then(handleResponse),
+    getDocuments: ({ contactId, projectId }: { contactId?: string, projectId?: string }): Promise<Document[]> => {
+        let url = `${API_BASE}/documents?`;
+        if (contactId) url += `contactId=${contactId}`;
+        if (projectId) url += `projectId=${projectId}`;
+        return fetchImpl(url).then(handleResponse);
+    },
     uploadDocument: (data: Omit<Document, 'id'|'uploadDate'>): Promise<Document> => fetchImpl(`${API_BASE}/documents`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteDocument: (id: string): Promise<void> => fetchImpl(`${API_BASE}/documents/${id}`, { method: 'DELETE' }).then(handleResponse),
     getDocumentTemplates: (orgId: string): Promise<DocumentTemplate[]> => fetchImpl(`${API_BASE}/document-templates?orgId=${orgId}`).then(handleResponse),
@@ -210,6 +219,15 @@ const apiClient = {
     createSandbox: (data: { orgId: string, name: string }): Promise<Sandbox> => fetchImpl(`${API_BASE}/sandboxes`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     refreshSandbox: (sandboxId: string): Promise<void> => fetchImpl(`${API_BASE}/sandboxes/${sandboxId}/refresh`, { method: 'POST' }).then(handleResponse),
     deleteSandbox: (sandboxId: string): Promise<void> => fetchImpl(`${API_BASE}/sandboxes/${sandboxId}`, { method: 'DELETE' }).then(handleResponse),
+    
+    // FIX: Add missing project-related API client methods
+    // --- PROJECTS ---
+    getProjects: (orgId: string): Promise<Project[]> => fetchImpl(`${API_BASE}/projects?orgId=${orgId}`).then(handleResponse),
+    getProjectPhases: (orgId: string): Promise<ProjectPhase[]> => fetchImpl(`${API_BASE}/project-phases?orgId=${orgId}`).then(handleResponse),
+    createProject: (data: Omit<Project, 'id' | 'createdAt'>): Promise<Project> => fetchImpl(`${API_BASE}/projects`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    updateProject: (data: Project): Promise<Project> => fetchImpl(`${API_BASE}/projects/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    deleteProject: (id: string): Promise<void> => fetchImpl(`${API_BASE}/projects/${id}`, { method: 'DELETE' }).then(handleResponse),
+    addProjectComment: (variables: { projectId: string; comment: { userId: string, message: string } }): Promise<Project> => fetchImpl(`${API_BASE}/projects/${variables.projectId}/comments`, { method: 'POST', body: JSON.stringify(variables.comment), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
 };
 
 export default apiClient;

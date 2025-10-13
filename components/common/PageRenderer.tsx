@@ -23,6 +23,7 @@ import KnowledgeBasePage from '../kb/KnowledgeBasePage';
 import CustomObjectListPage from '../custom_objects/CustomObjectListPage';
 import AppMarketplacePage from '../marketplace/AppMarketplacePage';
 import DocumentsPage from '../documents/DocumentsPage';
+import ProjectsPage from '../projects/ProjectsPage';
 
 const PageRenderer: React.FC = () => {
     const { currentPage } = useApp();
@@ -40,6 +41,8 @@ const PageRenderer: React.FC = () => {
             return <DealsPage />;
         case 'Tickets':
             return <TicketsPage />;
+        case 'Projects':
+            return <ProjectsPage />;
         case 'Interactions':
             return <InteractionsPage />;
         case 'SyncedEmail':

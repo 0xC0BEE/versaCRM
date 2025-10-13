@@ -55,34 +55,36 @@ Integrate artificial intelligence to provide proactive insights and guidance.
 -   [x] **AI Content Studio:** An AI-powered modal for generating marketing copy for emails and landing pages.
 -   [x] **Smart Search:** A natural language search modal that can answer questions, apply filters, or find knowledge base articles.
 -   [x] **VoIP Integration & AI Call Summaries:** Enable click-to-call and use AI to summarize call logs.
--   [x] **Growth Co-pilot (Phase 1 - The Analyst):** An interactive AI on the dashboard that can answer natural language questions about CRM data by generating dynamic charts and lists from a static data snapshot.
--   [x] **Growth Co-pilot (Phase 2 - The Live Agent):** Enhance the co-pilot with **Function Calling**, allowing it to use "tools" to query the live CRM database for accurate, real-time answers.
--   [x] **Growth Co-pilot (Phase 3 - The Action Taker):** Extend function calling to include "write" actions (e.g., `createTask`), with a crucial user confirmation step before execution.
--   [x] **Growth Co-pilot (Phase 4 - The Conversationalist):** Implement a voice-activated "Live Conversation" mode using the Gemini Live API, allowing users to talk to their CRM.
-
-**Phase Complete!** The Growth Co-pilot now functions as a multi-modal, action-oriented, and conversational assistant, fulfilling the core vision for this strategic feature.
+-   [x] **Growth Co-pilot:** A multi-modal, action-oriented, and conversational AI assistant that can query live data, perform actions, and engage in voice conversations.
 
 ---
 
-## **Phase 5: Sales Enablement & Document Automation (Complete)**
+## Phase 5: Sales Enablement & Document Automation (Complete)
 
-**Goal:** Bridge the gap between a deal and a signed contract by building document generation tools directly into the CRM. This keeps users on the platform and professionalizes their sales output.
+Bridge the gap between a deal and a signed contract by building document generation tools directly into the CRM.
 
--   [x] **New "Documents" Hub & Template Builder:**
-    -   [x] Create a new top-level page for managing document templates.
-    -   [x] Build a simple, block-based editor for creating and styling templates.
--   [x] **Dynamic Data Engine:**
-    -   [x] Implement a placeholder system (e.g., `{{contact.name}}`, `{{deal.value}}`) that can be used in templates.
-    -   [x] When generating a document from a Deal, automatically populate all placeholders with live CRM data.
--   [x] **Line Item & Quoting Integration:**
-    -   [x] Create a "Line Item Table" block for the template editor.
-    -   [x] Allow users to add products directly from the Inventory module to a quote.
-    -   [x] Automatically calculate quantities, subtotals, taxes, and grand totals.
--   [x] **AI Content Integration:**
-    -   [x] Integrate the AI Content Studio into the document editor for text generation.
-    -   [x] Integrate a new AI Image Studio for on-demand image creation.
--   [x] **"Generate Document" from Deal Record:**
-    -   [x] Add a "Generate Document" button to the Deal detail view.
-    -   [x] This button will launch a modal allowing the user to select a template, preview the final document, and download it.
--   [ ] **PDF Generation Service:**
-    -   Implement a service that takes the final, populated HTML document and converts it into a professional, downloadable PDF. (Currently exports as HTML).
+-   [x] **Document & Proposal Generator:**
+    -   [x] A block-based template editor for quotes and proposals.
+    -   [x] Dynamic data engine to auto-populate documents from CRM records.
+    -   [x] Integrated quoting with real-time calculations from the Inventory module.
+    -   [x] AI content and image generation directly within the builder.
+    -   [x] One-click document generation from any Deal record.
+
+**Phase Complete!** The pre-sale and sales lifecycle is now fully supported within the platform.
+
+---
+
+## **Phase 6: Project Management & Post-Sale Collaboration (Next)**
+
+**Goal:** Bridge the gap between a "Won" deal and successful service delivery. This transforms the CRM into a complete customer lifecycle management platform.
+
+-   **New "Projects" Hub:**
+    -   [ ] A new top-level page featuring a Kanban-style board to manage all post-sale projects.
+-   **Automated Project Creation:**
+    -   [ ] Add a "Create Project from Deal" option when a deal is won.
+-   **Project Templates:**
+    -   [ ] Allow users to create pre-defined project templates with standard phases and task checklists in Settings.
+-   **Dedicated Project Workspace:**
+    -   [ ] A detail view for each project including project-specific tasks, team assignments, and a discussion feed for internal collaboration.
+-   **Client Portal Integration:**
+    -   [ ] Add a "Projects" tab to the client portal, giving clients a read-only view of their project's status and completed milestones.

@@ -1,28 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-// FIX: Corrected import path for apiClient.
 import apiClient from '../services/apiClient';
-// FIX: Corrected import path for types.
-// FIX: Aliased Document to AppDocument to avoid name collision with DOM type.
 import { Document as AppDocument } from '../types';
 import toast from 'react-hot-toast';
 
-export const useDocuments = (contactId: string) => {
+export const useProjectDocuments = (projectId: string) => {
     const queryClient = useQueryClient();
 
-    // FIX: Used aliased type AppDocument.
     const documentsQuery = useQuery<AppDocument[], Error>({
-        queryKey: ['documents', contactId],
-        // FIX: The apiClient.getDocuments function expects an object with a contactId property, not a string.
-        queryFn: () => apiClient.getDocuments({ contactId }),
-        enabled: !!contactId,
+        queryKey: ['documents', projectId],
+        queryFn: () => apiClient.getDocuments({ projectId }),
+        enabled: !!projectId,
     });
 
     const uploadDocumentMutation = useMutation({
-        // FIX: Used aliased type AppDocument.
         mutationFn: (docData: Omit<AppDocument, 'id'|'uploadDate'>) => apiClient.uploadDocument(docData),
         onSuccess: () => {
             toast.success('Document uploaded!');
-            queryClient.invalidateQueries({ queryKey: ['documents', contactId] });
+            queryClient.invalidateQueries({ queryKey: ['documents', projectId] });
         },
         onError: () => toast.error('Failed to upload document.'),
     });
@@ -31,7 +25,7 @@ export const useDocuments = (contactId: string) => {
         mutationFn: (docId: string) => apiClient.deleteDocument(docId),
         onSuccess: () => {
             toast.success('Document deleted!');
-            queryClient.invalidateQueries({ queryKey: ['documents', contactId] });
+            queryClient.invalidateQueries({ queryKey: ['documents', projectId] });
         },
         onError: () => toast.error('Failed to delete document.'),
     });

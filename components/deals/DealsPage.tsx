@@ -9,6 +9,7 @@ import DealEditModal from './DealEditModal';
 import DealForecastModal from './DealForecastModal';
 import ContactDetailModal from '../organizations/ContactDetailModal';
 import { useApp } from '../../contexts/AppContext';
+import CreateProjectFromDealModal from './CreateProjectFromDealModal';
 
 const DealsPage: React.FC = () => {
     const { dealsQuery, dealStagesQuery, updateDealMutation, contactsQuery } = useData();
@@ -22,6 +23,7 @@ const DealsPage: React.FC = () => {
     const [isForecasting, setIsForecasting] = useState(false);
     const [forecastModalData, setForecastModalData] = useState<{ deal: Deal, forecast: DealForecast } | null>(null);
     const [contactModalData, setContactModalData] = useState<{ contact: AnyContact | null, initialTab?: string, initialTemplateId?: string }>({ contact: null });
+    const [dealToCreateProjectFrom, setDealToCreateProjectFrom] = useState<Deal | null>(null);
 
     const sortedStages = useMemo(() => {
         return (stages as DealStage[]).sort((a, b) => a.order - b.order);
@@ -47,6 +49,11 @@ const DealsPage: React.FC = () => {
         const dealToMove = (deals as Deal[]).find(d => d.id === dealId);
         if (dealToMove && dealToMove.stageId !== stageId) {
             updateDealMutation.mutate({ ...dealToMove, stageId });
+            
+            const wonStage = (stages as DealStage[]).find(s => s.id === stageId && s.name === 'Won');
+            if (wonStage) {
+                setDealToCreateProjectFrom(dealToMove);
+            }
         }
     };
     
@@ -140,6 +147,14 @@ const DealsPage: React.FC = () => {
                     isDeleting={false}
                     initialActiveTab={contactModalData.initialTab}
                     initialTemplateId={contactModalData.initialTemplateId}
+                />
+            )}
+
+            {dealToCreateProjectFrom && (
+                <CreateProjectFromDealModal
+                    isOpen={!!dealToCreateProjectFrom}
+                    onClose={() => setDealToCreateProjectFrom(null)}
+                    deal={dealToCreateProjectFrom}
                 />
             )}
         </PageWrapper>
