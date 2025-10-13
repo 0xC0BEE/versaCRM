@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, FunctionDeclaration, GenerateContentResponse, Part, Type, Content } from '@google/genai';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/Card';
 import Button from '../ui/Button';
 import { Bot, Loader, Send, User as UserIcon } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import toast from 'react-hot-toast';
 import AiGeneratedChart from './AiGeneratedChart';
+import { copilotTools } from '../../config/copilotTools';
+import { Deal, DealStage, AnyContact, Ticket } from '../../types';
 
 interface Message {
     sender: 'user' | 'ai';
@@ -25,7 +27,7 @@ const GrowthCopilotCard: React.FC = () => {
     const [isAnalyzing, setIsAnalyzing] = useState(true);
     const [proactiveSuggestions, setProactiveSuggestions] = useState<string[]>([]);
     
-    const { contactsQuery, dealsQuery, ticketsQuery } = useData();
+    const { contactsQuery, dealsQuery, ticketsQuery, dealStagesQuery } = useData();
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const getCRMContext = useCallback(() => {
@@ -88,15 +90,69 @@ Your response MUST be a single, valid JSON object and nothing else. Do not wrap 
 
     useEffect(() => {
         // Only run on initial load when there are no messages
-        if (messages.length === 0) {
+        if (messages.length === 0 && contactsQuery.data && dealsQuery.data && ticketsQuery.data) {
             generateProactiveSuggestions();
         }
-    }, [generateProactiveSuggestions]);
+    }, [generateProactiveSuggestions, contactsQuery.data, dealsQuery.data, ticketsQuery.data]);
 
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    const executeFunctionCall = useCallback((name: string, args: any): any => {
+        console.log(`[Co-pilot] Executing function: ${name}`, args);
+
+        switch (name) {
+            case 'findDeals': {
+                let filteredDeals = dealsQuery.data || [];
+                if (args.minValue) {
+                    filteredDeals = filteredDeals.filter((d: Deal) => d.value >= args.minValue);
+                }
+                if (args.maxValue) {
+                    filteredDeals = filteredDeals.filter((d: Deal) => d.value <= args.maxValue);
+                }
+                if (args.stageName) {
+                    const stage = (dealStagesQuery.data || []).find((s: DealStage) => s.name.toLowerCase() === args.stageName.toLowerCase());
+                    if (stage) {
+                        filteredDeals = filteredDeals.filter((d: Deal) => d.stageId === stage.id);
+                    }
+                }
+                return filteredDeals.map((d: Deal) => ({ name: d.name, value: d.value, stageId: d.stageId }));
+            }
+            case 'findContacts': {
+                let filteredContacts = contactsQuery.data || [];
+                if (args.status) {
+                    filteredContacts = filteredContacts.filter((c: AnyContact) => c.status.toLowerCase() === args.status.toLowerCase());
+                }
+                if (args.leadSource) {
+                    filteredContacts = filteredContacts.filter((c: AnyContact) => c.leadSource.toLowerCase() === args.leadSource.toLowerCase());
+                }
+                return filteredContacts.map((c: AnyContact) => ({ name: c.contactName, email: c.email, status: c.status, leadSource: c.leadSource }));
+            }
+            case 'summarizeTickets': {
+                 let tickets = ticketsQuery.data || [];
+                 if (args.groupBy === 'priority') {
+                     const summary = tickets.reduce((acc: any, ticket: Ticket) => {
+                         acc[ticket.priority] = (acc[ticket.priority] || 0) + 1;
+                         return acc;
+                     }, {});
+                     return Object.entries(summary).map(([name, value]) => ({ name, value }));
+                 }
+                 if (args.groupBy === 'status') {
+                     const summary = tickets.reduce((acc: any, ticket: Ticket) => {
+                         acc[ticket.status] = (acc[ticket.status] || 0) + 1;
+                         return acc;
+                     }, {});
+                     return Object.entries(summary).map(([name, value]) => ({ name, value }));
+                 }
+                 return { error: `Unsupported groupBy value: ${args.groupBy}` };
+            }
+            default:
+                return { error: `Unknown function: ${name}` };
+        }
+    }, [contactsQuery.data, dealsQuery.data, ticketsQuery.data, dealStagesQuery.data]);
+
 
     const handleSend = async (prompt?: string) => {
         const query = prompt || input;
@@ -109,16 +165,8 @@ Your response MUST be a single, valid JSON object and nothing else. Do not wrap 
 
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
-            const context = getCRMContext();
 
-            const fullPrompt = `You are a helpful CRM Growth Co-pilot. Analyze the user's query based on the provided CRM data snapshot.
-
-User Query: "${query}"
-
-CRM Data Snapshot:
-${JSON.stringify(context, null, 2)}
-
-Your response MUST be a single, valid JSON object and nothing else. Do not wrap it in markdown. The JSON object must have the following structure:
+            const fullPrompt = `You are a helpful CRM Growth Co-pilot. Analyze the user's query. Use the available tools to find the necessary information to answer the question. If you have the information from a tool call, or if you don't need tools, your final response MUST be a single, valid JSON object and nothing else. Do not wrap it in markdown. The JSON object must have the following structure:
 {
   "insight": "A brief, natural language summary of the findings.",
   "chartType": "The best chart type: 'bar', 'list', or 'kpi'.",
@@ -130,31 +178,47 @@ Your response MUST be a single, valid JSON object and nothing else. Do not wrap 
   ]
 }
 
-Example for a 'bar' chart response:
-{
-  "insight": "There are 2 leads and 1 active contact.",
-  "chartType": "bar",
-  "data": [
-    { "name": "Lead", "numericValue": 2 },
-    { "name": "Active", "numericValue": 1 }
-  ]
-}`;
+User Query: "${query}"
+`;
             
-            const response = await ai.models.generateContent({
+            const firstResponse = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: fullPrompt,
+                config: {
+                    tools: [{ functionDeclarations: copilotTools }],
+                },
             });
-            
-            let jsonStr = response.text.trim();
-            if (jsonStr.startsWith('```json')) {
-                jsonStr = jsonStr.slice(7, -3);
-            } else if (jsonStr.startsWith('```')) {
-                jsonStr = jsonStr.slice(3, -3);
-            }
 
-            const aiResponse: AiResponse = JSON.parse(jsonStr);
-            const aiMessage: Message = { sender: 'ai', content: aiResponse };
-            setMessages(prev => [...prev, aiMessage]);
+            const handleFinalResponse = (finalResponse: GenerateContentResponse) => {
+                 let jsonStr = finalResponse.text.trim();
+                if (jsonStr.startsWith('```json')) {
+                    jsonStr = jsonStr.slice(7, -3);
+                } else if (jsonStr.startsWith('```')) {
+                    jsonStr = jsonStr.slice(3, -3);
+                }
+                const aiResponse: AiResponse = JSON.parse(jsonStr);
+                const aiMessage: Message = { sender: 'ai', content: aiResponse };
+                setMessages(prev => [...prev, aiMessage]);
+            };
+
+            if (firstResponse.functionCalls && firstResponse.functionCalls.length > 0) {
+                const functionCall = firstResponse.functionCalls[0];
+                const functionResult = executeFunctionCall(functionCall.name, functionCall.args);
+                
+                const history: Content[] = [
+                    { role: 'user', parts: [{ text: fullPrompt }] },
+                    { role: 'model', parts: [{ functionCall: functionCall }] },
+                    { role: 'user', parts: [{ functionResponse: { name: functionCall.name, response: { result: functionResult } } }] },
+                ];
+
+                const secondResponse = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: history,
+                });
+                handleFinalResponse(secondResponse);
+            } else {
+                handleFinalResponse(firstResponse);
+            }
 
         } catch (error) {
             console.error("Growth Co-pilot Error:", error);

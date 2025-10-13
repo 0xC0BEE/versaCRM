@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -27,8 +26,8 @@ const AiGeneratedChart: React.FC<AiGeneratedChartProps> = ({ chartType, data }) 
                 <ul className="space-y-2 text-sm">
                     {data.map((item, index) => (
                         <li key={index} className="p-2 bg-card-bg rounded-md">
-                            <p className="font-semibold text-text-primary">{item.title}</p>
-                            {item.subtitle && <p className="text-xs text-text-secondary">{item.subtitle}</p>}
+                            <p className="font-semibold text-text-primary">{item?.title || 'Untitled Item'}</p>
+                            {item?.subtitle && <p className="text-xs text-text-secondary">{item.subtitle}</p>}
                         </li>
                     ))}
                 </ul>
@@ -54,8 +53,8 @@ const AiGeneratedChart: React.FC<AiGeneratedChartProps> = ({ chartType, data }) 
             const kpi = data[0];
             return (
                 <div className="text-center">
-                    <p className="text-sm font-medium text-text-secondary">{kpi.title}</p>
-                    <p className="text-4xl font-bold text-text-heading">{kpi.textValue}</p>
+                    <p className="text-sm font-medium text-text-secondary">{kpi?.title || 'Metric'}</p>
+                    <p className="text-4xl font-bold text-text-heading">{kpi?.textValue || '-'}</p>
                 </div>
             );
         default:
