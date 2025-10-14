@@ -141,6 +141,46 @@ export const kbArticles: KBArticleType[] = [
                      <li>
                         <strong>Generate Documents:</strong> From the Deal edit modal, you can click <strong>"Generate Document"</strong> to create a professional proposal or quote using a pre-defined template, automatically populated with this deal's information.
                     </li>
+                    <li>
+                        <strong>Create a Project (Post-Sale):</strong> When you drag a deal into a "Won" stage, you will be prompted to automatically create a new project from it. This seamlessly transitions the customer from the sales process to your delivery or onboarding workflow. See the "Project Management" article for more details.
+                    </li>
+                </ol>
+            </>
+        ),
+    },
+    {
+        id: 'project-management',
+        title: 'Project Management',
+        category: 'Core Features',
+        content: (
+            <>
+                <h2 id="overview-projects">Overview</h2>
+                <p>
+                    The Project Management hub is designed to manage the entire post-sale customer lifecycle. It bridges the gap between winning a deal and successfully delivering your product or service, ensuring a smooth handover from sales to your delivery team.
+                </p>
+                <h3 id="how-to-use-projects">How to Use It</h3>
+                <ol>
+                    <li>
+                        <strong>Access the Projects Hub:</strong> Click on <strong>Projects</strong> in the main sidebar. You'll see a Kanban board view of all your projects, organized by their current phase (e.g., "Onboarding", "In Progress").
+                    </li>
+                    <li>
+                        <strong>Automatic Project Creation:</strong> The easiest way to create a project is from the <strong>Deals</strong> pipeline. When you move a deal to a "Won" stage, a modal will appear prompting you to create a project from it. You can use a pre-defined Project Template to automatically populate the new project with a standard set of tasks.
+                    </li>
+                    <li>
+                        <strong>Manual Project Creation:</strong> You can also click <strong>"New Project"</strong> on the main Projects page to create one from scratch.
+                    </li>
+                    <li>
+                        <strong>The Project Workspace:</strong> Click on any project card to open its dedicated workspace. This is the command center for the project and includes several tabs:
+                        <ul>
+                            <li className="!mt-2"><strong>Tasks:</strong> A list of all tasks specific to this project. Add new tasks, mark them as complete, and toggle their visibility for the client.</li>
+                            <li className="!mt-2"><strong>Discussion:</strong> A collaborative feed for your team. Post updates, ask questions, and use @mentions to notify specific team members.</li>
+                            <li className="!mt-2"><strong>Files:</strong> Upload and manage all documents related to the project. You can choose to make specific files visible to the client in their portal.</li>
+                            <li className="!mt-2"><strong>Notes:</strong> A wiki-style notes area for project briefs, key information, and meeting minutes.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Client Portal Integration:</strong> Any tasks or files you mark as "visible to client" will automatically appear in the client's dedicated portal, giving them a transparent, read-only view of project progress.
+                    </li>
                 </ol>
             </>
         ),
