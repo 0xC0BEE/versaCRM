@@ -1,1 +1,0 @@
-// This file is a duplicate and can be safely deleted. Use components/workflows/advanced/node_configs/ConditionConfig.tsx instead.

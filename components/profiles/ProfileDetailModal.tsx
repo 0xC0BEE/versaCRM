@@ -1,1 +1,0 @@
-// This file is deprecated and can be safely deleted. Functionality is handled by components/organizations/ContactDetailModal.tsx

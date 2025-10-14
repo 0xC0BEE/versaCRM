@@ -15,7 +15,8 @@ vi.mock('../../services/apiClient', () => ({
 
 describe('Login Flow', () => {
   it('should allow a user to log in and see the dashboard', async () => {
-    const mockUser = { id: 'user_admin_1', name: 'Alice Admin', email: 'admin@crm.com', role: 'Organization Admin', organizationId: 'org_1' };
+    // FIX: Completed the mock user object to match the User type definition.
+    const mockUser = { id: 'user_admin_1', name: 'Alice Admin', email: 'admin@crm.com', role: 'Organization Admin', organizationId: 'org_1', roleId: 'role_admin', isClient: false };
     (apiClient.login as vi.Mock).mockResolvedValue(mockUser);
 
     renderWithProviders(<App />);
@@ -36,8 +37,8 @@ describe('Login Flow', () => {
       expect(screen.queryByRole('heading', { name: /VersaCRM/i })).not.toBeInTheDocument();
       // The user should see the header of the main console
       expect(screen.getByText('Alice Admin')).toBeInTheDocument();
-      // And the dashboard page should be rendered
-      expect(screen.getByRole('heading', { name: /Dashboard/i })).toBeInTheDocument();
+      // And the dashboard page should be rendered. Note: This may change depending on onboarding flow.
+      expect(screen.getByRole('heading', { name: /Organization Dashboard/i })).toBeInTheDocument();
     });
 
     // Check if api.login was called correctly

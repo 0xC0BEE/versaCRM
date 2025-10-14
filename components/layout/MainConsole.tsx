@@ -1,1 +1,0 @@
-// This file is deprecated and can be safely deleted. Its logic was consolidated into App.tsx.

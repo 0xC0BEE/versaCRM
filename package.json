@@ -21,12 +21,10 @@
     "react-router-dom": "^7.9.3",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "vitest": "^3.2.4",
-    "@vitejs/plugin-react": "^5.0.4",
-    "@testing-library/react": "^16.3.0",
-    "@testing-library/jest-dom": "^6.9.1",
     "reactflow": "^11.11.4",
-    "react-grid-layout": "^1.4.4"
+    "react-grid-layout": "^1.4.4",
+    "@testing-library/react": "^16.3.0",
+    "vitest": "^3.2.4"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
