@@ -12,6 +12,7 @@ import AiAssistantTab from './client_portal/AiAssistantTab';
 // FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import LiveChatWidget from '../chat/LiveChatWidget';
+import ClientProjectsTab from './client_portal/ClientProjectsTab';
 
 const ClientPortal: React.FC = () => {
     const { authenticatedUser, logout } = useAuth();
@@ -19,12 +20,14 @@ const ClientPortal: React.FC = () => {
     const { organizationSettingsQuery } = useData();
     const { data: settings, isLoading: settingsLoading } = organizationSettingsQuery;
 
-    const tabs = ['Profile', 'History', 'Documents', 'Tickets', 'AI Assistant'];
+    const tabs = ['Profile', 'Projects', 'History', 'Documents', 'Tickets', 'AI Assistant'];
 
     const renderContent = () => {
         switch (activeTab) {
             case 'Profile':
                 return <ClientProfileTab />;
+            case 'Projects':
+                return <ClientProjectsTab />;
             case 'History':
                 return <ClientHistoryTab />;
             case 'Documents':

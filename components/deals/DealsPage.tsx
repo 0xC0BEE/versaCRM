@@ -13,7 +13,7 @@ import CreateProjectFromDealModal from './CreateProjectFromDealModal';
 
 const DealsPage: React.FC = () => {
     const { dealsQuery, dealStagesQuery, updateDealMutation, contactsQuery } = useData();
-    const { setCallContact, setIsCallModalOpen } = useApp();
+    const { setCallContact, setIsCallModalOpen, isFeatureEnabled } = useApp();
     const { data: deals = [], isLoading: dealsLoading } = dealsQuery;
     const { data: stages = [], isLoading: stagesLoading } = dealStagesQuery;
     const { data: contacts = [] } = contactsQuery;
@@ -89,13 +89,15 @@ const DealsPage: React.FC = () => {
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-semibold text-text-heading">Deals Pipeline</h1>
                 <div className="flex items-center gap-2">
-                    <Button
-                        variant={isForecasting ? 'primary' : 'secondary'}
-                        onClick={() => setIsForecasting(!isForecasting)}
-                        leftIcon={<Bot size={16} />}
-                    >
-                        AI Forecast
-                    </Button>
+                    {isFeatureEnabled('aiPredictiveForecasting') && (
+                        <Button
+                            variant={isForecasting ? 'primary' : 'secondary'}
+                            onClick={() => setIsForecasting(!isForecasting)}
+                            leftIcon={<Bot size={16} />}
+                        >
+                            AI Forecast
+                        </Button>
+                    )}
                     <Button onClick={handleAdd} leftIcon={<Plus size={16} />}>
                         New Deal
                     </Button>

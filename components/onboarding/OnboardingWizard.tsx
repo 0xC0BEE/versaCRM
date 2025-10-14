@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Organization, Industry, CustomObjectDefinition, DealStage } from '../../types';
 import { GoogleGenAI, Type } from '@google/genai';
@@ -191,14 +190,16 @@ Example for a Real Estate agency:
                 {renderStep()}
                 <div className="mt-6 flex justify-between">
                     {step > 1 && step < 5 && (
-                        <Button variant="secondary" onClick={() => setStep(step - 1)}>Back</Button>
+                        <Button variant="secondary" onClick={() => setStep(step - 1)} disabled={isLoading}>Back</Button>
                     )}
                     <div/>
                     {step < 4 && (
                         <Button onClick={() => setStep(step + 1)}>Next</Button>
                     )}
                     {step === 4 && (
-                        <Button onClick={handleFinish} leftIcon={<Wand2 size={16}/>}>Finish & Build</Button>
+                        <Button onClick={handleFinish} leftIcon={isLoading ? <Loader size={16} className="animate-spin" /> : <Wand2 size={16}/>} disabled={isLoading}>
+                            {isLoading ? 'Building...' : 'Finish & Build'}
+                        </Button>
                     )}
                 </div>
             </div>

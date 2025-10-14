@@ -13,6 +13,7 @@ import { Trash2, Wand2, FileText } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import { useDebounce } from '../../hooks/useDebounce';
 import DocumentGenerationModal from '../documents/DocumentGenerationModal';
+import { useApp } from '../../contexts/AppContext';
 
 interface DealEditModalProps {
     isOpen: boolean;
@@ -31,6 +32,7 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
         deleteDealMutation
     } = useData();
     const { authenticatedUser } = useAuth();
+    const { isFeatureEnabled } = useApp();
     const isNew = !deal;
 
     const { data: contacts = [] } = contactsQuery;
@@ -118,10 +120,10 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
     }, [allRecords, customObjectDefs]);
 
     useEffect(() => {
-        if (isNew && isOpen) {
+        if (isNew && isOpen && isFeatureEnabled('aiRecordLinking')) {
             generateSuggestion(debouncedDealName);
         }
-    }, [debouncedDealName, isNew, isOpen, generateSuggestion]);
+    }, [debouncedDealName, isNew, isOpen, generateSuggestion, isFeatureEnabled]);
 
 
     useEffect(() => {

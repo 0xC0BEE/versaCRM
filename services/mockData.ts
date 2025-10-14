@@ -59,7 +59,7 @@ export const MOCK_PRODUCTS: Product[] = [
 export const MOCK_TASKS: Task[] = [
     { id: 'task_1', organizationId: 'org_1', title: 'Follow up with John Patient', dueDate: '2023-05-20T10:00:00Z', isCompleted: false, userId: 'user_team_1', contactId: 'contact_1' },
     { id: 'task_2', organizationId: 'org_1', title: 'Prepare proposal for Jane Doe', dueDate: '2023-05-18T10:00:00Z', isCompleted: false, userId: 'user_admin_1', contactId: 'contact_2' },
-    { id: 'task_3', organizationId: 'org_1', title: 'Onboarding call for Wellness Program', dueDate: '2023-05-15T10:00:00Z', isCompleted: true, userId: 'user_admin_1', projectId: 'proj_1' },
+    { id: 'task_3', organizationId: 'org_1', title: 'Onboarding call for Wellness Program', dueDate: '2023-05-15T10:00:00Z', isCompleted: true, userId: 'user_admin_1', projectId: 'proj_1', isVisibleToClient: true },
 ];
 
 export const MOCK_CALENDAR_EVENTS: CalendarEvent[] = [
@@ -179,7 +179,8 @@ export const MOCK_PROJECT_DOCUMENTS: Document[] = [
         fileName: 'Statement_of_Work_Wellness.pdf',
         fileType: 'application/pdf',
         uploadDate: new Date().toISOString(),
-        dataUrl: 'about:blank' // Placeholder
+        dataUrl: 'about:blank', // Placeholder
+        isVisibleToClient: true,
     }
 ];
 

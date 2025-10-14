@@ -167,6 +167,7 @@ const apiClient = {
         return fetchImpl(url).then(handleResponse);
     },
     uploadDocument: (data: Omit<Document, 'id'|'uploadDate'>): Promise<Document> => fetchImpl(`${API_BASE}/documents`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    updateDocument: (data: Document): Promise<Document> => fetchImpl(`${API_BASE}/documents/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteDocument: (id: string): Promise<void> => fetchImpl(`${API_BASE}/documents/${id}`, { method: 'DELETE' }).then(handleResponse),
     getDocumentTemplates: (orgId: string): Promise<DocumentTemplate[]> => fetchImpl(`${API_BASE}/document-templates?orgId=${orgId}`).then(handleResponse),
     createDocumentTemplate: (data: Omit<DocumentTemplate, 'id'>): Promise<DocumentTemplate> => fetchImpl(`${API_BASE}/document-templates`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),

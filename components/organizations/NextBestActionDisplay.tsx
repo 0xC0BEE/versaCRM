@@ -4,6 +4,7 @@ import { AnyContact, NextBestAction } from '../../types';
 import apiClient from '../../services/apiClient';
 import { Loader, Wand2, ArrowRight } from 'lucide-react';
 import Button from '../ui/Button';
+import { useApp } from '../../contexts/AppContext';
 
 interface NextBestActionDisplayProps {
     contact: AnyContact;
@@ -11,12 +12,18 @@ interface NextBestActionDisplayProps {
 }
 
 const NextBestActionDisplay: React.FC<NextBestActionDisplayProps> = ({ contact, onTakeAction }) => {
+    const { isFeatureEnabled } = useApp();
+
     const { data: nextAction, isLoading, isError } = useQuery<NextBestAction, Error>({
         queryKey: ['nextBestAction', contact.id],
         queryFn: () => apiClient.getContactNextBestAction(contact.id),
-        enabled: !!contact.id,
+        enabled: !!contact.id && isFeatureEnabled('aiNextBestAction'),
         staleTime: 2 * 60 * 1000, // Stale after 2 mins
     });
+
+    if (!isFeatureEnabled('aiNextBestAction')) {
+        return null;
+    }
 
     if (isLoading) {
         return (

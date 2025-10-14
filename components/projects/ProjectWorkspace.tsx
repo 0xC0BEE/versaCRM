@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Project, AnyContact, Task, Deal, User, Document as DocType } from '../../types';
 import PageWrapper from '../layout/PageWrapper';
 import Button from '../ui/Button';
-import { ArrowLeft, Edit, Plus, File, FileImage, FileText, Download, Eye, UploadCloud, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit, Plus, File, FileImage, FileText, Download, Eye, UploadCloud, Trash2, EyeOff } from 'lucide-react';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import { Card } from '../ui/Card';
 import Tabs from '../ui/Tabs';
@@ -32,6 +32,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ projectId, onBack }
         teamMembersQuery,
         tasksQuery,
         createTaskMutation,
+        updateTaskMutation,
         addProjectCommentMutation,
         updateProjectMutation
     } = useData();
@@ -42,9 +43,9 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ projectId, onBack }
 
     const project = useMemo(() => (projectsQuery.data as Project[])?.find(p => p.id === projectId), [projectsQuery.data, projectId]);
     const contact = useMemo(() => (contactsQuery.data as AnyContact[])?.find(c => c.id === project?.contactId), [contactsQuery.data, project]);
-    const userMap = useMemo(() => new Map((teamMembersQuery.data as User[]).map(u => [u.id, u])), [teamMembersQuery.data]);
+    const userMap = useMemo(() => new Map((teamMembersQuery.data as User[] || []).map(u => [u.id, u])), [teamMembersQuery.data]);
     
-    const projectTasks = useMemo(() => (tasksQuery.data as Task[])?.filter(t => t.projectId === projectId), [tasksQuery.data, projectId]);
+    const projectTasks = useMemo(() => (tasksQuery.data as Task[] || []).filter(t => t.projectId === projectId), [tasksQuery.data, projectId]);
 
     const isLoading = projectsQuery.isLoading || contactsQuery.isLoading || dealsQuery.isLoading || teamMembersQuery.isLoading || tasksQuery.isLoading;
     
@@ -70,6 +71,10 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ projectId, onBack }
                 contactId: project?.contactId,
             }, { onSuccess: () => setNewTaskTitle('') });
         };
+        
+        const handleVisibilityToggle = (task: Task) => {
+            updateTaskMutation.mutate({ ...task, isVisibleToClient: !task.isVisibleToClient });
+        };
 
         return (
             <div className="space-y-4">
@@ -78,8 +83,22 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ projectId, onBack }
                     <Button type="submit" leftIcon={<Plus size={16} />} disabled={createTaskMutation.isPending}>Add Task</Button>
                 </form>
                 <div className="space-y-2">
-                    {projectTasks.filter(t => !t.isCompleted).map(task => <TaskItem key={task.id} task={task} onEdit={() => toast.error("Edit from here not implemented yet.")} />)}
-                    {projectTasks.filter(t => t.isCompleted).map(task => <TaskItem key={task.id} task={task} onEdit={() => toast.error("Edit from here not implemented yet.")} />)}
+                    {projectTasks.filter(t => !t.isCompleted).map(task => (
+                        <div key={task.id} className="flex items-center gap-2">
+                            <TaskItem task={task} onEdit={() => toast.error("Edit from here not implemented yet.")} />
+                            <Button size="icon" variant="ghost" onClick={() => handleVisibilityToggle(task)} className="h-9 w-9" title="Toggle client visibility">
+                                {task.isVisibleToClient ? <Eye size={16} className="text-primary"/> : <EyeOff size={16} className="text-text-secondary"/>}
+                            </Button>
+                        </div>
+                    ))}
+                    {projectTasks.filter(t => t.isCompleted).map(task => (
+                        <div key={task.id} className="flex items-center gap-2">
+                           <TaskItem task={task} onEdit={() => toast.error("Edit from here not implemented yet.")} />
+                            <Button size="icon" variant="ghost" onClick={() => handleVisibilityToggle(task)} className="h-9 w-9" title="Toggle client visibility">
+                                {task.isVisibleToClient ? <Eye size={16} className="text-primary"/> : <EyeOff size={16} className="text-text-secondary"/>}
+                            </Button>
+                        </div>
+                    ))}
                     {projectTasks.length === 0 && <p className="text-sm text-center py-4 text-text-secondary">No tasks for this project yet.</p>}
                 </div>
             </div>
@@ -165,7 +184,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ projectId, onBack }
     };
     
     const FilesTab = () => {
-        const { documentsQuery, uploadDocumentMutation, deleteDocumentMutation } = useProjectDocuments(projectId);
+        const { documentsQuery, uploadDocumentMutation, deleteDocumentMutation, updateDocumentMutation } = useProjectDocuments(projectId);
         const { data: documents = [], isLoading } = documentsQuery;
         const [previewingFile, setPreviewingFile] = useState<DocType | null>(null);
         const fileInputRef = useRef<HTMLInputElement>(null);
@@ -180,8 +199,13 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ projectId, onBack }
                     fileName: file.name,
                     fileType: file.type,
                     dataUrl,
+                    isVisibleToClient: false,
                 });
             }
+        };
+        
+        const handleVisibilityToggle = (doc: DocType) => {
+            updateDocumentMutation.mutate({ ...doc, isVisibleToClient: !doc.isVisibleToClient });
         };
         
         const getFileIcon = (fileType: string) => {
@@ -189,7 +213,24 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ projectId, onBack }
             if (fileType === 'application/pdf') return <FileText className="h-6 w-6 text-red-500" />;
             return <File className="h-6 w-6 text-text-secondary" />;
         };
-        // ... (Download/Preview logic) ...
+
+        const handlePreview = (doc: DocType) => {
+            if (doc.fileType.startsWith('image/')) {
+                setPreviewingFile(doc);
+            } else {
+                handleDownload(doc);
+            }
+        };
+
+        const handleDownload = (doc: DocType) => {
+            const link = document.createElement('a');
+            link.href = doc.dataUrl;
+            link.download = doc.fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
          return (
             <div>
                 <div className="flex justify-between items-center mb-4">
@@ -201,12 +242,28 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ projectId, onBack }
                     <div className="divide-y divide-border-subtle border border-border-subtle rounded-lg">
                         {documents.map((doc: DocType) => (
                              <div key={doc.id} className="p-3 flex justify-between items-center">
-                                <div className="flex items-center gap-3"><div className="flex-shrink-0">{getFileIcon(doc.fileType)}</div><div><p className="font-medium text-text-primary">{doc.fileName}</p><p className="text-xs text-text-secondary">Uploaded on {format(new Date(doc.uploadDate), 'PP')}</p></div></div>
-                                <div className="space-x-1"><Button size="sm" variant="danger" onClick={() => deleteDocumentMutation.mutate(doc.id)}><Trash2 size={14} /></Button></div>
+                                <div className="flex items-center gap-3 min-w-0"><div className="flex-shrink-0">{getFileIcon(doc.fileType)}</div><div className="truncate"><p className="font-medium text-text-primary truncate">{doc.fileName}</p><p className="text-xs text-text-secondary">Uploaded on {format(new Date(doc.uploadDate), 'PP')}</p></div></div>
+                                <div className="space-x-1 flex-shrink-0">
+                                    <Button size="sm" variant="ghost" onClick={() => handleVisibilityToggle(doc)} title="Toggle client visibility">
+                                        {doc.isVisibleToClient ? <Eye size={14} className="text-primary"/> : <EyeOff size={14} className="text-text-secondary"/>}
+                                    </Button>
+                                    <Button size="sm" variant="secondary" onClick={() => handlePreview(doc)}><Eye size={14} /></Button>
+                                    <Button size="sm" variant="secondary" onClick={() => handleDownload(doc)}><Download size={14} /></Button>
+                                    <Button size="sm" variant="danger" onClick={() => deleteDocumentMutation.mutate(doc.id)} disabled={deleteDocumentMutation.isPending}><Trash2 size={14} /></Button>
+                                </div>
                             </div>
                         ))}
                     </div>
                 ) : <div className="text-center py-12 text-text-secondary"><File className="mx-auto h-12 w-12" /><p className="mt-2">No files uploaded yet.</p></div>}
+                
+                {previewingFile && (
+                    <FilePreviewModal
+                        isOpen={!!previewingFile}
+                        onClose={() => setPreviewingFile(null)}
+                        fileUrl={previewingFile.dataUrl}
+                        fileName={previewingFile.fileName}
+                    />
+                )}
             </div>
         );
     };
@@ -223,7 +280,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ projectId, onBack }
 
         return (
             <div>
-                 <Textarea id="project-notes" label="Project Notes" value={localNotes} onChange={e => setLocalNotes(e.target.value)} rows={15} />
+                 <Textarea id="project-notes" label="Project Notes / Wiki" value={localNotes} onChange={e => setLocalNotes(e.target.value)} rows={15} />
                  <div className="flex justify-end mt-2">
                     <Button size="sm" onClick={handleSaveNotes} disabled={updateProjectMutation.isPending}>Save Notes</Button>
                  </div>

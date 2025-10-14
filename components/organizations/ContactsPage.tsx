@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useMemo } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 // FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
@@ -28,7 +24,7 @@ interface ContactsPageProps {
 }
 
 const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => {
-    const { industryConfig, contactFilters } = useApp();
+    const { industryConfig, contactFilters, isFeatureEnabled } = useApp();
     const { authenticatedUser } = useAuth();
     const { 
         contactsQuery,
@@ -135,13 +131,15 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-semibold text-text-heading">{industryConfig.contactNamePlural}</h1>
                     <div className="flex items-center gap-2">
-                        <Button
-                            variant={isChurning ? 'primary' : 'secondary'}
-                            onClick={() => setIsChurning(!isChurning)}
-                            leftIcon={<Bot size={16} />}
-                        >
-                            AI Churn Risk
-                        </Button>
+                        {isFeatureEnabled('aiPredictiveForecasting') && (
+                            <Button
+                                variant={isChurning ? 'primary' : 'secondary'}
+                                onClick={() => setIsChurning(!isChurning)}
+                                leftIcon={<Bot size={16} />}
+                            >
+                                AI Churn Risk
+                            </Button>
+                        )}
                         <Button onClick={handleAdd} leftIcon={<Plus size={16} />}>
                             New {industryConfig.contactName}
                         </Button>

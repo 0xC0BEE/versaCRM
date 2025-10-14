@@ -20,6 +20,14 @@ export const useProjectDocuments = (projectId: string) => {
         },
         onError: () => toast.error('Failed to upload document.'),
     });
+    
+    const updateDocumentMutation = useMutation({
+        mutationFn: (docData: AppDocument) => apiClient.updateDocument(docData),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['documents', projectId] });
+        },
+        onError: () => toast.error('Failed to update document visibility.'),
+    });
 
     const deleteDocumentMutation = useMutation({
         mutationFn: (docId: string) => apiClient.deleteDocument(docId),
@@ -33,6 +41,7 @@ export const useProjectDocuments = (projectId: string) => {
     return {
         documentsQuery,
         uploadDocumentMutation,
+        updateDocumentMutation,
         deleteDocumentMutation,
     };
 };

@@ -8,9 +8,10 @@ type ChartType = 'list' | 'bar' | 'kpi';
 interface AiGeneratedChartProps {
     chartType: ChartType;
     data: any[];
+    onItemClick?: (item: any) => void;
 }
 
-const AiGeneratedChart: React.FC<AiGeneratedChartProps> = ({ chartType, data }) => {
+const AiGeneratedChart: React.FC<AiGeneratedChartProps> = ({ chartType, data, onItemClick }) => {
     const { theme } = useTheme();
     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     const tickColor = isDark ? '#9ca3af' : '#6b7280';
@@ -25,7 +26,10 @@ const AiGeneratedChart: React.FC<AiGeneratedChartProps> = ({ chartType, data }) 
             return (
                 <ul className="space-y-2 text-sm">
                     {data.map((item, index) => (
-                        <li key={index} className="p-2 bg-card-bg rounded-md">
+                        <li key={index} 
+                            onClick={() => onItemClick && onItemClick(item)}
+                            className={`p-2 bg-card-bg rounded-md ${onItemClick ? 'cursor-pointer hover:bg-hover-bg' : ''}`}
+                        >
                             <p className="font-semibold text-text-primary">{item?.title || 'Untitled Item'}</p>
                             {item?.subtitle && <p className="text-xs text-text-secondary">{item.subtitle}</p>}
                         </li>

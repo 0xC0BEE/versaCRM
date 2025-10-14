@@ -148,6 +148,7 @@ export interface Task {
     projectId?: string;
     relatedObjectDefId?: string;
     relatedObjectRecordId?: string;
+    isVisibleToClient?: boolean;
 }
 
 export interface CalendarEvent {
@@ -208,6 +209,7 @@ export interface Document {
     fileType: string;
     uploadDate: string;
     dataUrl: string; // Base64 encoded
+    isVisibleToClient?: boolean;
 }
 
 export interface DocumentBlock {
@@ -917,6 +919,7 @@ export interface DataContextType {
     createDocumentTemplateMutation: any;
     updateDocumentTemplateMutation: any;
     deleteDocumentTemplateMutation: any;
+    updateDocumentMutation: any;
     createProjectMutation: any;
     updateProjectMutation: any;
     deleteProjectMutation: any;

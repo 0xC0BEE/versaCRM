@@ -70,21 +70,33 @@ Bridge the gap between a deal and a signed contract by building document generat
     -   [x] AI content and image generation directly within the builder.
     -   [x] One-click document generation from any Deal record.
 
-**Phase Complete!** The pre-sale and sales lifecycle is now fully supported within the platform.
+---
+
+## Phase 6: Project Management & Post-Sale Collaboration (Complete)
+
+Bridge the gap between a "Won" deal and successful service delivery, creating a complete customer lifecycle platform.
+
+-   [x] **New "Projects" Hub:** A Kanban board to manage all post-sale projects.
+-   [x] **Automated Project Creation:** A "Create Project from Deal" option when a deal is won.
+-   [x] **Project Templates:** Pre-defined project templates with standard phases and task checklists.
+-   [x] **Dedicated Project Workspace:** A detail view for each project including project-specific tasks, a discussion feed, file management, and project notes.
+-   [x] **Client Portal Integration:** A "Projects" tab in the client portal, giving clients a read-only view of their project's status and completed milestones.
+
+**Phase Complete!** The entire customer lifecycle from lead to delivery is now managed within VersaCRM.
 
 ---
 
-## **Phase 6: Project Management & Post-Sale Collaboration (Next)**
+## **Phase 7: Unified Communications Hub (Next)**
 
-**Goal:** Bridge the gap between a "Won" deal and successful service delivery. This transforms the CRM into a complete customer lifecycle management platform.
+**Goal:** Transform VersaCRM into the single interface users need to manage all customer communication, eliminating the need to switch between different apps.
 
--   **New "Projects" Hub:**
-    -   [ ] A new top-level page featuring a Kanban-style board to manage all post-sale projects.
--   **Automated Project Creation:**
-    -   [ ] Add a "Create Project from Deal" option when a deal is won.
--   **Project Templates:**
-    -   [ ] Allow users to create pre-defined project templates with standard phases and task checklists in Settings.
--   **Dedicated Project Workspace:**
-    -   [ ] A detail view for each project including project-specific tasks, team assignments, and a discussion feed for internal collaboration.
--   **Client Portal Integration:**
-    -   [ ] Add a "Projects" tab to the client portal, giving clients a read-only view of their project's status and completed milestones.
+-   **New "Inbox" Hub:**
+    -   [ ] A new top-level page featuring a unified, multi-channel inbox.
+-   **Two-Way Email Client:**
+    -   [ ] Upgrade the existing email integration to allow users to send, receive, and reply to emails directly from the Inbox, with all conversations automatically logged.
+-   **SMS Integration:**
+    -   [ ] Integrate with a third-party service (e.g., Twilio) to enable sending and receiving SMS messages from the Unified Inbox.
+-   **Productivity Tools:**
+    -   [ ] Canned responses and templates for quick replies across all channels.
+-   **AI-Powered Assistance:**
+    -   [ ] Integrate AI to suggest replies, summarize long conversation threads, and analyze message sentiment.

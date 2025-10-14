@@ -14,6 +14,7 @@ import Tabs from '../ui/Tabs';
 import { GoogleGenAI } from '@google/genai';
 import { useDebounce } from '../../hooks/useDebounce';
 import { Wand2 } from 'lucide-react';
+import { useApp } from '../../contexts/AppContext';
 
 interface TicketDetailModalProps {
     isOpen: boolean;
@@ -30,6 +31,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({ isOpen, onClose, 
         updateTicketMutation
     } = useData();
     const { authenticatedUser } = useAuth();
+    const { isFeatureEnabled } = useApp();
     const isNew = !ticket;
     const [activeTab, setActiveTab] = useState('Replies');
     
@@ -109,10 +111,10 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({ isOpen, onClose, 
     }, [allRecords, customObjectDefs]);
 
     useEffect(() => {
-        if (isNew && isOpen) {
+        if (isNew && isOpen && isFeatureEnabled('aiRecordLinking')) {
             generateSuggestion(debouncedSubject);
         }
-    }, [debouncedSubject, isNew, isOpen, generateSuggestion]);
+    }, [debouncedSubject, isNew, isOpen, generateSuggestion, isFeatureEnabled]);
 
 
      // FIX: Removed manual setFormData calls, as useForm now handles dependency updates automatically.

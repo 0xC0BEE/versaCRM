@@ -515,7 +515,7 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     
     // --- DOCUMENTS ---
      if (path.startsWith('/api/v1/documents')) {
-        const docId = path.split('/').pop();
+        const docId = path.split('/')[4];
         if(method === 'GET') {
             const contactId = searchParams.get('contactId');
             const projectId = searchParams.get('projectId');
@@ -528,6 +528,14 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
             const newDoc = { ...body, id: `doc_${Date.now()}`, uploadDate: new Date().toISOString() };
             db.documents.push(newDoc);
             return respond(newDoc);
+        }
+        if (method === 'PUT' && docId) {
+            const index = db.documents.findIndex(d => d.id === docId);
+            if (index > -1) {
+                db.documents[index] = { ...db.documents[index], ...body };
+                return respond(db.documents[index]);
+            }
+            return respond({ message: 'Document not found' }, 404);
         }
         if(method === 'DELETE') {
             db.documents = db.documents.filter(d => d.id !== docId);
