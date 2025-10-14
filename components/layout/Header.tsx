@@ -4,7 +4,6 @@ import { Bell, LogOut, Menu, Search, ChevronsUpDown, Check, FlaskConical, Mic } 
 import { useNotifications } from '../../contexts/NotificationContext';
 import NotificationsPanel from './NotificationsPanel';
 import SmartSearchModal from '../search/SmartSearchModal';
-// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import { useApp } from '../../contexts/AppContext';
 

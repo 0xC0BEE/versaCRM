@@ -1,15 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
-// FIX: Imported correct types.
-// FIX: Corrected import path for types.
 import { Ticket, OrganizationSettings, SLAPolicy } from '../../types';
 import { differenceInMilliseconds, addHours } from 'date-fns';
-// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 
 interface SLATimerProps {
     ticket: Ticket;
-    // FIX: Use OrganizationSettings type for settings prop.
     settings: OrganizationSettings | undefined | null;
 }
 
@@ -39,7 +34,6 @@ const SLATimer: React.FC<SLATimerProps> = ({ ticket, settings }) => {
         const calculateTimeLeft = () => {
             if (!settings || ticket.status === 'Closed') return 0;
             
-            // FIX: Correctly access SLA policy based on ticket priority.
             const priorityKey = ticket.priority.toLowerCase() as keyof SLAPolicy['responseTime'];
             const responseTimeHours = settings.ticketSla.responseTime[priorityKey];
             const resolutionTimeHours = settings.ticketSla.resolutionTime[priorityKey];
@@ -79,7 +73,7 @@ const SLATimer: React.FC<SLATimerProps> = ({ ticket, settings }) => {
     const isBreached = sign === '-';
     const isWarning = !isBreached && timeLeft < 3600 * 1000; // Less than 1 hour
 
-    const color = isBreached ? 'text-red-500' : isWarning ? 'text-orange-500' : 'text-green-500';
+    const color = isBreached ? 'text-error' : isWarning ? 'text-warning' : 'text-success';
 
     const firstTeamReply = ticket.replies.find(r => r.userId.startsWith('user_') && !r.isInternal);
     const label = !firstTeamReply ? 'Response' : 'Resolution';

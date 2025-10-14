@@ -30,7 +30,6 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({ isOpen, onClose, contac
         total: 0,
     }), [contact.organizationId, contact.id]);
 
-    // FIX: Memoize a dependency that merges the `order` prop with the initial state to ensure type compatibility with the useForm hook.
     const formDependency = useMemo(() => (order ? { ...initialState, ...order } : null), [order, initialState]);
 
     const { formData, setFormData, handleChange } = useForm(initialState, formDependency);
@@ -88,7 +87,6 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({ isOpen, onClose, contac
                 onSuccess: () => onClose()
             });
         } else {
-            // FIX: Merged original `order` to ensure `id` is present, fixing the type casting error.
             updateOrderMutation.mutate({ ...order!, ...saveData }, {
                 onSuccess: () => onClose()
             });

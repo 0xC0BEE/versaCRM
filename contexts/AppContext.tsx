@@ -1,10 +1,9 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
-// FIX: Corrected import path for types.
 import { AppContextType, Industry, Page, IndustryConfig, FilterCondition, AnyContact, Sandbox } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { useAuth } from './AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-// FIX: Corrected import path for apiClient from a file path to a relative module path.
+// FIX: Changed to default import for apiClient.
 import apiClient from '../services/apiClient';
 import { industryConfigs as fallbackConfigs } from '../config/industryConfig';
 import { useData } from './DataContext';

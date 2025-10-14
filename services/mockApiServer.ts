@@ -7,7 +7,7 @@ import {
     MOCK_LANDING_PAGES, MOCK_DOCUMENTS, MOCK_CUSTOM_REPORTS, MOCK_DASHBOARD_WIDGETS,
     MOCK_SUPPLIERS, MOCK_WAREHOUSES, MOCK_CUSTOM_OBJECT_DEFINITIONS, MOCK_CUSTOM_OBJECT_RECORDS,
     MOCK_ANONYMOUS_SESSIONS, MOCK_APP_MARKETPLACE_ITEMS, MOCK_INSTALLED_APPS, MOCK_SANDBOXES, MOCK_DOCUMENT_TEMPLATES,
-    MOCK_PROJECTS, MOCK_PROJECT_PHASES, MOCK_PROJECT_TEMPLATES
+    MOCK_PROJECTS, MOCK_PROJECT_PHASES, MOCK_PROJECT_TEMPLATES, MOCK_CANNED_RESPONSES
 } from './mockData';
 import { industryConfigs } from '../config/industryConfig';
 import { generateDashboardData } from './reportGenerator';
@@ -15,7 +15,7 @@ import { checkAndTriggerWorkflows } from './workflowService';
 import { recalculateScoreForContact } from './leadScoringService';
 import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
-import { Sandbox, Conversation } from '../types';
+import { Sandbox, Conversation, CannedResponse } from '../types';
 
 // Hydrate the in-memory sandbox list from localStorage to persist it across reloads.
 const storedSandboxes = JSON.parse(localStorage.getItem('sandboxesList') || '[]');
@@ -57,6 +57,7 @@ const mainDB = {
     projects: MOCK_PROJECTS,
     projectPhases: MOCK_PROJECT_PHASES,
     projectTemplates: MOCK_PROJECT_TEMPLATES,
+    cannedResponses: MOCK_CANNED_RESPONSES,
 };
 
 let sandboxedDBs: { [key: string]: typeof mainDB } = JSON.parse(localStorage.getItem('sandboxedDBs') || '{}');
@@ -87,8 +88,80 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     const path = new URL(urlString, window.location.origin).pathname;
     const searchParams = new URL(urlString, window.location.origin).searchParams;
 
+    // --- CANNED RESPONSES ---
+    if (path.startsWith('/api/v1/canned-responses')) {
+        const responseId = path.split('/')[4];
+        if (method === 'GET') {
+            const orgId = searchParams.get('orgId');
+            return respond(db.cannedResponses.filter(cr => cr.organizationId === orgId));
+        }
+        if (method === 'POST') {
+            const newResponse: CannedResponse = { ...body, id: `cr_${Date.now()}` };
+            db.cannedResponses.push(newResponse);
+            return respond(newResponse, 201);
+        }
+        if (method === 'PUT' && responseId) {
+            const index = db.cannedResponses.findIndex(cr => cr.id === responseId);
+            if (index > -1) {
+                db.cannedResponses[index] = { ...db.cannedResponses[index], ...body };
+                return respond(db.cannedResponses[index]);
+            }
+            return respond({ message: 'Not found' }, 404);
+        }
+        if (method === 'DELETE' && responseId) {
+            db.cannedResponses = db.cannedResponses.filter(cr => cr.id !== responseId);
+            return respond(null, 204);
+        }
+    }
+
     // --- INBOX ---
     if (path.startsWith('/api/v1/inbox')) {
+        if (path.endsWith('/new') && method === 'POST') {
+            const { contactId, userId, subject, body: newBody } = body;
+            const newInteraction = {
+                id: `int_${Date.now()}`,
+                organizationId: 'org_1', // Hardcoded for demo
+                contactId,
+                userId,
+                type: 'Email' as const,
+                date: new Date().toISOString(),
+                notes: `Subject: ${subject}\n\n${newBody}`,
+            };
+
+            db.interactions.unshift(newInteraction);
+            const contactIndex = db.contacts.findIndex(c => c.id === contactId);
+            if (contactIndex > -1) {
+                if (!db.contacts[contactIndex].interactions) {
+                    db.contacts[contactIndex].interactions = [];
+                }
+                db.contacts[contactIndex].interactions!.unshift(newInteraction);
+            }
+            return respond(newInteraction, 201);
+        }
+
+        if (path.endsWith('/reply') && method === 'POST') {
+            const { contactId, userId, subject, body: replyBody } = body;
+            const newInteraction = {
+                id: `int_${Date.now()}`,
+                organizationId: 'org_1', // Hardcoded for demo
+                contactId,
+                userId,
+                type: 'Email' as const,
+                date: new Date().toISOString(),
+                notes: `Subject: Re: ${subject}\n\n${replyBody}`,
+            };
+
+            db.interactions.unshift(newInteraction);
+            const contactIndex = db.contacts.findIndex(c => c.id === contactId);
+            if (contactIndex > -1) {
+                if (!db.contacts[contactIndex].interactions) {
+                    db.contacts[contactIndex].interactions = [];
+                }
+                db.contacts[contactIndex].interactions!.unshift(newInteraction);
+            }
+            return respond(newInteraction, 201);
+        }
+
         if (method === 'GET') {
             const orgId = searchParams.get('orgId');
             const allEmails = db.interactions.filter(i => i.organizationId === orgId && i.type === 'Email');
@@ -425,6 +498,32 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
         }
     }
 
+    // FIX: Add handler for email sync
+    if (path.endsWith('/api/v1/email/sync')) {
+        const orgId = body.orgId;
+        // Simulate finding some emails
+        const newInteraction = {
+            id: `int_synced_${Date.now()}`,
+            organizationId: orgId,
+            contactId: 'contact_1',
+            userId: 'user_admin_1',
+            type: 'Email' as const,
+            date: new Date().toISOString(),
+            notes: '(Synced via integration)\nSubject: Re: Project Update\n\nHi John, just wanted to check in on the project status.',
+        };
+        db.interactions.unshift(newInteraction);
+        const contactToUpdate = db.contacts.find(c => c.id === 'contact_1');
+        if (contactToUpdate) {
+            if (!contactToUpdate.interactions) {
+                contactToUpdate.interactions = [];
+            }
+            contactToUpdate.interactions.unshift(newInteraction);
+        }
+        if (db.settings.emailIntegration) {
+            db.settings.emailIntegration.lastSync = new Date().toISOString();
+        }
+        return respond(null, 204);
+    }
 
     // --- DASHBOARD ---
     if (path.endsWith('/dashboard')) {

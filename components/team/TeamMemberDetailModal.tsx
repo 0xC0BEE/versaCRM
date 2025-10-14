@@ -1,4 +1,5 @@
 
+
 import React, { useMemo, useState } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -28,7 +29,7 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({ isOpen, o
 
     const [newUserCredentials, setNewUserCredentials] = useState<{ email: string; password: string } | null>(null);
 
-    const initialState = useMemo((): Omit<User, 'id'> => ({
+    const initialState = useMemo((): Omit<User, 'id'| 'contactId'> => ({
         name: '',
         email: '',
         roleId: (roles as CustomRole[])[0]?.id || '',

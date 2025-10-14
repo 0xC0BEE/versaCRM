@@ -115,7 +115,7 @@ const FormBuilderPage: React.FC<FormBuilderPageProps> = ({ formToEdit, onClose }
                 <Card className="col-span-3 p-4 overflow-y-auto">
                     <FormToolbox onFieldAdd={handleFieldAdd} usedFieldIds={form.fields.map(f => f.id)} />
                 </Card>
-                <div className="col-span-5 h-full flex items-center justify-center p-4 bg-card-bg rounded-card border border-border-subtle">
+                <div className="col-span-5 h-full flex items-center justify-center p-4 bg-card-bg rounded-lg border border-border-subtle">
                    <FormPreview 
                         form={form} 
                         setForm={setForm} 

@@ -1,11 +1,7 @@
-
-
 import React, { useState } from 'react';
-// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import PageWrapper from '../layout/PageWrapper';
-// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
 import { Card } from '../ui/Card';
 import Tabs from '../ui/Tabs';
 import OrganizationDashboardTab from './detail_tabs/OrganizationDashboardTab';
@@ -14,7 +10,6 @@ import TeamPage from '../team/TeamPage';
 import OrganizationSettings from './OrganizationSettings';
 import OrganizationWorkflowsTab from './detail_tabs/OrganizationWorkflowsTab';
 import OrganizationReportsTab from './detail_tabs/OrganizationReportsTab';
-// FIX: Corrected the import path for types to be a valid relative path.
 import { Organization } from '../../types';
 
 const OrganizationDetailPage: React.FC = () => {

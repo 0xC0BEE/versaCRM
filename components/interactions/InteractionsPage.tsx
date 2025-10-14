@@ -22,7 +22,9 @@ const InteractionsPage: React.FC = () => {
                 {isLoading ? (
                     <div className="p-8 text-center">Loading interactions...</div>
                 ) : (
-                    <InteractionsTimeline interactions={interactions as Interaction[]} />
+                    <div className="p-6">
+                        <InteractionsTimeline interactions={interactions as Interaction[]} />
+                    </div>
                 )}
             </Card>
         </PageWrapper>

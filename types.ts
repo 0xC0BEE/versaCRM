@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-// FIX: Import and export Node/Edge types from reactflow for use in workflow/campaign definitions.
+// Import and export Node/Edge types from reactflow for use in workflow/campaign definitions.
 import type { Node, Edge } from 'reactflow';
 
 export type { Node, Edge };
@@ -317,6 +317,13 @@ export interface Conversation {
     participants: { id: string, name: string, email: string }[];
 }
 
+export interface CannedResponse {
+  id: string;
+  organizationId: string;
+  name: string;
+  body: string;
+}
+
 
 // Config & Settings
 export interface CustomField {
@@ -474,7 +481,6 @@ export interface AdvancedWorkflow {
     organizationId: string;
     name: string;
     isActive: boolean;
-    // FIX: Use strongly-typed Node and Edge arrays.
     nodes: Node[];
     edges: Edge[];
 }
@@ -498,29 +504,22 @@ export interface Campaign {
         clicked: number;
     };
     targetAudience: CampaignTargetAudience;
-    // FIX: Use strongly-typed Node and Edge arrays.
     nodes: Node[]; // ReactFlow nodes
     edges: Edge[]; // ReactFlow edges
 }
 
-// FIX: Added missing properties to CampaignEnrollment to match usage in components.
 export interface CampaignEnrollment {
     id: string;
     campaignId: string;
     contactId: string;
     currentNodeId: string;
     waitUntil: string;
-    programName: string;
-    startDate: string;
-    endDate?: string;
-    status: 'Active' | 'Completed';
 }
 
 // Marketing & Forms
 export interface PublicFormField {
     id: string;
     label: string;
-    // FIX: Widened the type to allow for more field types, matching CustomField.
     type: 'text' | 'textarea' | 'select' | 'number' | 'date' | 'checkbox' | 'file';
     required: boolean;
     placeholder?: string;
@@ -845,6 +844,7 @@ export interface DataContextType {
     projectsQuery: any;
     projectPhasesQuery: any;
     inboxQuery: any;
+    cannedResponsesQuery: any;
 
     // Mutations
     createOrganizationMutation: any;
@@ -942,5 +942,10 @@ export interface DataContextType {
     createProjectMutation: any;
     updateProjectMutation: any;
     deleteProjectMutation: any;
+    sendEmailReplyMutation: any;
+    sendNewEmailMutation: any;
     addProjectCommentMutation: any;
+    createCannedResponseMutation: any;
+    updateCannedResponseMutation: any;
+    deleteCannedResponseMutation: any;
 }

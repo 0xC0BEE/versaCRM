@@ -28,7 +28,6 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 type Layouts = { [key: string]: DashboardLayout[] };
 
-// FIX: Added props interface to accept isTabbedView.
 interface DashboardPageProps {
     isTabbedView?: boolean;
 }
@@ -180,7 +179,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
 
     const renderOrgDashboard = () => (
         <>
-            {/* FIX: Conditionally render title based on isTabbedView */}
             {!isTabbedView && (
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-3xl font-bold text-text-heading">Organization Dashboard</h1>
@@ -228,7 +226,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
         </>
     );
 
-    // FIX: Add conditional rendering for tabbed view to avoid showing nested tabs.
     if (isTabbedView) {
         return <div className="p-1">{renderOrgDashboard()}</div>;
     }

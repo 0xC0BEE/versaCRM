@@ -4,7 +4,8 @@ import {
     EmailTemplate, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, 
     LandingPage, Document, CustomReport, DashboardWidget, Supplier, Warehouse, CustomObjectDefinition, 
     CustomObjectRecord, AppMarketplaceItem, InstalledApp, Sandbox, DocumentTemplate,
-    ProjectPhase, Project, ProjectTemplate
+    ProjectPhase, Project, ProjectTemplate,
+    CannedResponse
 } from '../types';
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
@@ -70,6 +71,11 @@ export const MOCK_CALENDAR_EVENTS: CalendarEvent[] = [
 export const MOCK_EMAIL_TEMPLATES: EmailTemplate[] = [
     { id: 'template_1', organizationId: 'org_1', name: 'Welcome Email', subject: 'Welcome to Clay Health!', body: 'Hi {{contactName}},\n\nWelcome! We\'re excited to have you.\n\nBest,\n{{userName}}' },
     { id: 'template_2', organizationId: 'org_1', name: 'Case Study Follow-up', subject: 'Following up on our conversation', body: 'Hi {{contactName}},\n\nAs promised, here is a case study relevant to our discussion. Let me know your thoughts!\n\nBest,\n{{userName}}' },
+];
+
+export const MOCK_CANNED_RESPONSES: CannedResponse[] = [
+    { id: 'cr_1', organizationId: 'org_1', name: 'Follow-up', body: 'Hi {{contact.contactName}},\n\nJust following up on our previous conversation. Please let me know if you have any questions.\n\nBest,\n{{userName}}' },
+    { id: 'cr_2', organizationId: 'org_1', name: 'Support - Common Question', body: 'Hello,\n\nThanks for reaching out! To reset your password, please visit the following link: [LINK]\n\nLet us know if you need anything else!' }
 ];
 
 export const MOCK_FORMS: PublicForm[] = [

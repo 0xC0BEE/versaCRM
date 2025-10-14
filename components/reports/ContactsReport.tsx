@@ -47,7 +47,7 @@ const ContactsReport: React.FC<ContactsReportProps> = ({ data }) => {
                                         contentStyle={{
                                             backgroundColor: isDark ? '#1f2937' : '#ffffff',
                                             border: `1px solid ${strokeColor}`,
-                                            borderRadius: 'var(--radius-input)'
+                                            borderRadius: 'var(--radius)'
                                         }}
                                     />
                                     <Bar dataKey="count" fill="url(#contactsStatus)" name="Count" radius={[4, 4, 0, 0]} />
@@ -77,7 +77,7 @@ const ContactsReport: React.FC<ContactsReportProps> = ({ data }) => {
                                         contentStyle={{
                                             backgroundColor: isDark ? '#1f2937' : '#ffffff',
                                             border: `1px solid ${strokeColor}`,
-                                            borderRadius: 'var(--radius-input)'
+                                            borderRadius: 'var(--radius)'
                                         }}
                                     />
                                     <Bar dataKey="count" fill="url(#leadSource)" name="Count" radius={[4, 4, 0, 0]} />

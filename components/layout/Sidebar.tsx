@@ -1,11 +1,10 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
-// FIX: Corrected import path for types.
 import { Page, Permission } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import {
     Home, Building, Users, Briefcase, Inbox, Calendar, BarChart2, Settings, Package, Handshake,
-    LifeBuoy, Zap, Mails, ClipboardList, BookOpen, LayoutTemplate, Bot, HelpCircle, Shapes, FileText, FolderKanban
+    LifeBuoy, Zap, Mails, ClipboardList, BookOpen, LayoutTemplate, Bot, HelpCircle, Shapes, FileText, FolderKanban, History
 } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import * as LucideIcons from 'lucide-react';
@@ -15,8 +14,6 @@ interface SidebarProps {
     setIsOpen: (isOpen: boolean) => void;
 }
 
-// FIX: Defined an interface for navigation items to ensure a consistent shape and resolve type errors.
-// FIX: Changed page type to Page for better type safety.
 interface NavItem {
     page: Page;
     icon: React.ElementType;
@@ -26,7 +23,6 @@ interface NavItem {
     customObjectDefId?: string;
 }
 
-// FIX: Added NavSection interface to strongly type navSections array.
 interface NavSection {
     title: string;
     items: NavItem[];
@@ -63,7 +59,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         }))
     } : null;
 
-    // FIX: Applied NavSection[] type to resolve type inference issues.
     let navSections: NavSection[] = [
         {
             title: 'Core',
@@ -93,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                 { page: 'LandingPages', icon: LayoutTemplate, permission: 'automations:manage' },
                 { page: 'Documents', icon: FileText, permission: 'deals:read' },
                 { page: 'Workflows', icon: Bot, permission: 'automations:manage' },
-                { page: 'Interactions', icon: Inbox, permission: 'contacts:read:all' },
+                { page: 'Interactions', icon: History, permission: 'contacts:read:all' },
                 { page: 'SyncedEmail', icon: Mails, permission: 'contacts:read:all' },
                 { page: 'Inventory', icon: Package, permission: 'inventory:read' },
             ]

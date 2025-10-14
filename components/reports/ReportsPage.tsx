@@ -12,7 +12,7 @@ import { useData } from '../../contexts/DataContext';
 import { AnyReportData, ReportType, AnyContact, Product, User, Task, Deal, DealStage, CustomReport } from '../../types';
 import { generateReportData } from '../../services/reportGenerator';
 // FIX: Changed date-fns import for 'subDays' from a destructured import to a default import from its subpath to resolve a module export error.
-import subDays from 'date-fns/subDays';
+import { subDays } from 'date-fns';
 import ReportFilters from './ReportFilters';
 import SalesReport from './SalesReport';
 import InventoryReport from './InventoryReport';
@@ -139,19 +139,19 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
                 </div>
             )}
             <Card>
-                <div className="p-4 border-b border-border-subtle">
+                <CardHeader>
                     <ReportFilters reportType={reportType} setReportType={setReportType} dateRange={dateRange} setDateRange={setDateRange} />
-                </div>
-                <div className="p-6">
+                </CardHeader>
+                <CardContent>
                     {isLoading ? <div className="p-8 text-center">Loading report data...</div> : renderReport()}
-                </div>
+                </CardContent>
             </Card>
 
             <Card className="mt-6">
                 <CardHeader>
                     <CardTitle>My Custom Reports</CardTitle>
                 </CardHeader>
-                <div className="border-t border-border-subtle">
+                <CardContent className="p-0">
                     {customReports.length > 0 ? (
                         <div className="divide-y divide-border-subtle">
                             {(customReports as CustomReport[]).map((report: CustomReport) => {
@@ -180,7 +180,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
                     ) : (
                         <p className="text-sm text-text-secondary text-center p-6">You haven't created any custom reports yet.</p>
                     )}
-                </div>
+                </CardContent>
             </Card>
             
             {isPreviewModalOpen && selectedReport && (

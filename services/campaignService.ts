@@ -1,8 +1,6 @@
-
 import {
   MOCK_CAMPAIGNS,
   MOCK_CONTACTS_MUTABLE,
-// FIX: Corrected import path for mockData.
 } from './mockData';
 import { Campaign, CampaignEnrollment, AnyContact, CampaignTargetAudience } from '../types';
 
@@ -35,22 +33,17 @@ export const campaignService = {
             if (matchesAudience(contact, campaign.targetAudience)) {
                  const alreadyEnrolled = (contact.campaignEnrollments || []).some(e => e.campaignId === campaign.id);
                  if (!alreadyEnrolled) {
-                    // FIX: Replaced 'currentStepIndex' with 'currentNodeId' to match the CampaignEnrollment type and correctly initialize the journey.
                     const triggerNode = campaign.nodes.find(n => n.type === 'journeyTrigger');
                     if (!triggerNode) {
                         console.error(`[CampaignService] Campaign "${campaign.name}" is missing a trigger node.`);
                         continue;
                     }
-                     // FIX: Add missing properties to CampaignEnrollment
                      const enrollment: CampaignEnrollment = {
                         id: `enroll_${Date.now()}`,
                         campaignId: campaign.id,
                         contactId: contact.id,
                         currentNodeId: triggerNode.id,
                         waitUntil: new Date().toISOString(),
-                        programName: campaign.name,
-                        startDate: new Date().toISOString(),
-                        status: 'Active',
                     };
                     if (!contact.campaignEnrollments) contact.campaignEnrollments = [];
                     contact.campaignEnrollments.push(enrollment);
@@ -71,7 +64,6 @@ export const campaignService = {
             return;
         }
         
-        // FIX: The trigger node must be found to correctly initialize the currentNodeId for the enrollment.
         const triggerNode = campaign.nodes.find(n => n.type === 'journeyTrigger');
         if (!triggerNode) {
             console.error(`[CampaignService] Campaign "${campaign.name}" is missing a trigger node.`);
@@ -87,17 +79,12 @@ export const campaignService = {
         console.log(`[CampaignService] Enrolling ${contactsToEnroll.length} contacts into campaign "${campaign.name}".`);
 
         contactsToEnroll.forEach(contact => {
-            // FIX: Replaced 'currentStepIndex' with 'currentNodeId' to match the CampaignEnrollment type.
-            // FIX: Add missing properties to CampaignEnrollment
             const enrollment: CampaignEnrollment = {
                 id: `enroll_${Date.now()}_${contact.id}`,
                 campaignId: campaign.id,
                 contactId: contact.id,
                 currentNodeId: triggerNode.id,
                 waitUntil: new Date().toISOString(),
-                programName: campaign.name,
-                startDate: new Date().toISOString(),
-                status: 'Active',
             };
             if (!contact.campaignEnrollments) {
                 contact.campaignEnrollments = [];

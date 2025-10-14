@@ -30,5 +30,11 @@ export const featureFlags: FeatureFlag[] = [
         name: 'AI Record Linking Suggestions',
         description: 'Enables AI-powered suggestions for linking Deals and Tickets to Custom Object records.',
         isEnabled: false,
+    },
+    {
+        id: 'aiReplySuggestions',
+        name: 'AI Reply Suggestions',
+        description: 'Enables AI-powered one-click reply suggestions in the Unified Inbox.',
+        isEnabled: false,
     }
 ];

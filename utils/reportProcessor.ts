@@ -1,6 +1,5 @@
 // This utility processes raw data from a custom report into a format suitable for charting.
 
-// FIX: Corrected import path for types.
 import { ReportVisualization } from '../types';
 
 export interface ProcessedChartData {

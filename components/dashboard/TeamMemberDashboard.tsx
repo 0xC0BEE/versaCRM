@@ -61,7 +61,7 @@ const TeamMemberDashboard: React.FC<TeamMemberDashboardProps> = ({ isTabbedView 
                         <div className="max-h-96 overflow-y-auto">
                             {pendingTasks.length > 0 ? (
                                 <ul className="divide-y divide-border-subtle">
-                                    {pendingTasks.slice(0, 10).map(task => (
+                                    {pendingTasks.slice(0, 10).map((task: Task) => (
                                         <li key={task.id} className="py-3">
                                             <p className="text-sm font-medium text-text-primary">{task.title}</p>
                                             <p className="text-xs text-text-secondary">Due: {format(new Date(task.dueDate), 'PP')}</p>
@@ -115,7 +115,7 @@ const TeamMemberDashboard: React.FC<TeamMemberDashboardProps> = ({ isTabbedView 
     }
 
     if (isTabbedView) {
-        return pageContent;
+        return <div className="p-1">{pageContent}</div>;
     }
 
     return (

@@ -1,15 +1,10 @@
-
-
 import React, { useState } from 'react';
-// FIX: Corrected the import path for DataContext to be a valid relative path.
 import { useData } from '../../contexts/DataContext';
 import PageWrapper from '../layout/PageWrapper';
-// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
 import { Card } from '../ui/Card';
 import OrganizationsTable from './OrganizationsTable';
 import Button from '../ui/Button';
 import { Plus } from 'lucide-react';
-// FIX: Corrected the import path for types to be a valid relative path.
 import { Organization } from '../../types';
 import OrganizationEditModal from './OrganizationEditModal';
 

@@ -1,10 +1,7 @@
-
 import React, { createContext, useContext, ReactNode, useMemo, useCallback, useState, useEffect } from 'react';
-// FIX: Corrected import path for types.
 import { User, AuthContextType, Permission, CustomRole } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { useQueryClient } from '@tanstack/react-query';
-// FIX: Corrected import path for apiClient from a file path to a relative module path.
 import apiClient from '../services/apiClient';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

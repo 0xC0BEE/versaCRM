@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/Card';
@@ -24,15 +23,12 @@ const AiInsightsCard: React.FC<AiInsightsCardProps> = ({ dashboardData, isLoadin
         setIsGenerating(true);
         setInsight('');
         try {
-// FIX: Corrected GoogleGenAI initialization
             const ai = new GoogleGenAI({apiKey: process.env.API_KEY!});
             const prompt = `Analyze the following CRM dashboard data and provide a concise, actionable insight for an organization admin. Data: ${JSON.stringify(dashboardData.kpis)}`;
-// FIX: Corrected generateContent call
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,
             });
-// FIX: Corrected how response text is accessed
             setInsight(response.text);
         } catch (error) {
             console.error("AI Insight Generation Error:", error);

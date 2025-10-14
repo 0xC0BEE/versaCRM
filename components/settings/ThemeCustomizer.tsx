@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 // FIX: Corrected import path for useTheme.
 import { useTheme } from '../../contexts/ThemeContext';
@@ -17,7 +18,7 @@ const ThemeCustomizer: React.FC = () => {
                     <button
                         key={t}
                         onClick={() => setTheme(t)}
-                        className={`px-4 py-2 rounded-button font-medium capitalize transition-colors ${
+                        className={`px-4 py-2 rounded-md font-medium capitalize transition-colors ${
                             theme === t 
                                 ? 'bg-primary text-white' 
                                 : 'bg-card-bg text-text-primary border border-border-subtle hover:bg-hover-bg'

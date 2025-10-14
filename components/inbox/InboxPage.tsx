@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import PageWrapper from '../layout/PageWrapper';
 import { useData } from '../../contexts/DataContext';
 import { Conversation, AnyContact, User } from '../../types';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import ConversationList from './ConversationList';
 import ConversationView from './ConversationView';
 import ContactInspector from './ContactInspector';
-import { Inbox } from 'lucide-react';
+import { Inbox, MessageSquare } from 'lucide-react';
+import ComposeView from './ComposeView';
+import Button from '../ui/Button';
 
 const InboxPage: React.FC = () => {
     const { inboxQuery, contactsQuery, teamMembersQuery } = useData();
@@ -15,6 +16,7 @@ const InboxPage: React.FC = () => {
     const { data: teamMembers = [], isLoading: teamMembersLoading } = teamMembersQuery;
 
     const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+    const [isComposing, setIsComposing] = useState(false);
 
     const isLoading = inboxLoading || contactsLoading || teamMembersLoading;
 
@@ -36,30 +38,56 @@ const InboxPage: React.FC = () => {
     }, [teamMembers, contacts]);
 
     useEffect(() => {
-        if (!selectedConversationId && conversations.length > 0) {
+        if (!isComposing && !selectedConversationId && conversations.length > 0) {
             setSelectedConversationId(conversations[0].id);
         }
-    }, [conversations, selectedConversationId]);
+    }, [conversations, selectedConversationId, isComposing]);
+
+    const handleSelectConversation = (id: string) => {
+        setIsComposing(false);
+        setSelectedConversationId(id);
+    };
+
+    const handleCompose = () => {
+        setSelectedConversationId(null);
+        setIsComposing(true);
+    };
+
+    const handleCancelCompose = () => {
+        setIsComposing(false);
+        if (conversations.length > 0) {
+            setSelectedConversationId(conversations[0].id);
+        }
+    };
+
+    const handleSent = () => {
+        setIsComposing(false);
+    };
 
     if (isLoading) {
-        return <PageWrapper><LoadingSpinner /></PageWrapper>;
+        return <div className="flex h-[calc(100vh-4rem)]"><LoadingSpinner /></div>;
     }
 
     return (
         <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
             <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 border-r border-border-subtle overflow-y-auto">
-                <div className="p-4 border-b border-border-subtle">
+                <div className="p-4 border-b border-border-subtle flex justify-between items-center">
                     <h1 className="text-xl font-semibold">Inbox</h1>
+                    <Button size="sm" variant="secondary" onClick={handleCompose} leftIcon={<MessageSquare size={14}/>}>
+                        Compose
+                    </Button>
                 </div>
                 <ConversationList
                     conversations={conversations as Conversation[]}
                     selectedConversationId={selectedConversationId}
-                    onSelectConversation={setSelectedConversationId}
+                    onSelectConversation={handleSelectConversation}
                 />
             </div>
 
             <div className="flex-1 flex flex-col overflow-hidden">
-                {selectedConversation ? (
+                {isComposing ? (
+                    <ComposeView onCancel={handleCancelCompose} onSent={handleSent} />
+                ) : selectedConversation ? (
                     <div className="flex-1 flex overflow-hidden">
                         <div className="flex-1 overflow-y-auto">
                             <ConversationView conversation={selectedConversation} userMap={userMap} />
@@ -74,7 +102,7 @@ const InboxPage: React.FC = () => {
                     <div className="flex-1 flex items-center justify-center text-text-secondary">
                          <div className="text-center">
                             <Inbox size={48} className="mx-auto" />
-                            <p className="mt-2">Select a conversation to view</p>
+                            <p className="mt-2">Select a conversation or compose a new message</p>
                         </div>
                     </div>
                 )}

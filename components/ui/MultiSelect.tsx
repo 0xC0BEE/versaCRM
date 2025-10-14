@@ -11,7 +11,6 @@ interface MultiSelectProps {
 const MultiSelect: React.FC<MultiSelectProps> = ({ label, options, selectedValues, onChange }) => {
     
     const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        // FIX: Explicitly type 'option' as HTMLOptionElement to resolve property 'value' not existing on type 'unknown'.
         const selectedOptions = Array.from(e.target.selectedOptions, (option: HTMLOptionElement) => option.value);
         onChange(selectedOptions);
     }

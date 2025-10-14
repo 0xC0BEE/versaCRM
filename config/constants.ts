@@ -1,8 +1,4 @@
-// FIX: Corrected import path for types.
-// FIX: Commented out deprecated UserRole type and USER_ROLES constant.
-// import { UserRole } from '../types';
-
-// export const USER_ROLES: UserRole[] = ['Super Admin', 'Organization Admin', 'Team Member', 'Client'];
+// This file contains a constant for quick login users in the demo environment.
 
 export const QUICK_LOGIN_USERS = [
     { email: 'super@crm.com', label: 'Super Admin' },

@@ -1,18 +1,14 @@
-
 import React from 'react';
-import { Interaction } from '../../types';
-// FIX: Imported ClipboardList icon for 'Form Submission' type.
+import { Interaction, User } from '../../types';
 import { Mail, Phone, Users, FileText, Calendar, MapPin, Wrench, ClipboardList } from 'lucide-react';
 import { format } from 'date-fns';
-// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 
 interface InteractionsTimelineProps {
     interactions: Interaction[];
 }
 
-// FIX: Added 'Form Submission' icon to satisfy the InteractionType record.
-const interactionIcons: Record<Interaction['type'], React.ReactNode> = {
+const interactionIcons: Record<string, React.ReactNode> = {
     Email: <Mail className="h-4 w-4 text-white" />,
     Call: <Phone className="h-4 w-4 text-white" />,
     Meeting: <Users className="h-4 w-4 text-white" />,
@@ -24,8 +20,7 @@ const interactionIcons: Record<Interaction['type'], React.ReactNode> = {
     'Form Submission': <ClipboardList className="h-4 w-4 text-white" />,
 };
 
-// FIX: Added 'Form Submission' color to satisfy the InteractionType record.
-const interactionColors: Record<Interaction['type'], string> = {
+const interactionColors: Record<string, string> = {
     Email: 'bg-blue-500',
     Call: 'bg-green-500',
     Meeting: 'bg-purple-500',
@@ -54,7 +49,7 @@ const InteractionsTimeline: React.FC<InteractionsTimelineProps> = ({ interaction
     const renderNotes = (notes: string) => {
         if (!teamMembers.length) return notes;
 
-        const names = teamMembers.map(tm => tm.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+        const names = teamMembers.map((tm: any) => tm.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
         if (names.length === 0) return notes;
         
         const mentionRegex = new RegExp(`(@(${names.join('|')}))`, 'g');
@@ -62,7 +57,7 @@ const InteractionsTimeline: React.FC<InteractionsTimelineProps> = ({ interaction
         const parts = notes.split(mentionRegex);
 
         return parts.map((part, index) => {
-            const isMention = teamMembers.some(tm => `@${tm.name}` === part);
+            const isMention = teamMembers.some((tm: any) => `@${tm.name}` === part);
             if (isMention) {
                 return (
                     <strong key={index} className="bg-primary/10 text-primary font-semibold rounded px-1">
@@ -75,7 +70,7 @@ const InteractionsTimeline: React.FC<InteractionsTimelineProps> = ({ interaction
     };
 
     return (
-        <div className="flow-root">
+        <div className="flow-root p-4">
             <ul className="-mb-8">
                 {sortedInteractions.map((interaction, interactionIdx) => (
                     <li key={interaction.id}>

@@ -19,7 +19,7 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({ reportType, setReportType
     };
 
     return (
-        <div className="flex flex-col md:flex-row justify-between items-end gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-end gap-4 p-4 border-b border-border-subtle">
             <Select
                 id="reportType"
                 label="Report Type"

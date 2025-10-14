@@ -93,10 +93,11 @@ Bridge the gap between a "Won" deal and successful service delivery, creating a 
 -   **New "Inbox" Hub:**
     -   [x] A new top-level page featuring a unified, multi-channel inbox UI.
 -   **Two-Way Email Client:**
-    -   [ ] Upgrade the existing email integration to allow users to send, receive, and reply to emails directly from the Inbox, with all conversations automatically logged.
+    -   [x] Upgrade the existing email integration to allow users to send, receive, and reply to emails directly from the Inbox, with all conversations automatically logged.
+-   **Productivity Tools & AI Assistance:**
+    -   [x] Canned responses and templates for quick replies.
+    -   [x] AI-powered reply suggestions.
+    -   [ ] AI-powered conversation summaries.
+    -   [ ] AI-powered sentiment analysis.
 -   **SMS Integration:**
     -   [ ] Integrate with a third-party service (e.g., Twilio) to enable sending and receiving SMS messages from the Unified Inbox.
--   **Productivity Tools:**
-    -   [ ] Canned responses and templates for quick replies across all channels.
--   **AI-Powered Assistance:**
-    -   [ ] Integrate AI to suggest replies, summarize long conversation threads, and analyze message sentiment.

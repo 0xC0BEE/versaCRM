@@ -1,5 +1,3 @@
-
-
 import React, { useMemo, useState, useRef } from 'react';
 import { Ticket, TicketAttachment } from '../../../types';
 import Modal from '../../ui/Modal';
@@ -72,7 +70,6 @@ const ClientTicketDetailModal: React.FC<ClientTicketDetailModalProps> = ({ isOpe
             onSuccess: async (createdTicket) => {
                 // If there's an attachment, add it as the first reply
                 if (attachmentData) {
-                    // FIX: Updated the direct call to `apiClient.addTicketReply` to pass a single object argument (`{ ticketId, reply }`) to match the API client's updated, more consistent method signature.
                     addTicketReplyMutation.mutate({
                         ticketId: createdTicket.id,
                         reply: {

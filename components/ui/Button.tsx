@@ -1,6 +1,5 @@
 import React, { ButtonHTMLAttributes, ReactNode } from 'react';
 
-// FIX: Added 'danger' and 'primary' to the list of accepted variants to fix type errors across the app.
 type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 'success' | 'danger' | 'primary';
 type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
 
@@ -26,10 +25,8 @@ const Button: React.FC<ButtonProps> = ({
 
     const variantClasses: Record<ButtonVariant, string> = {
         default: 'bg-primary text-white hover:bg-primary/90',
-        // FIX: Mapped 'primary' variant to default styles.
         primary: 'bg-primary text-white hover:bg-primary/90',
         destructive: 'bg-error text-white hover:bg-error/90',
-        // FIX: Mapped 'danger' variant to destructive styles.
         danger: 'bg-error text-white hover:bg-error/90',
         outline: 'border border-border-subtle bg-transparent hover:bg-hover-bg hover:text-text-primary',
         secondary: 'bg-hover-bg text-text-primary hover:bg-hover-bg/80',

@@ -1,6 +1,4 @@
-
 import React from 'react';
-// FIX: Corrected the import path for types to be a valid relative path.
 import { Organization } from '../../types';
 import Button from '../ui/Button';
 import { Plus } from 'lucide-react';
@@ -38,7 +36,6 @@ const OrganizationsTable: React.FC<OrganizationsTableProps> = ({ organizations, 
                         >
                             <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{org.name}</td>
                             <td className="px-6 py-4">{org.industry}</td>
-                            {/* FIX: Used correct property names from updated Organization type. */}
                             <td className="px-6 py-4">{org.primaryContactEmail}</td>
                             <td className="px-6 py-4">{new Date(org.createdAt).toLocaleDateString()}</td>
                         </tr>

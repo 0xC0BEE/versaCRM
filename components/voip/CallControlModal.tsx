@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useData } from '../../contexts/DataContext';
@@ -25,7 +23,6 @@ const CallControlModal: React.FC = () => {
     const [isSummarizing, setIsSummarizing] = useState(false);
 
     useEffect(() => {
-        // FIX: Replaced NodeJS.Timeout with ReturnType<typeof setInterval> for browser compatibility.
         let timer: ReturnType<typeof setInterval>;
         if (status === 'connected') {
             timer = setInterval(() => {
@@ -78,11 +75,9 @@ const CallControlModal: React.FC = () => {
         if (!callLog) return;
         setIsSummarizing(true);
         try {
-            // FIX: Initialize GoogleGenAI with named apiKey parameter.
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
             const prompt = `Generate a concise, one-paragraph summary for a simulated business call with ${callContact?.contactName} that lasted ${formatDuration(duration)}. The summary should sound professional and plausible.`;
             
-            // FIX: Use ai.models.generateContent and access text via .text property.
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,

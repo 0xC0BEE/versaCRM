@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -46,7 +43,6 @@ const AiAssistantTab: React.FC = () => {
         setIsLoading(true);
 
         try {
-            // FIX: Initialize GoogleGenAI with named apiKey parameter
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
             
             const ticketsForContact = (await apiClient.getTickets(contact.organizationId)).filter(t => t.contactId === contact.id);
@@ -64,13 +60,11 @@ const AiAssistantTab: React.FC = () => {
             Answer the client's question based *only* on this data. Be friendly and concise.
             Client's question: "${input}"`;
 
-            // FIX: Use ai.models.generateContent and await the response text property
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,
             });
 
-            // FIX: Access response text via .text property
             const aiMessage: Message = { sender: 'ai', text: response.text };
             setMessages(prev => [...prev, aiMessage]);
 

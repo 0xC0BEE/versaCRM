@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -64,7 +65,7 @@ const InteractionEditModal: React.FC<InteractionEditModalProps> = ({ isOpen, onC
 
     const filteredSuggestions = useMemo(() => {
         if (!mentionQuery) return teamMembers;
-        return teamMembers.filter(member =>
+        return teamMembers.filter((member: any) =>
             member.name.toLowerCase().includes(mentionQuery.toLowerCase())
         );
     }, [mentionQuery, teamMembers]);
@@ -127,7 +128,7 @@ const InteractionEditModal: React.FC<InteractionEditModalProps> = ({ isOpen, onC
                     {showSuggestions && filteredSuggestions.length > 0 && (
                         <div className="absolute z-10 w-full mt-1 bg-card-bg border border-border-subtle rounded-md shadow-lg max-h-40 overflow-y-auto">
                             <ul>
-                                {filteredSuggestions.map(user => (
+                                {filteredSuggestions.map((user: User) => (
                                     <li key={user.id}>
                                         <button
                                             onClick={() => handleMentionSelect(user)}

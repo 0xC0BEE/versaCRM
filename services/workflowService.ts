@@ -1,7 +1,5 @@
-// FIX: Corrected import path for mockData from a file path to a relative module path.
 import { MOCK_CONTACTS_MUTABLE, MOCK_WORKFLOWS, MOCK_ADVANCED_WORKFLOWS, MOCK_EMAIL_TEMPLATES, MOCK_TASKS, MOCK_USERS, MOCK_ROLES } from './mockData';
 import { replacePlaceholders } from '../utils/textUtils';
-// FIX: Imported 'addDays' from 'date-fns' to make the function available.
 import { addDays } from 'date-fns';
 import { Workflow, WorkflowTrigger, AnyContact, Deal, AdvancedWorkflow, AuditLogEntry, Task, Interaction } from '../types';
 
@@ -127,7 +125,6 @@ async function executeAction(actionData: any, payload: any, workflowId: string, 
             {
                 const template = MOCK_EMAIL_TEMPLATES.find(t => t.id === actionData.emailTemplateId);
                 if (template && payload.contact) {
-                    // FIX: User object does not have a 'role' property. Finding admin user by roleId via MOCK_ROLES.
                     const adminRoleId = MOCK_ROLES.find(r => r.organizationId === payload.contact.organizationId && r.name === 'Organization Admin')?.id;
                     const sender = MOCK_USERS.find(u => u.organizationId === payload.contact.organizationId && u.roleId === adminRoleId) || MOCK_USERS[0];
                     const subject = replacePlaceholders(template.subject, payload.contact, payload.deal);
