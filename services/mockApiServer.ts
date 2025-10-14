@@ -15,7 +15,7 @@ import { checkAndTriggerWorkflows } from './workflowService';
 import { recalculateScoreForContact } from './leadScoringService';
 import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
-import { Sandbox } from '../types';
+import { Sandbox, Conversation } from '../types';
 
 // Hydrate the in-memory sandbox list from localStorage to persist it across reloads.
 const storedSandboxes = JSON.parse(localStorage.getItem('sandboxesList') || '[]');
@@ -86,6 +86,58 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
 
     const path = new URL(urlString, window.location.origin).pathname;
     const searchParams = new URL(urlString, window.location.origin).searchParams;
+
+    // --- INBOX ---
+    if (path.startsWith('/api/v1/inbox')) {
+        if (method === 'GET') {
+            const orgId = searchParams.get('orgId');
+            const allEmails = db.interactions.filter(i => i.organizationId === orgId && i.type === 'Email');
+            
+            const threads: Record<string, Conversation> = {};
+
+            for (const email of allEmails) {
+                const subjectMatch = email.notes.match(/Subject: (.*)/);
+                const subject = (subjectMatch ? subjectMatch[1] : 'No Subject').replace(/^(Re: |Fwd: )/i, '').trim();
+                const threadId = `${email.contactId}-${subject}`;
+
+                const contact = db.contacts.find(c => c.id === email.contactId);
+                const user = db.users.find(u => u.id === email.userId);
+
+                if (!threads[threadId]) {
+                     if (!contact || !user) continue;
+                     threads[threadId] = {
+                        id: threadId,
+                        contactId: contact.id,
+                        subject: subject,
+                        lastMessageTimestamp: '1970-01-01T00:00:00.000Z',
+                        lastMessageSnippet: '',
+                        messages: [],
+                        participants: [
+                            { id: contact.id, name: contact.contactName, email: contact.email },
+                            { id: user.id, name: user.name, email: user.email }
+                        ]
+                    };
+                }
+
+                const message = {
+                    id: email.id,
+                    senderId: email.userId,
+                    body: email.notes,
+                    timestamp: email.date
+                };
+                threads[threadId].messages.push(message);
+
+                if (new Date(email.date) > new Date(threads[threadId].lastMessageTimestamp)) {
+                    threads[threadId].lastMessageTimestamp = email.date;
+                    threads[threadId].lastMessageSnippet = email.notes.split('\n\n')[1] || email.notes;
+                }
+            }
+            
+            const conversations = Object.values(threads).sort((a, b) => new Date(b.lastMessageTimestamp).getTime() - new Date(a.lastMessageTimestamp).getTime());
+            return respond(conversations);
+        }
+    }
+
 
     // --- SANDBOXES ---
     if (path.startsWith('/api/v1/sandboxes')) {

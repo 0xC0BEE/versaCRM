@@ -7,7 +7,9 @@ import {
     // FIX: Added missing imports for Project and ProjectPhase types
     Project,
     ProjectPhase,
-    ProjectComment
+    ProjectComment,
+    Conversation,
+    Message
 } from '../types';
 
 // Create a mutable reference to the fetch implementation that can be overridden by the mock server.
@@ -70,6 +72,9 @@ const apiClient = {
     getInteractionsByContact: (contactId: string): Promise<Interaction[]> => fetchImpl(`${API_BASE}/interactions?contactId=${contactId}`).then(handleResponse),
     createInteraction: (interactionData: Omit<Interaction, 'id'>): Promise<Interaction> => fetchImpl(`${API_BASE}/interactions`, { method: 'POST', body: JSON.stringify(interactionData), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateInteraction: (interactionData: Interaction): Promise<Interaction> => fetchImpl(`${API_BASE}/interactions/${interactionData.id}`, { method: 'PUT', body: JSON.stringify(interactionData), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+
+    // --- INBOX ---
+    getInboxConversations: (orgId: string): Promise<Conversation[]> => fetchImpl(`${API_BASE}/inbox?orgId=${orgId}`).then(handleResponse),
 
     // --- DASHBOARD & REPORTS ---
     getDashboardData: (orgId: string): Promise<DashboardData> => fetchImpl(`${API_BASE}/dashboard?orgId=${orgId}`).then(handleResponse),

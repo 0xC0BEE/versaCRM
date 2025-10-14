@@ -1,12 +1,12 @@
-import React, { useState, useRef } from 'react';
-import { Organization, Industry, CustomObjectDefinition, DealStage } from '../../types';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Organization, Industry } from '../../types';
 import { GoogleGenAI, Type } from '@google/genai';
 import { useData } from '../../contexts/DataContext';
 import { useQueryClient } from '@tanstack/react-query';
-import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { Wand2, Loader, PartyPopper } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useApp } from '../../contexts/AppContext';
 
 interface OnboardingWizardProps {
     organization: Organization;
@@ -19,9 +19,35 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ organization }) => 
     const [salesStages, setSalesStages] = useState('Lead\nQualification\nProposal\nNegotiation\nClosed Won\nClosed Lost');
     const [isLoading, setIsLoading] = useState(false);
     const isSubmittingRef = useRef(false);
+    const hasSkippedRef = useRef(false); // Guard to prevent infinite loop
     
     const { createCustomObjectDefMutation, updateOrganizationMutation, updateDealStagesMutation } = useData();
     const queryClient = useQueryClient();
+    const { isFeatureEnabled } = useApp();
+
+    const handleSkip = useCallback(() => {
+        setIsLoading(true);
+        setStep(5); // Show loading screen
+        updateOrganizationMutation.mutate({ ...organization, isSetupComplete: true }, {
+            onSuccess: () => {
+                toast.success("Setup complete! You can explore AI features later in settings.");
+                queryClient.invalidateQueries({ queryKey: ['organizations'] });
+            },
+            onError: (error) => {
+                toast.error(`Failed to finalize setup: ${error.message}`);
+                setIsLoading(false);
+                setStep(1); // Go back to start
+            }
+        });
+    }, [organization, updateOrganizationMutation, queryClient]);
+
+    useEffect(() => {
+        if (!isFeatureEnabled('aiOnboardingWizard') && !hasSkippedRef.current) {
+            hasSkippedRef.current = true; // Set guard immediately
+            handleSkip();
+        }
+    }, [isFeatureEnabled, handleSkip]);
+
 
     const handleFinish = async () => {
         if (isSubmittingRef.current) return;
@@ -131,11 +157,19 @@ Example for a Real Estate agency:
 
             setStep(6); // Move to success step
 
-        } catch (error) {
+        } catch (error: any) {
             console.error("AI Onboarding Error:", error);
-            toast.error("An error occurred during AI setup. Please try again.");
-            setIsLoading(false);
-            setStep(1); // Go back to the first step
+            // Check if it's a rate limit error
+            const isRateLimitError = error?.message?.includes('429') || error?.status === 'RESOURCE_EXHAUSTED';
+            if (isRateLimitError) {
+                toast.error("AI is busy right now. Let's skip this and set up manually.");
+                handleSkip(); // Skip automatically on rate limit
+            } else {
+                toast.error("An error occurred during AI setup. Please try again or skip.");
+                setIsLoading(false);
+                setStep(4); // Go back to the last step
+            }
+        } finally {
             isSubmittingRef.current = false;
         }
     };
@@ -173,11 +207,13 @@ Example for a Real Estate agency:
                     <textarea value={salesStages} onChange={e => setSalesStages(e.target.value)} rows={6} className="w-full p-2 border border-border-subtle rounded-md bg-card-bg" />
                 </div>
             );
-            case 5: return (
+            case 5:
+                const isBypassing = !isFeatureEnabled('aiOnboardingWizard');
+                return (
                 <div className="text-center p-8">
                     <Loader size={48} className="animate-spin text-primary mx-auto" />
-                    <h2 className="text-xl font-bold mt-4">Configuring your CRM...</h2>
-                    <p className="text-text-secondary mt-2">Our AI is building your custom objects and sales pipeline.</p>
+                    <h2 className="text-xl font-bold mt-4">{isBypassing ? "Finalizing your account setup..." : "Configuring your CRM..."}</h2>
+                    <p className="text-text-secondary mt-2">{isBypassing ? "Bypassing AI onboarding as per settings." : "Our AI is building your custom objects and sales pipeline."}</p>
                 </div>
             );
             case 6: return (
@@ -187,27 +223,42 @@ Example for a Real Estate agency:
                     <p className="text-text-secondary mt-2">The application will now reload with your custom configuration.</p>
                 </div>
             )
+            default: return null;
         }
     };
+
+    // If we are auto-skipping, only show the loading state.
+    if (!isFeatureEnabled('aiOnboardingWizard')) {
+        return (
+             <div className="fixed inset-0 bg-bg-primary z-50 flex items-center justify-center">
+                <div className="bg-card-bg p-8 rounded-lg shadow-lg w-full max-w-2xl border border-border-subtle">
+                    {renderStep()}
+                </div>
+            </div>
+        );
+    }
+
 
     return (
         <div className="fixed inset-0 bg-bg-primary z-50 flex items-center justify-center">
             <div className="bg-card-bg p-8 rounded-lg shadow-lg w-full max-w-2xl border border-border-subtle">
                 {renderStep()}
-                <div className="mt-6 flex justify-between">
-                    {step > 1 && step < 5 && (
-                        <Button variant="secondary" onClick={() => setStep(step - 1)} disabled={isLoading}>Back</Button>
-                    )}
-                    <div/>
-                    {step < 4 && (
-                        <Button onClick={() => setStep(step + 1)}>Next</Button>
-                    )}
-                    {step === 4 && (
-                        <Button onClick={handleFinish} leftIcon={isLoading ? <Loader size={16} className="animate-spin" /> : <Wand2 size={16}/>} disabled={isLoading}>
-                            {isLoading ? 'Building...' : 'Finish & Build'}
-                        </Button>
-                    )}
-                </div>
+                {step < 5 && (
+                    <div className="mt-6 flex justify-between">
+                        <div>
+                           {step > 1 && <Button variant="secondary" onClick={handleSkip} disabled={isLoading}>Skip for now</Button>}
+                        </div>
+                        <div className="flex gap-2">
+                             {step > 1 && <Button variant="secondary" onClick={() => setStep(step - 1)} disabled={isLoading}>Back</Button>}
+                            {step < 4 && <Button onClick={() => setStep(step + 1)}>Next</Button>}
+                            {step === 4 && (
+                                <Button onClick={handleFinish} leftIcon={isLoading ? <Loader size={16} className="animate-spin" /> : <Wand2 size={16}/>} disabled={isLoading}>
+                                    {isLoading ? 'Building...' : 'Finish & Build'}
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

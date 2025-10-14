@@ -24,6 +24,7 @@ import CustomObjectListPage from '../custom_objects/CustomObjectListPage';
 import AppMarketplacePage from '../marketplace/AppMarketplacePage';
 import DocumentsPage from '../documents/DocumentsPage';
 import ProjectsPage from '../projects/ProjectsPage';
+import InboxPage from '../inbox/InboxPage';
 
 const PageRenderer: React.FC = () => {
     const { currentPage } = useApp();
@@ -45,6 +46,8 @@ const PageRenderer: React.FC = () => {
             return <ProjectsPage />;
         case 'Interactions':
             return <InteractionsPage />;
+        case 'Inbox':
+            return <InboxPage />;
         case 'SyncedEmail':
             return <SyncedEmailPage />;
         case 'Campaigns':

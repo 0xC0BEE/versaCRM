@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
 // FIX: Corrected import path for types.
@@ -71,6 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
             title: 'Core',
             items: [
                 { page: 'Dashboard', icon: Home, permission: 'contacts:read:own' },
+                { page: 'Inbox', icon: Inbox, permission: 'contacts:read:own' },
                 { page: 'Contacts', icon: Users, label: industryConfig.contactNamePlural, permission: 'contacts:read:own' },
                 { page: 'Deals', icon: Handshake, permission: 'deals:read' },
                 { page: 'Tasks', icon: Briefcase, permission: 'contacts:read:own' },

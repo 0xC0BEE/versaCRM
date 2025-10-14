@@ -6,7 +6,7 @@ export type { Node, Edge };
 
 // Basic Types
 export type Industry = 'Health' | 'Finance' | 'Legal' | 'Generic';
-export type Page = 'Dashboard' | 'Organizations' | 'OrganizationDetails' | 'Contacts' | 'Deals' | 'Tickets' | 'Interactions' | 'SyncedEmail' | 'Campaigns' | 'Forms' | 'LandingPages' | 'Documents' | 'Projects' | 'Calendar' | 'Tasks' | 'Reports' | 'Inventory' | 'Team' | 'Workflows' | 'Settings' | 'ApiDocs' | 'KnowledgeBase' | 'CustomObjects' | 'AppMarketplace';
+export type Page = 'Dashboard' | 'Organizations' | 'OrganizationDetails' | 'Contacts' | 'Deals' | 'Tickets' | 'Interactions' | 'SyncedEmail' | 'Campaigns' | 'Forms' | 'LandingPages' | 'Documents' | 'Projects' | 'Calendar' | 'Tasks' | 'Reports' | 'Inventory' | 'Team' | 'Workflows' | 'Settings' | 'ApiDocs' | 'KnowledgeBase' | 'CustomObjects' | 'AppMarketplace' | 'Inbox';
 export type Theme = 'light' | 'dark' | 'system';
 export type ReportType = 'sales' | 'inventory' | 'financial' | 'contacts' | 'team' | 'deals';
 export type ContactStatus = 'Lead' | 'Active' | 'Needs Attention' | 'Inactive' | 'Do Not Contact';
@@ -297,6 +297,24 @@ export interface Project {
   assignedToId?: string;
   comments?: ProjectComment[];
   notes?: string;
+}
+
+// Unified Inbox Types
+export interface Message {
+    id: string;
+    senderId: string;
+    body: string;
+    timestamp: string;
+}
+
+export interface Conversation {
+    id: string;
+    contactId: string;
+    subject: string;
+    lastMessageTimestamp: string;
+    lastMessageSnippet: string;
+    messages: Message[];
+    participants: { id: string, name: string, email: string }[];
 }
 
 
@@ -826,6 +844,7 @@ export interface DataContextType {
     documentTemplatesQuery: any;
     projectsQuery: any;
     projectPhasesQuery: any;
+    inboxQuery: any;
 
     // Mutations
     createOrganizationMutation: any;
