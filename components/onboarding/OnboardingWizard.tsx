@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Organization, Industry, CustomObjectDefinition, DealStage } from '../../types';
 import { GoogleGenAI, Type } from '@google/genai';
 import { useData } from '../../contexts/DataContext';
@@ -18,13 +18,18 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ organization }) => 
     const [businessDescription, setBusinessDescription] = useState('');
     const [salesStages, setSalesStages] = useState('Lead\nQualification\nProposal\nNegotiation\nClosed Won\nClosed Lost');
     const [isLoading, setIsLoading] = useState(false);
+    const isSubmittingRef = useRef(false);
     
     const { createCustomObjectDefMutation, updateOrganizationMutation, updateDealStagesMutation } = useData();
     const queryClient = useQueryClient();
 
     const handleFinish = async () => {
+        if (isSubmittingRef.current) return;
+        isSubmittingRef.current = true;
+
         if (!businessDescription.trim() || !salesStages.trim()) {
             toast.error("Please provide a description and your sales stages.");
+            isSubmittingRef.current = false;
             return;
         }
 
@@ -131,6 +136,7 @@ Example for a Real Estate agency:
             toast.error("An error occurred during AI setup. Please try again.");
             setIsLoading(false);
             setStep(1); // Go back to the first step
+            isSubmittingRef.current = false;
         }
     };
 
