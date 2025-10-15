@@ -5,14 +5,14 @@ import PageWrapper from '../layout/PageWrapper';
 // FIX: Changed default import of 'Card' to a named import '{ Card, CardHeader, CardTitle, CardContent }' and refactored usage to resolve module export error.
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import Button from '../ui/Button';
-import { Download, Plus, Check, Edit, Trash2, Eye } from 'lucide-react';
+import { Download, Plus, Check, Edit, Trash2, Eye, History } from 'lucide-react';
 // FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 // FIX: Corrected import path for types.
-import { AnyReportData, ReportType, AnyContact, Product, User, Task, Deal, DealStage, CustomReport } from '../../types';
+import { AnyReportData, ReportType, AnyContact, Product, User, Task, Deal, DealStage, CustomReport, Snapshot } from '../../types';
 import { generateReportData } from '../../services/reportGenerator';
 // FIX: Changed date-fns import for 'subDays' from a destructured import to a default import from its subpath to resolve a module export error.
-import { subDays } from 'date-fns';
+import { subDays, format } from 'date-fns';
 import ReportFilters from './ReportFilters';
 import SalesReport from './SalesReport';
 import InventoryReport from './InventoryReport';
@@ -24,6 +24,8 @@ import { exportToCSV } from '../../utils/export';
 import CustomReportBuilderPage from './CustomReportBuilderPage';
 import ReportPreviewModal from './ReportPreviewModal';
 import { useApp } from '../../contexts/AppContext';
+import CreateSnapshotModal from './CreateSnapshotModal';
+import ViewSnapshotModal from './ViewSnapshotModal';
 
 
 interface ReportsPageProps {
@@ -36,15 +38,19 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
     const [view, setView] = useState<'reports' | 'builder'>('reports');
     const [selectedReport, setSelectedReport] = useState<CustomReport | null>(null);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+    const [isCreateSnapshotModalOpen, setIsCreateSnapshotModalOpen] = useState(false);
+    const [viewingSnapshot, setViewingSnapshot] = useState<Snapshot | null>(null);
     
     // FIX: Destructure currentDashboardId to use with dashboardWidgetsQuery.
     const { reportToEditId, setReportToEditId, currentDashboardId } = useApp();
 
     const { 
         contactsQuery, productsQuery, teamMembersQuery, tasksQuery, dealsQuery, dealStagesQuery, 
-        customReportsQuery, dashboardWidgetsQuery, addDashboardWidgetMutation, deleteCustomReportMutation 
+        customReportsQuery, dashboardWidgetsQuery, addDashboardWidgetMutation, deleteCustomReportMutation,
+        snapshotsQuery, deleteSnapshotMutation
     } = useData();
     const { data: customReports = [] } = customReportsQuery;
+    const { data: snapshots = [] } = snapshotsQuery;
     // FIX: Call dashboardWidgetsQuery as a function with the current dashboard ID.
     const { data: dashboardWidgets = [] } = dashboardWidgetsQuery(currentDashboardId);
     
@@ -119,6 +125,12 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
         }
     };
     
+    const handleDeleteSnapshot = (snapshotId: string) => {
+        if (window.confirm("Are you sure you want to delete this snapshot?")) {
+            deleteSnapshotMutation.mutate(snapshotId);
+        }
+    };
+    
     const handlePreview = (report: CustomReport) => {
         setSelectedReport(report);
         setIsPreviewModalOpen(true);
@@ -185,11 +197,58 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
                 </CardContent>
             </Card>
             
+            <Card className="mt-6">
+                <CardHeader className="flex flex-row justify-between items-center">
+                    <CardTitle>Data Snapshots</CardTitle>
+                    <Button size="sm" variant="secondary" onClick={() => setIsCreateSnapshotModalOpen(true)} leftIcon={<Plus size={14} />}>
+                        Create Snapshot
+                    </Button>
+                </CardHeader>
+                <CardContent className="p-0">
+                    {snapshots.length > 0 ? (
+                        <div className="divide-y divide-border-subtle">
+                            {(snapshots as Snapshot[]).map((snapshot: Snapshot) => (
+                                <div key={snapshot.id} className="p-4 px-6 flex justify-between items-center">
+                                    <div>
+                                        <p className="font-medium">{snapshot.name}</p>
+                                        <p className="text-xs text-text-secondary capitalize">
+                                            {snapshot.dataSource} • {format(new Date(snapshot.createdAt), 'PPp')}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button size="sm" variant="secondary" onClick={() => setViewingSnapshot(snapshot)} leftIcon={<Eye size={14} />}>View</Button>
+                                        <Button size="sm" variant="danger" onClick={() => handleDeleteSnapshot(snapshot.id)} disabled={deleteSnapshotMutation.isPending}><Trash2 size={14} /></Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center p-8 text-text-secondary">
+                            <History size={24} className="mx-auto" />
+                            <p className="mt-2 text-sm">No snapshots created yet. Snapshots are point-in-time copies of your data.</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+            
             {isPreviewModalOpen && selectedReport && (
                 <ReportPreviewModal
                     isOpen={isPreviewModalOpen}
                     onClose={() => setIsPreviewModalOpen(false)}
                     report={selectedReport}
+                />
+            )}
+
+            <CreateSnapshotModal 
+                isOpen={isCreateSnapshotModalOpen}
+                onClose={() => setIsCreateSnapshotModalOpen(false)}
+            />
+            
+            {viewingSnapshot && (
+                <ViewSnapshotModal
+                    isOpen={!!viewingSnapshot}
+                    onClose={() => setViewingSnapshot(null)}
+                    snapshot={viewingSnapshot}
                 />
             )}
         </>

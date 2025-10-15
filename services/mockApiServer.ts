@@ -8,7 +8,7 @@ import {
     MOCK_SUPPLIERS, MOCK_WAREHOUSES, MOCK_CUSTOM_OBJECT_DEFINITIONS, MOCK_CUSTOM_OBJECT_RECORDS,
     MOCK_ANONYMOUS_SESSIONS, MOCK_APP_MARKETPLACE_ITEMS, MOCK_INSTALLED_APPS, MOCK_SANDBOXES, MOCK_DOCUMENT_TEMPLATES,
     MOCK_PROJECTS, MOCK_PROJECT_PHASES, MOCK_PROJECT_TEMPLATES, MOCK_CANNED_RESPONSES,
-    MOCK_SURVEYS, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS
+    MOCK_SURVEYS, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_SNAPSHOTS
 } from './mockData';
 import { industryConfigs } from '../config/industryConfig';
 import { generateDashboardData } from './reportGenerator';
@@ -16,7 +16,7 @@ import { checkAndTriggerWorkflows } from './workflowService';
 import { recalculateScoreForContact } from './leadScoringService';
 import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
-import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse } from '../types';
+import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot } from '../types';
 
 // Hydrate the in-memory sandbox list from localStorage to persist it across reloads.
 const storedSandboxes = JSON.parse(localStorage.getItem('sandboxesList') || '[]');
@@ -62,6 +62,7 @@ const mainDB = {
     cannedResponses: MOCK_CANNED_RESPONSES,
     surveys: MOCK_SURVEYS,
     surveyResponses: MOCK_SURVEY_RESPONSES,
+    snapshots: MOCK_SNAPSHOTS,
 };
 
 let sandboxedDBs: { [key: string]: typeof mainDB } = JSON.parse(localStorage.getItem('sandboxedDBs') || '{}');
@@ -199,6 +200,33 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
         }
         if (method === 'DELETE' && surveyId) {
             db.surveys = db.surveys.filter(s => s.id !== surveyId);
+            return respond(null, 204);
+        }
+    }
+
+    // --- SNAPSHOTS ---
+    if (path.startsWith('/api/v1/snapshots')) {
+        const snapshotId = path.split('/')[4];
+        if (method === 'GET') {
+            const orgId = searchParams.get('orgId');
+            return respond(db.snapshots.filter(s => s.organizationId === orgId));
+        }
+        if (method === 'POST') {
+            const { orgId, name, dataSource } = body;
+            const dataToSnapshot = (db as any)[dataSource] || [];
+            const newSnapshot: Snapshot = {
+                id: `snap_${Date.now()}`,
+                organizationId: orgId,
+                name,
+                dataSource,
+                createdAt: new Date().toISOString(),
+                data: JSON.stringify(dataToSnapshot),
+            };
+            db.snapshots.push(newSnapshot);
+            return respond(newSnapshot, 201);
+        }
+        if (method === 'DELETE' && snapshotId) {
+            db.snapshots = db.snapshots.filter(s => s.id !== snapshotId);
             return respond(null, 204);
         }
     }

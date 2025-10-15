@@ -27,6 +27,7 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
         teamMembersQuery, 
         dealStagesQuery, 
         customObjectDefsQuery,
+        organizationSettingsQuery,
         createDealMutation,
         updateDealMutation,
         deleteDealMutation
@@ -39,6 +40,7 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
     const { data: teamMembers = [] } = teamMembersQuery;
     const { data: dealStages = [] } = dealStagesQuery;
     const { data: customObjectDefs = [] } = customObjectDefsQuery;
+    const { data: settings } = organizationSettingsQuery;
     
     const allRecordsQuery = useData().customObjectRecordsQuery(null); // Fetch all for suggestions
     const { data: allRecords = [] } = allRecordsQuery;
@@ -166,11 +168,21 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
             value: Number(formData.value),
             organizationId: authenticatedUser!.organizationId!,
         };
+        
+        const wonStageId = (dealStages as DealStage[]).find(s => s.name === 'Won')?.id;
+        const isMovingToWon = dealData.stageId === wonStageId && deal?.stageId !== wonStageId;
 
         if (isNew) {
             createDealMutation.mutate(dealData, { onSuccess: onClose });
         } else {
-            updateDealMutation.mutate({ ...deal!, ...dealData }, { onSuccess: onClose });
+            updateDealMutation.mutate({ ...deal!, ...dealData }, { 
+                onSuccess: () => {
+                    if (isMovingToWon && settings?.accounting?.isConnected) {
+                        toast.success(`Invoice created in QuickBooks for "${dealData.name}"`);
+                    }
+                    onClose();
+                }
+            });
         }
     };
 

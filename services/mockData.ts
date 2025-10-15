@@ -8,7 +8,8 @@ import {
     CannedResponse,
     Survey,
     SurveyResponse,
-    Dashboard
+    Dashboard,
+    Snapshot
 } from '../types';
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
@@ -126,6 +127,12 @@ export let MOCK_ORGANIZATION_SETTINGS: OrganizationSettings = {
     voip: { isConnected: false },
     liveChat: { isEnabled: true, color: '#3b82f6', welcomeMessage: 'Welcome! How can we help?', autoCreateContact: true, newContactStatus: 'Lead', autoCreateTicket: true, newTicketPriority: 'Medium' },
     featureFlags: {},
+    dataWarehouse: {
+        isConnected: false,
+    },
+    accounting: {
+        isConnected: false,
+    }
 };
 
 export const MOCK_TICKETS: Ticket[] = [
@@ -227,6 +234,7 @@ export const MOCK_APP_MARKETPLACE_ITEMS: AppMarketplaceItem[] = [
 ];
 export const MOCK_INSTALLED_APPS: InstalledApp[] = [];
 export const MOCK_SANDBOXES: Sandbox[] = [];
+export let MOCK_SNAPSHOTS: Snapshot[] = [];
 
 
 // Export mutable arrays for services that modify data in place

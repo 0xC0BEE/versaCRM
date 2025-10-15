@@ -11,7 +11,8 @@ import {
     CannedResponse,
     Survey,
     SurveyResponse,
-    AttributedDeal
+    AttributedDeal,
+    Snapshot
 } from '../types';
 
 // Create a mutable reference to the fetch implementation that can be overridden by the mock server.
@@ -101,6 +102,11 @@ const apiClient = {
     createDashboard: (data: { orgId: string, name: string }): Promise<Dashboard> => fetchImpl(`${API_BASE}/dashboards`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateDashboard: (data: { id: string, name: string }): Promise<Dashboard> => fetchImpl(`${API_BASE}/dashboards/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteDashboard: (id: string): Promise<void> => fetchImpl(`${API_BASE}/dashboards/${id}`, { method: 'DELETE' }).then(handleResponse),
+
+    // --- SNAPSHOTS ---
+    getSnapshots: (orgId: string): Promise<Snapshot[]> => fetchImpl(`${API_BASE}/snapshots?orgId=${orgId}`).then(handleResponse),
+    createSnapshot: (data: { orgId: string, name: string, dataSource: 'contacts' | 'deals' }): Promise<Snapshot> => fetchImpl(`${API_BASE}/snapshots`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    deleteSnapshot: (id: string): Promise<void> => fetchImpl(`${API_BASE}/snapshots/${id}`, { method: 'DELETE' }).then(handleResponse),
 
     // --- OTHER ENTITIES (Simplified) ---
     getTasks: (orgId: string, userId: string, canViewAll: boolean): Promise<Task[]> => fetchImpl(`${API_BASE}/tasks?orgId=${orgId}&userId=${userId}&canViewAll=${canViewAll}`).then(handleResponse),

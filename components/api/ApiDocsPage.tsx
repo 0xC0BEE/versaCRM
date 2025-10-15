@@ -1,7 +1,7 @@
 import React from 'react';
 import PageWrapper from '../layout/PageWrapper';
-// FIX: Changed default import of 'Card' to a named import '{ Card, CardHeader, CardTitle, CardContent }' and refactored usage to resolve module export error.
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
+import { useApp } from '../../contexts/AppContext';
 
 const CodeBlock: React.FC<{ children: React.ReactNode, language?: string }> = ({ children, language = 'bash' }) => (
     <pre className={`p-4 bg-gray-800 text-white rounded-lg text-sm overflow-x-auto language-${language}`}>
@@ -10,6 +10,13 @@ const CodeBlock: React.FC<{ children: React.ReactNode, language?: string }> = ({
 );
 
 const ApiDocsPage: React.FC = () => {
+    const { setCurrentPage } = useApp();
+    
+    const handleNavToSettings = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setCurrentPage('Settings');
+    };
+
     return (
         <PageWrapper>
             <h1 className="text-3xl font-bold text-text-heading mb-2">API Documentation</h1>
@@ -23,7 +30,7 @@ const ApiDocsPage: React.FC = () => {
                     <CardContent>
                         <p className="text-sm text-text-secondary mb-4">
                             Authenticate your API requests by including your secret key in the `Authorization` header.
-                            You can manage your API keys in your <a href="#" onClick={(e) => { e.preventDefault(); /* Navigate to settings */ }} className="text-primary hover:underline">API settings</a>.
+                            You can manage your API keys in your <a href="#" onClick={handleNavToSettings} className="text-primary hover:underline">API settings</a>.
                         </p>
                         <CodeBlock>
                             {`curl "https://api.versacrm.com/v1/contacts" \\

@@ -10,13 +10,15 @@ import DealForecastModal from './DealForecastModal';
 import ContactDetailModal from '../organizations/ContactDetailModal';
 import { useApp } from '../../contexts/AppContext';
 import CreateProjectFromDealModal from './CreateProjectFromDealModal';
+import toast from 'react-hot-toast';
 
 const DealsPage: React.FC = () => {
-    const { dealsQuery, dealStagesQuery, updateDealMutation, contactsQuery } = useData();
+    const { dealsQuery, dealStagesQuery, updateDealMutation, contactsQuery, organizationSettingsQuery } = useData();
     const { setCallContact, setIsCallModalOpen, isFeatureEnabled } = useApp();
     const { data: deals = [], isLoading: dealsLoading } = dealsQuery;
     const { data: stages = [], isLoading: stagesLoading } = dealStagesQuery;
     const { data: contacts = [] } = contactsQuery;
+    const { data: settings } = organizationSettingsQuery;
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
@@ -53,6 +55,9 @@ const DealsPage: React.FC = () => {
             const wonStage = (stages as DealStage[]).find(s => s.id === stageId && s.name === 'Won');
             if (wonStage) {
                 setDealToCreateProjectFrom(dealToMove);
+                if (settings?.accounting?.isConnected) {
+                    toast.success(`Invoice created in QuickBooks for "${dealToMove.name}"`);
+                }
             }
         }
     };
@@ -104,7 +109,7 @@ const DealsPage: React.FC = () => {
                 </div>
             </div>
             
-            <div className="flex gap-4 overflow-x-auto pb-4">
+            <div className="flex flex-col md:flex-row gap-4 md:overflow-x-auto pb-4">
                 {isLoading ? (
                     <p>Loading pipeline...</p>
                 ) : (

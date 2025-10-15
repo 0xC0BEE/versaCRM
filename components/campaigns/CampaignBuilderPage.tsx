@@ -3,7 +3,7 @@ import { ReactFlowProvider, Node, Edge } from 'reactflow';
 import PageWrapper from '../layout/PageWrapper';
 import Button from '../ui/Button';
 import { Campaign, ContactStatus } from '../../types';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Monitor } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -85,7 +85,7 @@ const CampaignBuilderPage: React.FC<CampaignBuilderPageProps> = ({ campaign, onC
         <PageWrapper>
             <div className="flex justify-between items-center mb-4">
                 <Button variant="secondary" onClick={onClose} leftIcon={<ArrowLeft size={16} />}>Back to Campaigns</Button>
-                <div className="flex items-center gap-4">
+                <div className="hidden md:flex items-center gap-4">
                      <input
                         id="campaign-name"
                         placeholder="Enter Journey Name..."
@@ -96,7 +96,7 @@ const CampaignBuilderPage: React.FC<CampaignBuilderPageProps> = ({ campaign, onC
                     <Button onClick={handleSave} disabled={isPending}>{isPending ? 'Saving...' : 'Save Journey'}</Button>
                 </div>
             </div>
-             <div className="grid grid-cols-12 gap-4 h-[calc(100vh-12rem)]">
+             <div className="hidden md:grid grid-cols-12 gap-4 h-[calc(100vh-12rem)]">
                 <Card className="col-span-3 p-4 overflow-y-auto">
                     <JourneyToolbox />
                 </Card>
@@ -115,6 +115,11 @@ const CampaignBuilderPage: React.FC<CampaignBuilderPageProps> = ({ campaign, onC
                 <Card className="col-span-3 p-4 overflow-y-auto">
                    <JourneyConfigPanel selectedNode={selectedNode} setNodes={setNodes} />
                 </Card>
+            </div>
+             <div className="md:hidden flex flex-col items-center justify-center h-[calc(100vh-12rem)] text-center p-4">
+                <Monitor size={48} className="text-text-secondary" />
+                <h3 className="mt-4 font-semibold text-lg">Builder Not Available on Mobile</h3>
+                <p className="text-text-secondary mt-1">Please switch to a desktop or tablet to use the journey builder.</p>
             </div>
         </PageWrapper>
     );

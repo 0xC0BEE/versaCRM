@@ -3,7 +3,7 @@ import { ReactFlowProvider, Node, Edge } from 'reactflow';
 import PageWrapper from '../../layout/PageWrapper';
 import Button from '../../ui/Button';
 import { AdvancedWorkflow } from '../../../types';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Monitor } from 'lucide-react';
 import { useData } from '../../../contexts/DataContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -70,7 +70,7 @@ const AdvancedWorkflowBuilder: React.FC<AdvancedWorkflowBuilderProps> = ({ workf
         <PageWrapper>
             <div className="flex justify-between items-center mb-4">
                 <Button variant="secondary" onClick={onClose} leftIcon={<ArrowLeft size={16} />}>Back to Workflows</Button>
-                <div className="flex items-center gap-4">
+                <div className="hidden md:flex items-center gap-4">
                     <input
                         id="workflow-name"
                         placeholder="Enter Workflow Name..."
@@ -86,7 +86,7 @@ const AdvancedWorkflowBuilder: React.FC<AdvancedWorkflowBuilderProps> = ({ workf
                 </div>
             </div>
 
-            <div className="grid grid-cols-12 gap-4 h-[calc(100vh-12rem)]">
+            <div className="hidden md:grid grid-cols-12 gap-4 h-[calc(100vh-12rem)]">
                 <Card className="col-span-3 p-4 overflow-y-auto">
                     <Toolbox />
                 </Card>
@@ -105,6 +105,11 @@ const AdvancedWorkflowBuilder: React.FC<AdvancedWorkflowBuilderProps> = ({ workf
                 <Card className="col-span-3 p-4 overflow-y-auto">
                     <ConfigPanel selectedNode={selectedNode} setNodes={setNodes} />
                 </Card>
+            </div>
+             <div className="md:hidden flex flex-col items-center justify-center h-[calc(100vh-12rem)] text-center p-4">
+                <Monitor size={48} className="text-text-secondary" />
+                <h3 className="mt-4 font-semibold text-lg">Builder Not Available on Mobile</h3>
+                <p className="text-text-secondary mt-1">Please switch to a desktop or tablet to use the advanced workflow builder.</p>
             </div>
         </PageWrapper>
     );

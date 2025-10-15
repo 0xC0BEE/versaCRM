@@ -53,7 +53,40 @@ const ContactsTable: React.FC<ContactsTableProps> = ({ contacts, onRowClick, isE
 
     return (
         <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-text-secondary">
+            {isError && <div className="p-8 text-center text-error">Failed to load {industryConfig.contactNamePlural.toLowerCase()}.</div>}
+            
+            {/* Mobile Card View */}
+            <div className="md:hidden">
+                {contacts.map((contact, index) => (
+                    <div key={contact.id} className={`p-4 border-b border-border-subtle ${selectedContactIds.has(contact.id) ? 'bg-primary/10' : ''}`} onClick={() => onRowClick(contact)}>
+                        <div className="flex items-start gap-3">
+                            <input 
+                                id={`checkbox-${contact.id}-mobile`} 
+                                type="checkbox" 
+                                className="w-4 h-4 mt-1 text-primary bg-card-bg border-border-subtle rounded focus:ring-primary"
+                                checked={selectedContactIds.has(contact.id)}
+                                onClick={e => e.stopPropagation()}
+                                onChange={() => handleSelectRow(contact.id)}
+                            />
+                             <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center">
+                                <span className="font-bold text-slate-500">{contact.contactName.charAt(0)}</span>
+                            </div>
+                            <div className="flex-grow">
+                                <p className="font-semibold text-text-primary">{contact.contactName}</p>
+                                <p className="text-sm text-text-secondary">{contact.email}</p>
+                            </div>
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded-micro ${
+                                contact.status === 'Active' ? 'bg-success/10 text-success' :
+                                contact.status === 'Lead' ? 'bg-primary/10 text-primary' :
+                                'bg-slate-400/10 text-text-secondary'
+                            }`}>{contact.status}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <table className="hidden md:table w-full text-sm text-left text-text-secondary">
                 <thead className="text-sm text-text-secondary uppercase bg-card-bg/50">
                     <tr>
                         <th scope="col" className="p-4">
@@ -78,11 +111,6 @@ const ContactsTable: React.FC<ContactsTableProps> = ({ contacts, onRowClick, isE
                     </tr>
                 </thead>
                 <tbody>
-                    {isError && (
-                        <tr><td colSpan={isChurning ? 8 : 7} className="text-center p-8 text-error">
-                            Failed to load {industryConfig.contactNamePlural.toLowerCase()}. Please try again later.
-                        </td></tr>
-                    )}
                     {!isError && contacts.map((contact, index) => (
                         <tr
                             key={contact.id}
@@ -141,19 +169,20 @@ const ContactsTable: React.FC<ContactsTableProps> = ({ contacts, onRowClick, isE
                             </td>
                             {isChurning && (
                                 <td className="px-6 py-4 text-center">
+                                    {/* FIX: Corrected prop name from `onOpenPrediction` to pass the `onOpenChurnPrediction` function. */}
                                     <ChurnPredictionDisplay contact={contact} onOpenPrediction={onOpenChurnPrediction!} />
                                 </td>
                             )}
                             <td className="px-6 py-4 cursor-pointer" onClick={() => onRowClick(contact)}>{new Date(contact.createdAt).toLocaleDateString()}</td>
                         </tr>
                     ))}
-                    {!isError && contacts.length === 0 && (
-                        <tr><td colSpan={isChurning ? 8 : 7} className="text-center p-8">
-                             <p className="text-text-secondary">No {industryConfig.contactNamePlural.toLowerCase()} found.</p>
-                        </td></tr>
-                    )}
                 </tbody>
             </table>
+             {!isError && contacts.length === 0 && (
+                <div className="text-center p-8">
+                    <p className="text-text-secondary">No {industryConfig.contactNamePlural.toLowerCase()} found.</p>
+                </div>
+            )}
         </div>
     );
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { DocumentTemplate, DocumentBlock, Product } from '../../types';
 import PageWrapper from '../layout/PageWrapper';
 import Button from '../ui/Button';
-import { ArrowLeft, Edit, Trash2, Heading, Type, Image as ImageIcon, Wand2, ListOrdered, Plus } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Heading, Type, Image as ImageIcon, Wand2, ListOrdered, Plus, Monitor } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -149,30 +149,30 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                 return (
                     <div className="my-4">
                         <table className="w-full text-left text-sm">
-                            <thead className="text-gray-500">
+                            <thead className="bg-gray-100">
                                 <tr>
-                                    <th className="p-2 font-medium">Item</th>
-                                    <th className="p-2 text-right font-medium">Quantity</th>
-                                    <th className="p-2 text-right font-medium">Unit Price</th>
-                                    <th className="p-2 text-right font-medium">Total</th>
+                                    <th className="p-2">Item</th>
+                                    <th className="p-2 text-right">Quantity</th>
+                                    <th className="p-2 text-right">Unit Price</th>
+                                    <th className="p-2 text-right">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {block.content.items.map((item: any, index: number) => (
-                                    <tr key={index} className="border-b border-gray-200">
-                                        <td className="p-2 font-medium text-gray-800">{item.name}</td>
-                                        <td className="p-2 text-right text-gray-600">{item.quantity}</td>
-                                        <td className="p-2 text-right text-gray-600">{item.unitPrice.toLocaleString('en-US', {style:'currency', currency: 'USD'})}</td>
-                                        <td className="p-2 text-right text-gray-800 font-medium">{(item.quantity * item.unitPrice).toLocaleString('en-US', {style:'currency', currency: 'USD'})}</td>
+                                    <tr key={index} className="border-b">
+                                        <td className="p-2 font-medium">{item.name}</td>
+                                        <td className="p-2 text-right">{item.quantity}</td>
+                                        <td className="p-2 text-right">{item.unitPrice.toLocaleString('en-US', {style:'currency', currency: 'USD'})}</td>
+                                        <td className="p-2 text-right">{(item.quantity * item.unitPrice).toLocaleString('en-US', {style:'currency', currency: 'USD'})}</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                         <div className="w-full flex justify-end mt-4">
-                            <div className="w-64 space-y-2 text-sm text-gray-700">
+                            <div className="w-64 space-y-2 text-sm totals">
                                 <div className="flex justify-between"><span>Subtotal</span><span>{subtotal.toLocaleString('en-US', {style:'currency', currency: 'USD'})}</span></div>
                                 <div className="flex justify-between"><span>Tax ({block.content.taxRate}%)</span><span>{tax.toLocaleString('en-US', {style:'currency', currency: 'USD'})}</span></div>
-                                <div className="flex justify-between font-bold text-base border-t border-gray-300 pt-2 text-gray-900"><span>Total</span><span>{total.toLocaleString('en-US', {style:'currency', currency: 'USD'})}</span></div>
+                                <div className="flex justify-between font-bold text-base border-t pt-2 grand-total"><span>Total</span><span>{total.toLocaleString('en-US', {style:'currency', currency: 'USD'})}</span></div>
                             </div>
                         </div>
                     </div>
@@ -280,15 +280,18 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
 
     return (
         <PageWrapper>
+            {/* Header */}
             <div className="flex justify-between items-center mb-4">
                 <Button variant="secondary" onClick={onClose} leftIcon={<ArrowLeft size={16} />}>Back to Templates</Button>
-                <div className="flex items-center gap-4">
+                <div className="hidden md:flex items-center gap-4">
                      <input id="template-name" placeholder="Enter Template Name..." value={template.name} onChange={e => setTemplate(p => ({...p, name: e.target.value}))} className="w-72 bg-transparent text-xl font-semibold focus:outline-none focus:border-b border-border-subtle" />
                     <Button onClick={handleSave} disabled={isPending}>{isPending ? 'Saving...' : 'Save Template'}</Button>
                 </div>
             </div>
             
-            <div className="grid grid-cols-12 gap-4 h-[calc(100vh-12rem)]">
+            {/* Main Builder Area */}
+            <div className="hidden md:grid grid-cols-12 gap-4 h-[calc(100vh-12rem)]">
+                {/* Toolbox */}
                 <Card className="col-span-3 p-4">
                     <h3 className="text-lg font-semibold text-text-heading mb-4">Toolbox</h3>
                     <div className="space-y-2">
@@ -298,10 +301,12 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                         <Button variant="secondary" className="w-full justify-start" onClick={() => addBlock('lineItems')} leftIcon={<ListOrdered size={16}/>}>Line Items</Button>
                     </div>
                 </Card>
+                {/* Preview */}
                 <div className="col-span-6 h-full overflow-y-auto p-8 bg-white dark:bg-gray-100 rounded-lg border border-border-subtle text-black">
                     <div className="max-w-2xl mx-auto space-y-4">
                         {template.content.map((block, index) => (
-                            <div key={block.id} 
+                             <div 
+                                key={block.id} 
                                 className={`group relative p-2 border-2 rounded-md transition-all cursor-pointer ${
                                     selectedBlockId === block.id ? 'border-primary' : 'border-transparent hover:border-primary/30'
                                 } ${draggedIndex === index ? 'opacity-30' : ''}`}
@@ -317,12 +322,18 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                         ))}
                     </div>
                 </div>
+                {/* Config Panel */}
                 <Card className="col-span-3 p-4 overflow-y-auto">
                     <h3 className="text-lg font-semibold text-text-heading mb-4">Configuration</h3>
                      <div className="space-y-4">
                         {renderConfigPanel()}
                      </div>
                 </Card>
+            </div>
+             <div className="md:hidden flex flex-col items-center justify-center h-[calc(100vh-12rem)] text-center p-4">
+                <Monitor size={48} className="text-text-secondary" />
+                <h3 className="mt-4 font-semibold text-lg">Builder Not Available on Mobile</h3>
+                <p className="text-text-secondary mt-1">Please switch to a desktop or tablet to use the document builder.</p>
             </div>
             <AiContentStudioModal isOpen={isAiStudioOpen} onClose={() => setIsAiStudioOpen(false)} onGenerate={handleAiGenerateText} />
             <AiImageStudioModal isOpen={isAiImageStudioOpen} onClose={() => setIsAiImageStudioOpen(false)} onGenerate={handleAiGenerateImage} />

@@ -49,7 +49,7 @@ const ApiKeysSettings: React.FC = () => {
                             value={keyName}
                             onChange={(e) => setKeyName(e.target.value)}
                             placeholder="New key name (e.g., 'Zapier Integration')"
-                            className="flex-grow bg-card-bg border border-border-subtle rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                            className="flex-grow bg-card-bg border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         />
                         <Button onClick={handleGenerateKey} leftIcon={<Plus size={16} />} disabled={createApiKeyMutation.isPending}>
                             {createApiKeyMutation.isPending ? 'Generating...' : 'Generate New Key'}

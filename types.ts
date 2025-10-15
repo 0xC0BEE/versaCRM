@@ -709,6 +709,15 @@ export interface AttributedDeal {
     closedAt: string;
 }
 
+export interface Snapshot {
+    id: string;
+    organizationId: string;
+    name: string;
+    dataSource: 'contacts' | 'deals';
+    createdAt: string;
+    data: string; // JSON string of the snapshotted data
+}
+
 // Misc
 export interface ApiKey {
     id: string;
@@ -760,6 +769,16 @@ export interface OrganizationSettings {
     };
     liveChat: LiveChatSettings;
     featureFlags: Record<string, boolean>;
+    dataWarehouse?: {
+        isConnected: boolean;
+        provider?: 'bigquery' | 'snowflake' | 'redshift';
+        connectionString?: string;
+        lastSync?: string;
+    };
+    accounting?: {
+        isConnected: boolean;
+        provider?: 'quickbooks' | 'xero';
+    };
 }
 export interface LeadScoringRule {
     id: string;
@@ -909,6 +928,7 @@ export interface DataContextType {
     cannedResponsesQuery: any;
     surveysQuery: any;
     surveyResponsesQuery: any;
+    snapshotsQuery: any;
 
     // Mutations
     createOrganizationMutation: any;
@@ -1018,4 +1038,6 @@ export interface DataContextType {
     createSurveyMutation: any;
     updateSurveyMutation: any;
     deleteSurveyMutation: any;
+    createSnapshotMutation: any;
+    deleteSnapshotMutation: any;
 }
