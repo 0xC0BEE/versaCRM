@@ -7,7 +7,8 @@ import {
     MOCK_LANDING_PAGES, MOCK_DOCUMENTS, MOCK_CUSTOM_REPORTS, MOCK_DASHBOARD_WIDGETS,
     MOCK_SUPPLIERS, MOCK_WAREHOUSES, MOCK_CUSTOM_OBJECT_DEFINITIONS, MOCK_CUSTOM_OBJECT_RECORDS,
     MOCK_ANONYMOUS_SESSIONS, MOCK_APP_MARKETPLACE_ITEMS, MOCK_INSTALLED_APPS, MOCK_SANDBOXES, MOCK_DOCUMENT_TEMPLATES,
-    MOCK_PROJECTS, MOCK_PROJECT_PHASES, MOCK_PROJECT_TEMPLATES, MOCK_CANNED_RESPONSES
+    MOCK_PROJECTS, MOCK_PROJECT_PHASES, MOCK_PROJECT_TEMPLATES, MOCK_CANNED_RESPONSES,
+    MOCK_SURVEYS, MOCK_SURVEY_RESPONSES
 } from './mockData';
 import { industryConfigs } from '../config/industryConfig';
 import { generateDashboardData } from './reportGenerator';
@@ -15,7 +16,7 @@ import { checkAndTriggerWorkflows } from './workflowService';
 import { recalculateScoreForContact } from './leadScoringService';
 import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
-import { Sandbox, Conversation, CannedResponse } from '../types';
+import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse } from '../types';
 
 // Hydrate the in-memory sandbox list from localStorage to persist it across reloads.
 const storedSandboxes = JSON.parse(localStorage.getItem('sandboxesList') || '[]');
@@ -58,6 +59,8 @@ const mainDB = {
     projectPhases: MOCK_PROJECT_PHASES,
     projectTemplates: MOCK_PROJECT_TEMPLATES,
     cannedResponses: MOCK_CANNED_RESPONSES,
+    surveys: MOCK_SURVEYS,
+    surveyResponses: MOCK_SURVEY_RESPONSES,
 };
 
 let sandboxedDBs: { [key: string]: typeof mainDB } = JSON.parse(localStorage.getItem('sandboxedDBs') || '{}');
@@ -88,6 +91,35 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     const path = new URL(urlString, window.location.origin).pathname;
     const searchParams = new URL(urlString, window.location.origin).searchParams;
 
+    // Add a mock LinkedIn message for inbox demonstration
+    const linkedInMessage: Interaction = {
+       id: 'int_li_1',
+       organizationId: 'org_1',
+       contactId: 'contact_2',
+       userId: 'user_team_1',
+       type: 'LinkedIn Message',
+       date: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // 3 hours ago
+       notes: 'Hey Jane, saw your post on AI in finance. Great insights! I\'d love to chat more about how VersaCRM is using predictive analytics.',
+    };
+    if (!db.interactions.some(i => i.id === 'int_li_1')) {
+        db.interactions.unshift(linkedInMessage);
+    }
+    
+    // Add a mock X message for inbox demonstration
+    const xMessage: Interaction = {
+       id: 'int_x_1',
+       organizationId: 'org_1',
+       contactId: 'contact_1',
+       userId: 'user_team_1',
+       type: 'X Message',
+       date: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
+       notes: 'Thanks for following up! Can you send the details to john.patient@example.com?',
+    };
+    if (!db.interactions.some(i => i.id === 'int_x_1')) {
+        db.interactions.unshift(xMessage);
+    }
+
+
     // --- CANNED RESPONSES ---
     if (path.startsWith('/api/v1/canned-responses')) {
         const responseId = path.split('/')[4];
@@ -113,6 +145,63 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
             return respond(null, 204);
         }
     }
+    
+    // --- SURVEYS ---
+     if (path.startsWith('/api/v1/survey-responses')) {
+        if (method === 'GET') {
+            const orgId = searchParams.get('orgId');
+            const orgSurveys = db.surveys.filter(s => s.organizationId === orgId).map(s => s.id);
+            const responses = db.surveyResponses.filter(r => orgSurveys.includes(r.surveyId));
+            return respond(responses);
+        }
+    }
+
+    if (path.startsWith('/api/v1/public/surveys/respond')) {
+        if (method === 'POST') {
+            const newResponse: SurveyResponse = {
+                id: `resp_${Date.now()}`,
+                contactId: 'contact_public', // Placeholder for public responses
+                respondedAt: new Date().toISOString(),
+                ...body
+            };
+            db.surveyResponses.push(newResponse);
+            return respond(null, 204);
+        }
+    }
+
+    if (path.startsWith('/api/v1/public/surveys/')) {
+        const surveyId = path.split('/').pop();
+        if (method === 'GET' && surveyId) {
+            const survey = db.surveys.find(s => s.id === surveyId);
+            return survey ? respond(survey) : respond({ message: 'Survey not found' }, 404);
+        }
+    }
+
+    if (path.startsWith('/api/v1/surveys')) {
+        const surveyId = path.split('/')[4];
+        if (method === 'GET') {
+            const orgId = searchParams.get('orgId');
+            return respond(db.surveys.filter(s => s.organizationId === orgId));
+        }
+        if (method === 'POST') {
+            const newSurvey: Survey = { ...body, id: `survey_${Date.now()}`, createdAt: new Date().toISOString() };
+            db.surveys.push(newSurvey);
+            return respond(newSurvey, 201);
+        }
+        if (method === 'PUT' && surveyId) {
+            const index = db.surveys.findIndex(s => s.id === surveyId);
+            if (index > -1) {
+                db.surveys[index] = { ...db.surveys[index], ...body };
+                return respond(db.surveys[index]);
+            }
+            return respond({ message: 'Not found' }, 404);
+        }
+        if (method === 'DELETE' && surveyId) {
+            db.surveys = db.surveys.filter(s => s.id !== surveyId);
+            return respond(null, 204);
+        }
+    }
+
 
     // --- INBOX ---
     if (path.startsWith('/api/v1/inbox')) {
@@ -164,17 +253,34 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
 
         if (method === 'GET') {
             const orgId = searchParams.get('orgId');
-            const allEmails = db.interactions.filter(i => i.organizationId === orgId && i.type === 'Email');
+            const messages = db.interactions.filter(i => i.organizationId === orgId && (i.type === 'Email' || i.type === 'LinkedIn Message' || i.type === 'X Message'));
             
             const threads: Record<string, Conversation> = {};
 
-            for (const email of allEmails) {
-                const subjectMatch = email.notes.match(/Subject: (.*)/);
-                const subject = (subjectMatch ? subjectMatch[1] : 'No Subject').replace(/^(Re: |Fwd: )/i, '').trim();
-                const threadId = `${email.contactId}-${subject}`;
+            for (const msg of messages) {
+                let subject = '';
+                let threadId = '';
+                let channel: 'Email' | 'LinkedIn' | 'X' = 'Email';
 
-                const contact = db.contacts.find(c => c.id === email.contactId);
-                const user = db.users.find(u => u.id === email.userId);
+                if (msg.type === 'Email') {
+                    const subjectMatch = msg.notes.match(/Subject: (.*)/);
+                    subject = (subjectMatch ? subjectMatch[1] : 'No Subject').replace(/^(Re: |Fwd: )/i, '').trim();
+                    threadId = `${msg.contactId}-${subject}`;
+                    channel = 'Email';
+                } else if (msg.type === 'LinkedIn Message') {
+                    subject = `LinkedIn Conversation`;
+                    threadId = `li-${msg.contactId}`;
+                    channel = 'LinkedIn';
+                } else if (msg.type === 'X Message') {
+                    subject = `X (Twitter) Conversation`;
+                    threadId = `x-${msg.contactId}`;
+                    channel = 'X';
+                }
+
+                if (!threadId) continue;
+
+                const contact = db.contacts.find(c => c.id === msg.contactId);
+                const user = db.users.find(u => u.id === msg.userId);
 
                 if (!threads[threadId]) {
                      if (!contact || !user) continue;
@@ -182,6 +288,7 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
                         id: threadId,
                         contactId: contact.id,
                         subject: subject,
+                        channel: channel,
                         lastMessageTimestamp: '1970-01-01T00:00:00.000Z',
                         lastMessageSnippet: '',
                         messages: [],
@@ -193,16 +300,16 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
                 }
 
                 const message = {
-                    id: email.id,
-                    senderId: email.userId,
-                    body: email.notes,
-                    timestamp: email.date
+                    id: msg.id,
+                    senderId: msg.userId,
+                    body: msg.notes,
+                    timestamp: msg.date
                 };
                 threads[threadId].messages.push(message);
 
-                if (new Date(email.date) > new Date(threads[threadId].lastMessageTimestamp)) {
-                    threads[threadId].lastMessageTimestamp = email.date;
-                    threads[threadId].lastMessageSnippet = email.notes.split('\n\n')[1] || email.notes;
+                if (new Date(msg.date) > new Date(threads[threadId].lastMessageTimestamp)) {
+                    threads[threadId].lastMessageTimestamp = msg.date;
+                    threads[threadId].lastMessageSnippet = msg.notes.split('\n\n')[1] || msg.notes;
                 }
             }
             
@@ -498,7 +605,7 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
         }
     }
 
-    // FIX: Add handler for email sync
+    // Add handler for email sync
     if (path.endsWith('/api/v1/email/sync')) {
         const orgId = body.orgId;
         // Simulate finding some emails
@@ -711,7 +818,48 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     if (path.endsWith('/dashboard/widgets')) return respond(db.dashboardWidgets);
 
     // --- OTHER POSTS ---
-    if (path.endsWith('/reports/custom/generate')) return respond(db.contacts.slice(0, 10)); // Simplified
+    if (path.endsWith('/reports/custom/generate')) {
+        const { config, orgId } = body;
+        let sourceData: any[];
+
+        if (config.dataSource === 'contacts') {
+            sourceData = db.contacts.filter(c => c.organizationId === orgId);
+        } else if (config.dataSource === 'products') {
+            sourceData = db.products.filter(p => p.organizationId === orgId);
+        } else if (config.dataSource === 'surveyResponses') {
+            const orgSurveys = db.surveys.filter(s => s.organizationId === orgId).map(s => s.id);
+            sourceData = db.surveyResponses.filter(r => orgSurveys.includes(r.surveyId));
+        } else {
+            // Custom Object
+            sourceData = db.customObjectRecords.filter(r => r.objectDefId === config.dataSource);
+        }
+
+        // Apply filters
+        const filteredData = sourceData.filter(row => {
+            return (config.filters || []).every((filter: any) => {
+                const rowValue = String(row.fields ? row.fields[filter.field] : row[filter.field] || '').toLowerCase();
+                const filterValue = filter.value.toLowerCase();
+                switch (filter.operator) {
+                    case 'is': return rowValue === filterValue;
+                    case 'is_not': return rowValue !== filterValue;
+                    case 'contains': return rowValue.includes(filterValue);
+                    case 'does_not_contain': return !rowValue.includes(filterValue);
+                    default: return true;
+                }
+            });
+        });
+
+        // Select columns
+        const resultData = filteredData.map(row => {
+            const newRow: Record<string, any> = {};
+            (config.columns || []).forEach((col: string) => {
+                newRow[col] = row.fields ? row.fields[col] : row[col];
+            });
+            return newRow;
+        });
+
+        return respond(resultData);
+    }
     if (path.endsWith('/campaigns/bulk-enroll')) {
         campaignService.enrollContacts(body.campaignId);
         return respond({ success: true });

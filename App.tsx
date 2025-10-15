@@ -7,6 +7,7 @@ import ClientPortal from './components/auth/ClientPortal';
 import CallControlModal from './components/voip/CallControlModal';
 import PublicLandingPage from './components/landing_pages/PublicLandingPage';
 import LiveCopilotModal from './components/copilot/LiveCopilotModal';
+import PublicSurveyPage from './components/surveys/PublicSurveyPage';
 
 function App() {
     const { authenticatedUser, hasPermission } = useAuth();
@@ -22,10 +23,15 @@ function App() {
         };
     }, []);
 
-    const isPublicRoute = hash && hash.startsWith('#/') && hash.length > 2;
+    const isPublicLandingPage = hash && hash.startsWith('#/lp/');
+    const isPublicSurveyPage = hash && hash.startsWith('#/survey/');
 
-    if (isPublicRoute) {
+    if (isPublicLandingPage) {
         return <PublicLandingPage />;
+    }
+    
+    if (isPublicSurveyPage) {
+        return <PublicSurveyPage />;
     }
 
     if (!authenticatedUser) {

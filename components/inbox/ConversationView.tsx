@@ -3,7 +3,7 @@ import { Conversation, CannedResponse } from '../../types';
 import { format } from 'date-fns';
 import Button from '../ui/Button';
 import Textarea from '../ui/Textarea';
-import { Send, ClipboardList, Wand2, Loader } from 'lucide-react';
+import { Send, ClipboardList, Wand2, Loader, Mail, Linkedin, Twitter } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -128,13 +128,22 @@ const ConversationView: React.FC<ConversationViewProps> = ({ conversation, userM
         }
     };
 
+    const getChannelIcon = (channel: 'Email' | 'LinkedIn' | 'X') => {
+        switch(channel) {
+            case 'LinkedIn': return <Linkedin size={16} className="text-blue-500" />;
+            case 'X': return <Twitter size={16} className="text-sky-500" />;
+            default: return <Mail size={16} className="text-gray-400" />;
+        }
+    };
+
     return (
         <div className="flex flex-col h-full">
             <div className="p-4 border-b border-border-subtle flex-shrink-0">
                 <h2 className="font-semibold text-lg">{conversation.subject}</h2>
-                <p className="text-sm text-text-secondary">
-                    With: {conversation.participants.map(p => p.name).join(', ')}
-                </p>
+                <div className="flex items-center gap-2 text-sm text-text-secondary mt-1">
+                    {getChannelIcon(conversation.channel)}
+                    <span>Conversation via {conversation.channel} with {conversation.participants.map(p => p.name).join(', ')}</span>
+                </div>
             </div>
 
             <div className="flex-grow overflow-y-auto p-4 space-y-6">

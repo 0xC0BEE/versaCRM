@@ -4,6 +4,7 @@ import LeadScoringSettings from './LeadScoringSettings';
 import EmailTemplates from './EmailTemplates';
 import TicketSettings from './TicketSettings';
 import CannedResponses from './CannedResponses';
+import SurveySettings from './SurveySettings';
 
 const ChannelsAndLeadGenSettings: React.FC = () => {
     return (
@@ -20,6 +21,9 @@ const ChannelsAndLeadGenSettings: React.FC = () => {
             </div>
             <div className="border-t border-border-subtle pt-8">
                 <TicketSettings />
+            </div>
+            <div className="border-t border-border-subtle pt-8">
+                <SurveySettings />
             </div>
         </div>
     );

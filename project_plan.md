@@ -82,22 +82,50 @@ Bridge the gap between a "Won" deal and successful service delivery, creating a 
 -   [x] **Dedicated Project Workspace:** A detail view for each project including project-specific tasks, a discussion feed, file management, and project notes.
 -   [x] **Client Portal Integration:** A "Projects" tab in the client portal, giving clients a read-only view of their project's status and completed milestones.
 
-**Phase Complete!** The entire customer lifecycle from lead to delivery is now managed within VersaCRM.
-
 ---
 
-## Phase 7: Unified Communications Hub (In Progress)
+## Phase 7: Unified Communications Hub (Complete)
 
 **Goal:** Transform VersaCRM into the single interface users need to manage all customer communication, eliminating the need to switch between different apps.
 
--   **New "Inbox" Hub:**
-    -   [x] A new top-level page featuring a unified, multi-channel inbox UI.
--   **Two-Way Email Client:**
-    -   [x] Upgrade the existing email integration to allow users to send, receive, and reply to emails directly from the Inbox, with all conversations automatically logged.
--   **Productivity Tools & AI Assistance:**
-    -   [x] Canned responses and templates for quick replies.
-    -   [x] AI-powered reply suggestions.
-    -   [ ] AI-powered conversation summaries.
-    -   [ ] AI-powered sentiment analysis.
--   **SMS Integration:**
-    -   [ ] Integrate with a third-party service (e.g., Twilio) to enable sending and receiving SMS messages from the Unified Inbox.
+-   [x] **New "Inbox" Hub:** A new top-level page featuring a unified, multi-channel inbox UI.
+-   [x] **Two-Way Email Client:** Users can send, receive, and reply to emails directly from the Inbox.
+-   [x] **Productivity Tools & AI Assistance:** Canned responses and AI-powered reply suggestions are integrated.
+
+---
+
+## Phase 8: True Omnichannel & Self-Service (Complete)
+
+**Goal:** Complete the Unified Inbox vision and empower customers to help themselves.
+
+-   [x] **Social Media Integration:**
+    -   [x] Integrate LinkedIn DMs into the Unified Inbox.
+    -   [x] Integrate X (Twitter) DMs into the Unified Inbox.
+-   [x] **Self-Service Customer Portal:**
+    -   [x] Enhance the Client Portal with a searchable knowledge base.
+    -   [x] Allow clients to view the status of their own tickets.
+-   [x] **Customer Feedback Tools:**
+    -   [x] Build simple CSAT (Customer Satisfaction) and NPS (Net Promoter Score) survey management tools.
+    -   [x] Add a workflow action to "Send Survey".
+
+---
+
+## Phase 9: Enterprise-Grade Business Intelligence (BI) (In Progress)
+
+**Goal:** Move beyond standard reports to give businesses a true data analysis platform.
+
+-   [x] **Customer Feedback Reporting:**
+    -   [x] Create a public-facing page for customers to respond to surveys.
+    -   [x] Add "Survey Responses" as a data source to the Custom Report Builder.
+-   [ ] **Advanced Dashboard Builder:** Evolve widgets into a full BI dashboard builder with cross-object reporting.
+-   [ ] **Attribution Modeling:** Introduce marketing attribution reports to connect campaign touches directly to revenue.
+-   [ ] **AI-Powered Anomaly Detection:** Use Gemini to proactively monitor KPIs and alert users to significant changes.
+
+---
+
+## Phase 10: The "No-Code" Platform (Planned)
+
+**Goal:** Empower non-technical users to build their own simple applications on top of our Custom Objects foundation.
+
+-   [ ] **Internal App Builder:** An interface for admins to create custom UIs for managing their Custom Object records.
+-   [ ] **Approval Workflows:** Extend the workflow engine to support multi-step approval processes for things like quotes or discounts.

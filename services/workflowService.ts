@@ -1,4 +1,4 @@
-import { MOCK_CONTACTS_MUTABLE, MOCK_WORKFLOWS, MOCK_ADVANCED_WORKFLOWS, MOCK_EMAIL_TEMPLATES, MOCK_TASKS, MOCK_USERS, MOCK_ROLES } from './mockData';
+import { MOCK_CONTACTS_MUTABLE, MOCK_WORKFLOWS, MOCK_ADVANCED_WORKFLOWS, MOCK_EMAIL_TEMPLATES, MOCK_TASKS, MOCK_USERS, MOCK_ROLES, MOCK_SURVEYS } from './mockData';
 import { replacePlaceholders } from '../utils/textUtils';
 import { addDays } from 'date-fns';
 import { Workflow, WorkflowTrigger, AnyContact, Deal, AdvancedWorkflow, AuditLogEntry, Task, Interaction } from '../types';
@@ -146,6 +146,17 @@ async function executeAction(actionData: any, payload: any, workflowId: string, 
                     }
                 }
                 logArray.push(`  -> ACTION: Send Email. Template ID: ${actionData.emailTemplateId}.`);
+            }
+            break;
+        case 'sendSurvey':
+            {
+                // This is a simulation. In a real app, this would generate a unique survey link and send an email.
+                const survey = MOCK_SURVEYS.find(s => s.id === actionData.surveyId);
+                if (survey && payload.contact) {
+                    logArray.push(`  -> ACTION: Send Survey. Name: "${survey.name}". To: ${payload.contact.contactName}.`);
+                } else {
+                    logArray.push(`  -> ACTION: Send Survey. FAILED: Survey or contact not found.`);
+                }
             }
             break;
         case 'updateContactField':

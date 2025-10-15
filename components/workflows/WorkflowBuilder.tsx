@@ -3,15 +3,13 @@ import PageWrapper from '../layout/PageWrapper';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
-import { Workflow, WorkflowTrigger, WorkflowAction, ContactStatus, DealStage, EmailTemplate, CustomField, User } from '../../types';
+import { Workflow, WorkflowTrigger, WorkflowAction, ContactStatus, DealStage, EmailTemplate, CustomField, User, Survey } from '../../types';
 import { ArrowLeft, Plus, Trash2, Zap, Check, Clock } from 'lucide-react';
-// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from '../../hooks/useForm';
 import { useApp } from '../../contexts/AppContext';
 import toast from 'react-hot-toast';
-// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
 import { Card } from '../ui/Card';
 
 interface WorkflowBuilderProps {
@@ -34,12 +32,13 @@ const actionTypes: { value: WorkflowAction['type'], label: string }[] = [
     { value: 'updateContactField', label: 'Update a Contact Field' },
     { value: 'wait', label: 'Wait for a duration' },
     { value: 'sendWebhook', label: 'Send a Webhook' },
+    { value: 'sendSurvey', label: 'Send a Survey' },
 ];
 
 const statusOptions: ContactStatus[] = ['Lead', 'Active', 'Inactive', 'Do Not Contact'];
 
 const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) => {
-    const { createWorkflowMutation, updateWorkflowMutation, dealStagesQuery, emailTemplatesQuery, teamMembersQuery } = useData();
+    const { createWorkflowMutation, updateWorkflowMutation, dealStagesQuery, emailTemplatesQuery, teamMembersQuery, surveysQuery } = useData();
     const { industryConfig } = useApp();
     const { authenticatedUser } = useAuth();
     const isNew = !workflow;
@@ -49,6 +48,7 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
     const { data: dealStages = [] } = dealStagesQuery;
     const { data: emailTemplates = [] } = emailTemplatesQuery;
     const { data: teamMembers = [] } = teamMembersQuery;
+    const { data: surveys = [] } = surveysQuery;
 
     const initialState = useMemo((): Omit<Workflow, 'id'> => ({
         name: '',
@@ -80,6 +80,7 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
                 case 'updateContactField': newActions[index] = { type: 'updateContactField' }; break;
                 case 'wait': newActions[index] = { type: 'wait', days: 1 }; break;
                 case 'sendWebhook': newActions[index] = { type: 'sendWebhook' }; break;
+                case 'sendSurvey': newActions[index] = { type: 'sendSurvey' }; break;
                 default: newActions[index] = { type: 'createTask' }; // Fallback
             }
         } else {
@@ -115,7 +116,7 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
     const renderConfigPanel = () => {
         if (selectedNode.type === 'trigger') {
              return (
-                <Card>
+                <Card className="p-4">
                     <h3 className="text-lg font-semibold text-text-primary mb-4">Configure Trigger</h3>
                     <div className="space-y-4">
                         {/* FIX: Added missing id prop. */}
@@ -129,7 +130,7 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
         } else if (selectedNode.type === 'action' && selectedNode.index !== undefined) {
             const action = formData.actions[selectedNode.index];
             return (
-                 <Card>
+                 <Card className="p-4">
                     <h3 className="text-lg font-semibold text-text-primary mb-4">Configure Action #{selectedNode.index + 1}</h3>
                      <div className="space-y-4">
                         {/* FIX: Added missing id prop. */}
@@ -216,6 +217,13 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
                     <Select id={`action-email-template-${index}`} label="Email Template" value={action.emailTemplateId || ''} onChange={e => handleActionChange(index, 'emailTemplateId', e.target.value)}>
                         <option value="">Select a template...</option>
                         {emailTemplates.map((t: EmailTemplate) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    </Select>
+                );
+            case 'sendSurvey':
+                return (
+                    <Select id={`action-survey-${index}`} label="Survey to Send" value={action.surveyId || ''} onChange={e => handleActionChange(index, 'surveyId', e.target.value)}>
+                        <option value="">Select a survey...</option>
+                        {surveys.map((s: Survey) => <option key={s.id} value={s.id}>{s.name} ({s.type})</option>)}
                     </Select>
                 );
             case 'updateContactField':

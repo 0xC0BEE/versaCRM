@@ -5,7 +5,9 @@ import {
     LandingPage, Document, CustomReport, DashboardWidget, Supplier, Warehouse, CustomObjectDefinition, 
     CustomObjectRecord, AppMarketplaceItem, InstalledApp, Sandbox, DocumentTemplate,
     ProjectPhase, Project, ProjectTemplate,
-    CannedResponse
+    CannedResponse,
+    Survey,
+    SurveyResponse
 } from '../types';
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
@@ -190,6 +192,14 @@ export const MOCK_PROJECT_DOCUMENTS: Document[] = [
     }
 ];
 
+export const MOCK_SURVEYS: Survey[] = [
+    { id: 'survey_1', organizationId: 'org_1', name: 'Post-Ticket CSAT', type: 'CSAT', question: 'How satisfied were you with our support?', createdAt: new Date().toISOString() },
+    { id: 'survey_2', organizationId: 'org_1', name: 'Quarterly NPS', type: 'NPS', question: 'How likely are you to recommend us to a friend or colleague?', createdAt: new Date().toISOString() },
+];
+
+// FIX: Changed from 'export const' to 'let' to allow modification and prevent redeclaration error.
+let MOCK_SURVEY_RESPONSES: SurveyResponse[] = [];
+
 
 export const MOCK_CUSTOM_REPORTS: CustomReport[] = [];
 export const MOCK_DASHBOARD_WIDGETS: DashboardWidget[] = [];
@@ -210,4 +220,4 @@ export const MOCK_SANDBOXES: Sandbox[] = [];
 
 
 // Export mutable arrays for services that modify data in place
-export { MOCK_CONTACTS_MUTABLE };
+export { MOCK_CONTACTS_MUTABLE, MOCK_SURVEY_RESPONSES };

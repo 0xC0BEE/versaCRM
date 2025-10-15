@@ -10,7 +10,7 @@ export type Page = 'Dashboard' | 'Organizations' | 'OrganizationDetails' | 'Cont
 export type Theme = 'light' | 'dark' | 'system';
 export type ReportType = 'sales' | 'inventory' | 'financial' | 'contacts' | 'team' | 'deals';
 export type ContactStatus = 'Lead' | 'Active' | 'Needs Attention' | 'Inactive' | 'Do Not Contact';
-export type InteractionType = 'Appointment' | 'Call' | 'Email' | 'Note' | 'Site Visit' | 'Maintenance Request' | 'VoIP Call' | 'Form Submission' | 'Meeting';
+export type InteractionType = 'Appointment' | 'Call' | 'Email' | 'Note' | 'Site Visit' | 'Maintenance Request' | 'VoIP Call' | 'Form Submission' | 'Meeting' | 'LinkedIn Message' | 'X Message';
 
 // Permissions
 export type Permission =
@@ -311,6 +311,7 @@ export interface Conversation {
     id: string;
     contactId: string;
     subject: string;
+    channel: 'Email' | 'LinkedIn' | 'X';
     lastMessageTimestamp: string;
     lastMessageSnippet: string;
     messages: Message[];
@@ -322,6 +323,24 @@ export interface CannedResponse {
   organizationId: string;
   name: string;
   body: string;
+}
+
+export interface Survey {
+  id: string;
+  organizationId: string;
+  name: string;
+  type: 'CSAT' | 'NPS';
+  question: string;
+  createdAt: string;
+}
+
+export interface SurveyResponse {
+  id: string;
+  surveyId: string;
+  contactId: string;
+  score: number;
+  comment?: string;
+  respondedAt: string;
 }
 
 
@@ -465,7 +484,8 @@ export type WorkflowAction =
     | { type: 'sendEmail', emailTemplateId?: string }
     | { type: 'updateContactField', fieldId?: string; newValue?: string }
     | { type: 'wait', days: number }
-    | { type: 'sendWebhook', webhookUrl?: string; payloadTemplate?: string };
+    | { type: 'sendWebhook', webhookUrl?: string; payloadTemplate?: string }
+    | { type: 'sendSurvey', surveyId?: string };
 
 export interface Workflow {
     id: string;
@@ -610,7 +630,7 @@ export interface FilterCondition {
     operator: 'is' | 'is_not' | 'contains' | 'does_not_contain';
     value: string;
 }
-export type ReportDataSource = 'contacts' | 'products' | string; // string for custom object IDs
+export type ReportDataSource = 'contacts' | 'products' | 'surveyResponses' | string; // string for custom object IDs
 export interface ReportVisualization {
     type: 'table' | 'bar' | 'pie' | 'line';
     groupByKey?: string;
@@ -793,7 +813,7 @@ export interface StructuredRecord {
 export type NodeExecutionType =
     | 'contactCreated' | 'contactStatusChanged' | 'dealCreated' | 'dealStageChanged'
     | 'ticketCreated' | 'ticketStatusChanged' | 'sendEmail' | 'createTask' | 'wait'
-    | 'ifCondition' | 'updateContactField';
+    | 'ifCondition' | 'updateContactField' | 'sendSurvey';
     
 export type WorkflowNodeType = 'trigger' | 'action' | 'condition';
 
@@ -845,6 +865,8 @@ export interface DataContextType {
     projectPhasesQuery: any;
     inboxQuery: any;
     cannedResponsesQuery: any;
+    surveysQuery: any;
+    surveyResponsesQuery: any;
 
     // Mutations
     createOrganizationMutation: any;
@@ -948,4 +970,7 @@ export interface DataContextType {
     createCannedResponseMutation: any;
     updateCannedResponseMutation: any;
     deleteCannedResponseMutation: any;
+    createSurveyMutation: any;
+    updateSurveyMutation: any;
+    deleteSurveyMutation: any;
 }

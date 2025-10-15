@@ -24,7 +24,7 @@ const PublicLandingPage: React.FC = () => {
     useEffect(() => {
         const handleHashChange = () => {
             const hash = window.location.hash;
-            const slugFromHash = hash.substring(2); // Remove '#/'
+            const slugFromHash = hash.substring(5); // Remove '#/lp/'
             setSlug(slugFromHash);
         }
         handleHashChange(); // Initial load

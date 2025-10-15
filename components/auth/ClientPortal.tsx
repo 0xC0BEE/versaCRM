@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LogOut } from 'lucide-react';
-// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
 import { Card } from '../ui/Card';
 import Tabs from '../ui/Tabs';
 import ClientProfileTab from './client_portal/ProfileTab';
@@ -9,10 +8,10 @@ import ClientHistoryTab from './client_portal/HistoryTab';
 import ClientDocumentsTab from './client_portal/DocumentsTab';
 import ClientTicketsTab from './client_portal/ClientTicketsTab';
 import AiAssistantTab from './client_portal/AiAssistantTab';
-// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import LiveChatWidget from '../chat/LiveChatWidget';
 import ClientProjectsTab from './client_portal/ClientProjectsTab';
+import ClientKBTab from './client_portal/ClientKBTab';
 
 const ClientPortal: React.FC = () => {
     const { authenticatedUser, logout } = useAuth();
@@ -20,7 +19,7 @@ const ClientPortal: React.FC = () => {
     const { organizationSettingsQuery } = useData();
     const { data: settings, isLoading: settingsLoading } = organizationSettingsQuery;
 
-    const tabs = ['Profile', 'Projects', 'History', 'Documents', 'Tickets', 'AI Assistant'];
+    const tabs = ['Profile', 'Projects', 'History', 'Documents', 'Tickets', 'Knowledge Base', 'AI Assistant'];
 
     const renderContent = () => {
         switch (activeTab) {
@@ -34,6 +33,8 @@ const ClientPortal: React.FC = () => {
                 return <ClientDocumentsTab />;
             case 'Tickets':
                 return <ClientTicketsTab />;
+            case 'Knowledge Base':
+                return <ClientKBTab />;
             case 'AI Assistant':
                 return <AiAssistantTab />;
             default:

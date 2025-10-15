@@ -1,6 +1,6 @@
 import React from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { Zap, Send, CheckSquare, Clock, GitFork } from 'lucide-react';
+import { Zap, Send, CheckSquare, Clock, GitFork, Edit, ClipboardCheck } from 'lucide-react';
 import { NodeExecutionType } from '../../../types';
 
 const nodeIcons: Record<string, React.ReactNode> = {
@@ -14,6 +14,8 @@ const nodeIcons: Record<string, React.ReactNode> = {
     createTask: <CheckSquare size={16} className="text-success"/>,
     wait: <Clock size={16} className="text-warning"/>,
     ifCondition: <GitFork size={16} className="text-purple-500"/>,
+    updateContactField: <Edit size={16} className="text-indigo-500"/>,
+    sendSurvey: <ClipboardCheck size={16} className="text-teal-500"/>,
 };
 
 const WorkflowNode: React.FC<NodeProps> = ({ data, selected, type }) => {

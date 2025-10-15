@@ -3,7 +3,7 @@ import Select from '../../../ui/Select';
 import Input from '../../../ui/Input';
 import { Node } from 'reactflow';
 import { useData } from '../../../../contexts/DataContext';
-import { User, EmailTemplate, NodeExecutionType, ContactStatus } from '../../../../types';
+import { User, EmailTemplate, NodeExecutionType, ContactStatus, Survey } from '../../../../types';
 
 interface ActionConfigProps {
     node: Node;
@@ -15,14 +15,16 @@ const actionTypes: { value: NodeExecutionType, label: string }[] = [
     { value: 'createTask', label: 'Create a Task' },
     { value: 'updateContactField', label: 'Update Contact Field' },
     { value: 'wait', label: 'Wait for a duration' },
+    { value: 'sendSurvey', label: 'Send a Survey' },
 ];
 
 const statusOptions: ContactStatus[] = ['Lead', 'Active', 'Needs Attention', 'Inactive', 'Do Not Contact'];
 
 const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => {
-    const { emailTemplatesQuery, teamMembersQuery } = useData();
+    const { emailTemplatesQuery, teamMembersQuery, surveysQuery } = useData();
     const { data: emailTemplates = [] } = emailTemplatesQuery;
     const { data: teamMembers = [] } = teamMembersQuery;
+    const { data: surveys = [] } = surveysQuery;
 
     // Use a single local state object for all form fields to prevent input lag.
     const [localData, setLocalData] = useState(node?.data || {});
@@ -50,11 +52,15 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
         if (newType === 'wait') {
             newData.days = 1;
         }
+        if (newType === 'sendSurvey') {
+            newData.surveyId = '';
+        }
         // This is a structural change, so update the global state immediately.
         updateNodeData(newData);
     };
 
     const renderActionOptions = () => {
+        // FIX: Cast node.data.nodeType to NodeExecutionType to prevent type errors.
         switch (localData.nodeType as NodeExecutionType) {
             case 'sendEmail':
                 return (
@@ -70,6 +76,22 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
                     >
                         <option value="">Select a template...</option>
                         {(emailTemplates as EmailTemplate[]).map((t: EmailTemplate) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    </Select>
+                );
+            case 'sendSurvey':
+                return (
+                    <Select
+                        id="survey-id"
+                        label="Survey to Send"
+                        value={localData.surveyId || ''}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            handleLocalChange('surveyId', value);
+                            handlePersistChange('surveyId', value);
+                        }}
+                    >
+                        <option value="">Select a survey...</option>
+                        {(surveys as Survey[]).map((s: Survey) => <option key={s.id} value={s.id}>{s.name} ({s.type})</option>)}
                     </Select>
                 );
             case 'createTask':

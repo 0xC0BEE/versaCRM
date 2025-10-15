@@ -44,30 +44,35 @@ const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ repor
     
     const contactColumns = useMemo(() => ['id', 'organizationId', 'contactName', 'email', 'phone', 'status', 'leadSource', 'createdAt', 'leadScore', 'assignedToId'], []);
     const productColumns = useMemo(() => ['id', 'organizationId', 'name', 'sku', 'category', 'description', 'costPrice', 'salePrice', 'stockLevel'], []);
+    const surveyResponseColumns = useMemo(() => ['id', 'surveyId', 'contactId', 'score', 'comment', 'respondedAt'], []);
+
     const numericContactColumns = useMemo(() => ['leadScore'], []);
     const numericProductColumns = useMemo(() => ['costPrice', 'salePrice', 'stockLevel'], []);
+    const numericSurveyResponseColumns = useMemo(() => ['score'], []);
 
     const availableColumns = useMemo(() => {
         if (config.dataSource === 'contacts') return contactColumns;
         if (config.dataSource === 'products') return productColumns;
+        if (config.dataSource === 'surveyResponses') return surveyResponseColumns;
         
         const customObjectDef = (customObjectDefs as CustomObjectDefinition[]).find(def => def.id === config.dataSource);
         if (customObjectDef) {
             return customObjectDef.fields.map(f => f.id);
         }
         return [];
-    }, [config.dataSource, contactColumns, productColumns, customObjectDefs]);
+    }, [config.dataSource, contactColumns, productColumns, surveyResponseColumns, customObjectDefs]);
     
     const numericColumns = useMemo(() => {
         if (config.dataSource === 'contacts') return numericContactColumns;
         if (config.dataSource === 'products') return numericProductColumns;
+        if (config.dataSource === 'surveyResponses') return numericSurveyResponseColumns;
         
         const customObjectDef = (customObjectDefs as CustomObjectDefinition[]).find(def => def.id === config.dataSource);
         if (customObjectDef) {
             return customObjectDef.fields.filter(f => f.type === 'number').map(f => f.id);
         }
         return [];
-    }, [config.dataSource, numericContactColumns, numericProductColumns, customObjectDefs]);
+    }, [config.dataSource, numericContactColumns, numericProductColumns, numericSurveyResponseColumns, customObjectDefs]);
 
     const { data: previewData, isLoading: isPreviewLoading } = useQuery({
         queryKey: ['reportPreview', config],
@@ -98,6 +103,8 @@ const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ repor
                     newConfig.columns = ['contactName', 'email', 'status'];
                 } else if (value === 'products') {
                     newConfig.columns = ['name', 'sku', 'salePrice'];
+                } else if (value === 'surveyResponses') {
+                    newConfig.columns = ['surveyId', 'contactId', 'score', 'respondedAt'];
                 } else {
                     const def = (customObjectDefs as CustomObjectDefinition[]).find(d => d.id === value);
                     newConfig.columns = def ? def.fields.slice(0, 3).map(f => f.id) : [];
@@ -154,6 +161,7 @@ const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ repor
                         <Select id="dataSource" label="Data Source" value={config.dataSource} onChange={e => handleConfigChange('dataSource', e.target.value)}>
                             <option value="contacts">Contacts</option>
                             <option value="products">Products</option>
+                            <option value="surveyResponses">Survey Responses</option>
                             {(customObjectDefs as CustomObjectDefinition[]).map(def => (
                                 <option key={def.id} value={def.id}>{def.namePlural}</option>
                             ))}

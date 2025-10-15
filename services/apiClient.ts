@@ -8,7 +8,9 @@ import {
     ProjectComment,
     Conversation,
     Message,
-    CannedResponse
+    CannedResponse,
+    Survey,
+    SurveyResponse
 } from '../types';
 
 // Create a mutable reference to the fetch implementation that can be overridden by the mock server.
@@ -83,6 +85,15 @@ const apiClient = {
     updateCannedResponse: (data: CannedResponse): Promise<CannedResponse> => fetchImpl(`${API_BASE}/canned-responses/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteCannedResponse: (id: string): Promise<void> => fetchImpl(`${API_BASE}/canned-responses/${id}`, { method: 'DELETE' }).then(handleResponse),
 
+    // --- SURVEYS ---
+    getSurveys: (orgId: string): Promise<Survey[]> => fetchImpl(`${API_BASE}/surveys?orgId=${orgId}`).then(handleResponse),
+    getSurveyResponses: (orgId: string): Promise<SurveyResponse[]> => fetchImpl(`${API_BASE}/survey-responses?orgId=${orgId}`).then(handleResponse),
+    getPublicSurvey: (surveyId: string): Promise<Survey | null> => fetchImpl(`${API_BASE}/public/surveys/${surveyId}`).then(handleResponse),
+    createSurvey: (data: Omit<Survey, 'id' | 'createdAt'>): Promise<Survey> => fetchImpl(`${API_BASE}/surveys`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    updateSurvey: (data: Survey): Promise<Survey> => fetchImpl(`${API_BASE}/surveys/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    deleteSurvey: (id: string): Promise<void> => fetchImpl(`${API_BASE}/surveys/${id}`, { method: 'DELETE' }).then(handleResponse),
+    submitSurveyResponse: (data: { surveyId: string, score: number, comment?: string }): Promise<void> => fetchImpl(`${API_BASE}/public/surveys/respond`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+
     // --- DASHBOARD & REPORTS ---
     getDashboardData: (orgId: string): Promise<DashboardData> => fetchImpl(`${API_BASE}/dashboard?orgId=${orgId}`).then(handleResponse),
 
@@ -130,7 +141,6 @@ const apiClient = {
     getOrganizationSettings: (orgId: string): Promise<OrganizationSettings> => fetchImpl(`${API_BASE}/settings?orgId=${orgId}`).then(handleResponse),
     updateOrganizationSettings: (updates: Partial<OrganizationSettings>): Promise<OrganizationSettings> => fetchImpl(`${API_BASE}/settings`, { method: 'PUT', body: JSON.stringify(updates), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     recalculateAllScores: (orgId: string): Promise<void> => fetchImpl(`${API_BASE}/lead-scoring/recalculate-all`, { method: 'POST', body: JSON.stringify({ orgId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-    // FIX: Added missing runEmailSync method
     runEmailSync: (orgId: string): Promise<void> => fetchImpl(`${API_BASE}/email/sync`, { method: 'POST', body: JSON.stringify({ orgId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     
     // --- WORKFLOWS ---

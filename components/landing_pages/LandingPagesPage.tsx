@@ -39,7 +39,7 @@ const LandingPagesPage: React.FC = () => {
     };
 
     const handleCopyLink = (slug: string) => {
-        const url = `${window.location.origin}/#/${slug}`;
+        const url = `${window.location.origin}/#/lp/${slug}`;
         navigator.clipboard.writeText(url);
         setCopiedSlug(slug);
         toast.success("Link copied to clipboard!");
@@ -93,7 +93,7 @@ const LandingPagesPage: React.FC = () => {
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex gap-2 justify-end">
                                                 {page.status === 'Published' && (
-                                                    <a href={`#/${page.slug}`} target="_blank" rel="noopener noreferrer">
+                                                    <a href={`#/lp/${page.slug}`} target="_blank" rel="noopener noreferrer">
                                                         <Button size="sm" variant="secondary" leftIcon={<Eye size={14} />}>View</Button>
                                                     </a>
                                                 )}
