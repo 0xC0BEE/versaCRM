@@ -15,7 +15,7 @@ import Input from '../ui/Input';
 import toast from 'react-hot-toast';
 import { format, formatDistanceToNow } from 'date-fns';
 import Textarea from '../ui/Textarea';
-import { useProjectDocuments } from '../../hooks/useProjectDocuments';
+import { useDocuments } from '../../hooks/useDocuments';
 import { fileToDataUrl } from '../../utils/fileUtils';
 import FilePreviewModal from '../ui/FilePreviewModal';
 
@@ -184,7 +184,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ projectId, onBack }
     };
     
     const FilesTab = () => {
-        const { documentsQuery, uploadDocumentMutation, deleteDocumentMutation, updateDocumentMutation } = useProjectDocuments(projectId);
+        const { documentsQuery, uploadDocumentMutation, deleteDocumentMutation, updateDocumentMutation } = useDocuments({ projectId });
         const { data: documents = [], isLoading } = documentsQuery;
         const [previewingFile, setPreviewingFile] = useState<DocType | null>(null);
         const fileInputRef = useRef<HTMLInputElement>(null);

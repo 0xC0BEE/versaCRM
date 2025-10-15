@@ -2,6 +2,7 @@ import React, { InputHTMLAttributes } from 'react';
 
 interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
     label?: string;
+    'aria-label'?: string;
     id: string;
     size?: 'sm' | 'md';
 }
@@ -25,6 +26,7 @@ const Input: React.FC<InputProps> = ({ label, id, className, size = 'md', ...pro
             <input
                 id={id}
                 className={`${baseClasses} ${sizeClasses[size]}`}
+                aria-label={props['aria-label'] || label}
                 {...props}
             />
         </div>

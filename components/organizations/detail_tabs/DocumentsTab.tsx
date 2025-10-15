@@ -20,7 +20,7 @@ interface DocumentsTabProps {
 }
 
 const DocumentsTab: React.FC<DocumentsTabProps> = ({ contact, isReadOnly }) => {
-    const { documentsQuery, uploadDocumentMutation, deleteDocumentMutation } = useDocuments(contact.id);
+    const { documentsQuery, uploadDocumentMutation, deleteDocumentMutation } = useDocuments({ contactId: contact.id });
     const { data: documents = [], isLoading } = documentsQuery;
     
     const [previewingFile, setPreviewingFile] = useState<DocType | null>(null);

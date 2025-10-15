@@ -260,9 +260,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const createInteractionMutation = useGenericMutation((vars: Omit<Interaction, 'id'>) => apiClient.createInteraction(vars), ['allInteractions', 'contacts']);
     const updateInteractionMutation = useGenericMutation((vars: Interaction) => apiClient.updateInteraction(vars), ['allInteractions', 'contacts']);
     
-    const createTaskMutation = useGenericMutation((vars: Omit<Task, 'id' | 'isCompleted'>) => apiClient.createTask(vars), 'tasks');
+    const createTaskMutation = useMutation({ mutationFn: (vars: Omit<Task, 'id' | 'isCompleted'>) => apiClient.createTask(vars), onSuccess: () => { toast.success("Task created!"); onMutationSuccess('tasks')(); }, onError: onMutationError });
     const updateTaskMutation = useGenericMutation((vars: Task) => apiClient.updateTask(vars), 'tasks');
-    const deleteTaskMutation = useGenericMutation((id: string) => apiClient.deleteTask(id), 'tasks');
+    const deleteTaskMutation = useMutation({ mutationFn: (id: string) => apiClient.deleteTask(id), onSuccess: () => { toast.success("Task deleted!"); onMutationSuccess('tasks')(); }, onError: onMutationError });
     
     const createCalendarEventMutation = useGenericMutation((vars: Omit<CalendarEvent, 'id'>) => apiClient.createCalendarEvent(vars), 'calendarEvents');
     const updateCalendarEventMutation = useGenericMutation((vars: CalendarEvent) => apiClient.updateCalendarEvent(vars), 'calendarEvents');

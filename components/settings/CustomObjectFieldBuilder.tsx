@@ -56,8 +56,19 @@ const CustomObjectFieldBuilder: React.FC<CustomObjectFieldBuilderProps> = ({ def
     const handleDeleteField = (fieldId: string) => {
         if (window.confirm("Are you sure you want to delete this field? This will be saved immediately.")) {
             const newFields = fields.filter(f => f.id !== fieldId);
+            const newLayout = layout.map(section => ({
+                ...section,
+                fields: section.fields.filter(fId => fId !== fieldId)
+            }));
+            
             setFields(newFields);
-            handleFieldsSave(newFields);
+            setLayout(newLayout);
+
+            updateCustomObjectDefMutation.mutate({ 
+                ...definition, 
+                fields: newFields,
+                layout: newLayout,
+            });
         }
     };
 

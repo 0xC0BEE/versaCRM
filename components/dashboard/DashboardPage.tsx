@@ -7,7 +7,7 @@ import LoadingSpinner from '../ui/LoadingSpinner';
 import KpiCard from './KpiCard';
 import { Card } from '../ui/Card';
 import DynamicChart from './DynamicChart';
-import GrowthCopilotCard from './GrowthCopilotCard';
+import AiInsightsCard from './AiInsightsCard';
 import TeamMemberDashboard from './TeamMemberDashboard';
 import ContactCard from './ContactCard';
 import ReviewPromptCard from './ReviewPromptCard';
@@ -113,7 +113,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
         const allWidgetIds = new Set([
             ...industryConfig.dashboard.kpis.map(k => `kpi-${k.key}`),
             ...industryConfig.dashboard.charts.map(c => `chart-${c.dataKey}`),
-            'growth-copilot', 'featured-contact', 'review-prompt',
+            'ai-insights', 'featured-contact', 'review-prompt',
             ...widgets.map((w: WidgetType) => w.widgetId)
         ]);
         const filteredLayouts: Layouts = {};
@@ -196,7 +196,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
             />;
         }
         switch(widgetId) {
-            case 'growth-copilot': return <GrowthCopilotCard />;
+            case 'ai-insights': return <AiInsightsCard dashboardData={dashboardData} isLoading={isDashboardLoading} />;
             case 'featured-contact': return featuredContact ? <ContactCard contact={featuredContact} aiSuggestion="AI Suggestion: Time to reconnect." onEmailClick={() => openContactModal(featuredContact)} /> : null;
             case 'review-prompt': return requiresReviewContact ? <ReviewPromptCard contact={requiresReviewContact} onReviewClick={() => openContactModal(requiresReviewContact)} /> : null;
             default:
@@ -204,7 +204,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
                 if (customWidget) {
                     return <DashboardWidget widget={customWidget} isEditMode={isEditMode} onRemove={removeWidget} />;
                 }
-                return <Card className="h-full items-center justify-center"><p>Unknown Widget: {widgetId}</p></Card>;
+                return <Card className="h-full flex items-center justify-center"><p>Unknown Widget: {widgetId}</p></Card>;
         }
     };
     

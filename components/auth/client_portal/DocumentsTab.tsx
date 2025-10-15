@@ -19,7 +19,7 @@ const ClientDocumentsTab: React.FC = () => {
     const { authenticatedUser } = useAuth();
     const contactId = authenticatedUser?.contactId;
 
-    const { documentsQuery, uploadDocumentMutation } = useDocuments(contactId!);
+    const { documentsQuery, uploadDocumentMutation } = useDocuments({ contactId: contactId! });
     const { data: documents = [], isLoading } = documentsQuery;
     
     const [previewingFile, setPreviewingFile] = useState<DocType | null>(null);
@@ -36,6 +36,7 @@ const ClientDocumentsTab: React.FC = () => {
                     fileName: file.name,
                     fileType: file.type,
                     dataUrl,
+                    isVisibleToClient: true, // Files uploaded by client are visible to them
                 });
             } catch (error) {
                 toast.error("Failed to read file.");

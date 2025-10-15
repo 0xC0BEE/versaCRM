@@ -21,9 +21,13 @@ const nodeIcons: Record<string, React.ReactNode> = {
 
 const WorkflowNode: React.FC<NodeProps> = ({ data, selected, type }) => {
     const icon = nodeIcons[data.nodeType as NodeExecutionType] || <Zap size={16} />;
+    const isApprovalOrCondition = type === 'condition' || type === 'approval';
+    const trueLabel = type === 'approval' ? 'Approved' : 'Yes';
+    const falseLabel = type === 'approval' ? 'Rejected' : 'No';
+
 
     return (
-        <div className={`w-52 p-3 rounded-lg border-2 shadow-md bg-card-bg ${selected ? 'border-primary' : 'border-border-subtle'}`}>
+        <div className={`relative w-52 p-3 rounded-lg border-2 shadow-md bg-card-bg ${selected ? 'border-primary' : 'border-border-subtle'}`}>
             {type !== 'trigger' && <Handle type="target" position={Position.Top} className="!bg-primary" />}
             
             <div className="flex items-center">
@@ -32,10 +36,13 @@ const WorkflowNode: React.FC<NodeProps> = ({ data, selected, type }) => {
             </div>
             {data.description && <p className="text-xs text-text-secondary mt-1 truncate">{data.description}</p>}
             
-            {type === 'condition' || type === 'approval' ? (
+            {isApprovalOrCondition ? (
                 <>
                     <Handle type="source" position={Position.Right} id="true" style={{ top: '50%', background: '#10b981' }} />
+                    <div className="absolute text-[10px] font-semibold" style={{ top: '50%', right: -52, transform: 'translateY(-50%)', color: 'rgb(var(--success))' }}>{trueLabel}</div>
+
                     <Handle type="source" position={Position.Bottom} id="false" style={{ left: '50%', background: '#ef4444' }} />
+                     <div className="absolute text-[10px] font-semibold" style={{ bottom: -18, left: '50%', transform: 'translateX(-50%)', color: 'rgb(var(--error))' }}>{falseLabel}</div>
                 </>
             ) : (
                 <Handle type="source" position={Position.Bottom} className="!bg-primary" />

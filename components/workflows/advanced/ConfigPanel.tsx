@@ -42,6 +42,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ selectedNode, setNodes }) => 
         switch (selectedNode.type) {
             case 'trigger':
                 return <TriggerConfig node={selectedNode} updateNodeData={updateNodeData} />;
+            case 'approval':
             case 'action':
                 return <ActionConfig node={selectedNode} updateNodeData={updateNodeData} />;
             case 'condition':

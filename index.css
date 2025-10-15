@@ -85,12 +85,6 @@ body {
   animation-fill-mode: backwards;
 }
 
-/* Add Tailwind directives */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-
 /* Custom scrollbar for horizontal tabs */
 .custom-scrollbar::-webkit-scrollbar {
   height: 6px;

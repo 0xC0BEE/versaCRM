@@ -4,7 +4,8 @@ import Button from '../../ui/Button';
 import Tabs from '../../ui/Tabs';
 import { ArrowLeft, CheckCircle, File, FileImage, FileText, Download, Eye } from 'lucide-react';
 import { useData } from '../../../contexts/DataContext';
-import { useProjectDocuments } from '../../../hooks/useProjectDocuments';
+// FIX: Corrected import to use the existing `useDocuments` hook.
+import { useDocuments } from '../../../hooks/useDocuments';
 import { format } from 'date-fns';
 import FilePreviewModal from '../../ui/FilePreviewModal';
 
@@ -60,7 +61,8 @@ const ClientProjectDetailView: React.FC<ClientProjectDetailViewProps> = ({ proje
     };
 
     const SharedFilesTab = () => {
-        const { documentsQuery } = useProjectDocuments(project.id);
+        // FIX: The hook expects an object with `projectId`, not just the ID.
+        const { documentsQuery } = useDocuments({ projectId: project.id });
         const { data: documents = [], isLoading } = documentsQuery;
 
         const sharedFiles = useMemo(() => documents.filter((d: DocType) => d.isVisibleToClient), [documents]);

@@ -24,7 +24,7 @@ const AiInsightsCard: React.FC<AiInsightsCardProps> = ({ dashboardData, isLoadin
         setInsight('');
         try {
             const ai = new GoogleGenAI({apiKey: process.env.API_KEY!});
-            const prompt = `Analyze the following CRM dashboard data and provide a concise, actionable insight for an organization admin. Data: ${JSON.stringify(dashboardData.kpis)}`;
+            const prompt = `Analyze the following CRM dashboard data and provide a concise, actionable insight for an organization admin. Focus on identifying potential anomalies, trends, or areas needing attention. Data: ${JSON.stringify(dashboardData.kpis)}`;
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,
@@ -55,14 +55,14 @@ const AiInsightsCard: React.FC<AiInsightsCardProps> = ({ dashboardData, isLoadin
                         <Bot size={20} className="mr-2 text-primary" />
                         AI Insights
                     </CardTitle>
-                    <CardDescription>Let Gemini analyze your current dashboard data.</CardDescription>
+                    <CardDescription>Detect anomalies and trends in your data.</CardDescription>
                 </div>
                 <Button 
                     onClick={generateInsight} 
                     disabled={isGenerating} 
                     size="sm"
                 >
-                    {isGenerating ? 'Generating...' : 'Generate'}
+                    {isGenerating ? 'Analyzing...' : 'Analyze KPIs'}
                 </Button>
             </CardHeader>
             <CardContent className="flex-grow flex items-center justify-start">
@@ -75,7 +75,7 @@ const AiInsightsCard: React.FC<AiInsightsCardProps> = ({ dashboardData, isLoadin
                     ) : insight ? (
                         <p className="text-sm whitespace-pre-wrap text-left">{insight}</p>
                     ) : (
-                        <p className="text-sm text-text-secondary text-left">Click "Generate" to see what's happening.</p>
+                        <p className="text-sm text-text-secondary text-left">Click "Analyze KPIs" to get an AI-powered summary of your key metrics.</p>
                     )}
                 </div>
             </CardContent>

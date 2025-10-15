@@ -19,6 +19,7 @@ const nodeTypes = {
   trigger: WorkflowNode,
   action: WorkflowNode,
   condition: WorkflowNode,
+  approval: WorkflowNode,
 };
 
 interface WorkflowCanvasProps {

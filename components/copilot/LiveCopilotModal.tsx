@@ -41,18 +41,20 @@ const LiveCopilotModal: React.FC = () => {
             scriptProcessorRef.current = null;
         }
         if (inputAudioContextRef.current && inputAudioContextRef.current.state !== 'closed') {
-            inputAudioContextRef.current.close();
+            inputAudioContextRef.current.close().catch(console.error);
             inputAudioContextRef.current = null;
         }
         if (outputAudioContextRef.current && outputAudioContextRef.current.state !== 'closed') {
-            sourcesRef.current.forEach(source => source.stop());
+            sourcesRef.current.forEach(source => {
+                try { source.stop(); } catch (e) {}
+            });
             sourcesRef.current.clear();
-            outputAudioContextRef.current.close();
+            outputAudioContextRef.current.close().catch(console.error);
             outputAudioContextRef.current = null;
         }
         
         if (sessionPromiseRef.current) {
-            sessionPromiseRef.current.then(session => session.close());
+            sessionPromiseRef.current.then(session => session.close()).catch(console.error);
             sessionPromiseRef.current = null;
         }
         

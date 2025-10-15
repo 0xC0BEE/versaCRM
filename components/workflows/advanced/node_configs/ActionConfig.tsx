@@ -10,7 +10,7 @@ interface ActionConfigProps {
     updateNodeData: (data: Record<string, any>) => void;
 }
 
-const actionTypes: { value: NodeExecutionType, label: string }[] = [
+const allActionTypes: { value: NodeExecutionType, label: string }[] = [
     { value: 'sendEmail', label: 'Send an Email' },
     { value: 'createTask', label: 'Create a Task' },
     { value: 'updateContactField', label: 'Update Contact Field' },
@@ -26,11 +26,9 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
     const { data: teamMembers = [] } = teamMembersQuery;
     const { data: surveys = [] } = surveysQuery;
 
-    // Use a single local state object for all form fields to prevent input lag.
     const [localData, setLocalData] = useState(node?.data || {});
 
     useEffect(() => {
-        // Sync local state when the selected node changes.
         setLocalData(node?.data || {});
     }, [node?.id, node?.data]);
 
@@ -39,7 +37,6 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
     };
 
     const handlePersistChange = (field: string, value: any) => {
-        // Persist the change to the global React Flow state.
         if (node?.data?.[field] !== value) {
             updateNodeData({ [field]: value });
         }
@@ -47,7 +44,7 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
 
     const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newType = e.target.value as NodeExecutionType;
-        const newLabel = actionTypes.find(t => t.value === newType)?.label || 'Action';
+        const newLabel = allActionTypes.find(t => t.value === newType)?.label || 'Action';
         const newData: Record<string, any> = { nodeType: newType, label: newLabel };
         if (newType === 'wait') {
             newData.days = 1;
@@ -55,13 +52,13 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
         if (newType === 'sendSurvey') {
             newData.surveyId = '';
         }
-        // This is a structural change, so update the global state immediately.
         updateNodeData(newData);
     };
 
     const renderActionOptions = () => {
-        // FIX: Cast node.data.nodeType to NodeExecutionType to prevent type errors.
-        switch (localData.nodeType as NodeExecutionType) {
+        const nodeType = node.type === 'approval' ? 'approval' : localData.nodeType;
+
+        switch (nodeType as NodeExecutionType) {
             case 'sendEmail':
                 return (
                     <Select
@@ -165,6 +162,22 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
                         onBlur={() => handlePersistChange('days', localData.days)}
                     />
                 );
+            case 'approval':
+                return (
+                    <Select
+                        id="approver-id"
+                        label="Request approval from"
+                        value={localData.approverId || ''}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            handleLocalChange('approverId', value);
+                            handlePersistChange('approverId', value);
+                        }}
+                    >
+                        <option value="">Select an approver...</option>
+                        {(teamMembers as User[]).map((m: User) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                    </Select>
+                );
             default:
                 return <p className="text-xs text-text-secondary">Select an action type to configure.</p>;
         }
@@ -172,10 +185,12 @@ const ActionConfig: React.FC<ActionConfigProps> = ({ node, updateNodeData }) => 
 
     return (
         <div className="space-y-4">
-            <Select id="action-type" label="Action Type" value={localData.nodeType} onChange={handleTypeChange}>
-                {actionTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-            </Select>
-            <div className="space-y-2 pt-2 border-t border-border-subtle">
+            {node.type === 'action' && (
+                <Select id="action-type" label="Action Type" value={localData.nodeType} onChange={handleTypeChange}>
+                    {allActionTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </Select>
+            )}
+            <div className={`space-y-2 ${node.type === 'action' ? 'pt-2 border-t border-border-subtle' : ''}`}>
                 {renderActionOptions()}
             </div>
             <p className="text-xs text-text-secondary">This action will be executed when the previous node in the workflow is completed.</p>

@@ -204,7 +204,6 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
                         <div className="flex gap-2">
                             <Button size="sm" variant="success" onClick={() => handleApprovalAction('Approved')} leftIcon={<Check size={14}/>}>Approve</Button>
                             <Button size="sm" variant="danger" onClick={() => handleApprovalAction('Rejected')} leftIcon={<X size={14}/>}>Reject</Button>
-                            <Button size="sm" variant="secondary" leftIcon={<UserCheck size={14}/>}>Reassign</Button>
                         </div>
                     </div>
                 )}
