@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { CustomObjectDefinition, CustomObjectRecord, CustomField } from '../../types';
 import Modal from '../ui/Modal';
@@ -96,11 +95,59 @@ const CustomObjectEditModal: React.FC<CustomObjectEditModalProps> = ({ isOpen, o
             default: return <Input {...props} type={field.type} />;
         }
     };
+    
+    const renderFieldsByLayout = () => {
+        const { layout, fields } = definition;
+
+        if (!layout || layout.length === 0) {
+            // Fallback to default rendering if no layout is defined
+            return fields.map(field => renderField(field));
+        }
+
+        const renderedFieldIds = new Set<string>();
+
+        const layoutElements = layout.map(section => {
+            if (section.fields.length === 0) return null;
+            
+            const sectionFields = fields.filter(f => section.fields.includes(f.id));
+            sectionFields.forEach(f => renderedFieldIds.add(f.id));
+            if (sectionFields.length === 0) return null;
+
+            return (
+                <div key={section.id} className="pt-4 border-t border-border-subtle first:pt-0 first:border-none">
+                    <h4 className="font-semibold text-text-primary mb-2">{section.title}</h4>
+                    <div className="space-y-4">
+                        {sectionFields.map(field => renderField(field))}
+                    </div>
+                </div>
+            );
+        });
+
+        const unassignedFields = fields.filter(f => !renderedFieldIds.has(f.id));
+        let unassignedElement = null;
+        if (unassignedFields.length > 0) {
+            unassignedElement = (
+                <div key="unassigned-section" className="pt-4 border-t border-border-subtle">
+                    <h4 className="font-semibold text-text-primary mb-2">Other Fields</h4>
+                    <div className="space-y-4">
+                        {unassignedFields.map(field => renderField(field))}
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <>
+                {layoutElements}
+                {unassignedElement}
+            </>
+        );
+    };
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={isNew ? `New ${definition.nameSingular}` : `Edit ${definition.nameSingular}`}>
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                {definition.fields.map(field => renderField(field))}
+                {renderFieldsByLayout()}
             </div>
             <div className="mt-6 flex justify-between items-center">
                 <div>

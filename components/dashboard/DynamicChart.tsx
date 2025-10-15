@@ -9,11 +9,12 @@ interface DynamicChartProps {
     type: 'bar' | 'line' | 'pie';
     data: any[];
     title: string;
+    onSegmentClick?: (payload: any) => void;
 }
 
 const PIE_COLORS = ['#3b82f6', '#10b981', '#f97316', '#a855f7', '#ec4899'];
 
-const DynamicChart: React.FC<DynamicChartProps> = ({ type, data, title }) => {
+const DynamicChart: React.FC<DynamicChartProps> = ({ type, data, title, onSegmentClick }) => {
     const { theme } = useTheme();
     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     const tickColor = isDark ? '#9ca3af' : '#6b7280';
@@ -65,7 +66,7 @@ const DynamicChart: React.FC<DynamicChartProps> = ({ type, data, title }) => {
                         <XAxis dataKey="name" tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fill: tickColor, fontSize: 12 }} axisLine={false} tickLine={false} />
                         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }} />
-                        <Bar dataKey="value" fill="url(#colorValue)" name="Count" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="value" fill="url(#colorValue)" name="Count" radius={[4, 4, 0, 0]} onClick={onSegmentClick} cursor={onSegmentClick ? 'pointer' : 'default'} />
                     </BarChart>
                 );
             case 'line':
@@ -81,7 +82,7 @@ const DynamicChart: React.FC<DynamicChartProps> = ({ type, data, title }) => {
             case 'pie':
                 return (
                      <PieChart>
-                        <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="45%" outerRadius={'85%'}>
+                        <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="45%" outerRadius={'85%'} onClick={onSegmentClick} cursor={onSegmentClick ? 'pointer' : 'default'}>
                             {data.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} stroke={isDark ? '#1f2937' : '#fff'} />
                             ))}

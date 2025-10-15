@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Campaign, AnyContact, Interaction } from '../../types';
+import { Campaign, AnyContact, Interaction, AttributedDeal } from '../../types';
 import PageWrapper from '../layout/PageWrapper';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, DollarSign } from 'lucide-react';
 import Button from '../ui/Button';
 import { useData } from '../../contexts/DataContext';
 import KpiCard from '../dashboard/KpiCard';
@@ -13,6 +13,7 @@ import Tabs from '../ui/Tabs';
 // FIX: Corrected import path to the non-deprecated ContactsTable component.
 import ContactsTable from '../organizations/ContactsTable';
 import LoadingSpinner from '../ui/LoadingSpinner';
+import { format } from 'date-fns';
 
 interface CampaignReportPageProps {
     campaign: Campaign;
@@ -20,12 +21,13 @@ interface CampaignReportPageProps {
 }
 
 const CampaignReportPage: React.FC<CampaignReportPageProps> = ({ campaign, onBack }) => {
-    const { allInteractionsQuery, contactsQuery } = useData();
+    const { allInteractionsQuery, contactsQuery, campaignAttributionQuery } = useData();
     const { data: allInteractions = [], isLoading: interactionsLoading } = allInteractionsQuery;
     const { data: allContacts = [], isLoading: contactsLoading } = contactsQuery;
+    const { data: attributedDeals = [], isLoading: attributionLoading } = campaignAttributionQuery(campaign.id);
     const [activeTab, setActiveTab] = useState('Opened');
 
-    const isLoading = interactionsLoading || contactsLoading;
+    const isLoading = interactionsLoading || contactsLoading || attributionLoading;
 
     const { openRate, clickRate, interactions, openedContacts, clickedContacts } = useMemo(() => {
         if (!campaign || !allInteractions.length || !allContacts.length) {
@@ -51,9 +53,42 @@ const CampaignReportPage: React.FC<CampaignReportPageProps> = ({ campaign, onBac
         return { openRate, clickRate, interactions: campaignInteractions, openedContacts, clickedContacts };
     }, [campaign, allInteractions, allContacts]);
     
-    const tabs = [`Opened (${openedContacts.length})`, `Clicked (${clickedContacts.length})`];
+    const attributedRevenue = useMemo(() => {
+        return (attributedDeals as AttributedDeal[]).reduce((sum, deal) => sum + deal.dealValue, 0);
+    }, [attributedDeals]);
+
+    const tabs = [`Opened (${openedContacts.length})`, `Clicked (${clickedContacts.length})`, `Attribution (${(attributedDeals as AttributedDeal[]).length})`];
 
     const renderContactList = () => {
+        if (activeTab.startsWith('Attribution')) {
+            return (
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left text-text-secondary">
+                        <thead className="text-xs uppercase bg-card-bg/50">
+                            <tr>
+                                <th scope="col" className="px-6 py-3 font-medium">Deal Name</th>
+                                <th scope="col" className="px-6 py-3 font-medium">Contact</th>
+                                <th scope="col" className="px-6 py-3 font-medium text-right">Value</th>
+                                <th scope="col" className="px-6 py-3 font-medium">Closed At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(attributedDeals as AttributedDeal[]).map(deal => (
+                                <tr key={deal.dealId} className="border-b border-border-subtle">
+                                    <td className="px-6 py-4 font-medium text-text-primary">{deal.dealName}</td>
+                                    <td className="px-6 py-4">{deal.contactName}</td>
+                                    <td className="px-6 py-4 text-right">{deal.dealValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
+                                    <td className="px-6 py-4">{format(new Date(deal.closedAt), 'PP')}</td>
+                                </tr>
+                            ))}
+                             {(attributedDeals as AttributedDeal[]).length === 0 && (
+                                <tr><td colSpan={4} className="text-center p-8">No deals have been attributed to this campaign yet.</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            )
+        }
         const contactsToShow = activeTab.startsWith('Opened') ? openedContacts : clickedContacts;
         return (
             <ContactsTable 
@@ -83,11 +118,12 @@ const CampaignReportPage: React.FC<CampaignReportPageProps> = ({ campaign, onBac
             </div>
 
             <div className="space-y-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
                     <KpiCard title="Recipients" value={campaign.stats.recipients} iconName="Users" />
                     <KpiCard title="Sent" value={campaign.stats.sent} iconName="Send" />
                     <KpiCard title="Open Rate" value={`${openRate.toFixed(1)}%`} iconName="MailOpen" />
                     <KpiCard title="Click Rate" value={`${clickRate.toFixed(1)}%`} iconName="MousePointerClick" />
+                    <KpiCard title="Attributed Revenue" value={attributedRevenue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} iconName="DollarSign" />
                 </div>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

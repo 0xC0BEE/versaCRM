@@ -37,14 +37,16 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
     const [selectedReport, setSelectedReport] = useState<CustomReport | null>(null);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     
-    const { reportToEditId, setReportToEditId } = useApp();
+    // FIX: Destructure currentDashboardId to use with dashboardWidgetsQuery.
+    const { reportToEditId, setReportToEditId, currentDashboardId } = useApp();
 
     const { 
         contactsQuery, productsQuery, teamMembersQuery, tasksQuery, dealsQuery, dealStagesQuery, 
         customReportsQuery, dashboardWidgetsQuery, addDashboardWidgetMutation, deleteCustomReportMutation 
     } = useData();
     const { data: customReports = [] } = customReportsQuery;
-    const { data: dashboardWidgets = [] } = dashboardWidgetsQuery;
+    // FIX: Call dashboardWidgetsQuery as a function with the current dashboard ID.
+    const { data: dashboardWidgets = [] } = dashboardWidgetsQuery(currentDashboardId);
     
     useEffect(() => {
         if (reportToEditId) {
@@ -163,7 +165,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ isTabbedView = false }) => {
                                             <Button 
                                                 size="sm" 
                                                 variant="secondary"
-                                                onClick={() => addDashboardWidgetMutation.mutate(report.id)}
+                                                onClick={() => addDashboardWidgetMutation.mutate({reportId: report.id, dashboardId: currentDashboardId})}
                                                 disabled={widgetExists || addDashboardWidgetMutation.isPending}
                                                 leftIcon={widgetExists ? <Check size={14} /> : <Plus size={14} />}
                                             >

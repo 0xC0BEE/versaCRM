@@ -1,6 +1,6 @@
 import React from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { Zap, Send, CheckSquare, Clock, GitFork, Edit, ClipboardCheck } from 'lucide-react';
+import { Zap, Send, CheckSquare, Clock, GitFork, Edit, ClipboardCheck, UserCheck } from 'lucide-react';
 import { NodeExecutionType } from '../../../types';
 
 const nodeIcons: Record<string, React.ReactNode> = {
@@ -16,6 +16,7 @@ const nodeIcons: Record<string, React.ReactNode> = {
     ifCondition: <GitFork size={16} className="text-purple-500"/>,
     updateContactField: <Edit size={16} className="text-indigo-500"/>,
     sendSurvey: <ClipboardCheck size={16} className="text-teal-500"/>,
+    approval: <UserCheck size={16} className="text-orange-500"/>,
 };
 
 const WorkflowNode: React.FC<NodeProps> = ({ data, selected, type }) => {
@@ -31,7 +32,7 @@ const WorkflowNode: React.FC<NodeProps> = ({ data, selected, type }) => {
             </div>
             {data.description && <p className="text-xs text-text-secondary mt-1 truncate">{data.description}</p>}
             
-            {type === 'condition' ? (
+            {type === 'condition' || type === 'approval' ? (
                 <>
                     <Handle type="source" position={Position.Right} id="true" style={{ top: '50%', background: '#10b981' }} />
                     <Handle type="source" position={Position.Bottom} id="false" style={{ left: '50%', background: '#ef4444' }} />

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Deal, AnyContact, DealForecast, CustomObjectDefinition, CustomObjectRecord } from '../../types';
 import { useData } from '../../contexts/DataContext';
-import { Handshake, Link } from 'lucide-react';
+import { Handshake, Link, Clock, Check, X } from 'lucide-react';
 import DealForecastDisplay from './DealForecast';
 
 interface DealCardProps {
@@ -38,6 +38,27 @@ const DealCard: React.FC<DealCardProps> = ({ deal, onDragStart, onClick, isForec
         return record.fields[primaryFieldId] || 'Unnamed Record';
 
     }, [deal, customObjectDefs, relatedRecords]);
+    
+    const renderApprovalStatus = () => {
+        if (!deal.approvalStatus) return null;
+        
+        let icon = <Clock size={12} />;
+        let color = 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400';
+        if (deal.approvalStatus === 'Approved') {
+            icon = <Check size={12} />;
+            color = 'bg-green-500/10 text-green-600 dark:text-green-400';
+        } else if (deal.approvalStatus === 'Rejected') {
+            icon = <X size={12} />;
+            color = 'bg-red-500/10 text-red-600 dark:text-red-400';
+        }
+        
+        return (
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${color}`}>
+                {icon}
+                {deal.approvalStatus}
+            </span>
+        );
+    }
 
     return (
         <div
@@ -58,7 +79,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal, onDragStart, onClick, isForec
                 <p className="text-sm font-bold text-primary">
                     {deal.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                 </p>
-                 {isForecasting ? (
+                {deal.approvalStatus ? renderApprovalStatus() : isForecasting ? (
                     <DealForecastDisplay deal={deal} onOpenForecast={onOpenForecast} />
                 ) : (
                     <Handshake size={14} className="text-text-secondary" />

@@ -123,6 +123,8 @@ export interface DealStage {
     order: number;
 }
 
+export type ApprovalStatus = 'Pending Approval' | 'Approved' | 'Rejected' | null;
+
 export interface Deal {
     id: string;
     organizationId: string;
@@ -135,6 +137,8 @@ export interface Deal {
     assignedToId?: string;
     relatedObjectDefId?: string;
     relatedObjectRecordId?: string;
+    approvalStatus?: ApprovalStatus;
+    currentApproverId?: string;
 }
 
 export interface Task {
@@ -419,6 +423,10 @@ export interface AppContextType {
     isFeatureEnabled: (flagId: string) => boolean;
     isLiveCopilotOpen: boolean;
     setIsLiveCopilotOpen: (isOpen: boolean) => void;
+    dashboardDateRange: { start: Date; end: Date };
+    setDashboardDateRange: (range: { start: Date; end: Date }) => void;
+    currentDashboardId: string;
+    setCurrentDashboardId: (id: string) => void;
 }
 
 export interface AuthContextType {
@@ -627,10 +635,10 @@ export type AnyReportData = SalesReportData | InventoryReportData | FinancialRep
 
 export interface FilterCondition {
     field: string;
-    operator: 'is' | 'is_not' | 'contains' | 'does_not_contain';
-    value: string;
+    operator: 'is' | 'is_not' | 'contains' | 'does_not_contain' | 'gt' | 'lt' | 'eq';
+    value: string | number;
 }
-export type ReportDataSource = 'contacts' | 'products' | 'surveyResponses' | string; // string for custom object IDs
+export type ReportDataSource = 'contacts' | 'products' | 'surveyResponses' | 'deals' | 'tickets' | string; // string for custom object IDs
 export interface ReportVisualization {
     type: 'table' | 'bar' | 'pie' | 'line';
     groupByKey?: string;
@@ -639,12 +647,18 @@ export interface ReportVisualization {
         column?: string;
     };
 }
+
 export interface CustomReport {
     id: string;
     organizationId: string;
     name: string;
     config: {
         dataSource: ReportDataSource;
+        join?: {
+            with: ReportDataSource;
+            on: string;
+            equals: string;
+        };
         columns: string[];
         filters: FilterCondition[];
         visualization: ReportVisualization;
@@ -659,11 +673,20 @@ export interface DashboardLayout {
     h: number;
     static?: boolean;
 }
+
+export interface Dashboard {
+    id: string;
+    organizationId: string;
+    name: string;
+    isDefault?: boolean;
+}
+
 export interface DashboardWidget {
     id: string;
     widgetId: string;
     organizationId: string;
     reportId: string;
+    dashboardId: string;
 }
 
 export interface DashboardData {
@@ -676,6 +699,14 @@ export interface DashboardData {
         contactsByStatus: { name: string; value: number }[];
         appointmentsByMonth: { name: string; value: number }[];
     }
+}
+
+export interface AttributedDeal {
+    dealId: string;
+    dealName: string;
+    dealValue: number;
+    contactName: string;
+    closedAt: string;
 }
 
 // Misc
@@ -737,6 +768,12 @@ export interface LeadScoringRule {
     interactionType?: InteractionType;
     status?: ContactStatus;
 }
+
+export interface CustomObjectLayoutSection {
+    id: string;
+    title: string;
+    fields: string[];
+}
 export interface CustomObjectDefinition {
     id: string;
     organizationId: string;
@@ -744,12 +781,15 @@ export interface CustomObjectDefinition {
     namePlural: string;
     icon: string;
     fields: CustomField[];
+    layout?: CustomObjectLayoutSection[];
 }
 export interface CustomObjectRecord {
     id: string;
     organizationId: string;
     objectDefId: string;
     fields: Record<string, any>;
+    approvalStatus?: ApprovalStatus;
+    currentApproverId?: string;
 }
 export interface AppMarketplaceItem {
     id: string;
@@ -813,9 +853,9 @@ export interface StructuredRecord {
 export type NodeExecutionType =
     | 'contactCreated' | 'contactStatusChanged' | 'dealCreated' | 'dealStageChanged'
     | 'ticketCreated' | 'ticketStatusChanged' | 'sendEmail' | 'createTask' | 'wait'
-    | 'ifCondition' | 'updateContactField' | 'sendSurvey';
+    | 'ifCondition' | 'updateContactField' | 'sendSurvey' | 'approval';
     
-export type WorkflowNodeType = 'trigger' | 'action' | 'condition';
+export type WorkflowNodeType = 'trigger' | 'action' | 'condition' | 'approval';
 
 export type JourneyNodeType = 'journeyTrigger' | 'journeyAction' | 'journeyCondition';
 export type JourneyExecutionType = 'targetAudience' | 'sendEmail' | 'wait' | 'ifEmailOpened' | 'createTask';
@@ -851,9 +891,11 @@ export interface DataContextType {
     ticketsQuery: any;
     formsQuery: any;
     campaignsQuery: any;
+    campaignAttributionQuery: (campaignId: string) => any;
     landingPagesQuery: any;
     customReportsQuery: any;
-    dashboardWidgetsQuery: any;
+    dashboardsQuery: any;
+    dashboardWidgetsQuery: (dashboardId: string) => any;
     customObjectDefsQuery: any;
     customObjectRecordsQuery: (defId: string | null) => any;
     marketplaceAppsQuery: any;
@@ -939,6 +981,9 @@ export interface DataContextType {
     createCustomReportMutation: any;
     updateCustomReportMutation: any;
     deleteCustomReportMutation: any;
+    createDashboardMutation: any;
+    updateDashboardMutation: any;
+    deleteDashboardMutation: any;
     addDashboardWidgetMutation: any;
     removeDashboardWidgetMutation: any;
     createOrderMutation: any;

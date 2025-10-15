@@ -21,6 +21,10 @@ interface CustomReportBuilderPageProps {
     onClose: () => void;
 }
 
+const possibleJoins: Partial<Record<ReportDataSource, ReportDataSource[]>> = {
+    contacts: ['deals', 'tickets', 'surveyResponses']
+};
+
 const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ reportToEdit, onClose }) => {
     const { createCustomReportMutation, updateCustomReportMutation, customObjectDefsQuery } = useData();
     const { data: customObjectDefs = [] } = customObjectDefsQuery;
@@ -45,34 +49,56 @@ const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ repor
     const contactColumns = useMemo(() => ['id', 'organizationId', 'contactName', 'email', 'phone', 'status', 'leadSource', 'createdAt', 'leadScore', 'assignedToId'], []);
     const productColumns = useMemo(() => ['id', 'organizationId', 'name', 'sku', 'category', 'description', 'costPrice', 'salePrice', 'stockLevel'], []);
     const surveyResponseColumns = useMemo(() => ['id', 'surveyId', 'contactId', 'score', 'comment', 'respondedAt'], []);
+    const dealColumns = useMemo(() => ['id', 'name', 'value', 'stageId', 'contactId', 'expectedCloseDate', 'createdAt', 'assignedToId'], []);
+    const ticketColumns = useMemo(() => ['id', 'contactId', 'subject', 'status', 'priority', 'createdAt', 'assignedToId'], []);
 
     const numericContactColumns = useMemo(() => ['leadScore'], []);
     const numericProductColumns = useMemo(() => ['costPrice', 'salePrice', 'stockLevel'], []);
     const numericSurveyResponseColumns = useMemo(() => ['score'], []);
+    const numericDealColumns = useMemo(() => ['value'], []);
+
+    const getColumnsForSource = (source: ReportDataSource) => {
+        switch(source) {
+            case 'contacts': return contactColumns;
+            case 'products': return productColumns;
+            case 'surveyResponses': return surveyResponseColumns;
+            case 'deals': return dealColumns;
+            case 'tickets': return ticketColumns;
+            default:
+                const customObjectDef = (customObjectDefs as CustomObjectDefinition[]).find(def => def.id === source);
+                return customObjectDef ? customObjectDef.fields.map(f => f.id) : [];
+        }
+    }
+    
+    const getNumericColumnsForSource = (source: ReportDataSource) => {
+        switch(source) {
+            case 'contacts': return numericContactColumns;
+            case 'products': return numericProductColumns;
+            case 'surveyResponses': return numericSurveyResponseColumns;
+            case 'deals': return numericDealColumns;
+            default:
+                const customObjectDef = (customObjectDefs as CustomObjectDefinition[]).find(def => def.id === source);
+                return customObjectDef ? customObjectDef.fields.filter(f => f.type === 'number').map(f => f.id) : [];
+        }
+    }
 
     const availableColumns = useMemo(() => {
-        if (config.dataSource === 'contacts') return contactColumns;
-        if (config.dataSource === 'products') return productColumns;
-        if (config.dataSource === 'surveyResponses') return surveyResponseColumns;
-        
-        const customObjectDef = (customObjectDefs as CustomObjectDefinition[]).find(def => def.id === config.dataSource);
-        if (customObjectDef) {
-            return customObjectDef.fields.map(f => f.id);
+        const primaryCols = getColumnsForSource(config.dataSource).map(c => `${config.dataSource}.${c}`);
+        if (config.join?.with) {
+            const joinedCols = getColumnsForSource(config.join.with).map(c => `${config.join!.with}.${c}`);
+            return [...primaryCols, ...joinedCols];
         }
-        return [];
-    }, [config.dataSource, contactColumns, productColumns, surveyResponseColumns, customObjectDefs]);
+        return getColumnsForSource(config.dataSource);
+    }, [config.dataSource, config.join]);
     
     const numericColumns = useMemo(() => {
-        if (config.dataSource === 'contacts') return numericContactColumns;
-        if (config.dataSource === 'products') return numericProductColumns;
-        if (config.dataSource === 'surveyResponses') return numericSurveyResponseColumns;
-        
-        const customObjectDef = (customObjectDefs as CustomObjectDefinition[]).find(def => def.id === config.dataSource);
-        if (customObjectDef) {
-            return customObjectDef.fields.filter(f => f.type === 'number').map(f => f.id);
+        const primaryNumCols = getNumericColumnsForSource(config.dataSource).map(c => `${config.dataSource}.${c}`);
+         if (config.join?.with) {
+            const joinedNumCols = getNumericColumnsForSource(config.join.with).map(c => `${config.join!.with}.${c}`);
+            return [...primaryNumCols, ...joinedNumCols];
         }
-        return [];
-    }, [config.dataSource, numericContactColumns, numericProductColumns, numericSurveyResponseColumns, customObjectDefs]);
+        return getNumericColumnsForSource(config.dataSource);
+    }, [config.dataSource, config.join]);
 
     const { data: previewData, isLoading: isPreviewLoading } = useQuery({
         queryKey: ['reportPreview', config],
@@ -97,18 +123,13 @@ const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ repor
             }
             current[keys[keys.length - 1]] = value;
             
-            // If dataSource changes, reset columns and filters
             if (path === 'dataSource') {
-                if (value === 'contacts') {
-                    newConfig.columns = ['contactName', 'email', 'status'];
-                } else if (value === 'products') {
-                    newConfig.columns = ['name', 'sku', 'salePrice'];
-                } else if (value === 'surveyResponses') {
-                    newConfig.columns = ['surveyId', 'contactId', 'score', 'respondedAt'];
-                } else {
-                    const def = (customObjectDefs as CustomObjectDefinition[]).find(d => d.id === value);
-                    newConfig.columns = def ? def.fields.slice(0, 3).map(f => f.id) : [];
-                }
+                delete newConfig.join;
+                if (value === 'contacts') newConfig.columns = ['contacts.contactName', 'contacts.email', 'contacts.status'];
+                else if (value === 'products') newConfig.columns = ['products.name', 'products.sku', 'products.salePrice'];
+                else if (value === 'surveyResponses') newConfig.columns = ['surveyResponses.surveyId', 'surveyResponses.contactId', 'surveyResponses.score'];
+                else newConfig.columns = [];
+                
                 newConfig.filters = [];
                 newConfig.visualization.groupByKey = undefined;
                 newConfig.visualization.metric.column = undefined;
@@ -142,6 +163,27 @@ const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ repor
         }
     };
 
+    const handleJoinChange = (joinWith: ReportDataSource) => {
+        if (!joinWith) {
+            handleConfigChange('join', undefined);
+            return;
+        }
+
+        const joinKeyMap = {
+            contacts: {
+                deals: { on: 'id', equals: 'contactId' },
+                tickets: { on: 'id', equals: 'contactId' },
+                surveyResponses: { on: 'id', equals: 'contactId' }
+            }
+        };
+
+        const joinInfo = (joinKeyMap as any)[config.dataSource]?.[joinWith];
+        if (joinInfo) {
+            handleConfigChange('join', { with: joinWith, ...joinInfo });
+        }
+    };
+
+
     const isPending = createCustomReportMutation.isPending || updateCustomReportMutation.isPending;
 
     return (
@@ -158,14 +200,25 @@ const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ repor
                 <Card className="lg:col-span-1 p-6">
                     <h2 className="text-xl font-semibold mb-4">Report Configuration</h2>
                     <div className="space-y-4">
-                        <Select id="dataSource" label="Data Source" value={config.dataSource} onChange={e => handleConfigChange('dataSource', e.target.value)}>
-                            <option value="contacts">Contacts</option>
-                            <option value="products">Products</option>
-                            <option value="surveyResponses">Survey Responses</option>
-                            {(customObjectDefs as CustomObjectDefinition[]).map(def => (
-                                <option key={def.id} value={def.id}>{def.namePlural}</option>
-                            ))}
-                        </Select>
+                        <div className="grid grid-cols-2 gap-2">
+                            <Select id="dataSource" label="Primary Data Source" value={config.dataSource} onChange={e => handleConfigChange('dataSource', e.target.value)}>
+                                <option value="contacts">Contacts</option>
+                                <option value="products">Products</option>
+                                <option value="deals">Deals</option>
+                                <option value="tickets">Tickets</option>
+                                <option value="surveyResponses">Survey Responses</option>
+                                {(customObjectDefs as CustomObjectDefinition[]).map(def => (
+                                    <option key={def.id} value={def.id}>{def.namePlural}</option>
+                                ))}
+                            </Select>
+
+                            <Select id="joinWith" label="Join with..." value={config.join?.with || ''} onChange={(e) => handleJoinChange(e.target.value as ReportDataSource)} disabled={!possibleJoins[config.dataSource]}>
+                                <option value="">-- No Join --</option>
+                                {(possibleJoins[config.dataSource] || []).map(source => (
+                                    <option key={source} value={source} className="capitalize">{source}</option>
+                                ))}
+                            </Select>
+                        </div>
                         
                         <MultiSelect label="Columns" options={availableColumns.map(c => ({ value: c, label: c }))} selectedValues={config.columns} onChange={cols => handleConfigChange('columns', cols)} />
 
@@ -180,7 +233,7 @@ const CustomReportBuilderPage: React.FC<CustomReportBuilderPageProps> = ({ repor
                                         <Select id={`filter-op-${index}`} label="" value={filter.operator} onChange={e => updateFilter(index, 'operator', e.target.value as any)} className="w-1/4">
                                             <option value="contains">contains</option><option value="is">is</option>
                                         </Select>
-                                        <Input id={`filter-val-${index}`} label="" value={filter.value} onChange={e => updateFilter(index, 'value', e.target.value)} className="flex-grow" />
+                                        <Input id={`filter-val-${index}`} label="" value={filter.value as string} onChange={e => updateFilter(index, 'value', e.target.value)} className="flex-grow" />
                                         <Button size="sm" variant="danger" onClick={() => removeFilter(index)}><Trash2 size={14}/></Button>
                                     </div>
                                 ))}

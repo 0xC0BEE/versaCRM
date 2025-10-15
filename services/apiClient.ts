@@ -1,6 +1,6 @@
 import {
     User, Organization, AnyContact, ContactStatus, CustomRole, Task, CalendarEvent, Product, Deal, DealStage, EmailTemplate, Interaction, Workflow, AdvancedWorkflow, OrganizationSettings, ApiKey, Ticket, PublicForm, Campaign, Document, LandingPage, CustomReport, ReportDataSource, FilterCondition, DashboardWidget, Industry, Supplier, Warehouse, TicketReply, CustomObjectDefinition, CustomObjectRecord, AppMarketplaceItem, InstalledApp, DealForecast, ContactChurnPrediction, NextBestAction, Order, Transaction,
-    DashboardData,
+    DashboardData, Dashboard,
     Sandbox,
     DocumentTemplate,
     Project,
@@ -10,7 +10,8 @@ import {
     Message,
     CannedResponse,
     Survey,
-    SurveyResponse
+    SurveyResponse,
+    AttributedDeal
 } from '../types';
 
 // Create a mutable reference to the fetch implementation that can be overridden by the mock server.
@@ -96,6 +97,10 @@ const apiClient = {
 
     // --- DASHBOARD & REPORTS ---
     getDashboardData: (orgId: string): Promise<DashboardData> => fetchImpl(`${API_BASE}/dashboard?orgId=${orgId}`).then(handleResponse),
+    getDashboards: (orgId: string): Promise<Dashboard[]> => fetchImpl(`${API_BASE}/dashboards?orgId=${orgId}`).then(handleResponse),
+    createDashboard: (data: { orgId: string, name: string }): Promise<Dashboard> => fetchImpl(`${API_BASE}/dashboards`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    updateDashboard: (data: { id: string, name: string }): Promise<Dashboard> => fetchImpl(`${API_BASE}/dashboards/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    deleteDashboard: (id: string): Promise<void> => fetchImpl(`${API_BASE}/dashboards/${id}`, { method: 'DELETE' }).then(handleResponse),
 
     // --- OTHER ENTITIES (Simplified) ---
     getTasks: (orgId: string, userId: string, canViewAll: boolean): Promise<Task[]> => fetchImpl(`${API_BASE}/tasks?orgId=${orgId}&userId=${userId}&canViewAll=${canViewAll}`).then(handleResponse),
@@ -172,6 +177,7 @@ const apiClient = {
 
     // --- CAMPAIGNS & LANDING PAGES ---
     getCampaigns: (orgId: string): Promise<Campaign[]> => fetchImpl(`${API_BASE}/campaigns?orgId=${orgId}`).then(handleResponse),
+    getCampaignAttribution: (campaignId: string): Promise<AttributedDeal[]> => fetchImpl(`${API_BASE}/campaigns/${campaignId}/attribution`).then(handleResponse),
     createCampaign: (data: any): Promise<Campaign> => fetchImpl(`${API_BASE}/campaigns`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateCampaign: (data: Campaign): Promise<Campaign> => fetchImpl(`${API_BASE}/campaigns/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     launchCampaign: (campaignId: string): Promise<void> => fetchImpl(`${API_BASE}/campaigns/${campaignId}/launch`, { method: 'POST' }).then(handleResponse),
@@ -188,10 +194,10 @@ const apiClient = {
     createCustomReport: (data: any): Promise<CustomReport> => fetchImpl(`${API_BASE}/reports/custom`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateCustomReport: (data: CustomReport): Promise<CustomReport> => fetchImpl(`${API_BASE}/reports/custom/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteCustomReport: (id: string): Promise<void> => fetchImpl(`${API_BASE}/reports/custom/${id}`, { method: 'DELETE' }).then(handleResponse),
-    generateCustomReport: (config: any, orgId: string): Promise<any[]> => fetchImpl(`${API_BASE}/reports/custom/generate`, { method: 'POST', body: JSON.stringify({ config, orgId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    generateCustomReport: (config: any, orgId: string, dateRange?: { start: Date, end: Date }): Promise<any[]> => fetchImpl(`${API_BASE}/reports/custom/generate`, { method: 'POST', body: JSON.stringify({ config, orgId, dateRange }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
 
-    getDashboardWidgets: (orgId: string): Promise<DashboardWidget[]> => fetchImpl(`${API_BASE}/dashboard/widgets?orgId=${orgId}`).then(handleResponse),
-    addDashboardWidget: (reportId: string): Promise<DashboardWidget> => fetchImpl(`${API_BASE}/dashboard/widgets`, { method: 'POST', body: JSON.stringify({ reportId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    getDashboardWidgets: (dashboardId: string): Promise<DashboardWidget[]> => fetchImpl(`${API_BASE}/dashboard/widgets?dashboardId=${dashboardId}`).then(handleResponse),
+    addDashboardWidget: ({ reportId, dashboardId }: { reportId: string; dashboardId: string }): Promise<DashboardWidget> => fetchImpl(`${API_BASE}/dashboard/widgets`, { method: 'POST', body: JSON.stringify({ reportId, dashboardId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     removeDashboardWidget: (widgetId: string): Promise<void> => fetchImpl(`${API_BASE}/dashboard/widgets/${widgetId}`, { method: 'DELETE' }).then(handleResponse),
 
     createOrder: (data: Omit<Order, 'id'>): Promise<Order> => fetchImpl(`${API_BASE}/orders`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),

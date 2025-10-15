@@ -1,5 +1,5 @@
 import React from 'react';
-import { Send, CheckSquare, Clock, GitFork, Edit, ClipboardCheck } from 'lucide-react';
+import { Send, CheckSquare, Clock, GitFork, Edit, ClipboardCheck, UserCheck } from 'lucide-react';
 import { NodeExecutionType, WorkflowNodeType } from '../../../types';
 
 interface DraggableNodeProps {
@@ -41,6 +41,10 @@ const logicNodes: Omit<DraggableNodeProps, 'type'>[] = [
     { nodeType: 'ifCondition', label: 'If/Then Condition', icon: <GitFork size={16} className="text-purple-500"/> },
 ]
 
+const approvalNodes: Omit<DraggableNodeProps, 'type'>[] = [
+    { nodeType: 'approval', label: 'Request Approval', icon: <UserCheck size={16} className="text-orange-500"/> },
+]
+
 const Toolbox: React.FC = () => {
   return (
     <div>
@@ -50,6 +54,13 @@ const Toolbox: React.FC = () => {
         <p className="text-sm font-semibold text-text-secondary mb-2">Actions</p>
         {actionNodes.map(node => (
             <DraggableNode key={node.nodeType} type="action" {...node} />
+        ))}
+      </div>
+
+       <div className="mb-4">
+        <p className="text-sm font-semibold text-text-secondary mb-2">Approvals</p>
+         {approvalNodes.map(node => (
+            <DraggableNode key={node.nodeType} type="approval" {...node} />
         ))}
       </div>
 

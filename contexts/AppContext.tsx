@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
-import { AppContextType, Industry, Page, IndustryConfig, FilterCondition, AnyContact, Sandbox } from '../types';
+import { AppContextType, Industry, Page, IndustryConfig, FilterCondition, AnyContact, Sandbox, Dashboard } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { useAuth } from './AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import apiClient from '../services/apiClient';
 import { industryConfigs as fallbackConfigs } from '../config/industryConfig';
 import { useData } from './DataContext';
 import { featureFlags as defaultFlags } from '../config/featureFlags';
+import { subDays } from 'date-fns';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -29,6 +30,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [initialKbArticleId, setInitialKbArticleId] = useState<string | null>(null);
     const [currentCustomObjectDefId, setCurrentCustomObjectDefId] = useState<string | null>(null);
     const [isLiveCopilotOpen, setIsLiveCopilotOpen] = useState(false);
+    const [dashboardDateRange, setDashboardDateRange] = useState({ start: subDays(new Date(), 30), end: new Date() });
+    const [currentDashboardId, setCurrentDashboardId] = useLocalStorage<string>('currentDashboardId', 'dash_default');
     
     const { organizationSettingsQuery } = useData();
     const { data: orgSettings } = organizationSettingsQuery;
@@ -44,8 +47,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         if (!authenticatedUser) {
             setCurrentPage('Dashboard');
             _setCurrentEnvironment('production');
+            setCurrentDashboardId('dash_default');
         }
-    }, [authenticatedUser, setCurrentPage, _setCurrentEnvironment]);
+    }, [authenticatedUser, setCurrentPage, _setCurrentEnvironment, setCurrentDashboardId]);
 
     const setCurrentEnvironment = useCallback((env: string) => {
         _setCurrentEnvironment(env);
@@ -93,13 +97,18 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         isFeatureEnabled,
         isLiveCopilotOpen,
         setIsLiveCopilotOpen,
+        dashboardDateRange,
+        setDashboardDateRange,
+        currentDashboardId,
+        setCurrentDashboardId,
     }), [
         currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, 
         contactFilters, setContactFilters, simulatedDate, setSimulatedDate, reportToEditId, 
         setReportToEditId, isCallModalOpen, setIsCallModalOpen, callContact, setCallContact, 
         initialKbArticleId, setInitialKbArticleId, currentCustomObjectDefId, 
         setCurrentCustomObjectDefId, currentEnvironment, setCurrentEnvironment, sandboxes, isFeatureEnabled,
-        isLiveCopilotOpen, setIsLiveCopilotOpen
+        isLiveCopilotOpen, setIsLiveCopilotOpen, dashboardDateRange, setDashboardDateRange,
+        currentDashboardId, setCurrentDashboardId
     ]);
 
     return (

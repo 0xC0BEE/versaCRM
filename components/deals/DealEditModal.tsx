@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { Deal, DealStage, AnyContact, User, CustomObjectDefinition, CustomObjectRecord } from '../../types';
+import { Deal, DealStage, AnyContact, User, CustomObjectDefinition, CustomObjectRecord, ApprovalStatus } from '../../types';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -9,7 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from '../../hooks/useForm';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
-import { Trash2, Wand2, FileText } from 'lucide-react';
+import { Trash2, Wand2, FileText, Check, X, UserCheck } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import { useDebounce } from '../../hooks/useDebounce';
 import DocumentGenerationModal from '../documents/DocumentGenerationModal';
@@ -179,13 +179,36 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
             deleteDealMutation.mutate(deal.id, { onSuccess: onClose });
         }
     };
+
+    const handleApprovalAction = (status: 'Approved' | 'Rejected') => {
+        if (!deal) return;
+        updateDealMutation.mutate({ ...deal, approvalStatus: status, currentApproverId: undefined }, {
+            onSuccess: () => {
+                toast.success(`Deal ${status.toLowerCase()}!`);
+                onClose();
+            }
+        });
+    };
     
     const isPending = createDealMutation.isPending || updateDealMutation.isPending || deleteDealMutation.isPending;
     const primaryFieldId = (customObjectDefs as CustomObjectDefinition[]).find(d => d.id === selectedDefId)?.fields[0]?.id;
 
+    const isPendingMyApproval = deal?.approvalStatus === 'Pending Approval' && deal?.currentApproverId === authenticatedUser?.id;
+
     return (
         <>
             <Modal isOpen={isOpen && !isGeneratorOpen} onClose={onClose} title={isNew ? 'Create New Deal' : `Edit Deal: ${deal?.name}`}>
+                {isPendingMyApproval && (
+                    <div className="p-3 mb-4 bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-300 dark:border-yellow-700 rounded-lg flex items-center justify-between">
+                        <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-200">This deal is awaiting your approval.</p>
+                        <div className="flex gap-2">
+                            <Button size="sm" variant="success" onClick={() => handleApprovalAction('Approved')} leftIcon={<Check size={14}/>}>Approve</Button>
+                            <Button size="sm" variant="danger" onClick={() => handleApprovalAction('Rejected')} leftIcon={<X size={14}/>}>Reject</Button>
+                            <Button size="sm" variant="secondary" leftIcon={<UserCheck size={14}/>}>Reassign</Button>
+                        </div>
+                    </div>
+                )}
+
                 <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                     <Input id="deal-name" label="Deal Name" value={formData.name} onChange={e => handleChange('name', e.target.value)} required disabled={isPending} />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

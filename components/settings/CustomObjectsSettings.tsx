@@ -62,7 +62,7 @@ const CustomObjectsSettings: React.FC = () => {
                                 <p className="text-xs text-text-secondary">Singular: {def.nameSingular}</p>
                             </div>
                             <div className="space-x-2">
-                                <Button size="sm" variant="secondary" onClick={() => handleManageFields(def)} leftIcon={<Settings2 size={14} />}>Manage Fields</Button>
+                                <Button size="sm" variant="secondary" onClick={() => handleManageFields(def)} leftIcon={<Settings2 size={14} />}>Configure</Button>
                                 <Button size="sm" variant="secondary" onClick={() => handleEdit(def)} leftIcon={<Edit size={14} />}>Edit</Button>
                                 <Button size="sm" variant="danger" onClick={() => handleDelete(def)} leftIcon={<Trash2 size={14} />} disabled={deleteCustomObjectDefMutation.isPending}>
                                     Delete

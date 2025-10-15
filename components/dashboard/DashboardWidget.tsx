@@ -10,6 +10,7 @@ import CustomReportChart from '../reports/CustomReportChart';
 import { Loader, AlertTriangle, Trash2, Edit } from 'lucide-react';
 import Button from '../ui/Button';
 import { useApp } from '../../contexts/AppContext';
+import toast from 'react-hot-toast';
 
 interface DashboardWidgetProps {
     widget: WidgetType;
@@ -20,15 +21,15 @@ interface DashboardWidgetProps {
 const DashboardWidget: React.FC<DashboardWidgetProps> = ({ widget, isEditMode, onRemove }) => {
     const { customReportsQuery } = useData();
     const { data: customReports = [] } = customReportsQuery;
-    const { setCurrentPage, setReportToEditId } = useApp();
+    const { setCurrentPage, setReportToEditId, dashboardDateRange, setContactFilters } = useApp();
 
     const report = useMemo(() => {
         return (customReports as CustomReport[]).find(r => r.id === widget.reportId);
     }, [customReports, widget.reportId]);
     
     const { data: reportData, isLoading, isError } = useQuery({
-        queryKey: ['customReportData', widget.reportId],
-        queryFn: () => apiClient.generateCustomReport(report!.config, report!.organizationId),
+        queryKey: ['customReportData', widget.reportId, dashboardDateRange],
+        queryFn: () => apiClient.generateCustomReport(report!.config, report!.organizationId, dashboardDateRange),
         enabled: !!report,
     });
     
@@ -38,6 +39,21 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({ widget, isEditMode, o
             setCurrentPage('Reports');
         }
     }
+
+    const handleCustomReportChartClick = (payload: any) => {
+        if (!payload || !report) return;
+
+        const { dataSource, visualization } = report.config;
+        const { groupByKey } = visualization;
+        
+        // For now, only enable drill-down for contacts data source
+        if (dataSource === 'contacts' && groupByKey) {
+            setContactFilters([{ field: groupByKey, operator: 'is', value: payload.name }]);
+            setCurrentPage('Contacts');
+        } else {
+            toast('Drill-down is not available for this data source yet.', { icon: 'ℹ️' });
+        }
+    };
 
     if (!report) {
         return (
@@ -90,8 +106,12 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({ widget, isEditMode, o
                         {report.config.visualization.type === 'table' ? (
                             <CustomReportDataTable data={reportData} />
                         ) : (
-                            // FIX: Pass the report name as the title prop to CustomReportChart.
-                            <CustomReportChart data={chartData} visualizationType={report.config.visualization.type} title={report.name} />
+                            <CustomReportChart 
+                                data={chartData} 
+                                visualizationType={report.config.visualization.type as 'bar' | 'line' | 'pie'} 
+                                title={report.name} 
+                                onSegmentClick={report.config.visualization.type !== 'line' ? handleCustomReportChartClick : undefined}
+                            />
                         )}
                     </div>
                 )}

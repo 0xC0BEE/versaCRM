@@ -7,7 +7,8 @@ import {
     ProjectPhase, Project, ProjectTemplate,
     CannedResponse,
     Survey,
-    SurveyResponse
+    SurveyResponse,
+    Dashboard
 } from '../types';
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
@@ -32,11 +33,12 @@ export const MOCK_INTERACTIONS: Interaction[] = [
     { id: 'int_1', organizationId: 'org_1', contactId: 'contact_1', userId: 'user_admin_1', type: 'Appointment', date: '2023-05-10T14:00:00Z', notes: 'Initial consultation. Discussed treatment plan.' },
     { id: 'int_2', organizationId: 'org_1', contactId: 'contact_1', userId: 'user_team_1', type: 'Email', date: '2023-05-12T09:00:00Z', notes: 'Subject: Follow-up from your visit\n\nHi John, here are the documents we discussed...' },
     { id: 'int_3', organizationId: 'org_1', contactId: 'contact_2', userId: 'user_admin_1', type: 'Call', date: '2023-05-11T11:30:00Z', notes: 'Checked in on Jane. She is feeling better.' },
+    { id: 'int_4', organizationId: 'org_1', contactId: 'contact_2', userId: 'user_admin_1', type: 'Email', date: '2023-04-25T10:00:00Z', notes: '(Campaign: Q2 Product Webinar)\nSubject: Thanks for attending!\n\nHi Jane, thanks for attending our Q2 webinar. Here is the recording as promised.' },
 ];
 
 let MOCK_CONTACTS_MUTABLE: AnyContact[] = [
     { id: 'contact_1', organizationId: 'org_1', contactName: 'John Patient', email: 'john.patient@example.com', phone: '555-0101', status: 'Active', leadSource: 'Web', createdAt: '2023-05-01T10:00:00Z', assignedToId: 'user_team_1', customFields: { patientId: 'P001', insuranceProvider: 'Blue Cross' }, interactions: [MOCK_INTERACTIONS[0], MOCK_INTERACTIONS[1]], leadScore: 25 },
-    { id: 'contact_2', organizationId: 'org_1', contactName: 'Jane Doe', email: 'jane.doe@example.com', phone: '555-0102', status: 'Lead', leadSource: 'Referral', createdAt: '2023-04-20T15:00:00Z', assignedToId: 'user_admin_1', customFields: { patientId: 'P002' }, interactions: [MOCK_INTERACTIONS[2]], leadScore: 10 },
+    { id: 'contact_2', organizationId: 'org_1', contactName: 'Jane Doe', email: 'jane.doe@example.com', phone: '555-0102', status: 'Lead', leadSource: 'Referral', createdAt: '2023-04-20T15:00:00Z', assignedToId: 'user_admin_1', customFields: { patientId: 'P002' }, interactions: [MOCK_INTERACTIONS[2], MOCK_INTERACTIONS[3]], leadScore: 10 },
     { id: 'contact_3', organizationId: 'org_1', contactName: 'Peter Jones', email: 'peter.jones@example.com', phone: '555-0103', status: 'Inactive', leadSource: 'Manual', createdAt: '2023-03-15T12:00:00Z', customFields: { patientId: 'P003' }, leadScore: 5 },
 ];
 
@@ -49,7 +51,7 @@ export const MOCK_DEAL_STAGES: DealStage[] = [
 ];
 
 export const MOCK_DEALS: Deal[] = [
-    { id: 'deal_1', organizationId: 'org_1', name: 'Corporate Wellness Program', value: 25000, stageId: 'stage_2', contactId: 'contact_2', expectedCloseDate: '2023-06-30T10:00:00Z', createdAt: '2023-05-01T10:00:00Z', assignedToId: 'user_admin_1' },
+    { id: 'deal_1', organizationId: 'org_1', name: 'Corporate Wellness Program', value: 25000, stageId: 'stage_4', contactId: 'contact_2', expectedCloseDate: '2023-05-25T10:00:00Z', createdAt: '2023-05-01T10:00:00Z', assignedToId: 'user_admin_1' },
     { id: 'deal_2', organizationId: 'org_1', name: 'New Clinic Equipment', value: 75000, stageId: 'stage_1', contactId: 'contact_3', expectedCloseDate: '2023-07-15T10:00:00Z', createdAt: '2023-05-10T10:00:00Z', assignedToId: 'user_team_1' },
 ];
 
@@ -99,6 +101,11 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
             } 
         }
       ], 
+      edges: [] 
+    },
+    { id: 'camp_2', organizationId: 'org_1', name: 'Q2 Product Webinar', status: 'Completed', stats: { recipients: 1, sent: 1, opened: 1, clicked: 0 }, 
+      targetAudience: {}, 
+      nodes: [], 
       edges: [] 
     },
 ];
@@ -200,9 +207,12 @@ export const MOCK_SURVEYS: Survey[] = [
 // FIX: Changed from 'export const' to 'let' to allow modification and prevent redeclaration error.
 let MOCK_SURVEY_RESPONSES: SurveyResponse[] = [];
 
+let MOCK_DASHBOARDS: Dashboard[] = [
+    { id: 'dash_default', organizationId: 'org_1', name: 'Organization Dashboard', isDefault: true }
+];
 
 export const MOCK_CUSTOM_REPORTS: CustomReport[] = [];
-export const MOCK_DASHBOARD_WIDGETS: DashboardWidget[] = [];
+let MOCK_DASHBOARD_WIDGETS: DashboardWidget[] = [];
 export const MOCK_DOCUMENTS: Document[] = [...MOCK_PROJECT_DOCUMENTS];
 export const MOCK_API_KEYS: ApiKey[] = [];
 export const MOCK_SUPPLIERS: Supplier[] = [];
@@ -220,4 +230,4 @@ export const MOCK_SANDBOXES: Sandbox[] = [];
 
 
 // Export mutable arrays for services that modify data in place
-export { MOCK_CONTACTS_MUTABLE, MOCK_SURVEY_RESPONSES };
+export { MOCK_CONTACTS_MUTABLE, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_DASHBOARD_WIDGETS };

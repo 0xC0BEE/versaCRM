@@ -8,7 +8,7 @@ import {
     MOCK_SUPPLIERS, MOCK_WAREHOUSES, MOCK_CUSTOM_OBJECT_DEFINITIONS, MOCK_CUSTOM_OBJECT_RECORDS,
     MOCK_ANONYMOUS_SESSIONS, MOCK_APP_MARKETPLACE_ITEMS, MOCK_INSTALLED_APPS, MOCK_SANDBOXES, MOCK_DOCUMENT_TEMPLATES,
     MOCK_PROJECTS, MOCK_PROJECT_PHASES, MOCK_PROJECT_TEMPLATES, MOCK_CANNED_RESPONSES,
-    MOCK_SURVEYS, MOCK_SURVEY_RESPONSES
+    MOCK_SURVEYS, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS
 } from './mockData';
 import { industryConfigs } from '../config/industryConfig';
 import { generateDashboardData } from './reportGenerator';
@@ -46,6 +46,7 @@ const mainDB = {
     landingPages: MOCK_LANDING_PAGES,
     documents: MOCK_DOCUMENTS,
     customReports: MOCK_CUSTOM_REPORTS,
+    dashboards: MOCK_DASHBOARDS,
     dashboardWidgets: MOCK_DASHBOARD_WIDGETS,
     suppliers: MOCK_SUPPLIERS,
     warehouses: MOCK_WAREHOUSES,
@@ -809,56 +810,153 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     if (path.endsWith('/advanced-workflows')) return respond(db.advancedWorkflows);
     if (path.endsWith('/api-keys')) return respond(db.apiKeys);
     if (path.endsWith('/forms')) return respond(db.forms);
-    if (path.endsWith('/campaigns')) return respond(db.campaigns);
+    if (path.startsWith('/api/v1/campaigns')) {
+        const campaignId = path.split('/')[4];
+
+        if (path.includes('/attribution')) {
+            const campaign = db.campaigns.find(c => c.id === campaignId);
+            if (!campaign) return respond({ message: 'Campaign not found' }, 404);
+
+            const wonStageId = db.dealStages.find(s => s.name === 'Won')?.id;
+            const wonDeals = db.deals.filter(d => d.stageId === wonStageId);
+            const attributedDeals: any[] = [];
+
+            for (const deal of wonDeals) {
+                const contact = db.contacts.find(c => c.id === deal.contactId);
+                if (!contact || !contact.interactions) continue;
+
+                const relevantInteractions = contact.interactions
+                    .filter(i => 
+                        i.notes.includes('(Campaign:') && 
+                        new Date(i.date) < new Date(deal.createdAt)
+                    )
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                
+                if (relevantInteractions.length > 0) {
+                    const lastTouch = relevantInteractions[0];
+                    if (lastTouch.notes.includes(`(Campaign: ${campaign.name})`)) {
+                        attributedDeals.push({
+                            dealId: deal.id,
+                            dealName: deal.name,
+                            dealValue: deal.value,
+                            contactName: contact.contactName,
+                            closedAt: deal.expectedCloseDate,
+                        });
+                    }
+                }
+            }
+            return respond(attributedDeals);
+        }
+
+        if (method === 'GET') {
+            const orgId = searchParams.get('orgId');
+            return respond(db.campaigns.filter(c => c.organizationId === orgId));
+        }
+    }
     if (path.endsWith('/landing-pages')) return respond(db.landingPages);
     if (path.endsWith('/public/landing-pages/' + path.split('/').pop())) {
         return respond(db.landingPages.find(p => p.slug === path.split('/').pop()));
     }
     if (path.endsWith('/reports/custom')) return respond(db.customReports);
-    if (path.endsWith('/dashboard/widgets')) return respond(db.dashboardWidgets);
+    if (path.startsWith('/api/v1/dashboard/widgets/')) {
+        const widgetId = path.split('/')[5];
+        if (method === 'DELETE') {
+            db.dashboardWidgets = db.dashboardWidgets.filter(w => w.id !== widgetId);
+            return respond(null, 204);
+        }
+    }
+    if (path.endsWith('/dashboard/widgets')) {
+        if (method === 'GET') {
+            const dashboardId = searchParams.get('dashboardId');
+            return respond(db.dashboardWidgets.filter(w => w.dashboardId === dashboardId));
+        }
+        if (method === 'POST') {
+            const { reportId, dashboardId } = body;
+            const newWidget = {
+                id: `widget_${Date.now()}`,
+                widgetId: `custom-report-${reportId}`,
+                organizationId: 'org_1', // assuming from context
+                reportId,
+                dashboardId,
+            };
+            db.dashboardWidgets.push(newWidget);
+            return respond(newWidget, 201);
+        }
+    }
 
     // --- OTHER POSTS ---
     if (path.endsWith('/reports/custom/generate')) {
-        const { config, orgId } = body;
-        let sourceData: any[];
+        const { config, orgId, dateRange } = body;
+        const getSourceData = (sourceName: string) => {
+             if (sourceName === 'surveyResponses') {
+                const orgSurveys = db.surveys.filter(s => s.organizationId === orgId).map(s => s.id);
+                return db.surveyResponses.filter(r => orgSurveys.includes(r.surveyId));
+            }
+            return (db as any)[sourceName]?.filter((r: any) => r.organizationId === orgId) || [];
+        }
+        
+        let primaryData = getSourceData(config.dataSource);
 
-        if (config.dataSource === 'contacts') {
-            sourceData = db.contacts.filter(c => c.organizationId === orgId);
-        } else if (config.dataSource === 'products') {
-            sourceData = db.products.filter(p => p.organizationId === orgId);
-        } else if (config.dataSource === 'surveyResponses') {
-            const orgSurveys = db.surveys.filter(s => s.organizationId === orgId).map(s => s.id);
-            sourceData = db.surveyResponses.filter(r => orgSurveys.includes(r.surveyId));
-        } else {
-            // Custom Object
-            sourceData = db.customObjectRecords.filter(r => r.objectDefId === config.dataSource);
+        if (config.join) {
+            const joinedData = getSourceData(config.join.with);
+            const joinedMap = new Map();
+            joinedData.forEach((row: any) => {
+                const key = row[config.join.equals];
+                if (!joinedMap.has(key)) joinedMap.set(key, []);
+                joinedMap.get(key).push(row);
+            });
+
+            const result = [];
+            for (const primaryRow of primaryData) {
+                const joinMatches = joinedMap.get((primaryRow as any)[config.join.on]) || [];
+                if (joinMatches.length > 0) {
+                    for (const joinedRow of joinMatches) {
+                        const mergedRow: Record<string, any> = {};
+                        for (const key in primaryRow) mergedRow[`${config.dataSource}.${key}`] = (primaryRow as any)[key];
+                        for (const key in joinedRow) mergedRow[`${config.join.with}.${key}`] = (joinedRow as any)[key];
+                        result.push(mergedRow);
+                    }
+                } else {
+                     const mergedRow: Record<string, any> = {};
+                     for (const key in primaryRow) mergedRow[`${config.dataSource}.${key}`] = (primaryRow as any)[key];
+                     result.push(mergedRow);
+                }
+            }
+            primaryData = result;
         }
 
-        // Apply filters
-        const filteredData = sourceData.filter(row => {
-            return (config.filters || []).every((filter: any) => {
-                const rowValue = String(row.fields ? row.fields[filter.field] : row[filter.field] || '').toLowerCase();
-                const filterValue = filter.value.toLowerCase();
-                switch (filter.operator) {
+        const dateFilteredData = dateRange ? primaryData.filter(row => {
+            const dateField = config.join ? `${config.dataSource}.createdAt` : 'createdAt';
+            const rowDate = new Date(row[dateField]);
+            const start = new Date(dateRange.start);
+            const end = new Date(dateRange.end);
+            end.setHours(23, 59, 59, 999);
+            return rowDate >= start && rowDate <= end;
+        }) : primaryData;
+
+        const filteredData = dateFilteredData.filter(row => 
+            (config.filters || []).every((filter: any) => {
+                const rowValue = String(row[filter.field] || '').toLowerCase();
+                const filterValue = String(filter.value).toLowerCase();
+                 switch (filter.operator) {
                     case 'is': return rowValue === filterValue;
                     case 'is_not': return rowValue !== filterValue;
                     case 'contains': return rowValue.includes(filterValue);
                     case 'does_not_contain': return !rowValue.includes(filterValue);
                     default: return true;
                 }
-            });
-        });
-
-        // Select columns
-        const resultData = filteredData.map(row => {
+            })
+        );
+        
+        const finalData = filteredData.map(row => {
             const newRow: Record<string, any> = {};
             (config.columns || []).forEach((col: string) => {
-                newRow[col] = row.fields ? row.fields[col] : row[col];
+                newRow[col] = row[col];
             });
             return newRow;
         });
-
-        return respond(resultData);
+        
+        return respond(finalData);
     }
     if (path.endsWith('/campaigns/bulk-enroll')) {
         campaignService.enrollContacts(body.campaignId);
