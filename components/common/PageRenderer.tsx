@@ -25,6 +25,8 @@ import AppMarketplacePage from '../marketplace/AppMarketplacePage';
 import DocumentsPage from '../documents/DocumentsPage';
 import ProjectsPage from '../projects/ProjectsPage';
 import InboxPage from '../inbox/InboxPage';
+import TeamChatPage from '../team_chat/TeamChatPage';
+import NotificationsPage from '../notifications/NotificationsPage';
 
 const PageRenderer: React.FC = () => {
     const { currentPage } = useApp();
@@ -32,6 +34,8 @@ const PageRenderer: React.FC = () => {
     switch (currentPage) {
         case 'Dashboard':
             return <DashboardPage />;
+        case 'Notifications':
+            return <NotificationsPage />;
         case 'Organizations':
             return <OrganizationsPage />;
         case 'OrganizationDetails':
@@ -48,6 +52,8 @@ const PageRenderer: React.FC = () => {
             return <InteractionsPage />;
         case 'Inbox':
             return <InboxPage />;
+        case 'TeamChat':
+            return <TeamChatPage />;
         case 'SyncedEmail':
             return <SyncedEmailPage />;
         case 'Campaigns':

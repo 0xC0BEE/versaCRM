@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import { useData } from '../../contexts/DataContext';
 import { Deal, DealStage, DealForecast, NextBestAction, AnyContact } from '../../types';
@@ -14,7 +14,7 @@ import toast from 'react-hot-toast';
 
 const DealsPage: React.FC = () => {
     const { dealsQuery, dealStagesQuery, updateDealMutation, contactsQuery, organizationSettingsQuery } = useData();
-    const { setCallContact, setIsCallModalOpen, isFeatureEnabled } = useApp();
+    const { setCallContact, setIsCallModalOpen, isFeatureEnabled, initialRecordLink, setInitialRecordLink } = useApp();
     const { data: deals = [], isLoading: dealsLoading } = dealsQuery;
     const { data: stages = [], isLoading: stagesLoading } = dealStagesQuery;
     const { data: contacts = [] } = contactsQuery;
@@ -31,13 +31,23 @@ const DealsPage: React.FC = () => {
         return (stages as DealStage[]).sort((a, b) => a.order - b.order);
     }, [stages]);
     
-    const handleAdd = () => {
-        setSelectedDeal(null);
+    const handleCardClick = (deal: Deal) => {
+        setSelectedDeal(deal);
         setIsModalOpen(true);
     };
 
-    const handleCardClick = (deal: Deal) => {
-        setSelectedDeal(deal);
+    useEffect(() => {
+        if (initialRecordLink?.page === 'Deals' && initialRecordLink.recordId && deals.length > 0) {
+            const dealToOpen = (deals as Deal[]).find(d => d.id === initialRecordLink.recordId);
+            if (dealToOpen) {
+                handleCardClick(dealToOpen);
+            }
+            setInitialRecordLink(null);
+        }
+    }, [initialRecordLink, deals, setInitialRecordLink]);
+    
+    const handleAdd = () => {
+        setSelectedDeal(null);
         setIsModalOpen(true);
     };
 

@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { CustomTheme } from '../../types';
@@ -37,12 +35,14 @@ const ThemeBuilder: React.FC = () => {
     }, [editingTheme]);
     
     const handleColorChange = (colorName: keyof CustomTheme['colors'], value: string) => {
-        if (editingTheme) {
-            setEditingTheme(prev => ({
+        setEditingTheme(prev => {
+            if (!prev) return null;
+            const currentColors = prev.colors || defaultColors;
+            return {
                 ...prev,
-                colors: { ...prev!.colors!, [colorName]: value }
-            }));
-        }
+                colors: { ...currentColors, [colorName]: value }
+            };
+        });
     };
 
     const handleNewTheme = () => {
@@ -62,11 +62,17 @@ const ThemeBuilder: React.FC = () => {
             toast.error("Theme name cannot be empty.");
             return;
         }
-        if (editingTheme.id && customThemes.some(t => t.id === editingTheme.id)) {
-            updateCustomTheme(editingTheme as CustomTheme);
+
+        const themeToSave = {
+            ...editingTheme,
+            colors: editingTheme.colors || defaultColors,
+        };
+
+        if (themeToSave.id && (customThemes || []).some(t => t.id === themeToSave.id)) {
+            updateCustomTheme(themeToSave as CustomTheme);
             toast.success("Theme updated!");
         } else {
-            addCustomTheme(editingTheme as CustomTheme);
+            addCustomTheme(themeToSave as CustomTheme);
             toast.success("Theme saved!");
         }
         setEditingTheme(null);
@@ -95,8 +101,7 @@ const ThemeBuilder: React.FC = () => {
                         className="w-full p-2 rounded-md bg-card-bg border border-border-subtle"
                     />
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        {/* FIX: Switched to Object.entries for safer key/value iteration */}
-                        {(Object.entries(editingTheme.colors!) as [keyof CustomTheme['colors'], string][]).map(([key, value]) => (
+                        {editingTheme.colors && (Object.entries(editingTheme.colors) as [keyof CustomTheme['colors'], string][]).map(([key, value]) => (
                             <div key={key}>
                                 <label className="block text-sm font-medium capitalize mb-1">{key === 'textHeading' ? 'Heading' : key}</label>
                                 <input 
@@ -122,11 +127,11 @@ const ThemeBuilder: React.FC = () => {
             
             <div className="mt-6 space-y-3">
                 <h4 className="font-semibold">My Themes</h4>
-                {customThemes.length > 0 ? (
+                {customThemes && customThemes.length > 0 ? (
                     customThemes.map(theme => (
                         <div key={theme.id} className="p-3 border border-border-subtle rounded-md bg-card-bg/50 flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                <div className="w-5 h-5 rounded-full border-2" style={{ backgroundColor: theme.colors.primary, borderColor: theme.colors.border}}></div>
+                                <div className="w-5 h-5 rounded-full border-2" style={{ backgroundColor: theme.colors?.primary, borderColor: theme.colors?.border}}></div>
                                 <p className="font-medium">{theme.name}</p>
                                 {activeCustomThemeId === theme.id && <span className="text-xs font-bold text-success flex items-center gap-1"><Check size={14}/> Active</span>}
                             </div>

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { DocumentTemplate, DocumentBlock, Product } from '../../types';
+import { DocumentTemplate, DocumentBlock, Product, User } from '../../types';
 import PageWrapper from '../layout/PageWrapper';
 import Button from '../ui/Button';
-import { ArrowLeft, Edit, Trash2, Heading, Type, Image as ImageIcon, Wand2, ListOrdered, Plus, Monitor } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Heading, Type, Image as ImageIcon, Wand2, ListOrdered, Plus, Monitor, Share2 } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -12,6 +12,7 @@ import Textarea from '../ui/Textarea';
 import AiContentStudioModal from '../ai/AiContentStudioModal';
 import AiImageStudioModal from '../ai/AiImageStudioModal';
 import Select from '../ui/Select';
+import ShareDocumentModal from './ShareDocumentModal';
 
 interface DocumentBuilderPageProps {
     templateToEdit: DocumentTemplate | null;
@@ -27,22 +28,26 @@ const placeholders = [
 ];
 
 const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdit, onClose }) => {
-    const { createDocumentTemplateMutation, updateDocumentTemplateMutation, productsQuery } = useData();
+    const { createDocumentTemplateMutation, updateDocumentTemplateMutation, productsQuery, teamMembersQuery } = useData();
     const { data: products = [] } = productsQuery;
+    const { data: teamMembers = [] } = teamMembersQuery;
     const { authenticatedUser } = useAuth();
     const isNew = !templateToEdit;
 
     const [template, setTemplate] = useState<Omit<DocumentTemplate, 'id' | 'organizationId'>>(() => 
-        templateToEdit || { name: 'New Template', content: [] }
+        templateToEdit || { name: 'New Template', content: [], permissions: [] }
     );
     const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [isAiStudioOpen, setIsAiStudioOpen] = useState(false);
     const [isAiImageStudioOpen, setIsAiImageStudioOpen] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     
     useEffect(() => {
         if (templateToEdit) setTemplate(templateToEdit);
     }, [templateToEdit]);
+
+    const userMap = useMemo(() => new Map((teamMembers as User[]).map(u => [u.id, u])), [teamMembers]);
 
     const handleSave = () => {
         if (!template.name.trim()) return toast.error("Template name is required.");
@@ -278,6 +283,14 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
         }
     };
 
+    const collaborators = useMemo(() => {
+        if (!templateToEdit) return [authenticatedUser];
+        const userIds = new Set(templateToEdit.permissions.map(p => p.userId));
+        userIds.add(authenticatedUser!.id); // Always include current user
+        return Array.from(userIds).map(id => userMap.get(id)).filter(Boolean);
+    }, [templateToEdit, userMap, authenticatedUser]);
+
+
     return (
         <PageWrapper>
             {/* Header */}
@@ -285,6 +298,13 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                 <Button variant="secondary" onClick={onClose} leftIcon={<ArrowLeft size={16} />}>Back to Templates</Button>
                 <div className="hidden md:flex items-center gap-4">
                      <input id="template-name" placeholder="Enter Template Name..." value={template.name} onChange={e => setTemplate(p => ({...p, name: e.target.value}))} className="w-72 bg-transparent text-xl font-semibold focus:outline-none focus:border-b border-border-subtle" />
+                    <div className="flex -space-x-2">
+                        {collaborators.slice(0, 4).map(user => (
+                            user && <div key={user.id} title={user.name} className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-slate-500 border-2 border-card-bg">{user.name.charAt(0)}</div>
+                        ))}
+                        {collaborators.length > 4 && <div className="w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center text-xs font-bold border-2 border-card-bg">+{collaborators.length - 4}</div>}
+                    </div>
+                    <Button variant="secondary" leftIcon={<Share2 size={16}/>} onClick={() => setIsShareModalOpen(true)}>Share</Button>
                     <Button onClick={handleSave} disabled={isPending}>{isPending ? 'Saving...' : 'Save Template'}</Button>
                 </div>
             </div>
@@ -337,6 +357,9 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
             </div>
             <AiContentStudioModal isOpen={isAiStudioOpen} onClose={() => setIsAiStudioOpen(false)} onGenerate={handleAiGenerateText} />
             <AiImageStudioModal isOpen={isAiImageStudioOpen} onClose={() => setIsAiImageStudioOpen(false)} onGenerate={handleAiGenerateImage} />
+            {templateToEdit && (
+                <ShareDocumentModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} template={templateToEdit} />
+            )}
         </PageWrapper>
     );
 };

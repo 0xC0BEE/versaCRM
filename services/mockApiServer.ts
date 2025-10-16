@@ -8,7 +8,7 @@ import {
     MOCK_SUPPLIERS, MOCK_WAREHOUSES, MOCK_CUSTOM_OBJECT_DEFINITIONS, MOCK_CUSTOM_OBJECT_RECORDS,
     MOCK_ANONYMOUS_SESSIONS, MOCK_APP_MARKETPLACE_ITEMS, MOCK_INSTALLED_APPS, MOCK_SANDBOXES, MOCK_DOCUMENT_TEMPLATES,
     MOCK_PROJECTS, MOCK_PROJECT_PHASES, MOCK_PROJECT_TEMPLATES, MOCK_CANNED_RESPONSES,
-    MOCK_SURVEYS, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_SNAPSHOTS
+    MOCK_SURVEYS, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_SNAPSHOTS, MOCK_TEAM_CHANNELS, MOCK_TEAM_CHAT_MESSAGES
 } from './mockData';
 import { industryConfigs } from '../config/industryConfig';
 import { generateDashboardData } from './reportGenerator';
@@ -16,7 +16,7 @@ import { checkAndTriggerWorkflows } from './workflowService';
 import { recalculateScoreForContact } from './leadScoringService';
 import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
-import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot } from '../types';
+import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage } from '../types';
 
 // Hydrate the in-memory sandbox list from localStorage to persist it across reloads.
 const storedSandboxes = JSON.parse(localStorage.getItem('sandboxesList') || '[]');
@@ -228,6 +228,55 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
         if (method === 'DELETE' && snapshotId) {
             db.snapshots = db.snapshots.filter(s => s.id !== snapshotId);
             return respond(null, 204);
+        }
+    }
+
+    // --- TEAM CHAT ---
+    if (path.startsWith('/api/v1/team-channels')) {
+        const parts = path.split('/');
+        const channelId = parts[4];
+        
+        if (channelId && path.includes('/messages')) {
+            if (method === 'GET') {
+                return respond(MOCK_TEAM_CHAT_MESSAGES.filter(m => m.channelId === channelId));
+            }
+            if (method === 'POST') {
+                const newMessage: TeamChatMessage = {
+                    id: `msg_${Date.now()}`,
+                    channelId: channelId,
+                    userId: body.userId,
+                    message: body.message,
+                    timestamp: new Date().toISOString(),
+                };
+                MOCK_TEAM_CHAT_MESSAGES.push(newMessage);
+                return respond(newMessage, 201);
+            }
+        }
+
+        if (channelId && path.includes('/members')) {
+            if (method === 'PUT') {
+                const index = MOCK_TEAM_CHANNELS.findIndex(c => c.id === channelId);
+                if (index > -1) {
+                    MOCK_TEAM_CHANNELS[index].memberIds = body.memberIds;
+                    return respond(MOCK_TEAM_CHANNELS[index]);
+                }
+                return respond({ message: 'Channel not found'}, 404);
+            }
+        }
+
+        if (method === 'GET') {
+            const orgId = searchParams.get('orgId');
+            return respond(MOCK_TEAM_CHANNELS.filter(c => c.organizationId === orgId));
+        }
+
+        if (method === 'POST') {
+            const newChannel: TeamChannel = {
+                ...body,
+                id: `chan_${Date.now()}`,
+                memberIds: body.isPrivate ? [body.memberIds[0]] : MOCK_USERS.filter(u => u.organizationId === body.organizationId && !u.isClient).map(u => u.id), // Add creator or all members
+            };
+            MOCK_TEAM_CHANNELS.push(newChannel);
+            return respond(newChannel, 201);
         }
     }
 
@@ -544,6 +593,32 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     // --- DOCUMENT TEMPLATES ---
     if (path.startsWith('/api/v1/document-templates')) {
         const templateId = path.split('/')[4];
+
+        if (templateId && path.includes('/permissions')) {
+            if (method === 'PUT') {
+                const index = db.documentTemplates.findIndex(t => t.id === templateId);
+                if (index > -1) {
+                    db.documentTemplates[index].permissions = body.permissions;
+                    return respond(db.documentTemplates[index]);
+                }
+                return respond({ message: 'Not found' }, 404);
+            }
+        }
+
+        if (templateId) {
+            if (method === 'PUT') {
+                const index = db.documentTemplates.findIndex(t => t.id === templateId);
+                if (index > -1) {
+                    db.documentTemplates[index] = { ...db.documentTemplates[index], ...body };
+                    return respond(db.documentTemplates[index]);
+                }
+            }
+            if (method === 'DELETE') {
+                db.documentTemplates = db.documentTemplates.filter(t => t.id !== templateId);
+                return respond(null, 204);
+            }
+        }
+        
         if (method === 'GET') {
             const orgId = searchParams.get('orgId');
             return respond(db.documentTemplates.filter(t => t.organizationId === orgId));
@@ -552,17 +627,6 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
             const newTemplate = { ...body, id: `dt_${Date.now()}` };
             db.documentTemplates.push(newTemplate);
             return respond(newTemplate);
-        }
-        if (method === 'PUT' && templateId) {
-            const index = db.documentTemplates.findIndex(t => t.id === templateId);
-            if (index > -1) {
-                db.documentTemplates[index] = { ...db.documentTemplates[index], ...body };
-                return respond(db.documentTemplates[index]);
-            }
-        }
-        if (method === 'DELETE' && templateId) {
-            db.documentTemplates = db.documentTemplates.filter(t => t.id !== templateId);
-            return respond(null, 204);
         }
     }
 
@@ -670,7 +734,7 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     }
     
     // --- TEAM & ROLES ---
-    if (path.endsWith('/team')) return respond(db.users.filter(u => u.organizationId === searchParams.get('orgId') && !u.isClient));
+    if (path.endsWith('/team')) return respond(db.users.filter(u => u.organizationId === searchParams.get('orgId')));
     if (path.endsWith('/roles')) return respond(db.roles.filter(r => r.organizationId === searchParams.get('orgId')));
     
     // --- TASKS ---

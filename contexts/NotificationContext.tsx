@@ -16,7 +16,8 @@ const mockNotifications: Omit<Notification, 'userId'>[] = [
     message: 'Alice Admin mentioned you in a note for John Patient.',
     timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 minutes ago
     isRead: false,
-    linkTo: '/contacts/contact_1',
+    // FIX: The `linkTo` property must be an object, not a string, to conform to the `Notification` type definition.
+    linkTo: { page: 'Contacts', recordId: 'contact_1' },
   },
   {
     id: 'notif_2',
@@ -24,7 +25,8 @@ const mockNotifications: Omit<Notification, 'userId'>[] = [
     message: 'Alice Admin assigned you a new task: "Prepare quarterly report".',
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
     isRead: false,
-    linkTo: '/tasks',
+    // FIX: The `linkTo` property must be an object, not a string, to conform to the `Notification` type definition.
+    linkTo: { page: 'Tasks' },
   },
   {
     id: 'notif_3',
@@ -32,7 +34,8 @@ const mockNotifications: Omit<Notification, 'userId'>[] = [
     message: 'Alice Admin mentioned you in a note for Jane Doe.',
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
     isRead: true,
-    linkTo: '/contacts/contact_2',
+    // FIX: The `linkTo` property must be an object, not a string, to conform to the `Notification` type definition.
+    linkTo: { page: 'Contacts', recordId: 'contact_2' },
   },
 ];
 

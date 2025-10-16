@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 // FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
 import { Card } from '../ui/Card';
@@ -8,9 +8,11 @@ import { useData } from '../../contexts/DataContext';
 import { Ticket } from '../../types';
 import TicketsTable from './TicketsTable';
 import TicketDetailModal from './TicketDetailModal';
+import { useApp } from '../../contexts/AppContext';
 
 const TicketsPage: React.FC = () => {
     const { ticketsQuery } = useData();
+    const { initialRecordLink, setInitialRecordLink } = useApp();
     const { data: tickets = [], isLoading } = ticketsQuery;
     const [isModalOpen, setIsModalOpen] = useState(false);
     // State now holds only the ID, not the stale object
@@ -22,14 +24,24 @@ const TicketsPage: React.FC = () => {
         return (tickets as Ticket[]).find(t => t.id === selectedTicketId) || null;
     }, [tickets, selectedTicketId]);
 
-
-    const handleAdd = () => {
-        setSelectedTicketId(null);
+    const handleRowClick = (ticket: Ticket) => {
+        setSelectedTicketId(ticket.id);
         setIsModalOpen(true);
     };
 
-    const handleRowClick = (ticket: Ticket) => {
-        setSelectedTicketId(ticket.id);
+    useEffect(() => {
+        if (initialRecordLink?.page === 'Tickets' && initialRecordLink.recordId && tickets.length > 0) {
+            const ticketToOpen = (tickets as Ticket[]).find(t => t.id === initialRecordLink.recordId);
+            if (ticketToOpen) {
+                handleRowClick(ticketToOpen);
+            }
+            setInitialRecordLink(null);
+        }
+    }, [initialRecordLink, tickets, setInitialRecordLink]);
+
+
+    const handleAdd = () => {
+        setSelectedTicketId(null);
         setIsModalOpen(true);
     };
     

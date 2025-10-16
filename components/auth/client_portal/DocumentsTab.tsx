@@ -64,6 +64,8 @@ const ClientDocumentsTab: React.FC = () => {
         document.body.removeChild(link);
     };
 
+    const visibleDocuments = documents.filter(doc => doc.isVisibleToClient);
+
     return (
         <div>
             <div className="flex justify-between items-center mb-4">
@@ -76,9 +78,9 @@ const ClientDocumentsTab: React.FC = () => {
 
             {isLoading ? (
                 <p>Loading documents...</p>
-            ) : documents.length > 0 ? (
+            ) : visibleDocuments.length > 0 ? (
                 <div className="divide-y divide-border-subtle border border-border-subtle rounded-lg">
-                    {documents.map((doc: DocType) => (
+                    {visibleDocuments.map((doc: DocType) => (
                         <div key={doc.id} className="p-3 flex justify-between items-center">
                             <div className="flex items-center gap-3 flex-grow min-w-0">
                                 {getFileIcon(doc.fileType)}
@@ -99,7 +101,7 @@ const ClientDocumentsTab: React.FC = () => {
             ) : (
                 <div className="text-center py-12 text-text-secondary">
                     <File className="mx-auto h-12 w-12 text-text-secondary/50" />
-                    <p className="mt-2">No documents have been uploaded yet.</p>
+                    <p className="mt-2">No documents have been shared with you yet.</p>
                 </div>
             )}
 

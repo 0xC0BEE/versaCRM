@@ -172,7 +172,11 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ projectId, onBack }
                             <div key={comment.id} className="flex items-start gap-3">
                                 <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center font-bold text-slate-500">{user?.name.charAt(0)}</div>
                                 <div>
-                                    <p className="text-sm"><span className="font-semibold">{user?.name}</span><span className="text-xs text-text-secondary ml-2">{formatDistanceToNow(new Date(comment.timestamp), { addSuffix: true })}</span></p>
+                                    <p className="text-sm">
+                                        <span className="font-semibold">{user?.name}</span>
+                                        {user?.isClient && <span className="ml-2 text-xs font-semibold px-1.5 py-0.5 rounded-sm bg-blue-500/10 text-blue-500">Client</span>}
+                                        <span className="text-xs text-text-secondary ml-2">{formatDistanceToNow(new Date(comment.timestamp), { addSuffix: true })}</span>
+                                    </p>
                                     <p className="text-sm text-text-secondary mt-1 whitespace-pre-wrap">{comment.message}</p>
                                 </div>
                             </div>

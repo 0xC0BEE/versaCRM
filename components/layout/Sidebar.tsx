@@ -4,10 +4,11 @@ import { Page, Permission } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import {
     Home, Building, Users, Briefcase, Inbox, Calendar, BarChart2, Settings, Package, Handshake,
-    LifeBuoy, Zap, Mails, ClipboardList, BookOpen, LayoutTemplate, Bot, HelpCircle, Shapes, FileText, FolderKanban, History
+    LifeBuoy, Zap, Mails, ClipboardList, BookOpen, LayoutTemplate, Bot, HelpCircle, Shapes, FileText, FolderKanban, History, MessageSquare, Bell
 } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import * as LucideIcons from 'lucide-react';
+import { useNotifications } from '../../contexts/NotificationContext';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -33,6 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     const { currentPage, setCurrentPage, industryConfig, setCurrentCustomObjectDefId } = useApp();
     const { hasPermission, authenticatedUser } = useAuth();
     const { customObjectDefsQuery } = useData();
+    const { unreadCount } = useNotifications();
     const { data: customObjectDefs = [] } = customObjectDefsQuery;
 
     const handleNavigation = (page: Page, customObjectDefId?: string) => {
@@ -64,7 +66,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
             title: 'Core',
             items: [
                 { page: 'Dashboard', icon: Home, permission: 'contacts:read:own' },
+                { page: 'Notifications', icon: Bell, permission: 'contacts:read:own' },
                 { page: 'Inbox', icon: Inbox, permission: 'contacts:read:own' },
+                { page: 'TeamChat', icon: MessageSquare, label: 'Team Chat', permission: 'contacts:read:own' },
                 { page: 'Contacts', icon: Users, label: industryConfig.contactNamePlural, permission: 'contacts:read:own' },
                 { page: 'Deals', icon: Handshake, permission: 'deals:read' },
                 { page: 'Tasks', icon: Briefcase, permission: 'contacts:read:own' },
@@ -156,13 +160,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                                             key={item.label || item.page}
                                             onClick={() => handleNavigation(item.page, item.customObjectDefId)}
                                             className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md w-full text-left ${
-                                                currentPage === item.page
+                                                (currentPage === item.page && (!item.customObjectDefId || item.customObjectDefId === (useApp().currentCustomObjectDefId)))
                                                     ? 'bg-primary/10 text-primary'
                                                     : 'text-text-secondary hover:bg-hover-bg'
                                             }`}
                                         >
-                                            <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${currentPage === item.page ? 'text-primary' : 'text-text-secondary group-hover:text-text-primary'}`} aria-hidden="true" />
-                                            {item.label || item.page}
+                                            <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${(currentPage === item.page && (!item.customObjectDefId || item.customObjectDefId === (useApp().currentCustomObjectDefId))) ? 'text-primary' : 'text-text-secondary group-hover:text-text-primary'}`} aria-hidden="true" />
+                                            <span className="flex-1">{item.label || item.page}</span>
+                                            {item.page === 'Notifications' && unreadCount > 0 && (
+                                                <span className="ml-auto inline-block py-0.5 px-2 text-xs font-semibold rounded-full bg-primary text-white">
+                                                    {unreadCount}
+                                                </span>
+                                            )}
                                         </button>
                                     ))}
                                 </div>

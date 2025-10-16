@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import { useData } from '../../contexts/DataContext';
 import TaskItem from './TaskItem';
@@ -11,9 +11,11 @@ import { addDays } from 'date-fns';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import TaskEditModal from './TaskEditModal';
+import { useApp } from '../../contexts/AppContext';
 
 const MyTasksPage: React.FC = () => {
     const { authenticatedUser, hasPermission } = useAuth();
+    const { initialRecordLink, setInitialRecordLink } = useApp();
     const { tasksQuery, createTaskMutation, teamMembersQuery } = useData();
     const { data: tasks = [], isLoading: tasksLoading } = tasksQuery;
     const { data: teamMembers = [], isLoading: membersLoading } = teamMembersQuery;
@@ -31,6 +33,21 @@ const MyTasksPage: React.FC = () => {
             return acc;
         }, {} as Record<string, string>);
     }, [teamMembers]);
+    
+    const handleEditTask = (task: Task) => {
+        setSelectedTask(task);
+        setIsEditModalOpen(true);
+    };
+
+    useEffect(() => {
+        if (initialRecordLink?.page === 'Tasks' && initialRecordLink.recordId && tasks.length > 0) {
+            const taskToOpen = (tasks as Task[]).find(t => t.id === initialRecordLink.recordId);
+            if (taskToOpen) {
+                handleEditTask(taskToOpen);
+            }
+            setInitialRecordLink(null);
+        }
+    }, [initialRecordLink, tasks, setInitialRecordLink]);
 
     const handleAddTask = (e: React.FormEvent) => {
         e.preventDefault();
@@ -49,11 +66,6 @@ const MyTasksPage: React.FC = () => {
                 setNewTaskTitle('');
             }
         });
-    };
-
-    const handleEditTask = (task: Task) => {
-        setSelectedTask(task);
-        setIsEditModalOpen(true);
     };
     
     const { pendingTasks, completedTasks } = useMemo(() => {

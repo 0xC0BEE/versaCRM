@@ -9,7 +9,9 @@ import {
     Survey,
     SurveyResponse,
     Dashboard,
-    Snapshot
+    Snapshot,
+    TeamChannel,
+    TeamChatMessage
 } from '../types';
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
@@ -144,7 +146,7 @@ export const MOCK_LANDING_PAGES: LandingPage[] = [
 ];
 
 export const MOCK_DOCUMENT_TEMPLATES: DocumentTemplate[] = [
-    { id: 'dt_1', organizationId: 'org_1', name: 'Standard Proposal', content: [] },
+    { id: 'dt_1', organizationId: 'org_1', name: 'Standard Proposal', content: [], permissions: [{ userId: 'user_admin_1', accessLevel: 'edit' }] },
     { 
         id: 'dt_2', 
         organizationId: 'org_1', 
@@ -158,7 +160,8 @@ export const MOCK_DOCUMENT_TEMPLATES: DocumentTemplate[] = [
                 ],
                 taxRate: 8.5
             }}
-        ] 
+        ],
+        permissions: [{ userId: 'user_admin_1', accessLevel: 'edit' }, { userId: 'user_team_1', accessLevel: 'view' }]
     },
 ];
 
@@ -211,6 +214,26 @@ export const MOCK_SURVEYS: Survey[] = [
     { id: 'survey_2', organizationId: 'org_1', name: 'Quarterly NPS', type: 'NPS', question: 'How likely are you to recommend us to a friend or colleague?', createdAt: new Date().toISOString() },
 ];
 
+let MOCK_TEAM_CHANNELS: TeamChannel[] = [
+    { id: 'chan_general', organizationId: 'org_1', name: 'general', description: 'Company-wide announcements and updates.', isPrivate: false, memberIds: ['user_admin_1', 'user_team_1'] },
+    { id: 'chan_sales', organizationId: 'org_1', name: 'sales', description: 'All things related to sales and deals.', isPrivate: false, memberIds: ['user_admin_1', 'user_team_1'] },
+    { id: 'chan_proj_wellness', organizationId: 'org_1', name: 'proj-wellness-program', description: 'Discussion for the Corporate Wellness Program deal.', isPrivate: true, linkedRecordId: 'deal_1', linkedRecordType: 'deal', memberIds: ['user_admin_1'] },
+];
+
+export const MOCK_TEAM_CHAT_MESSAGES: TeamChatMessage[] = [
+    // General channel
+    { id: 'msg_1', channelId: 'chan_general', userId: 'user_admin_1', message: 'Welcome to the new Team Chat! 🎉', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
+    { id: 'msg_2', channelId: 'chan_general', userId: 'user_team_1', message: 'This is great!', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 1.5).toISOString() },
+    
+    // Sales channel
+    { id: 'msg_3', channelId: 'chan_sales', userId: 'user_admin_1', message: 'Heads up, I just closed the Corporate Wellness Program deal for $25k!', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
+    { id: 'msg_4', channelId: 'chan_sales', userId: 'user_team_1', message: 'Amazing work, Alice! Congrats!', timestamp: new Date(Date.now() - 1000 * 60 * 28).toISOString() },
+
+    // Project channel
+    { id: 'msg_5', channelId: 'chan_proj_wellness', userId: 'user_admin_1', message: 'Kicking off this private channel to discuss the wellness program deal. @Charlie Team I need you to prep the onboarding materials.', timestamp: new Date(Date.now() - 1000 * 60 * 25).toISOString() },
+];
+
+
 // FIX: Changed from 'export const' to 'let' to allow modification and prevent redeclaration error.
 let MOCK_SURVEY_RESPONSES: SurveyResponse[] = [];
 
@@ -238,4 +261,5 @@ export let MOCK_SNAPSHOTS: Snapshot[] = [];
 
 
 // Export mutable arrays for services that modify data in place
-export { MOCK_CONTACTS_MUTABLE, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_DASHBOARD_WIDGETS };
+// FIX: Export MOCK_TEAM_CHANNELS to make it available for import.
+export { MOCK_CONTACTS_MUTABLE, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_DASHBOARD_WIDGETS, MOCK_TEAM_CHANNELS };

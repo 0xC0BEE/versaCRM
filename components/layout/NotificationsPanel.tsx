@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { Bell, X, AtSign, CheckSquare, LifeBuoy } from 'lucide-react';
+import { Bell, X, AtSign, CheckSquare, LifeBuoy, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Notification } from '../../types';
 import { useApp } from '../../contexts/AppContext';
@@ -15,28 +15,26 @@ const getNotificationIcon = (type: Notification['type']) => {
             return <AtSign className="h-5 w-5 text-purple-500" />;
         case 'task_assigned':
             return <CheckSquare className="h-5 w-5 text-blue-500" />;
+        case 'deal_won':
+            return <CheckSquare className="h-5 w-5 text-green-500" />;
         case 'ticket_assigned':
         case 'ticket_reply':
             return <LifeBuoy className="h-5 w-5 text-green-500" />;
         default:
-            // Fallback for any other types like 'deal_won'
             return <Bell className="h-5 w-5 text-text-secondary" />;
     }
 };
 
 const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ onClose }) => {
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
-    const { setCurrentPage } = useApp();
+    const { setCurrentPage, setInitialRecordLink } = useApp();
 
     const handleNotificationClick = (notification: Notification) => {
         markAsRead(notification.id);
-        if (notification.type === 'task_assigned') {
-            setCurrentPage('Tasks');
+        if (notification.linkTo) {
+            setInitialRecordLink(notification.linkTo);
+            setCurrentPage(notification.linkTo.page);
         }
-        if (notification.type === 'ticket_assigned' || notification.type === 'ticket_reply') {
-            setCurrentPage('Tickets');
-        }
-        // Add more navigation logic here for other notification types
         onClose();
     };
 
@@ -59,16 +57,17 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ onClose }) => {
             <div className="flex-1 overflow-y-auto max-h-96">
                 {notifications.length > 0 ? (
                     <ul className="divide-y divide-border-subtle">
-                        {notifications.map(notification => (
+                        {notifications.slice(0, 10).map(notification => (
                             <li
                                 key={notification.id}
-                                className={`p-4 hover:bg-hover-bg cursor-pointer ${!notification.isRead ? 'bg-primary/10' : ''}`}
+                                className={`p-4 hover:bg-hover-bg cursor-pointer ${!notification.isRead ? 'bg-primary/5' : ''}`}
                                 onClick={() => handleNotificationClick(notification)}
                             >
                                 <div className="flex items-start gap-3">
                                     <div className="flex-shrink-0 pt-0.5">{getNotificationIcon(notification.type)}</div>
                                     <div className="flex-grow">
                                         <p className="text-sm text-text-primary">{notification.message}</p>
+
                                         <p className="text-xs text-text-secondary mt-1">
                                             {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
                                         </p>
@@ -88,6 +87,14 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ onClose }) => {
                         <p className="mt-2 text-sm">You're all caught up!</p>
                     </div>
                 )}
+            </div>
+             <div className="flex-shrink-0 p-2 border-t border-border-subtle">
+                <button
+                    onClick={() => { setCurrentPage('Notifications'); onClose(); }}
+                    className="w-full text-center text-sm font-semibold text-primary py-2 rounded-md hover:bg-primary/10 flex items-center justify-center gap-1"
+                >
+                    View All Notifications <ArrowRight size={16} />
+                </button>
             </div>
         </div>
     );

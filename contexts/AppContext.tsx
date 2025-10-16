@@ -32,6 +32,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [isLiveCopilotOpen, setIsLiveCopilotOpen] = useState(false);
     const [dashboardDateRange, setDashboardDateRange] = useState({ start: subDays(new Date(), 30), end: new Date() });
     const [currentDashboardId, setCurrentDashboardId] = useLocalStorage<string>('currentDashboardId', 'dash_default');
+    const [initialRecordLink, setInitialRecordLink] = useState<{ page: Page, recordId?: string } | null>(null);
     
     const { organizationSettingsQuery } = useData();
     const { data: orgSettings } = organizationSettingsQuery;
@@ -101,6 +102,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setDashboardDateRange,
         currentDashboardId,
         setCurrentDashboardId,
+        initialRecordLink,
+        setInitialRecordLink,
     }), [
         currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, 
         contactFilters, setContactFilters, simulatedDate, setSimulatedDate, reportToEditId, 
@@ -108,7 +111,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         initialKbArticleId, setInitialKbArticleId, currentCustomObjectDefId, 
         setCurrentCustomObjectDefId, currentEnvironment, setCurrentEnvironment, sandboxes, isFeatureEnabled,
         isLiveCopilotOpen, setIsLiveCopilotOpen, dashboardDateRange, setDashboardDateRange,
-        currentDashboardId, setCurrentDashboardId
+        currentDashboardId, setCurrentDashboardId, initialRecordLink, setInitialRecordLink
     ]);
 
     return (

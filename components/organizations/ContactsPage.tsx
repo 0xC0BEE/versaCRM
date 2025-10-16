@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import { Card } from '../ui/Card';
 import Button from '../ui/Button';
@@ -19,7 +19,7 @@ interface ContactsPageProps {
 }
 
 const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => {
-    const { industryConfig, contactFilters, isFeatureEnabled } = useApp();
+    const { industryConfig, contactFilters, isFeatureEnabled, initialRecordLink, setInitialRecordLink } = useApp();
     const { authenticatedUser } = useAuth();
     const { 
         contactsQuery,
@@ -37,6 +37,21 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [isChurning, setIsChurning] = useState(false);
     const [churnModalData, setChurnModalData] = useState<{contact: AnyContact, prediction: ContactChurnPrediction} | null>(null);
+
+    const handleRowClick = (contact: AnyContact) => {
+        setSelectedContact(contact);
+        setIsDetailModalOpen(true);
+    };
+
+    useEffect(() => {
+        if (initialRecordLink?.page === 'Contacts' && initialRecordLink.recordId && contacts.length > 0) {
+            const contactToOpen = (contacts as AnyContact[]).find(c => c.id === initialRecordLink.recordId);
+            if (contactToOpen) {
+                handleRowClick(contactToOpen);
+            }
+            setInitialRecordLink(null); // Clear after use
+        }
+    }, [initialRecordLink, contacts, setInitialRecordLink]);
 
     const filteredContacts = useMemo(() => {
         if (!contactFilters || contactFilters.length === 0) {
@@ -57,11 +72,6 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
         });
     }, [contacts, contactFilters]);
 
-
-    const handleRowClick = (contact: AnyContact) => {
-        setSelectedContact(contact);
-        setIsDetailModalOpen(true);
-    };
 
     const handleAdd = () => {
         // Provide a default empty structure for a new contact

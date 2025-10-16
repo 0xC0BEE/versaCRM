@@ -1,36 +1,193 @@
-
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import PageWrapper from '../layout/PageWrapper';
-// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
-import { Card } from '../ui/Card';
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import Button from '../ui/Button';
-import { Plus, Zap, Code, Trash2, TestTube2 } from 'lucide-react';
-// FIX: Corrected import path for DataContext.
+import { Plus, Zap, Code, Trash2, TestTube2, Wand2, Loader, ArrowRight } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
-import { Workflow, AdvancedWorkflow } from '../../types';
+import { Workflow, AdvancedWorkflow, ProcessInsight, Deal, Ticket, DealStage } from '../../types';
 import WorkflowBuilder from './WorkflowBuilder';
-// FIX: Corrected import path for AdvancedWorkflowBuilder.
 import AdvancedWorkflowBuilder from './advanced/AdvancedWorkflowBuilder';
 import toast from 'react-hot-toast';
 import WorkflowTestModal from './WorkflowTestModal';
+import { GoogleGenAI, Type } from '@google/genai';
+import { differenceInDays } from 'date-fns';
+import { useApp } from '../../contexts/AppContext';
 
 interface WorkflowsPageProps {
     isTabbedView?: boolean;
 }
 
+const AiProcessOptimizationCard: React.FC<{ onSuggest: (workflow: Partial<Workflow>) => void }> = ({ onSuggest }) => {
+    const [analysisResult, setAnalysisResult] = useState<ProcessInsight[] | null>(null);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const { dealsQuery, ticketsQuery, dealStagesQuery } = useData();
+    const { isFeatureEnabled } = useApp();
+
+    const handleAnalyze = async () => {
+        setIsAnalyzing(true);
+        setAnalysisResult(null);
+
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+            
+            const deals = dealsQuery.data as Deal[];
+            const tickets = ticketsQuery.data as Ticket[];
+            const dealStages = dealStagesQuery.data as DealStage[];
+
+            const dealJourneys = deals.map(deal => ({
+                stage: dealStages.find(s => s.id === deal.stageId)?.name || 'Unknown',
+                durationDays: differenceInDays(new Date(), new Date(deal.createdAt)),
+                value: deal.value,
+            }));
+            
+            const ticketSummary = tickets.reduce((acc: Record<string, number>, ticket) => {
+                const key = `${ticket.priority} Priority`;
+                acc[key] = (acc[key] || 0) + 1;
+                return acc;
+            }, {});
+
+            const prompt = `You are a CRM process optimization expert. Analyze this summary of deal and ticket data to find bottlenecks and suggest simple workflow automations.
+
+Data:
+- Deal Journeys: ${JSON.stringify(dealJourneys.slice(0, 10))}
+- Ticket Summary: ${JSON.stringify(ticketSummary)}
+- Available Deal Stages: ${JSON.stringify(dealStages)}
+
+Your response MUST be a JSON object containing an array called 'insights'. Each object in the array should have:
+1. 'observation': A string describing a potential bottleneck (e.g., "Deals over $50k in 'Proposal Sent' seem to be stalling.").
+2. 'suggestion': A string suggesting a workflow (e.g., "Create a workflow to notify a manager when a high-value deal is in 'Proposal Sent' for more than 7 days.").
+3. 'workflow': An object with 'trigger' and 'actions' keys, structured for my system.
+
+- 'workflow.trigger': Must have a 'type' (e.g., 'dealStageChanged', 'ticketCreated') and optional properties like 'toStageId' or 'priority'.
+- 'workflow.actions': An array of objects, each with a 'type' (e.g., 'createTask', 'wait') and properties like 'taskTitle' or 'days'.
+
+Example for 'workflow':
+"workflow": {
+  "trigger": { "type": "dealStageChanged", "toStageId": "stage_2" },
+  "actions": [{ "type": "wait", "days": 7 }, { "type": "createTask", "taskTitle": "High-value deal stalled: {{deal.name}}" }]
+}
+
+Analyze the data and return 1-2 distinct insights in the specified JSON format.`;
+
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            insights: {
+                                type: Type.ARRAY,
+                                items: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        observation: { type: Type.STRING },
+                                        suggestion: { type: Type.STRING },
+                                        workflow: {
+                                            type: Type.OBJECT,
+                                            properties: {
+                                                trigger: {
+                                                    type: Type.OBJECT,
+                                                    properties: {
+                                                        type: { type: Type.STRING },
+                                                        fromStatus: { type: Type.STRING, nullable: true },
+                                                        toStatus: { type: Type.STRING, nullable: true },
+                                                        fromStageId: { type: Type.STRING, nullable: true },
+                                                        toStageId: { type: Type.STRING, nullable: true },
+                                                        priority: { type: Type.STRING, nullable: true }
+                                                    },
+                                                    required: ['type']
+                                                },
+                                                actions: {
+                                                    type: Type.ARRAY,
+                                                    items: {
+                                                        type: Type.OBJECT,
+                                                        properties: {
+                                                            type: { type: Type.STRING },
+                                                            taskTitle: { type: Type.STRING, nullable: true },
+                                                            assigneeId: { type: Type.STRING, nullable: true },
+                                                            emailTemplateId: { type: Type.STRING, nullable: true },
+                                                            fieldId: { type: Type.STRING, nullable: true },
+                                                            newValue: { type: Type.STRING, nullable: true },
+                                                            days: { type: Type.INTEGER, nullable: true },
+                                                            webhookUrl: { type: Type.STRING, nullable: true },
+                                                            payloadTemplate: { type: Type.STRING, nullable: true },
+                                                            surveyId: { type: Type.STRING, nullable: true }
+                                                        },
+                                                        required: ['type']
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const result = JSON.parse(response.text);
+            setAnalysisResult(result.insights || []);
+
+        } catch (error) {
+            console.error("AI Process Analysis Error:", error);
+            toast.error("Failed to analyze processes. Please try again.");
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
+    return (
+        <Card className="mb-6">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Wand2 size={20} className="text-primary" /> AI Process Optimization</CardTitle>
+            </CardHeader>
+            <CardContent>
+                {isAnalyzing ? (
+                    <div className="flex items-center justify-center p-8">
+                        <Loader size={24} className="animate-spin text-primary" />
+                        <p className="ml-3">Analyzing your deal & ticket history...</p>
+                    </div>
+                ) : analysisResult ? (
+                    analysisResult.length > 0 ? (
+                        <div className="space-y-4">
+                            {analysisResult.map((insight, index) => (
+                                <div key={index} className="p-3 bg-hover-bg rounded-lg">
+                                    <p className="font-semibold text-sm">Observation: <span className="font-normal text-text-secondary">{insight.observation}</span></p>
+                                    <p className="font-semibold text-sm mt-1">Suggestion: <span className="font-normal text-text-secondary">{insight.suggestion}</span></p>
+                                    <div className="text-right mt-2">
+                                        <Button size="sm" variant="secondary" onClick={() => onSuggest(insight.workflow)} rightIcon={<ArrowRight size={14}/>}>Create Workflow</Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : <p>No specific bottlenecks found to suggest automations for at this time. Your processes look efficient!</p>
+                ) : (
+                    <>
+                        <p className="text-sm text-text-secondary mb-4">Let our AI analyze your process history to find bottlenecks and suggest helpful automations.</p>
+                        <Button onClick={handleAnalyze}>Analyze with AI</Button>
+                    </>
+                )}
+            </CardContent>
+        </Card>
+    );
+};
+
+
 const WorkflowsPage: React.FC<WorkflowsPageProps> = ({ isTabbedView = false }) => {
     const { 
         workflowsQuery, 
         advancedWorkflowsQuery,
-        // deleteWorkflowMutation, // Add when simple workflow deletion is needed
         deleteAdvancedWorkflowMutation
     } = useData();
+    const { isFeatureEnabled } = useApp();
     const { data: workflows = [], isLoading: simpleLoading } = workflowsQuery;
     const { data: advancedWorkflows = [], isLoading: advancedLoading } = advancedWorkflowsQuery;
 
     const [view, setView] = useState<'list' | 'builder' | 'advanced'>('list');
-    const [selectedItem, setSelectedItem] = useState<Workflow | AdvancedWorkflow | null>(null);
+    const [selectedItem, setSelectedItem] = useState<Partial<Workflow> | Partial<AdvancedWorkflow> | null>(null);
     const [isTestModalOpen, setIsTestModalOpen] = useState(false);
 
     const allWorkflows = useMemo(() => {
@@ -50,6 +207,15 @@ const WorkflowsPage: React.FC<WorkflowsPageProps> = ({ isTabbedView = false }) =
 
     const handleNewSimple = () => {
         setSelectedItem(null);
+        setView('builder');
+    };
+    
+    const handleSuggestWorkflow = (suggestedWorkflow: Partial<Workflow>) => {
+        setSelectedItem({
+            name: 'AI Suggested Workflow',
+            isActive: true,
+            ...suggestedWorkflow
+        });
         setView('builder');
     };
 
@@ -101,6 +267,11 @@ const WorkflowsPage: React.FC<WorkflowsPageProps> = ({ isTabbedView = false }) =
                     </div>
                 </div>
             )}
+
+            {isFeatureEnabled('aiProcessOptimization') && (
+                <AiProcessOptimizationCard onSuggest={handleSuggestWorkflow} />
+            )}
+
             <Card>
                 {isLoading ? (
                     <div className="p-8 text-center">Loading workflows...</div>
@@ -122,7 +293,6 @@ const WorkflowsPage: React.FC<WorkflowsPageProps> = ({ isTabbedView = false }) =
                                         <td className="px-6 py-4 font-medium text-text-primary">{w.name}</td>
                                         <td className="px-6 py-4">
                                              <span className={`text-xs font-medium px-2 py-0.5 rounded-micro ${
-                                                // FIX: Use 'in' operator for type guarding instead of accessing a dynamically added property.
                                                 'nodes' in w ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400'
                                             }`}>
                                                 {w.workflowType}

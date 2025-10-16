@@ -36,5 +36,11 @@ export const featureFlags: FeatureFlag[] = [
         name: 'AI Reply Suggestions',
         description: 'Enables AI-powered one-click reply suggestions in the Unified Inbox.',
         isEnabled: false,
+    },
+    {
+        id: 'aiProcessOptimization',
+        name: 'AI Process Optimization',
+        description: 'Enables the AI-powered process mining and workflow suggestion feature on the Workflows page.',
+        isEnabled: false,
     }
 ];

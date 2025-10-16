@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import { useData } from '../../contexts/DataContext';
 import { Project, ProjectPhase } from '../../types';
@@ -7,9 +7,11 @@ import { Plus } from 'lucide-react';
 import ProjectColumn from './ProjectColumn';
 import ProjectEditModal from './ProjectEditModal';
 import ProjectWorkspace from './ProjectWorkspace';
+import { useApp } from '../../contexts/AppContext';
 
 const ProjectsPage: React.FC = () => {
     const { projectsQuery, projectPhasesQuery, updateProjectMutation } = useData();
+    const { initialRecordLink, setInitialRecordLink } = useApp();
     const { data: projects = [], isLoading: projectsLoading } = projectsQuery;
     const { data: phases = [], isLoading: phasesLoading } = projectPhasesQuery;
 
@@ -19,6 +21,13 @@ const ProjectsPage: React.FC = () => {
     const sortedPhases = useMemo(() => {
         return (phases as ProjectPhase[]).sort((a, b) => a.order - b.order);
     }, [phases]);
+    
+    useEffect(() => {
+        if (initialRecordLink?.page === 'Projects' && initialRecordLink.recordId) {
+            setViewingProjectId(initialRecordLink.recordId);
+            setInitialRecordLink(null);
+        }
+    }, [initialRecordLink, setInitialRecordLink]);
 
     const handleAdd = () => {
         setIsCreateModalOpen(true);

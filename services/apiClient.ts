@@ -3,6 +3,7 @@ import {
     DashboardData, Dashboard,
     Sandbox,
     DocumentTemplate,
+    DocumentPermission,
     Project,
     ProjectPhase,
     ProjectComment,
@@ -12,7 +13,9 @@ import {
     Survey,
     SurveyResponse,
     AttributedDeal,
-    Snapshot
+    Snapshot,
+    TeamChannel,
+    TeamChatMessage
 } from '../types';
 
 // Create a mutable reference to the fetch implementation that can be overridden by the mock server.
@@ -80,6 +83,13 @@ const apiClient = {
     getInboxConversations: (orgId: string): Promise<Conversation[]> => fetchImpl(`${API_BASE}/inbox?orgId=${orgId}`).then(handleResponse),
     sendEmailReply: (data: { contactId: string, userId: string, subject: string, body: string }): Promise<Interaction> => fetchImpl(`${API_BASE}/inbox/reply`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     sendNewEmail: (data: { contactId: string, userId: string, subject: string, body: string }): Promise<Interaction> => fetchImpl(`${API_BASE}/inbox/new`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+
+    // --- TEAM CHAT ---
+    getTeamChannels: (orgId: string): Promise<TeamChannel[]> => fetchImpl(`${API_BASE}/team-channels?orgId=${orgId}`).then(handleResponse),
+    getTeamChannelMessages: (channelId: string): Promise<TeamChatMessage[]> => fetchImpl(`${API_BASE}/team-channels/${channelId}/messages`).then(handleResponse),
+    postTeamChatMessage: (data: { channelId: string, userId: string, message: string }): Promise<TeamChatMessage> => fetchImpl(`${API_BASE}/team-channels/${data.channelId}/messages`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    createTeamChannel: (data: Omit<TeamChannel, 'id'>): Promise<TeamChannel> => fetchImpl(`${API_BASE}/team-channels`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    updateTeamChannelMembers: (data: { channelId: string, memberIds: string[] }): Promise<TeamChannel> => fetchImpl(`${API_BASE}/team-channels/${data.channelId}/members`, { method: 'PUT', body: JSON.stringify({ memberIds: data.memberIds }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
 
     // --- CANNED RESPONSES ---
     getCannedResponses: (orgId: string): Promise<CannedResponse[]> => fetchImpl(`${API_BASE}/canned-responses?orgId=${orgId}`).then(handleResponse),
@@ -237,6 +247,7 @@ const apiClient = {
     createDocumentTemplate: (data: Omit<DocumentTemplate, 'id'>): Promise<DocumentTemplate> => fetchImpl(`${API_BASE}/document-templates`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateDocumentTemplate: (data: DocumentTemplate): Promise<DocumentTemplate> => fetchImpl(`${API_BASE}/document-templates/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteDocumentTemplate: (id: string): Promise<void> => fetchImpl(`${API_BASE}/document-templates/${id}`, { method: 'DELETE' }).then(handleResponse),
+    updateDocumentTemplatePermissions: (id: string, permissions: DocumentPermission[]): Promise<DocumentTemplate> => fetchImpl(`${API_BASE}/document-templates/${id}/permissions`, { method: 'PUT', body: JSON.stringify({ permissions }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     
     getDocuments: (params: { contactId?: string, projectId?: string }): Promise<Document[]> => fetchImpl(`${API_BASE}/documents?contactId=${params.contactId || ''}&projectId=${params.projectId || ''}`).then(handleResponse),
     uploadDocument: (data: Omit<Document, 'id'|'uploadDate'>): Promise<Document> => fetchImpl(`${API_BASE}/documents`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),

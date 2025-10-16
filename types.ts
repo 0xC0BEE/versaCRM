@@ -6,7 +6,7 @@ export type { Node, Edge };
 
 // Basic Types
 export type Industry = 'Health' | 'Finance' | 'Legal' | 'Generic';
-export type Page = 'Dashboard' | 'Organizations' | 'OrganizationDetails' | 'Contacts' | 'Deals' | 'Tickets' | 'Interactions' | 'SyncedEmail' | 'Campaigns' | 'Forms' | 'LandingPages' | 'Documents' | 'Projects' | 'Calendar' | 'Tasks' | 'Reports' | 'Inventory' | 'Team' | 'Workflows' | 'Settings' | 'ApiDocs' | 'KnowledgeBase' | 'CustomObjects' | 'AppMarketplace' | 'Inbox';
+export type Page = 'Dashboard' | 'Organizations' | 'OrganizationDetails' | 'Contacts' | 'Deals' | 'Tickets' | 'Interactions' | 'SyncedEmail' | 'Campaigns' | 'Forms' | 'LandingPages' | 'Documents' | 'Projects' | 'Calendar' | 'Tasks' | 'Reports' | 'Inventory' | 'Team' | 'Workflows' | 'Settings' | 'ApiDocs' | 'KnowledgeBase' | 'CustomObjects' | 'AppMarketplace' | 'Inbox' | 'TeamChat' | 'Notifications';
 export type Theme = 'light' | 'dark' | 'system';
 export type ReportType = 'sales' | 'inventory' | 'financial' | 'contacts' | 'team' | 'deals';
 export type ContactStatus = 'Lead' | 'Active' | 'Needs Attention' | 'Inactive' | 'Do Not Contact';
@@ -222,11 +222,19 @@ export interface DocumentBlock {
     content: any;
 }
 
+export type DocumentAccessLevel = 'edit' | 'view';
+
+export interface DocumentPermission {
+  userId: string;
+  accessLevel: DocumentAccessLevel;
+}
+
 export interface DocumentTemplate {
     id: string;
     organizationId: string;
     name: string;
     content: DocumentBlock[];
+    permissions: DocumentPermission[];
 }
 
 export interface OrderLineItem {
@@ -347,6 +355,27 @@ export interface SurveyResponse {
   respondedAt: string;
 }
 
+// Team Chat Types
+export interface TeamChannel {
+  id: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  isPrivate: boolean;
+  linkedRecordId?: string; // e.g. deal or project ID
+  linkedRecordType?: 'deal' | 'project';
+  memberIds: string[];
+}
+
+export interface TeamChatMessage {
+  id: string;
+  channelId: string;
+  userId: string;
+  message: string;
+  timestamp: string;
+  threadId?: string;
+}
+
 
 // Config & Settings
 export interface CustomField {
@@ -427,6 +456,8 @@ export interface AppContextType {
     setDashboardDateRange: (range: { start: Date; end: Date }) => void;
     currentDashboardId: string;
     setCurrentDashboardId: (id: string) => void;
+    initialRecordLink: { page: Page; recordId?: string } | null;
+    setInitialRecordLink: (link: { page: Page; recordId?: string } | null) => void;
 }
 
 export interface AuthContextType {
@@ -467,7 +498,10 @@ export interface Notification {
     message: string;
     timestamp: string;
     isRead: boolean;
-    linkTo?: string;
+    linkTo?: {
+        page: Page;
+        recordId?: string;
+    };
 }
 
 export interface NotificationContextType {
@@ -502,6 +536,12 @@ export interface Workflow {
     isActive: boolean;
     trigger: WorkflowTrigger;
     actions: WorkflowAction[];
+}
+
+export interface ProcessInsight {
+  observation: string;
+  suggestion: string;
+  workflow: Omit<Workflow, 'id' | 'name' | 'organizationId' | 'isActive'>;
 }
 
 export interface AdvancedWorkflow {
@@ -925,6 +965,8 @@ export interface DataContextType {
     projectsQuery: any;
     projectPhasesQuery: any;
     inboxQuery: any;
+    teamChannelsQuery: any;
+    teamChannelMessagesQuery: (channelId: string | null) => any;
     cannedResponsesQuery: any;
     surveysQuery: any;
     surveyResponsesQuery: any;
@@ -1025,6 +1067,7 @@ export interface DataContextType {
     createDocumentTemplateMutation: any;
     updateDocumentTemplateMutation: any;
     deleteDocumentTemplateMutation: any;
+    updateDocumentTemplatePermissionsMutation: any;
     updateDocumentMutation: any;
     createProjectMutation: any;
     updateProjectMutation: any;
@@ -1032,6 +1075,9 @@ export interface DataContextType {
     sendEmailReplyMutation: any;
     sendNewEmailMutation: any;
     addProjectCommentMutation: any;
+    postTeamChatMessageMutation: any;
+    createTeamChannelMutation: any;
+    updateTeamChannelMembersMutation: any;
     createCannedResponseMutation: any;
     updateCannedResponseMutation: any;
     deleteCannedResponseMutation: any;
