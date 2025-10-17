@@ -5,13 +5,14 @@ import Tabs from '../ui/Tabs';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useApp } from '../../contexts/AppContext';
 import { Notification } from '../../types';
-import { AtSign, Bell, CheckSquare, LifeBuoy } from 'lucide-react';
+import { AtSign, Bell, CheckSquare, LifeBuoy, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import Button from '../ui/Button';
 
 const getNotificationIcon = (type: Notification['type']) => {
     switch (type) {
         case 'mention': return <AtSign className="h-5 w-5 text-purple-500" />;
+        case 'chat_mention': return <MessageSquare className="h-5 w-5 text-indigo-500" />;
         case 'task_assigned': return <CheckSquare className="h-5 w-5 text-blue-500" />;
         case 'deal_won': return <CheckSquare className="h-5 w-5 text-green-500" />;
         case 'ticket_assigned':
@@ -26,7 +27,7 @@ const NotificationsPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState('All');
 
     const filteredNotifications = React.useMemo(() => {
-        if (activeTab === 'Unread') {
+        if (activeTab.startsWith('Unread')) {
             return notifications.filter(n => !n.isRead);
         }
         return notifications;

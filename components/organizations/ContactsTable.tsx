@@ -169,8 +169,7 @@ const ContactsTable: React.FC<ContactsTableProps> = ({ contacts, onRowClick, isE
                             </td>
                             {isChurning && (
                                 <td className="px-6 py-4 text-center">
-                                    {/* FIX: Corrected prop name from `onOpenPrediction` to pass the `onOpenChurnPrediction` function. */}
-                                    <ChurnPredictionDisplay contact={contact} onOpenPrediction={onOpenChurnPrediction!} />
+                                    <ChurnPredictionDisplay contact={contact} onOpenPrediction={onOpenChurnPrediction} />
                                 </td>
                             )}
                             <td className="px-6 py-4 cursor-pointer" onClick={() => onRowClick(contact)}>{new Date(contact.createdAt).toLocaleDateString()}</td>

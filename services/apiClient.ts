@@ -15,7 +15,10 @@ import {
     AttributedDeal,
     Snapshot,
     TeamChannel,
-    TeamChatMessage
+    TeamChatMessage,
+    Notification,
+    ClientChecklistTemplate,
+    ClientChecklist
 } from '../types';
 
 // Create a mutable reference to the fetch implementation that can be overridden by the mock server.
@@ -87,7 +90,7 @@ const apiClient = {
     // --- TEAM CHAT ---
     getTeamChannels: (orgId: string): Promise<TeamChannel[]> => fetchImpl(`${API_BASE}/team-channels?orgId=${orgId}`).then(handleResponse),
     getTeamChannelMessages: (channelId: string): Promise<TeamChatMessage[]> => fetchImpl(`${API_BASE}/team-channels/${channelId}/messages`).then(handleResponse),
-    postTeamChatMessage: (data: { channelId: string, userId: string, message: string }): Promise<TeamChatMessage> => fetchImpl(`${API_BASE}/team-channels/${data.channelId}/messages`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    postTeamChatMessage: (data: { channelId: string, userId: string, message: string, threadId?: string }): Promise<{ message: TeamChatMessage, notifications: Notification[] }> => fetchImpl(`${API_BASE}/team-channels/${data.channelId}/messages`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     createTeamChannel: (data: Omit<TeamChannel, 'id'>): Promise<TeamChannel> => fetchImpl(`${API_BASE}/team-channels`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateTeamChannelMembers: (data: { channelId: string, memberIds: string[] }): Promise<TeamChannel> => fetchImpl(`${API_BASE}/team-channels/${data.channelId}/members`, { method: 'PUT', body: JSON.stringify({ memberIds: data.memberIds }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
 
@@ -260,6 +263,10 @@ const apiClient = {
     deleteProject: (id: string): Promise<void> => fetchImpl(`${API_BASE}/projects/${id}`, { method: 'DELETE' }).then(handleResponse),
     addProjectComment: (data: { projectId: string; comment: Omit<ProjectComment, 'id' | 'timestamp'> }): Promise<Project> => fetchImpl(`${API_BASE}/projects/${data.projectId}/comments`, { method: 'POST', body: JSON.stringify(data.comment), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     getProjectPhases: (orgId: string): Promise<ProjectPhase[]> => fetchImpl(`${API_BASE}/project-phases?orgId=${orgId}`).then(handleResponse),
+
+    getClientChecklistTemplates: (orgId: string): Promise<ClientChecklistTemplate[]> => fetchImpl(`${API_BASE}/client-checklist-templates?orgId=${orgId}`).then(handleResponse),
+    assignChecklistToProject: (data: { projectId: string, templateId: string }): Promise<Project> => fetchImpl(`${API_BASE}/projects/${data.projectId}/assign-checklist`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    updateClientChecklist: (data: { projectId: string, checklist: ClientChecklist }): Promise<Project> => fetchImpl(`${API_BASE}/projects/${data.projectId}/update-checklist`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
 };
 
 export default apiClient;

@@ -22,17 +22,27 @@ const AiProcessOptimizationCard: React.FC<{ onSuggest: (workflow: Partial<Workfl
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const { dealsQuery, ticketsQuery, dealStagesQuery } = useData();
     const { isFeatureEnabled } = useApp();
+    const isDataLoading = dealsQuery.isLoading || ticketsQuery.isLoading || dealStagesQuery.isLoading;
 
     const handleAnalyze = async () => {
         setIsAnalyzing(true);
         setAnalysisResult(null);
 
+        // This is the most robust check, ensuring data is not just successfully fetched but also truthy.
+        if (dealsQuery.status !== 'success' || !dealsQuery.data ||
+            ticketsQuery.status !== 'success' || !ticketsQuery.data ||
+            dealStagesQuery.status !== 'success' || !dealStagesQuery.data) {
+            toast.error("Data is not ready for analysis. Please try again in a moment.");
+            setIsAnalyzing(false);
+            return;
+        }
+
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
             
-            const deals = dealsQuery.data as Deal[];
-            const tickets = ticketsQuery.data as Ticket[];
-            const dealStages = dealStagesQuery.data as DealStage[];
+            const deals = dealsQuery.data;
+            const tickets = ticketsQuery.data;
+            const dealStages = dealStagesQuery.data;
 
             const dealJourneys = deals.map(deal => ({
                 stage: dealStages.find(s => s.id === deal.stageId)?.name || 'Unknown',
@@ -167,7 +177,9 @@ Analyze the data and return 1-2 distinct insights in the specified JSON format.`
                 ) : (
                     <>
                         <p className="text-sm text-text-secondary mb-4">Let our AI analyze your process history to find bottlenecks and suggest helpful automations.</p>
-                        <Button onClick={handleAnalyze}>Analyze with AI</Button>
+                        <Button onClick={handleAnalyze} disabled={isDataLoading}>
+                            {isDataLoading ? 'Loading data...' : 'Analyze with AI'}
+                        </Button>
                     </>
                 )}
             </CardContent>
@@ -191,8 +203,8 @@ const WorkflowsPage: React.FC<WorkflowsPageProps> = ({ isTabbedView = false }) =
     const [isTestModalOpen, setIsTestModalOpen] = useState(false);
 
     const allWorkflows = useMemo(() => {
-        const simple = (workflows as Workflow[]).map(w => ({ ...w, workflowType: 'Simple' as const }));
-        const advanced = (advancedWorkflows as AdvancedWorkflow[]).map(w => ({ ...w, workflowType: 'Advanced' as const }));
+        const simple = (workflows || []).map(w => ({ ...w, workflowType: 'Simple' as const }));
+        const advanced = (advancedWorkflows || []).map(w => ({ ...w, workflowType: 'Advanced' as const }));
         return [...simple, ...advanced];
     }, [workflows, advancedWorkflows]);
 

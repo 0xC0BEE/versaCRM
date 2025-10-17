@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { DocumentTemplate, DocumentBlock, Product, User } from '../../types';
 import PageWrapper from '../layout/PageWrapper';
 import Button from '../ui/Button';
-import { ArrowLeft, Edit, Trash2, Heading, Type, Image as ImageIcon, Wand2, ListOrdered, Plus, Monitor, Share2 } from 'lucide-react';
+// FIX: Imported 'GripVertical' to resolve reference error.
+import { ArrowLeft, Edit, Trash2, Heading, Type, Image as ImageIcon, Wand2, ListOrdered, Plus, Monitor, Share2, GripVertical } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -137,6 +139,21 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
     const isPending = createDocumentTemplateMutation.isPending || updateDocumentTemplateMutation.isPending;
     const selectedBlock = template.content.find(b => b.id === selectedBlockId);
 
+    const collaborators = useMemo(() => {
+        if (!templateToEdit) return [authenticatedUser];
+        const userIds = new Set(templateToEdit.permissions.map(p => p.userId));
+        userIds.add(authenticatedUser!.id); // Always include current user
+        return Array.from(userIds).map(id => userMap.get(id)).filter(Boolean);
+    }, [templateToEdit, userMap, authenticatedUser]);
+    
+    const myPermission = useMemo(() => {
+        if (isNew || !templateToEdit) return 'edit'; // Creator has edit access
+        return templateToEdit.permissions.find(p => p.userId === authenticatedUser!.id)?.accessLevel || 'view';
+    }, [templateToEdit, authenticatedUser, isNew]);
+
+    const isReadOnly = myPermission === 'view';
+
+    // This is the preview rendering logic
     const renderPreviewBlock = (block: DocumentBlock) => {
         switch(block.type) {
             case 'header': return (
@@ -193,19 +210,19 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
         switch(selectedBlock.type) {
             case 'header': return (
                 <div className="space-y-4">
-                    <Input id="header-title" label="Title" value={selectedBlock.content.title} onChange={e => updateBlock(selectedBlock.id, { ...selectedBlock.content, title: e.target.value })} />
-                    <Textarea id="header-subtitle" label="Subtitle" value={selectedBlock.content.subtitle} onChange={e => updateBlock(selectedBlock.id, { ...selectedBlock.content, subtitle: e.target.value })} />
+                    <Input id="header-title" label="Title" value={selectedBlock.content.title} onChange={e => updateBlock(selectedBlock.id, { ...selectedBlock.content, title: e.target.value })} disabled={isReadOnly} />
+                    <Textarea id="header-subtitle" label="Subtitle" value={selectedBlock.content.subtitle} onChange={e => updateBlock(selectedBlock.id, { ...selectedBlock.content, subtitle: e.target.value })} disabled={isReadOnly} />
                 </div>
             );
             case 'text': return (
                 <div className="space-y-4">
-                    <Textarea id="text-content" label="Text" value={selectedBlock.content.text} rows={10} onChange={e => updateBlock(selectedBlock.id, { text: e.target.value })} />
-                    <Button variant="secondary" size="sm" className="w-full" onClick={() => setIsAiStudioOpen(true)} leftIcon={<Wand2 size={14} />}>Generate with AI</Button>
+                    <Textarea id="text-content" label="Text" value={selectedBlock.content.text} rows={10} onChange={e => updateBlock(selectedBlock.id, { text: e.target.value })} disabled={isReadOnly} />
+                    <Button variant="secondary" size="sm" className="w-full" onClick={() => setIsAiStudioOpen(true)} leftIcon={<Wand2 size={14} />} disabled={isReadOnly}>Generate with AI</Button>
                     <div>
                         <h4 className="text-sm font-semibold mt-4 mb-2">Placeholders</h4>
                         <div className="flex flex-wrap gap-1">
                             {placeholders.map(p => (
-                                <button key={p.value} onClick={() => insertPlaceholder(p.value)} className="text-xs bg-hover-bg px-2 py-1 rounded hover:bg-primary/10 hover:text-primary transition-colors">
+                                <button key={p.value} onClick={() => insertPlaceholder(p.value)} className="text-xs bg-hover-bg px-2 py-1 rounded hover:bg-primary/10 hover:text-primary transition-colors" disabled={isReadOnly}>
                                     {p.label}
                                 </button>
                             ))}
@@ -215,8 +232,8 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
             );
             case 'image': return (
                  <div className="space-y-4">
-                    <Input id="image-src" label="Image URL or Data" value={selectedBlock.content.src} onChange={e => updateBlock(selectedBlock.id, { ...selectedBlock.content, src: e.target.value })} />
-                    <Button variant="secondary" size="sm" className="w-full" onClick={() => setIsAiImageStudioOpen(true)} leftIcon={<Wand2 size={14} />}>Generate with AI</Button>
+                    <Input id="image-src" label="Image URL or Data" value={selectedBlock.content.src} onChange={e => updateBlock(selectedBlock.id, { ...selectedBlock.content, src: e.target.value })} disabled={isReadOnly} />
+                    <Button variant="secondary" size="sm" className="w-full" onClick={() => setIsAiImageStudioOpen(true)} leftIcon={<Wand2 size={14} />} disabled={isReadOnly}>Generate with AI</Button>
                 </div>
             );
             case 'lineItems': {
@@ -259,22 +276,22 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                             <div key={index} className="p-2 border border-border-subtle rounded-md space-y-2">
                                 <div className="flex justify-between items-center">
                                     <p className="text-sm font-medium">Item #{index + 1}</p>
-                                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeItem(index)}><Trash2 size={14} className="text-error"/></Button>
+                                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeItem(index)} disabled={isReadOnly}><Trash2 size={14} className="text-error"/></Button>
                                 </div>
-                                <Select id={`item-prod-${index}`} label="Product" value={item.productId} onChange={e => handleItemChange(index, 'productId', e.target.value)}>
+                                <Select id={`item-prod-${index}`} label="Product" value={item.productId} onChange={e => handleItemChange(index, 'productId', e.target.value)} disabled={isReadOnly}>
                                     <option value="">Select a product</option>
                                     {products.map((p: Product) => <option key={p.id} value={p.id}>{p.name}</option>)}
                                 </Select>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <Input id={`item-qty-${index}`} label="Quantity" type="number" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', parseInt(e.target.value))}/>
-                                    <Input id={`item-price-${index}`} label="Unit Price" type="number" step="0.01" value={item.unitPrice} onChange={e => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))}/>
+                                    <Input id={`item-qty-${index}`} label="Quantity" type="number" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', parseInt(e.target.value))} disabled={isReadOnly}/>
+                                    <Input id={`item-price-${index}`} label="Unit Price" type="number" step="0.01" value={item.unitPrice} onChange={e => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))} disabled={isReadOnly}/>
                                 </div>
                             </div>
                         ))}
                         </div>
-                        <Button size="sm" variant="secondary" className="w-full" onClick={addItem} leftIcon={<Plus size={14}/>}>Add Item</Button>
+                        <Button size="sm" variant="secondary" className="w-full" onClick={addItem} leftIcon={<Plus size={14}/>} disabled={isReadOnly}>Add Item</Button>
                         <div className="pt-4 border-t border-border-subtle">
-                            <Input id="tax-rate" label="Tax Rate (%)" type="number" value={taxRate} onChange={e => handleTaxChange(parseFloat(e.target.value) || 0)} />
+                            <Input id="tax-rate" label="Tax Rate (%)" type="number" value={taxRate} onChange={e => handleTaxChange(parseFloat(e.target.value) || 0)} disabled={isReadOnly} />
                         </div>
                     </div>
                 )
@@ -283,29 +300,23 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
         }
     };
 
-    const collaborators = useMemo(() => {
-        if (!templateToEdit) return [authenticatedUser];
-        const userIds = new Set(templateToEdit.permissions.map(p => p.userId));
-        userIds.add(authenticatedUser!.id); // Always include current user
-        return Array.from(userIds).map(id => userMap.get(id)).filter(Boolean);
-    }, [templateToEdit, userMap, authenticatedUser]);
-
-
     return (
         <PageWrapper>
             {/* Header */}
             <div className="flex justify-between items-center mb-4">
                 <Button variant="secondary" onClick={onClose} leftIcon={<ArrowLeft size={16} />}>Back to Templates</Button>
                 <div className="hidden md:flex items-center gap-4">
-                     <input id="template-name" placeholder="Enter Template Name..." value={template.name} onChange={e => setTemplate(p => ({...p, name: e.target.value}))} className="w-72 bg-transparent text-xl font-semibold focus:outline-none focus:border-b border-border-subtle" />
+                     <input id="template-name" placeholder="Enter Template Name..." value={template.name} onChange={e => setTemplate(p => ({...p, name: e.target.value}))} className="w-72 bg-transparent text-xl font-semibold focus:outline-none focus:border-b border-border-subtle" disabled={isReadOnly} />
                     <div className="flex -space-x-2">
                         {collaborators.slice(0, 4).map(user => (
                             user && <div key={user.id} title={user.name} className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-slate-500 border-2 border-card-bg">{user.name.charAt(0)}</div>
                         ))}
                         {collaborators.length > 4 && <div className="w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center text-xs font-bold border-2 border-card-bg">+{collaborators.length - 4}</div>}
                     </div>
-                    <Button variant="secondary" leftIcon={<Share2 size={16}/>} onClick={() => setIsShareModalOpen(true)}>Share</Button>
-                    <Button onClick={handleSave} disabled={isPending}>{isPending ? 'Saving...' : 'Save Template'}</Button>
+                    {!isNew && (
+                        <Button variant="secondary" leftIcon={<Share2 size={16}/>} onClick={() => setIsShareModalOpen(true)}>Share</Button>
+                    )}
+                    <Button onClick={handleSave} disabled={isPending || isReadOnly}>{isPending ? 'Saving...' : 'Save Template'}</Button>
                 </div>
             </div>
             
@@ -315,10 +326,10 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                 <Card className="col-span-3 p-4">
                     <h3 className="text-lg font-semibold text-text-heading mb-4">Toolbox</h3>
                     <div className="space-y-2">
-                        <Button variant="secondary" className="w-full justify-start" onClick={() => addBlock('header')} leftIcon={<Heading size={16}/>}>Header</Button>
-                        <Button variant="secondary" className="w-full justify-start" onClick={() => addBlock('text')} leftIcon={<Type size={16}/>}>Text Block</Button>
-                        <Button variant="secondary" className="w-full justify-start" onClick={() => addBlock('image')} leftIcon={<ImageIcon size={16}/>}>Image</Button>
-                        <Button variant="secondary" className="w-full justify-start" onClick={() => addBlock('lineItems')} leftIcon={<ListOrdered size={16}/>}>Line Items</Button>
+                        <Button variant="secondary" className="w-full justify-start" onClick={() => addBlock('header')} leftIcon={<Heading size={16}/>} disabled={isReadOnly}>Header</Button>
+                        <Button variant="secondary" className="w-full justify-start" onClick={() => addBlock('text')} leftIcon={<Type size={16}/>} disabled={isReadOnly}>Text Block</Button>
+                        <Button variant="secondary" className="w-full justify-start" onClick={() => addBlock('image')} leftIcon={<ImageIcon size={16}/>} disabled={isReadOnly}>Image</Button>
+                        <Button variant="secondary" className="w-full justify-start" onClick={() => addBlock('lineItems')} leftIcon={<ListOrdered size={16}/>} disabled={isReadOnly}>Line Items</Button>
                     </div>
                 </Card>
                 {/* Preview */}
@@ -327,17 +338,20 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                         {template.content.map((block, index) => (
                              <div 
                                 key={block.id} 
-                                className={`group relative p-2 border-2 rounded-md transition-all cursor-pointer ${
+                                className={`group relative p-2 border-2 rounded-md transition-all ${!isReadOnly ? 'cursor-pointer' : ''} ${
                                     selectedBlockId === block.id ? 'border-primary' : 'border-transparent hover:border-primary/30'
                                 } ${draggedIndex === index ? 'opacity-30' : ''}`}
-                                draggable onDragStart={e => handleDragStart(e, index)} onDragOver={e => handleDragOver(e, index)} onDragEnd={handleDragEnd}
-                                onClick={() => setSelectedBlockId(block.id)}
+                                draggable={!isReadOnly} onDragStart={e => !isReadOnly && handleDragStart(e, index)} onDragOver={e => !isReadOnly && handleDragOver(e, index)} onDragEnd={handleDragEnd}
+                                onClick={() => !isReadOnly && setSelectedBlockId(block.id)}
                             >
                                 {renderPreviewBlock(block)}
-                                <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Button size="icon" variant="secondary" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setSelectedBlockId(block.id); }}><Edit size={14}/></Button>
-                                    <Button size="icon" variant="danger" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); removeBlock(block.id); }}><Trash2 size={14}/></Button>
-                                </div>
+                                {!isReadOnly && (
+                                    <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button size="icon" variant="secondary" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setSelectedBlockId(block.id); }}><Edit size={14}/></Button>
+                                        <Button size="icon" variant="danger" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); removeBlock(block.id); }}><Trash2 size={14}/></Button>
+                                        <GripVertical className="cursor-move text-text-secondary/50"/>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

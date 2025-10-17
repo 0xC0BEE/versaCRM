@@ -1,8 +1,9 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { Page, Permission } from '../../types';
-import { Calendar, Handshake, Home, Inbox, LifeBuoy, Ticket, Users } from 'lucide-react';
+import { Calendar, Handshake, Home, Inbox, LifeBuoy, Users, FileText, FolderKanban, MessageSquare, Briefcase } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface SidebarProps {
 const TeamMemberSidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     const { currentPage, setCurrentPage, industryConfig } = useApp();
     const { hasPermission } = useAuth();
+    const { unreadCount } = useNotifications();
 
     const handleNavigation = (page: Page) => {
         setCurrentPage(page);
@@ -22,12 +24,15 @@ const TeamMemberSidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     
     const navItems: { page: Page; icon: React.ElementType; label?: string; permission?: Permission }[] = [
         { page: 'Dashboard', icon: Home },
+        { page: 'Inbox', icon: Inbox, permission: 'contacts:read:own' },
+        { page: 'TeamChat', icon: MessageSquare, label: 'Team Chat', permission: 'contacts:read:own' },
         { page: 'Contacts', icon: Users, label: industryConfig.contactNamePlural, permission: 'contacts:read:own' },
         { page: 'Deals', icon: Handshake, permission: 'deals:read' },
+        { page: 'Projects', icon: FolderKanban, permission: 'deals:read' },
         { page: 'Tickets', icon: LifeBuoy, permission: 'tickets:read' },
-        { page: 'Interactions', icon: Inbox },
-        { page: 'Calendar', icon: Calendar },
-        { page: 'Tasks', icon: Ticket },
+        { page: 'Documents', icon: FileText, permission: 'deals:read' },
+        { page: 'Tasks', icon: Briefcase, permission: 'contacts:read:own' },
+        { page: 'Calendar', icon: Calendar, permission: 'contacts:read:own' },
     ];
 
     return (
@@ -49,7 +54,12 @@ const TeamMemberSidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                                 }`}
                             >
                                 <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${currentPage === item.page ? 'text-primary' : 'text-text-secondary group-hover:text-text-primary'}`} aria-hidden="true" />
-                                {item.label || item.page}
+                                <span className="flex-1">{item.label || item.page}</span>
+                                {item.page === 'Inbox' && unreadCount > 0 && (
+                                     <span className="ml-auto inline-block py-0.5 px-2 text-xs font-semibold rounded-full bg-primary text-white">
+                                        {unreadCount}
+                                    </span>
+                                )}
                             </button>
                         )
                     ))}

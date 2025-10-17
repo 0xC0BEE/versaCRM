@@ -2,10 +2,10 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { Project, AnyContact, Task, Deal, User, Document as DocType } from '../../types';
+import { Project, AnyContact, Task, Deal, User, Document as DocType, ClientChecklist, ClientChecklistTemplate } from '../../types';
 import PageWrapper from '../layout/PageWrapper';
 import Button from '../ui/Button';
-import { ArrowLeft, Edit, Plus, File, FileImage, FileText, Download, Eye, UploadCloud, Trash2, EyeOff } from 'lucide-react';
+import { ArrowLeft, Edit, Plus, File, FileImage, FileText, Download, Eye, UploadCloud, Trash2, EyeOff, CheckCircle } from 'lucide-react';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import { Card } from '../ui/Card';
 import Tabs from '../ui/Tabs';
@@ -18,6 +18,7 @@ import Textarea from '../ui/Textarea';
 import { useDocuments } from '../../hooks/useDocuments';
 import { fileToDataUrl } from '../../utils/fileUtils';
 import FilePreviewModal from '../ui/FilePreviewModal';
+import Modal from '../ui/Modal';
 
 interface ProjectWorkspaceProps {
     projectId: string;
@@ -168,6 +169,9 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ projectId, onBack }
                 <div className="space-y-3">
                     {[...(project.comments || [])].reverse().map(comment => {
                         const user = userMap.get(comment.userId);
+                        const taskMentionRegex = /\[RE: Task "(.*?)"\](.*)/s;
+                        const match = comment.message.match(taskMentionRegex);
+
                         return (
                             <div key={comment.id} className="flex items-start gap-3">
                                 <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center font-bold text-slate-500">{user?.name.charAt(0)}</div>
@@ -177,7 +181,16 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ projectId, onBack }
                                         {user?.isClient && <span className="ml-2 text-xs font-semibold px-1.5 py-0.5 rounded-sm bg-blue-500/10 text-blue-500">Client</span>}
                                         <span className="text-xs text-text-secondary ml-2">{formatDistanceToNow(new Date(comment.timestamp), { addSuffix: true })}</span>
                                     </p>
-                                    <p className="text-sm text-text-secondary mt-1 whitespace-pre-wrap">{comment.message}</p>
+                                    {match ? (
+                                        <div className="mt-1">
+                                            <div className="p-2 bg-slate-200/50 dark:bg-slate-700/50 rounded-md text-xs italic border-l-2 border-slate-400 mb-2">
+                                                In reply to task: "{match[1]}"
+                                            </div>
+                                            <p className="text-sm text-text-secondary whitespace-pre-wrap">{match[2].trim()}</p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-text-secondary mt-1 whitespace-pre-wrap">{comment.message}</p>
+                                    )}
                                 </div>
                             </div>
                         );
@@ -292,6 +305,81 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ projectId, onBack }
         )
     };
 
+    const ChecklistsTab = () => {
+        const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+
+        const AssignedChecklist: React.FC<{ checklist: ClientChecklist }> = ({ checklist }) => {
+            const completedCount = checklist.items.filter(item => item.isCompleted).length;
+            const totalCount = checklist.items.length;
+            const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+
+            return (
+                <div className="p-4 border border-border-subtle rounded-lg">
+                    <h5 className="font-semibold">{checklist.name}</h5>
+                    <div className="flex items-center gap-2 text-xs text-text-secondary my-2">
+                        <div className="w-full bg-hover-bg rounded-full h-1.5">
+                            <div className="bg-primary h-1.5 rounded-full" style={{ width: `${progress}%` }}></div>
+                        </div>
+                        <span>{completedCount} / {totalCount}</span>
+                    </div>
+                    <ul className="space-y-1 text-sm">
+                        {checklist.items.map(item => (
+                            <li key={item.id} className="flex items-center gap-2">
+                                <CheckCircle size={14} className={item.isCompleted ? 'text-success' : 'text-gray-300'} />
+                                <span className={item.isCompleted ? 'line-through text-text-secondary' : ''}>{item.text}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            );
+        };
+
+        return (
+            <div>
+                <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-semibold">Client Checklists</h4>
+                    <Button size="sm" variant="secondary" onClick={() => setIsAssignModalOpen(true)} leftIcon={<Plus size={14} />}>Assign Checklist</Button>
+                </div>
+                 <div className="space-y-4">
+                    {(project.checklists || []).map(cl => <AssignedChecklist key={cl.id} checklist={cl} />)}
+                    {(project.checklists || []).length === 0 && (
+                        <p className="text-sm text-center py-4 text-text-secondary">No checklists assigned to this project yet.</p>
+                    )}
+                </div>
+                {isAssignModalOpen && <AssignChecklistModal project={project} isOpen={isAssignModalOpen} onClose={() => setIsAssignModalOpen(false)} />}
+            </div>
+        );
+    };
+
+    const AssignChecklistModal: React.FC<{ project: Project; isOpen: boolean; onClose: () => void }> = ({ project, isOpen, onClose }) => {
+        const { clientChecklistTemplatesQuery, assignChecklistToProjectMutation } = useData();
+        const { data: templates = [], isLoading } = clientChecklistTemplatesQuery;
+        
+        const handleAssign = (templateId: string) => {
+            assignChecklistToProjectMutation.mutate({ projectId: project.id, templateId }, {
+                onSuccess: () => {
+                    toast.success("Checklist assigned!");
+                    onClose();
+                }
+            });
+        };
+
+        return (
+            <Modal isOpen={isOpen} onClose={onClose} title="Assign a Checklist">
+                {isLoading ? <LoadingSpinner/> : (
+                    <div className="space-y-2">
+                        {templates.map((template: ClientChecklistTemplate) => (
+                            <div key={template.id} className="p-2 flex justify-between items-center rounded-md hover:bg-hover-bg">
+                                <span>{template.name}</span>
+                                <Button size="sm" onClick={() => handleAssign(template.id)} disabled={assignChecklistToProjectMutation.isPending}>Assign</Button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </Modal>
+        );
+    };
+
     return (
         <PageWrapper>
             <div className="flex justify-between items-center mb-6">
@@ -303,11 +391,12 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ projectId, onBack }
             </div>
             <Card>
                 <div className="p-6">
-                    <Tabs tabs={['Tasks', 'Discussion', 'Files', 'Notes']} activeTab={activeTab} setActiveTab={setActiveTab} />
+                    <Tabs tabs={['Tasks', 'Discussion', 'Files', 'Checklists', 'Notes']} activeTab={activeTab} setActiveTab={setActiveTab} />
                     <div className="mt-6">
                         {activeTab === 'Tasks' && <TasksTab />}
                         {activeTab === 'Discussion' && <DiscussionTab />}
                         {activeTab === 'Files' && <FilesTab />}
+                        {activeTab === 'Checklists' && <ChecklistsTab />}
                         {activeTab === 'Notes' && <NotesTab />}
                     </div>
                 </div>

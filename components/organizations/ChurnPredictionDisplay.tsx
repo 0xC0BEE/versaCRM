@@ -6,7 +6,7 @@ import { Loader } from 'lucide-react';
 
 interface ChurnPredictionDisplayProps {
     contact: AnyContact;
-    onOpenPrediction: (contact: AnyContact, prediction: ContactChurnPrediction) => void;
+    onOpenPrediction?: (contact: AnyContact, prediction: ContactChurnPrediction) => void;
 }
 
 const ChurnPredictionDisplay: React.FC<ChurnPredictionDisplayProps> = ({ contact, onOpenPrediction }) => {
@@ -35,7 +35,7 @@ const ChurnPredictionDisplay: React.FC<ChurnPredictionDisplayProps> = ({ contact
         <button
             onClick={(e) => {
                 e.stopPropagation();
-                onOpenPrediction(contact, prediction);
+                if (onOpenPrediction) onOpenPrediction(contact, prediction);
             }}
             className={`px-2 py-0.5 rounded-full text-xs font-bold border transition-all ${getBackgroundColor(prediction.risk)}`}
         >

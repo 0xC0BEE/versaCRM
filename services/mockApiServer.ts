@@ -8,7 +8,7 @@ import {
     MOCK_SUPPLIERS, MOCK_WAREHOUSES, MOCK_CUSTOM_OBJECT_DEFINITIONS, MOCK_CUSTOM_OBJECT_RECORDS,
     MOCK_ANONYMOUS_SESSIONS, MOCK_APP_MARKETPLACE_ITEMS, MOCK_INSTALLED_APPS, MOCK_SANDBOXES, MOCK_DOCUMENT_TEMPLATES,
     MOCK_PROJECTS, MOCK_PROJECT_PHASES, MOCK_PROJECT_TEMPLATES, MOCK_CANNED_RESPONSES,
-    MOCK_SURVEYS, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_SNAPSHOTS, MOCK_TEAM_CHANNELS, MOCK_TEAM_CHAT_MESSAGES
+    MOCK_SURVEYS, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_SNAPSHOTS, MOCK_TEAM_CHANNELS, MOCK_TEAM_CHAT_MESSAGES, MOCK_CLIENT_CHECKLIST_TEMPLATES
 } from './mockData';
 import { industryConfigs } from '../config/industryConfig';
 import { generateDashboardData } from './reportGenerator';
@@ -16,7 +16,7 @@ import { checkAndTriggerWorkflows } from './workflowService';
 import { recalculateScoreForContact } from './leadScoringService';
 import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
-import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage } from '../types';
+import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, Notification, ClientChecklist } from '../types';
 
 // Hydrate the in-memory sandbox list from localStorage to persist it across reloads.
 const storedSandboxes = JSON.parse(localStorage.getItem('sandboxesList') || '[]');
@@ -63,6 +63,7 @@ const mainDB = {
     surveys: MOCK_SURVEYS,
     surveyResponses: MOCK_SURVEY_RESPONSES,
     snapshots: MOCK_SNAPSHOTS,
+    clientChecklistTemplates: MOCK_CLIENT_CHECKLIST_TEMPLATES,
 };
 
 let sandboxedDBs: { [key: string]: typeof mainDB } = JSON.parse(localStorage.getItem('sandboxedDBs') || '{}');
@@ -246,10 +247,37 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
                     channelId: channelId,
                     userId: body.userId,
                     message: body.message,
+                    threadId: body.threadId,
                     timestamp: new Date().toISOString(),
                 };
                 MOCK_TEAM_CHAT_MESSAGES.push(newMessage);
-                return respond(newMessage, 201);
+                
+                // Generate notifications for @mentions
+                const notifications: Notification[] = [];
+                const mentionRegex = /@([A-Za-z\s]+)/g;
+                let match;
+                const sender = db.users.find(u => u.id === body.userId);
+                const channel = MOCK_TEAM_CHANNELS.find(c => c.id === channelId);
+
+                while ((match = mentionRegex.exec(body.message)) !== null) {
+                    const mentionedName = match[1].trim();
+                    const mentionedUser = db.users.find(u => u.name === mentionedName && u.id !== body.userId);
+
+                    if (mentionedUser && sender && channel) {
+                        const newNotification: Notification = {
+                            id: `notif_${Date.now()}_${Math.random()}`,
+                            userId: mentionedUser.id,
+                            type: 'chat_mention',
+                            message: `${sender.name} mentioned you in #${channel.name}`,
+                            timestamp: new Date().toISOString(),
+                            isRead: false,
+                            linkTo: { page: 'TeamChat', recordId: channel.id },
+                        };
+                        notifications.push(newNotification);
+                    }
+                }
+
+                return respond({ message: newMessage, notifications }, 201);
             }
         }
 
@@ -634,6 +662,43 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     if (path.startsWith('/api/v1/projects')) {
         const projectId = path.split('/')[4];
 
+        if (projectId && path.includes('/assign-checklist')) {
+            const { templateId } = body;
+            const projectIndex = db.projects.findIndex(p => p.id === projectId);
+            const template = db.clientChecklistTemplates.find(t => t.id === templateId);
+            if (projectIndex > -1 && template) {
+                const newChecklist: ClientChecklist = {
+                    id: `cl_${Date.now()}`,
+                    projectId,
+                    templateId,
+                    name: template.name,
+                    items: template.items.map(item => ({...item, id: `cli_${Date.now()}_${Math.random()}`, isCompleted: false }))
+                };
+                if (!db.projects[projectIndex].checklists) {
+                    db.projects[projectIndex].checklists = [];
+                }
+                db.projects[projectIndex].checklists!.push(newChecklist);
+                return respond(db.projects[projectIndex]);
+            }
+            return respond({ message: 'Project or template not found' }, 404);
+        }
+
+        if (projectId && path.includes('/update-checklist')) {
+            const { checklist } = body;
+            const projectIndex = db.projects.findIndex(p => p.id === projectId);
+            if (projectIndex > -1) {
+                const project = db.projects[projectIndex];
+                if (project.checklists) {
+                    const checklistIndex = project.checklists.findIndex(cl => cl.id === checklist.id);
+                    if (checklistIndex > -1) {
+                        project.checklists[checklistIndex] = checklist;
+                        return respond(project);
+                    }
+                }
+            }
+            return respond({ message: 'Project or checklist not found' }, 404);
+        }
+
         if (projectId && path.includes('/comments')) {
             const projectIndex = db.projects.findIndex(p => p.id === projectId);
             if (projectIndex > -1) {
@@ -697,6 +762,14 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
             return respond(db.projectPhases.filter(p => p.organizationId === orgId));
         }
     }
+
+    if (path.startsWith('/api/v1/client-checklist-templates')) {
+        if (method === 'GET') {
+            const orgId = searchParams.get('orgId');
+            return respond(db.clientChecklistTemplates.filter(t => t.organizationId === orgId));
+        }
+    }
+
 
     // Add handler for email sync
     if (path.endsWith('/api/v1/email/sync')) {

@@ -298,6 +298,27 @@ export interface ProjectComment {
   timestamp: string;
 }
 
+export interface ClientChecklistItem {
+    id: string;
+    text: string;
+    isCompleted: boolean;
+}
+
+export interface ClientChecklist {
+    id: string;
+    projectId: string;
+    templateId: string;
+    name: string;
+    items: ClientChecklistItem[];
+}
+
+export interface ClientChecklistTemplate {
+    id: string;
+    organizationId: string;
+    name: string;
+    items: { text: string }[];
+}
+
 export interface Project {
   id: string;
   organizationId: string;
@@ -309,6 +330,7 @@ export interface Project {
   assignedToId?: string;
   comments?: ProjectComment[];
   notes?: string;
+  checklists?: ClientChecklist[];
 }
 
 // Unified Inbox Types
@@ -494,7 +516,7 @@ export interface ThemeContextType {
 export interface Notification {
     id: string;
     userId: string;
-    type: 'mention' | 'task_assigned' | 'deal_won' | 'ticket_assigned' | 'ticket_reply';
+    type: 'mention' | 'task_assigned' | 'deal_won' | 'ticket_assigned' | 'ticket_reply' | 'chat_mention';
     message: string;
     timestamp: string;
     isRead: boolean;
@@ -971,6 +993,7 @@ export interface DataContextType {
     surveysQuery: any;
     surveyResponsesQuery: any;
     snapshotsQuery: any;
+    clientChecklistTemplatesQuery: any;
 
     // Mutations
     createOrganizationMutation: any;
@@ -1086,4 +1109,6 @@ export interface DataContextType {
     deleteSurveyMutation: any;
     createSnapshotMutation: any;
     deleteSnapshotMutation: any;
+    assignChecklistToProjectMutation: any;
+    updateClientChecklistMutation: any;
 }

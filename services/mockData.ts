@@ -11,7 +11,8 @@ import {
     Dashboard,
     Snapshot,
     TeamChannel,
-    TeamChatMessage
+    TeamChatMessage,
+    ClientChecklistTemplate
 } from '../types';
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
@@ -186,11 +187,47 @@ export const MOCK_PROJECT_TEMPLATES: ProjectTemplate[] = [
     ]},
 ];
 
+export const MOCK_CLIENT_CHECKLIST_TEMPLATES: ClientChecklistTemplate[] = [
+    {
+        id: 'cct_1',
+        organizationId: 'org_1',
+        name: 'New Client Onboarding',
+        items: [
+            { text: 'Complete initial questionnaire' },
+            { text: 'Upload required identification documents' },
+            { text: 'Schedule kick-off call' },
+            { text: 'Review and sign service agreement' },
+        ]
+    },
+    {
+        id: 'cct_2',
+        organizationId: 'org_1',
+        name: 'Document Collection',
+        items: [
+            { text: 'Upload Proof of Address' },
+            { text: 'Upload Signed Contract' },
+        ]
+    }
+];
+
 export const MOCK_PROJECTS: Project[] = [
     { id: 'proj_1', organizationId: 'org_1', name: 'Onboarding for Wellness Program', phaseId: 'phase_3', contactId: 'contact_2', dealId: 'deal_1', createdAt: '2023-07-01T10:00:00Z', assignedToId: 'user_admin_1',
       comments: [
         { id: 'comment_1', userId: 'user_admin_1', message: 'Kick-off call scheduled for next week.', timestamp: '2023-07-02T11:00:00Z'},
         { id: 'comment_2', userId: 'user_team_1', message: 'I\'ve sent the welcome packet to the client.', timestamp: '2023-07-03T15:30:00Z'},
+      ],
+      checklists: [
+        {
+            id: 'cc_1',
+            projectId: 'proj_1',
+            templateId: 'cct_1',
+            name: 'New Client Onboarding',
+            items: [
+                { id: 'item_1', text: 'Complete initial questionnaire', isCompleted: true },
+                { id: 'item_2', text: 'Upload required identification documents', isCompleted: false },
+                { id: 'item_3', text: 'Schedule kick-off call', isCompleted: false },
+            ]
+        }
       ],
       notes: '### Project Brief\nThis project is to onboard the new client, Innovate Financial, for their Corporate Wellness Program.\n\n**Key Stakeholders:**\n- Jane Doe (Client)\n- Alice Admin (Project Lead)\n\n**Timeline:**\n- Kick-off: Week 1\n- Implementation: Weeks 2-3\n- Go-live: Week 4'
     },
@@ -229,8 +266,10 @@ export const MOCK_TEAM_CHAT_MESSAGES: TeamChatMessage[] = [
     { id: 'msg_3', channelId: 'chan_sales', userId: 'user_admin_1', message: 'Heads up, I just closed the Corporate Wellness Program deal for $25k!', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
     { id: 'msg_4', channelId: 'chan_sales', userId: 'user_team_1', message: 'Amazing work, Alice! Congrats!', timestamp: new Date(Date.now() - 1000 * 60 * 28).toISOString() },
 
-    // Project channel
+    // Project channel with a thread
     { id: 'msg_5', channelId: 'chan_proj_wellness', userId: 'user_admin_1', message: 'Kicking off this private channel to discuss the wellness program deal. @Charlie Team I need you to prep the onboarding materials.', timestamp: new Date(Date.now() - 1000 * 60 * 25).toISOString() },
+    { id: 'msg_6', channelId: 'chan_proj_wellness', userId: 'user_team_1', message: 'Got it, on it now.', timestamp: new Date(Date.now() - 1000 * 60 * 24).toISOString(), threadId: 'msg_5' },
+    { id: 'msg_7', channelId: 'chan_proj_wellness', userId: 'user_admin_1', message: 'Thanks! Let me know if you need the design assets.', timestamp: new Date(Date.now() - 1000 * 60 * 23).toISOString(), threadId: 'msg_5' },
 ];
 
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { TeamChannel, TeamChatMessage, User } from '../../types';
-import { Hash, Lock, Send, Loader, Plus, Users } from 'lucide-react';
+import { Hash, Lock, Send, Loader, Plus, Users, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import Button from '../ui/Button';
 import Textarea from '../ui/Textarea';
@@ -11,13 +11,18 @@ import Input from '../ui/Input';
 import Switch from '../ui/Switch';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
 import toast from 'react-hot-toast';
+import ThreadSidebar from './ThreadSidebar';
+import { useApp } from '../../contexts/AppContext';
 
 const TeamChatPage: React.FC = () => {
     const { teamChannelsQuery, teamMembersQuery } = useData();
     const { authenticatedUser } = useAuth();
+    const { initialRecordLink, setInitialRecordLink } = useApp();
+
     const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
     const [isCreateChannelModalOpen, setIsCreateChannelModalOpen] = useState(false);
     const [isManageMembersModalOpen, setIsManageMembersModalOpen] = useState(false);
+    const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
 
     const { data: channels = [], isLoading: channelsLoading } = teamChannelsQuery;
     const { data: teamMembers = [] } = teamMembersQuery;
@@ -29,10 +34,25 @@ const TeamChatPage: React.FC = () => {
             setSelectedChannelId(channels[0].id);
         }
     }, [channels, selectedChannelId]);
+    
+    useEffect(() => {
+        if (initialRecordLink?.page === 'TeamChat' && initialRecordLink.recordId) {
+            // check if channel exists before setting
+            if ((channels as TeamChannel[]).some((c: TeamChannel) => c.id === initialRecordLink.recordId)) {
+                setSelectedChannelId(initialRecordLink.recordId);
+            }
+            setInitialRecordLink(null); // Clear after use
+        }
+    }, [initialRecordLink, channels, setInitialRecordLink]);
 
     const selectedChannel = useMemo(() => {
         return (channels as TeamChannel[]).find(c => c.id === selectedChannelId);
     }, [channels, selectedChannelId]);
+    
+    // When channel changes, close any open thread
+    useEffect(() => {
+        setActiveThreadId(null);
+    }, [selectedChannelId]);
 
     const ChannelList = () => (
         <div className="flex flex-col h-full bg-card-bg border-r border-border-subtle">
@@ -68,7 +88,26 @@ const TeamChatPage: React.FC = () => {
         const messagesEndRef = useRef<HTMLDivElement>(null);
 
         useEffect(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+        }, [messages]);
+
+        const { mainMessages, threads } = useMemo(() => {
+            const threads = new Map<string, TeamChatMessage[]>();
+            const mainMessages: TeamChatMessage[] = [];
+
+            (messages as TeamChatMessage[]).forEach(message => {
+                if (message.threadId) {
+                    if (!threads.has(message.threadId)) {
+                        threads.set(message.threadId, []);
+                    }
+                    threads.get(message.threadId)!.push(message);
+                } else {
+                    mainMessages.push(message);
+                }
+            });
+            threads.forEach(replies => replies.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()));
+            mainMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+            return { mainMessages, threads };
         }, [messages]);
 
         const handleSendMessage = (e: React.FormEvent) => {
@@ -85,27 +124,36 @@ const TeamChatPage: React.FC = () => {
 
         const Message: React.FC<{ msg: TeamChatMessage }> = ({ msg }) => {
             const user = userMap.get(msg.userId);
-            const isMe = msg.userId === authenticatedUser?.id;
+            const replies = threads.get(msg.id) || [];
+            
             return (
-                <div className={`flex items-start gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
+                <div className="group relative flex items-start gap-3 p-2 rounded-md hover:bg-hover-bg">
                      <div className="w-8 h-8 rounded-md bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center font-bold text-slate-500">{user?.name.charAt(0)}</div>
-                    <div className={`flex-grow ${isMe ? 'text-right' : ''}`}>
+                    <div className="flex-grow">
                         <p className="text-sm">
-                            {isMe ? (
-                                <>
-                                    <span className="text-xs text-text-secondary mr-2">{format(new Date(msg.timestamp), 'p')}</span>
-                                    <span className="font-semibold text-text-primary">{user?.name}</span>
-                                </>
-                            ) : (
-                                <>
-                                    <span className="font-semibold text-text-primary">{user?.name}</span>
-                                    <span className="text-xs text-text-secondary ml-2">{format(new Date(msg.timestamp), 'p')}</span>
-                                </>
-                            )}
+                            <span className="font-semibold text-text-primary">{user?.name}</span>
+                            <span className="text-xs text-text-secondary ml-2">{format(new Date(msg.timestamp), 'p')}</span>
                         </p>
-                        <div className={`mt-1 p-2 rounded-md inline-block ${isMe ? 'bg-primary text-white' : 'bg-hover-bg'}`}>
-                            <p className="text-sm whitespace-pre-wrap text-left">{msg.message}</p>
+                        <div className="mt-1">
+                            <p className="text-sm whitespace-pre-wrap text-left text-text-secondary">{msg.message}</p>
                         </div>
+                        {replies.length > 0 && (
+                            <div className="mt-2">
+                                <button onClick={() => setActiveThreadId(msg.id)} className="text-xs font-semibold text-primary hover:underline flex items-center gap-1.5">
+                                    <div className="flex -space-x-1">
+                                        {[...new Set(replies.map(r => r.userId))].slice(0, 3).map(userId => (
+                                            <div key={userId} className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-[8px] border border-card-bg">{userMap.get(userId)?.name.charAt(0)}</div>
+                                        ))}
+                                    </div>
+                                    <span>{replies.length} {replies.length > 1 ? 'replies' : 'reply'}</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                    <div className="absolute top-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="secondary" size="sm" onClick={() => setActiveThreadId(msg.id)} leftIcon={<MessageSquare size={14}/>}>
+                            Reply
+                        </Button>
                     </div>
                 </div>
             );
@@ -129,9 +177,9 @@ const TeamChatPage: React.FC = () => {
                         </button>
                     </div>
                 </div>
-                <div className="flex-grow overflow-y-auto p-4 space-y-4">
+                <div className="flex-grow overflow-y-auto p-4 space-y-2">
                     {messagesLoading ? <div className="flex justify-center items-center h-full"><Loader className="animate-spin"/></div> : (
-                        messages.map((msg: TeamChatMessage) => <Message key={msg.id} msg={msg} />)
+                        mainMessages.map((msg: TeamChatMessage) => <Message key={msg.id} msg={msg} />)
                     )}
                     <div ref={messagesEndRef} />
                 </div>
@@ -223,8 +271,17 @@ const TeamChatPage: React.FC = () => {
             <div className="w-64 flex-shrink-0">
                 <ChannelList />
             </div>
-            <div className="flex-1 bg-bg-primary">
-                <MessagePane />
+            <div className="flex-1 bg-bg-primary flex">
+                <div className="flex-1 flex flex-col">
+                    <MessagePane />
+                </div>
+                {activeThreadId && selectedChannelId && (
+                    <ThreadSidebar 
+                        channelId={selectedChannelId} 
+                        threadId={activeThreadId}
+                        onClose={() => setActiveThreadId(null)}
+                    />
+                )}
             </div>
             <CreateChannelModal />
             {selectedChannel && <ManageMembersModal />}
