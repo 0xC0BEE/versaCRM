@@ -20,7 +20,8 @@ import {
     ClientChecklistTemplate,
     ClientChecklist,
     SubscriptionPlan,
-    SystemAuditLogEntry
+    SystemAuditLogEntry,
+    Relationship
 } from '../types';
 
 // Create a mutable reference to the fetch implementation that can be overridden by the mock server.
@@ -67,6 +68,8 @@ const apiClient = {
     bulkUpdateContactStatus: ({ ids, status }: { ids: string[]; status: ContactStatus }): Promise<void> => fetchImpl(`${API_BASE}/contacts/bulk-status-update`, { method: 'POST', body: JSON.stringify({ ids, status }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     getContactChurnPrediction: (contactId: string): Promise<ContactChurnPrediction> => fetchImpl(`${API_BASE}/contacts/${contactId}/churn-prediction`).then(handleResponse),
     getContactNextBestAction: (contactId: string): Promise<NextBestAction> => fetchImpl(`${API_BASE}/contacts/${contactId}/next-best-action`).then(handleResponse),
+    addContactRelationship: ({ contactId, relationship }: { contactId: string, relationship: Relationship }): Promise<AnyContact> => fetchImpl(`${API_BASE}/contacts/${contactId}/relationships`, { method: 'POST', body: JSON.stringify(relationship), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    deleteContactRelationship: ({ contactId, relatedContactId }: { contactId: string, relatedContactId: string }): Promise<AnyContact> => fetchImpl(`${API_BASE}/contacts/${contactId}/relationships/${relatedContactId}`, { method: 'DELETE' }).then(handleResponse),
     
     // --- TEAM & ROLES ---
     getTeamMembers: (orgId: string): Promise<User[]> => fetchImpl(`${API_BASE}/team?orgId=${orgId}`).then(handleResponse),

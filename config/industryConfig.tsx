@@ -82,6 +82,14 @@ export let industryConfigs: Record<Industry, IndustryConfig> = {
                 { dataKey: 'contactsByStatus', title: 'Clients by Status', type: 'pie' },
                 { dataKey: 'appointmentsByMonth', title: 'Meetings This Year', type: 'bar' },
             ]
+        },
+        complianceFeatures: {
+            enabled: true,
+            tabName: 'Compliance (KYC/AML)',
+        },
+        relationshipMapping: {
+            enabled: true,
+            tabName: 'Relationships',
         }
     },
     Legal: {

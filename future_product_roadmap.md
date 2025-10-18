@@ -66,8 +66,8 @@ This document outlines the next strategic evolution of the VersaCRM platform, bu
     -   [x] Build connectors for EMR/EHR (Electronic Health Record) systems.
     -   [x] Develop specialized patient scheduling and appointment management tools.
 -   [ ] **Financial Services Cloud:**
-    -   [ ] Add compliance tracking features for regulations like KYC (Know Your Customer) and AML (Anti-Money Laundering).
-    -   [ ] Create advanced data models for household/relationship mapping (e.g., connecting family members, financial advisors, and accountants).
+    -   [x] Add compliance tracking features for regulations like KYC (Know Your Customer) and AML (Anti-Money Laundering).
+    -   [x] Create advanced data models for household/relationship mapping (e.g., connecting family members, financial advisors, and accountants).
     -   [ ] Develop tools for managing financial accounts, insurance policies, and investment portfolios as custom objects.
 -   [ ] **Vertical-Specific AI Models:**
     -   [ ] Fine-tune separate Gemini models on industry-specific data, terminology, and regulations.

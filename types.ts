@@ -38,6 +38,22 @@ export type Permission =
   | 'inventory:manage'
   | 'voip:use';
 
+// Financial Services Vertical Types
+export type KYCStatus = 'Not Started' | 'Pending' | 'Verified' | 'Rejected';
+export type AMLRisk = 'Low' | 'Medium' | 'High';
+
+export interface FinancialComplianceData {
+    kycStatus: KYCStatus;
+    lastKycCheck?: string;
+    amlRisk: AMLRisk;
+    lastAmlCheck?: string;
+    amlNotes?: string;
+}
+
+export interface Relationship {
+    relatedContactId: string;
+    relationshipType: string;
+}
 
 // Core Data Models
 export interface Organization {
@@ -85,12 +101,13 @@ export interface AnyContact {
     enrollments?: CampaignEnrollment[];
     transactions?: Transaction[];
     auditLogs?: AuditLogEntry[];
-    relationships?: any[];
+    relationships?: Relationship[];
     leadScore?: number;
     avatar?: string;
     campaignEnrollments?: CampaignEnrollment[];
     structuredRecords?: StructuredRecord[];
     subscriptions?: ContactSubscription[];
+    financialComplianceData?: FinancialComplianceData;
 }
 
 export interface Interaction {
@@ -522,6 +539,14 @@ export interface IndustryConfig {
     dashboard: {
         kpis: DashboardKpi[];
         charts: DashboardChart[];
+    };
+    complianceFeatures?: {
+        enabled: boolean;
+        tabName: string;
+    };
+    relationshipMapping?: {
+        enabled: boolean;
+        tabName: string;
     };
 }
 
@@ -1135,6 +1160,8 @@ export interface DataContextType {
     deleteContactMutation: any;
     bulkDeleteContactsMutation: any;
     bulkUpdateContactStatusMutation: any;
+    addContactRelationshipMutation: any;
+    deleteContactRelationshipMutation: any;
     createUserMutation: any;
     updateUserMutation: any;
     deleteUserMutation: any;

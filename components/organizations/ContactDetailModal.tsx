@@ -18,6 +18,7 @@ import NextBestActionDisplay from './NextBestActionDisplay';
 import { useData } from '../../contexts/DataContext';
 import JourneyTab from './detail_tabs/JourneyTab';
 import SubscriptionsTab from './detail_tabs/SubscriptionsTab';
+import ComplianceTab from './detail_tabs/ComplianceTab';
 
 interface ContactDetailModalProps {
     isOpen: boolean;
@@ -67,9 +68,15 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
     };
 
     const tabs = useMemo(() => {
-        const coreTabs = ['Profile', 'Journey', 'History', 'Subscriptions', industryConfig.ordersTabName, industryConfig.enrollmentsTabName, 'Billing', 'Email', 'Documents'];
+        let coreTabs = ['Profile', 'Journey', 'History', 'Subscriptions', industryConfig.ordersTabName, industryConfig.enrollmentsTabName, 'Billing', 'Email', 'Documents'];
         if(industryConfig.structuredRecordTypes.length > 0) {
             coreTabs.splice(3, 0, industryConfig.structuredRecordTabName);
+        }
+        if (industryConfig.complianceFeatures?.enabled) {
+            coreTabs.splice(3, 0, industryConfig.complianceFeatures.tabName);
+        }
+        if (industryConfig.relationshipMapping?.enabled) {
+            coreTabs.splice(4, 0, industryConfig.relationshipMapping.tabName);
         }
         
         const hasWebsiteActivity = contact?.interactions?.some(i => i.type === 'Site Visit');
@@ -90,6 +97,10 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
                 return <ProfileTab contact={contact} onSave={onSave} onDelete={onDelete} isSaving={isSaving} isDeleting={isDeleting} />;
             case 'Journey':
                 return <JourneyTab contact={contact} />;
+            case industryConfig.complianceFeatures?.tabName:
+                return <ComplianceTab contact={contact} />;
+            case industryConfig.relationshipMapping?.tabName:
+                return <RelationshipsTab contact={contact} isReadOnly={false} />;
             case 'History':
                 return <HistoryTab contact={contact} />;
             case 'Subscriptions':

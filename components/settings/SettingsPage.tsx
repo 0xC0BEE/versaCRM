@@ -11,6 +11,7 @@ import ChannelsAndLeadGenSettings from './ChannelsAndLeadGenSettings';
 import DeveloperSettings from './DeveloperSettings';
 import SubscriptionSettings from './SubscriptionSettings';
 import ComplianceSettings from './ComplianceSettings';
+import OrganizationProfileSettings from './OrganizationProfileSettings';
 
 // Standalone components for tabs
 import RolesAndPermissionsPage from './RolesAndPermissionsPage';
@@ -19,6 +20,7 @@ const SettingsPage: React.FC = () => {
     const { hasPermission } = useAuth();
     
     const allTabs = [
+        { name: 'Organization', component: <OrganizationProfileSettings /> },
         { name: 'Users & Roles', permission: 'settings:manage:roles', component: <RolesAndPermissionsPage /> },
         { name: 'Objects & Fields', component: <ObjectsAndFieldsSettings /> },
         { name: 'Appearance', component: <AppearanceSettings /> },

@@ -18,7 +18,7 @@ import { checkAndTriggerWorkflows } from './workflowService';
 import { recalculateScoreForContact } from './leadScoringService';
 import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
-import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, Notification, ClientChecklist, SubscriptionPlan } from '../types';
+import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, Notification, ClientChecklist, SubscriptionPlan, Relationship } from '../types';
 
 // Hydrate the in-memory sandbox list from localStorage to persist it across reloads.
 const storedSandboxes = JSON.parse(localStorage.getItem('sandboxesList') || '[]');
@@ -532,6 +532,47 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     // --- CONTACTS ---
     if (path.startsWith('/api/v1/contacts')) {
         const contactId = path.split('/')[4];
+
+        if (contactId && path.includes('/relationships')) {
+            const relatedContactId = path.split('/')[6];
+
+            if (method === 'POST') {
+                const { relatedContactId: newRelId, relationshipType } = body;
+
+                const contact1Index = db.contacts.findIndex(c => c.id === contactId);
+                const contact2Index = db.contacts.findIndex(c => c.id === newRelId);
+
+                if (contact1Index > -1 && contact2Index > -1) {
+                    const contact1 = db.contacts[contact1Index];
+                    const contact2 = db.contacts[contact2Index];
+
+                    if (!contact1.relationships) contact1.relationships = [];
+                    if (!contact2.relationships) contact2.relationships = [];
+
+                    // Add to both contacts for reciprocity
+                    if (!contact1.relationships.some(r => r.relatedContactId === newRelId)) {
+                        contact1.relationships.push({ relatedContactId: newRelId, relationshipType });
+                    }
+                    if (!contact2.relationships.some(r => r.relatedContactId === contactId)) {
+                        contact2.relationships.push({ relatedContactId: contactId, relationshipType });
+                    }
+                    return respond(contact1);
+                }
+                return respond({ message: 'One or both contacts not found' }, 404);
+            }
+            if (method === 'DELETE') {
+                const contact1Index = db.contacts.findIndex(c => c.id === contactId);
+                const contact2Index = db.contacts.findIndex(c => c.id === relatedContactId);
+
+                if (contact1Index > -1) {
+                    db.contacts[contact1Index].relationships = (db.contacts[contact1Index].relationships || []).filter(r => r.relatedContactId !== relatedContactId);
+                }
+                 if (contact2Index > -1) {
+                    db.contacts[contact2Index].relationships = (db.contacts[contact2Index].relationships || []).filter(r => r.relatedContactId !== contactId);
+                }
+                return respond(db.contacts[contact1Index] || null);
+            }
+        }
 
         if (path.includes('/subscribe')) {
             const index = db.contacts.findIndex(c => c.id === contactId);
