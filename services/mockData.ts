@@ -13,7 +13,8 @@ import {
     TeamChannel,
     TeamChatMessage,
     ClientChecklistTemplate,
-    SubscriptionPlan
+    SubscriptionPlan,
+    SystemAuditLogEntry
 } from '../types';
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
@@ -63,7 +64,22 @@ export const MOCK_DEALS: Deal[] = [
 ];
 
 export const MOCK_PRODUCTS: Product[] = [
-    { id: 'prod_1', organizationId: 'org_1', name: 'Standard Consultation', sku: 'CONS-STD', category: 'Service', costPrice: 0, salePrice: 150, stockLevel: 9999 },
+    { 
+      id: 'prod_1', 
+      organizationId: 'org_1', 
+      name: 'Standard Consultation', 
+      sku: 'CONS-STD', 
+      category: 'Service', 
+      costPrice: 0, 
+      salePrice: 150, 
+      stockLevel: 9999,
+      pricingRules: [
+        {
+            condition: { type: 'quantity_gt', value: 4 }, // 5 or more
+            action: { type: 'percent_discount', value: 10 } // 10% off
+        }
+      ]
+    },
     { 
       id: 'prod_2', 
       organizationId: 'org_1', 
@@ -105,8 +121,10 @@ export const MOCK_TASKS: Task[] = [
 ];
 
 export const MOCK_CALENDAR_EVENTS: CalendarEvent[] = [
-    { id: 'event_1', title: 'Follow-up with John Patient', start: new Date(2023, 4, 20, 10, 0), end: new Date(2023, 4, 20, 10, 30), userIds: ['user_team_1'], contactId: 'contact_1' },
-    { id: 'event_2', title: 'Team Meeting', start: new Date(2023, 4, 22, 9, 0), end: new Date(2023, 4, 22, 10, 0), userIds: ['user_admin_1', 'user_team_1'] },
+    { id: 'event_1', title: 'Follow-up with John Patient', start: new Date(2023, 4, 20, 10, 0), end: new Date(2023, 4, 20, 10, 30), practitionerIds: ['user_team_1'], contactId: 'contact_1', appointmentType: 'Follow-up', status: 'Completed' },
+    { id: 'event_2', title: 'Team Meeting', start: new Date(2023, 4, 22, 9, 0), end: new Date(2023, 4, 22, 10, 0), practitionerIds: ['user_admin_1', 'user_team_1'], contactId: 'contact_1' },
+    { id: 'event_3', title: 'New Patient Visit: Jane Doe', start: new Date(2023, 4, 22, 11, 0), end: new Date(2023, 4, 22, 12, 0), practitionerIds: ['user_admin_1'], contactId: 'contact_2', appointmentType: 'New Patient Visit', status: 'Confirmed' },
+    { id: 'event_4', title: 'Annual Physical: Peter Jones', start: new Date(2023, 4, 22, 14, 0), end: new Date(2023, 4, 22, 14, 45), practitionerIds: ['user_team_1'], contactId: 'contact_3', appointmentType: 'Annual Physical', status: 'Scheduled' },
 ];
 
 export const MOCK_EMAIL_TEMPLATES: EmailTemplate[] = [
@@ -169,7 +187,11 @@ export let MOCK_ORGANIZATION_SETTINGS: OrganizationSettings = {
     },
     accounting: {
         isConnected: false,
-    }
+    },
+    hipaaComplianceModeEnabled: false,
+    emrEhrIntegration: {
+        isConnected: false,
+    },
 };
 
 export const MOCK_TICKETS: Ticket[] = [
@@ -317,6 +339,13 @@ let MOCK_DASHBOARDS: Dashboard[] = [
 export const MOCK_SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     { id: 'plan_monthly', organizationId: 'org_1', name: 'Basic Plan', price: 49, billingCycle: 'monthly' },
     { id: 'plan_yearly', organizationId: 'org_1', name: 'Pro Plan', price: 990, billingCycle: 'yearly' },
+];
+
+export const MOCK_SYSTEM_AUDIT_LOGS: SystemAuditLogEntry[] = [
+    { id: 'sys_log_1', timestamp: new Date(Date.now() - 1000 * 60 * 2).toISOString(), userId: 'user_admin_1', action: 'view', entityType: 'Contact', entityId: 'contact_1', details: 'Viewed contact "John Patient"' },
+    { id: 'sys_log_2', timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), userId: 'user_team_1', action: 'update', entityType: 'Deal', entityId: 'deal_2', details: 'Updated deal "New Clinic Equipment"' },
+    { id: 'sys_log_3', timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString(), userId: 'user_admin_1', action: 'login', entityType: 'User', entityId: 'user_admin_1', details: 'User logged in successfully' },
+    { id: 'sys_log_4', timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), userId: 'user_admin_1', action: 'export', entityType: 'Contacts', entityId: 'org_1', details: 'Exported 3 contacts to CSV' },
 ];
 
 export const MOCK_CUSTOM_REPORTS: CustomReport[] = [];

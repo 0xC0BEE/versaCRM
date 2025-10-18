@@ -250,6 +250,9 @@ export const kbArticles: KBArticleType[] = [
                         <strong>View Event Details:</strong> Click on an existing event in the calendar to view or edit its details.
                     </li>
                 </ol>
+                 <p className="mt-4">
+                    <strong>Note for Health Cloud users:</strong> When the "Health" industry is active, the Calendar transforms into a specialized Appointment Scheduler. See the "Health Cloud: Appointment Scheduler" article for more details.
+                </p>
             </>
         ),
     },
@@ -862,6 +865,40 @@ export const kbArticles: KBArticleType[] = [
                     </li>
                     <li>
                         <strong>Start a Chat:</strong> Open the widget and send a message. Based on your settings, this will automatically create a new Contact and/or a new Ticket in your CRM, which your team can see and respond to immediately.
+                    </li>
+                </ol>
+            </>
+        ),
+    },
+
+    // --- INDUSTRY VERTICALS ---
+    {
+        id: 'health-cloud-scheduler',
+        title: 'Health Cloud: Appointment Scheduler',
+        category: 'Industry Verticals',
+        content: (
+            <>
+                <h2 id="overview-health-scheduler">Overview</h2>
+                <p>
+                    When your organization's industry is set to "Health", the standard Calendar is transformed into a specialized Appointment Scheduler, designed specifically for the needs of clinics and healthcare providers.
+                </p>
+                <h3 id="key-features">Key Features</h3>
+                <ol>
+                    <li>
+                        <strong>Multi-Practitioner View:</strong> The default view is a "Day" view that shows the schedules of multiple practitioners side-by-side in columns. This gives schedulers and front-desk staff a complete overview of the clinic's availability.
+                    </li>
+                    <li>
+                        <strong>Practitioner Filtering:</strong> Use the dropdown menu at the top of the scheduler to select which practitioners' schedules you want to view. This is useful for large clinics or for focusing on a specific department.
+                    </li>
+                    <li>
+                        <strong>Appointment-Specific Fields:</strong> When creating or editing an event, you will see new fields tailored for healthcare:
+                        <ul>
+                            <li className="!mt-2"><strong>Appointment Type:</strong> Categorize visits with types like "New Patient Visit," "Follow-up," or "Annual Physical."</li>
+                            <li className="!mt-2"><strong>Appointment Status:</strong> Track the lifecycle of an appointment with statuses like "Scheduled," "Confirmed," "Checked-in," "Completed," and "No-show."</li>
+                        </ul>
+                    </li>
+                     <li>
+                        <strong>Status-Based Color Coding:</strong> Appointments on the calendar are automatically color-coded based on their status, providing an instant visual understanding of the day's progress. For example, "Confirmed" appointments might be green, while "No-shows" are yellow.
                     </li>
                 </ol>
             </>

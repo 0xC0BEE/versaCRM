@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { DocumentTemplate, DocumentBlock, Product, User, DocumentLineItemBlockContent } from '../../types';
 import PageWrapper from '../layout/PageWrapper';
 import Button from '../ui/Button';
-// FIX: Imported 'GripVertical' to resolve reference error.
 import { ArrowLeft, Edit, Trash2, Heading, Type, Image as ImageIcon, Wand2, ListOrdered, Plus, Monitor, Share2, GripVertical } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,7 +19,6 @@ interface DocumentBuilderPageProps {
     onClose: () => void;
 }
 
-// FIX: Define a local type for document line items to ensure type safety.
 type DocumentLineItem = DocumentLineItemBlockContent['items'][0];
 
 const placeholders = [
@@ -30,6 +28,45 @@ const placeholders = [
     { label: 'Deal Value', value: '{{deal.value}}' },
     { label: 'Current Date', value: `{{now}}` },
 ];
+
+const calculatePrice = (product: Product, quantity: number, selectedOptions?: Record<string, string>) => {
+    let price = product.salePrice;
+    let originalPrice = product.salePrice;
+    let discountApplied: string | undefined = undefined;
+
+    // 1. Apply option adjustments first
+    if (product.options && selectedOptions) {
+        product.options.forEach(opt => {
+            const selectedChoiceName = selectedOptions[opt.name];
+            const choice = opt.choices.find(c => c.name === selectedChoiceName);
+            if (choice) {
+                price += choice.priceAdjustment;
+            }
+        });
+        originalPrice = price; // This is the new base price before volume discounts
+    }
+
+    // 2. Apply pricing rules (e.g., volume discount) on top of the option-adjusted price
+    if (product.pricingRules) {
+        const applicableRule = product.pricingRules
+            .filter(rule => rule.condition.type === 'quantity_gt' && quantity > rule.condition.value)
+            .sort((a, b) => b.condition.value - a.condition.value)[0]; // get the highest quantity rule
+
+        if (applicableRule) {
+            if (applicableRule.action.type === 'percent_discount') {
+                price = originalPrice * (1 - applicableRule.action.value / 100);
+                discountApplied = `${applicableRule.action.value}% volume discount`;
+            }
+        }
+    }
+    
+    return { 
+        unitPrice: price, 
+        originalUnitPrice: discountApplied ? originalPrice : undefined,
+        discountApplied
+    };
+};
+
 
 const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdit, onClose }) => {
     const { createDocumentTemplateMutation, updateDocumentTemplateMutation, productsQuery, teamMembersQuery } = useData();
@@ -167,7 +204,6 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
             case 'text': return <p className="py-2 whitespace-pre-wrap leading-relaxed">{block.content.text}</p>;
             case 'image': return <img src={block.content.src} alt={block.content.alt} className="w-full h-auto rounded-md" />;
             case 'lineItems': {
-                // FIX: Cast items to DocumentLineItem[] and add a fallback for undefined to prevent runtime errors.
                 const items = (block.content.items || []) as DocumentLineItem[];
                 const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
                 const tax = subtotal * (block.content.taxRate / 100);
@@ -188,12 +224,20 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                                     <tr key={index} className="border-b">
                                         <td className="p-2 font-medium">
                                             {item.name}
+                                            {item.discountApplied && (
+                                                <p className="text-xs text-green-600 font-normal">{item.discountApplied}</p>
+                                            )}
                                             {item.description && (
                                                 <p className="text-xs text-gray-500 whitespace-pre-wrap font-normal">{item.description}</p>
                                             )}
                                         </td>
                                         <td className="p-2 text-right">{item.quantity}</td>
-                                        <td className="p-2 text-right">{item.unitPrice.toLocaleString('en-US', {style:'currency', currency: 'USD'})}</td>
+                                        <td className="p-2 text-right">
+                                            {item.originalUnitPrice && (
+                                                <span className="line-through text-gray-500 mr-1">{item.originalUnitPrice.toLocaleString('en-US', {style:'currency', currency: 'USD'})}</span>
+                                            )}
+                                            {item.unitPrice.toLocaleString('en-US', {style:'currency', currency: 'USD'})}
+                                        </td>
                                         <td className="p-2 text-right">{(item.quantity * item.unitPrice).toLocaleString('en-US', {style:'currency', currency: 'USD'})}</td>
                                     </tr>
                                 ))}
@@ -251,39 +295,44 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
 
                 const handleItemChange = (index: number, field: string, value: any) => {
                     const newItems = [...items];
-                    const item: any = {...newItems[index]};
+                    const item: any = { ...newItems[index] };
                     item[field] = value;
 
-                    if(field === 'productId') {
-                        // FIX: Cast `products` to `Product[]` to ensure correct type inference for `product`, fixing property access errors.
-                        const product = (products as Product[]).find(p => p.id === value);
+                    const product = (products as Product[]).find(p => p.id === item.productId);
+
+                    if (field === 'productId') {
                         if (product) {
                             item.name = product.name;
-                            item.unitPrice = product.salePrice;
-                            item.selectedOptions = {}; // Reset options
-                            
-                            // Set default options
+                            item.selectedOptions = {};
+
                             if (product.options) {
                                 product.options.forEach(opt => {
-                                    if (opt.choices.length > 0) {
-                                        item.selectedOptions[opt.name] = opt.choices[0].name;
-                                    }
+                                    if (opt.choices.length > 0) item.selectedOptions[opt.name] = opt.choices[0].name;
                                 });
                             }
                             
                             if (product.isBundle && product.bundleItemIds) {
-                                const productMap = new Map((products as Product[]).map((p: Product) => [p.id, p]));
-                                const bundleContents = product.bundleItemIds
-                                    .map(id => productMap.get(id)?.name)
-                                    .filter(Boolean)
-                                    .map(name => `- ${name}`)
-                                    .join('\n');
+                                const productMap = new Map((products as Product[]).map(p => [p.id, p]));
+                                const bundleContents = product.bundleItemIds.map(id => `- ${productMap.get(id)?.name}`).join('\n');
                                 item.description = `Includes:\n${bundleContents}`;
                             } else {
                                 item.description = '';
                             }
                         }
                     }
+
+                    if (product) {
+                        const priceInfo = calculatePrice(product, item.quantity, item.selectedOptions);
+                        item.unitPrice = priceInfo.unitPrice;
+                        item.originalUnitPrice = priceInfo.originalUnitPrice;
+                        item.discountApplied = priceInfo.discountApplied;
+                    }
+
+                    if (field === 'unitPrice') { // Manual override
+                        item.originalUnitPrice = undefined;
+                        item.discountApplied = undefined;
+                    }
+                    
                     newItems[index] = item;
                     updateBlock(selectedBlock.id, { ...selectedBlock.content, items: newItems });
                 };
@@ -294,10 +343,13 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                     if (!item.selectedOptions) item.selectedOptions = {};
                     item.selectedOptions[optionName] = choiceName;
 
-                    // FIX: Cast `products` to `Product[]` to ensure correct type inference for `product`, fixing property access errors.
                     const product = (products as Product[]).find(p => p.id === item.productId);
-                    if (product && product.options) {
-                        let price = product.salePrice;
+                    if (product) {
+                        const priceInfo = calculatePrice(product, item.quantity, item.selectedOptions);
+                        item.unitPrice = priceInfo.unitPrice;
+                        item.originalUnitPrice = priceInfo.originalUnitPrice;
+                        item.discountApplied = priceInfo.discountApplied;
+                        
                         let description = '';
                         if (product.isBundle && product.bundleItemIds) {
                            const productMap = new Map((products as Product[]).map((p: Product) => [p.id, p]));
@@ -307,15 +359,15 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                         
                         const selectedOptionDescriptions: string[] = [];
 
-                        product.options.forEach(opt => {
-                            const selectedChoiceName = item.selectedOptions![opt.name];
-                            const choice = opt.choices.find(c => c.name === selectedChoiceName);
-                            if (choice) {
-                                price += choice.priceAdjustment;
-                                selectedOptionDescriptions.push(`- ${opt.name}: ${choice.name}${choice.priceAdjustment !== 0 ? ` (${choice.priceAdjustment > 0 ? '+' : ''}${choice.priceAdjustment.toLocaleString('en-US', {style: 'currency', currency: 'USD'})})` : ''}`);
-                            }
-                        });
-                        item.unitPrice = price;
+                        if (product.options) {
+                             product.options.forEach(opt => {
+                                const selectedChoiceName = item.selectedOptions![opt.name];
+                                const choice = opt.choices.find(c => c.name === selectedChoiceName);
+                                if (choice) {
+                                    selectedOptionDescriptions.push(`- ${opt.name}: ${choice.name}${choice.priceAdjustment !== 0 ? ` (${choice.priceAdjustment > 0 ? '+' : ''}${choice.priceAdjustment.toLocaleString('en-US', {style: 'currency', currency: 'USD'})})` : ''}`);
+                                }
+                            });
+                        }
                         item.description = (description || '') + selectedOptionDescriptions.join('\n');
                     }
 
@@ -324,7 +376,7 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                 };
 
                 const addItem = () => {
-                    const newItem: DocumentLineItem = { productId: '', name: 'New Item', description: '', quantity: 1, unitPrice: 0 };
+                    const newItem: DocumentLineItem = { productId: '', name: 'New Item', description: '', quantity: 1, unitPrice: 0, selectedOptions: {} };
                     updateBlock(selectedBlock.id, { ...selectedBlock.content, items: [...items, newItem] });
                 };
                 
@@ -341,7 +393,7 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                         <h4 className="font-semibold">Line Items</h4>
                         <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-2">
                         {items.map((item: any, index: number) => {
-                            const product = products.find((p: Product) => p.id === item.productId);
+                            const product = (products as Product[]).find(p => p.id === item.productId);
                             return (
                                 <div key={index} className="p-2 border border-border-subtle rounded-md space-y-2">
                                     <div className="flex justify-between items-center">
@@ -371,8 +423,11 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                                     ))}
 
                                     <div className="grid grid-cols-2 gap-2">
-                                        <Input id={`item-qty-${index}`} label="Quantity" type="number" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', parseInt(e.target.value))} disabled={isReadOnly}/>
-                                        <Input id={`item-price-${index}`} label="Unit Price" type="number" step="0.01" value={item.unitPrice} onChange={e => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))} disabled={isReadOnly}/>
+                                        <Input id={`item-qty-${index}`} label="Quantity" type="number" min="1" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', parseInt(e.target.value))} disabled={isReadOnly}/>
+                                        <div>
+                                            <Input id={`item-price-${index}`} label="Unit Price" type="number" step="0.01" value={item.unitPrice} onChange={e => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))} disabled={isReadOnly}/>
+                                            {item.discountApplied && <p className="text-xs text-green-600 mt-1">{item.discountApplied}</p>}
+                                        </div>
                                     </div>
                                 </div>
                             );

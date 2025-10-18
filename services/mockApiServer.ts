@@ -9,7 +9,8 @@ import {
     MOCK_ANONYMOUS_SESSIONS, MOCK_APP_MARKETPLACE_ITEMS, MOCK_INSTALLED_APPS, MOCK_SANDBOXES, MOCK_DOCUMENT_TEMPLATES,
     MOCK_PROJECTS, MOCK_PROJECT_PHASES, MOCK_PROJECT_TEMPLATES, MOCK_CANNED_RESPONSES,
     MOCK_SURVEYS, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_SNAPSHOTS, MOCK_TEAM_CHANNELS, MOCK_TEAM_CHAT_MESSAGES, MOCK_CLIENT_CHECKLIST_TEMPLATES,
-    MOCK_SUBSCRIPTION_PLANS
+    MOCK_SUBSCRIPTION_PLANS,
+    MOCK_SYSTEM_AUDIT_LOGS
 } from './mockData';
 import { industryConfigs } from '../config/industryConfig';
 import { generateDashboardData } from './reportGenerator';
@@ -66,6 +67,7 @@ const mainDB = {
     snapshots: MOCK_SNAPSHOTS,
     clientChecklistTemplates: MOCK_CLIENT_CHECKLIST_TEMPLATES,
     subscriptionPlans: MOCK_SUBSCRIPTION_PLANS,
+    systemAuditLogs: MOCK_SYSTEM_AUDIT_LOGS,
 };
 
 let sandboxedDBs: { [key: string]: typeof mainDB } = JSON.parse(localStorage.getItem('sandboxedDBs') || '{}');
@@ -560,7 +562,11 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
                 if (contact.subscriptions) {
                     const subIndex = contact.subscriptions.findIndex(s => s.id === subId);
                     if (subIndex > -1) {
-                        contact.subscriptions[subIndex].status = 'cancelled';
+                        if (path.endsWith('/pay')) {
+                            contact.subscriptions[subIndex].nextBillingDate = new Date(new Date(contact.subscriptions[subIndex].nextBillingDate).setMonth(new Date(contact.subscriptions[subIndex].nextBillingDate).getMonth() + 1)).toISOString();
+                        } else { // Cancel
+                            contact.subscriptions[subIndex].status = 'cancelled';
+                        }
                         return respond(contact);
                     }
                 }
@@ -862,6 +868,12 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
             db.settings.emailIntegration.lastSync = new Date().toISOString();
         }
         return respond(null, 204);
+    }
+    
+    if (path.startsWith('/api/v1/system-audit-logs')) {
+        if (method === 'GET') {
+            return respond(db.systemAuditLogs);
+        }
     }
 
     // --- DASHBOARD ---

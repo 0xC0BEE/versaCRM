@@ -115,6 +115,17 @@ export interface ProductOption {
     choices: ProductOptionChoice[];
 }
 
+export interface PricingRule {
+    condition: {
+        type: 'quantity_gt';
+        value: number;
+    };
+    action: {
+        type: 'percent_discount';
+        value: number;
+    };
+}
+
 export interface Product {
     id: string;
     organizationId: string;
@@ -128,6 +139,7 @@ export interface Product {
     isBundle?: boolean;
     bundleItemIds?: string[];
     options?: ProductOption[];
+    pricingRules?: PricingRule[];
 }
 
 export interface DealStage {
@@ -138,6 +150,17 @@ export interface DealStage {
 }
 
 export type ApprovalStatus = 'Pending Approval' | 'Approved' | 'Rejected' | null;
+
+export interface RevenueRecognitionSchedule {
+    startDate: string;
+    months: number;
+    schedule: {
+        month: number;
+        date: string;
+        amount: number;
+        status: 'Pending' | 'Recognized';
+    }[];
+}
 
 export interface Deal {
     id: string;
@@ -153,6 +176,7 @@ export interface Deal {
     relatedObjectRecordId?: string;
     approvalStatus?: ApprovalStatus;
     currentApproverId?: string;
+    revenueSchedule?: RevenueRecognitionSchedule;
 }
 
 export interface Task {
@@ -169,13 +193,17 @@ export interface Task {
     isVisibleToClient?: boolean;
 }
 
+export type AppointmentStatus = 'Scheduled' | 'Confirmed' | 'Checked-in' | 'Completed' | 'Cancelled' | 'No-show';
+
 export interface CalendarEvent {
     id: string;
     title: string;
     start: Date;
     end: Date;
-    userIds: string[];
-    contactId?: string;
+    practitionerIds: string[]; // Renamed from userIds
+    contactId: string; // Made non-optional for Health Cloud
+    appointmentType?: string;
+    status?: AppointmentStatus;
 }
 
 export interface EmailTemplate {
@@ -237,6 +265,8 @@ export interface DocumentLineItemBlockContent {
         description: string;
         quantity: number;
         unitPrice: number;
+        originalUnitPrice?: number;
+        discountApplied?: string;
         selectedOptions?: Record<string, string>;
     }[];
     taxRate: number;
@@ -297,6 +327,16 @@ export interface AuditLogEntry {
     userId: string;
     userName: string;
     change: string;
+}
+
+export interface SystemAuditLogEntry {
+  id: string;
+  timestamp: string;
+  userId: string;
+  action: 'login' | 'view' | 'create' | 'update' | 'delete' | 'export';
+  entityType: string;
+  entityId: string;
+  details: string;
 }
 
 export interface ProjectPhase {
@@ -925,6 +965,11 @@ export interface OrganizationSettings {
         isConnected: boolean;
         provider?: 'quickbooks' | 'xero';
     };
+    hipaaComplianceModeEnabled?: boolean;
+    emrEhrIntegration?: {
+        isConnected: boolean;
+        provider?: 'epic' | 'cerner';
+    };
 }
 export interface LeadScoringRule {
     id: string;
@@ -1079,6 +1124,7 @@ export interface DataContextType {
     snapshotsQuery: any;
     clientChecklistTemplatesQuery: any;
     subscriptionPlansQuery: any;
+    systemAuditLogsQuery: any;
 
     // Mutations
     createOrganizationMutation: any;

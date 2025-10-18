@@ -49,11 +49,11 @@ This document outlines the next strategic evolution of the VersaCRM platform, bu
 -   [x] **Payment Gateway Integration:**
     -   [x] Integrate with Stripe and/or PayPal.
     -   [x] Allow customers to pay invoices directly via a secure link on a generated document or from within the Client Portal.
--   [ ] **CPQ (Configure, Price, Quote) Engine:**
+-   [x] **CPQ (Configure, Price, Quote) Engine:**
     -   [x] Support for Product Bundles.
     -   [x] Add configurable options with price adjustments.
-    -   [ ] Implement rule-based pricing and discounts.
--   [ ] **Revenue Recognition:** Introduce basic tools to help businesses schedule and recognize revenue over the lifetime of a contract, aiding in compliance with accounting standards like ASC 606.
+    -   [x] Implement rule-based pricing and discounts.
+-   [x] **Revenue Recognition:** Introduce basic tools to help businesses schedule and recognize revenue over the lifetime of a contract, aiding in compliance with accounting standards like ASC 606.
 
 ---
 
@@ -62,9 +62,9 @@ This document outlines the next strategic evolution of the VersaCRM platform, bu
 **Goal:** Go beyond our current industry templates and build deep, specialized "Cloud" solutions with unique data models, workflows, and compliance features, mirroring the successful strategy of Salesforce.
 
 -   [ ] **Health Cloud:**
-    -   [ ] Introduce features to ensure HIPAA compliance (e.g., data encryption, audit trails).
-    -   [ ] Build connectors for EMR/EHR (Electronic Health Record) systems.
-    -   [ ] Develop specialized patient scheduling and appointment management tools.
+    -   [x] Introduce features to ensure HIPAA compliance (e.g., data encryption, audit trails).
+    -   [x] Build connectors for EMR/EHR (Electronic Health Record) systems.
+    -   [x] Develop specialized patient scheduling and appointment management tools.
 -   [ ] **Financial Services Cloud:**
     -   [ ] Add compliance tracking features for regulations like KYC (Know Your Customer) and AML (Anti-Money Laundering).
     -   [ ] Create advanced data models for household/relationship mapping (e.g., connecting family members, financial advisors, and accountants).

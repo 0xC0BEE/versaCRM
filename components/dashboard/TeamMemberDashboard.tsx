@@ -39,7 +39,8 @@ const TeamMemberDashboard: React.FC<TeamMemberDashboardProps> = ({ isTabbedView 
     
     const upcomingAppointments = React.useMemo(() => 
         (events as CalendarEvent[])
-            .filter(e => isFuture(new Date(e.start)) && e.userIds.includes(authenticatedUser!.id))
+            // FIX: The property on CalendarEvent is `practitionerIds`, not `userIds`.
+            .filter(e => isFuture(new Date(e.start)) && e.practitionerIds.includes(authenticatedUser!.id))
             .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()), 
     [events, authenticatedUser]);
 

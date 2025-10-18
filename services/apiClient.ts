@@ -19,7 +19,8 @@ import {
     Notification,
     ClientChecklistTemplate,
     ClientChecklist,
-    SubscriptionPlan
+    SubscriptionPlan,
+    SystemAuditLogEntry
 } from '../types';
 
 // Create a mutable reference to the fetch implementation that can be overridden by the mock server.
@@ -167,6 +168,7 @@ const apiClient = {
     updateOrganizationSettings: (updates: Partial<OrganizationSettings>): Promise<OrganizationSettings> => fetchImpl(`${API_BASE}/settings`, { method: 'PUT', body: JSON.stringify(updates), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     recalculateAllScores: (orgId: string): Promise<void> => fetchImpl(`${API_BASE}/lead-scoring/recalculate-all`, { method: 'POST', body: JSON.stringify({ orgId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     runEmailSync: (orgId: string): Promise<void> => fetchImpl(`${API_BASE}/email/sync`, { method: 'POST', body: JSON.stringify({ orgId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    getSystemAuditLogs: (orgId: string): Promise<SystemAuditLogEntry[]> => fetchImpl(`${API_BASE}/system-audit-logs?orgId=${orgId}`).then(handleResponse),
     
     // --- WORKFLOWS ---
     getWorkflows: (orgId: string): Promise<Workflow[]> => fetchImpl(`${API_BASE}/workflows?orgId=${orgId}`).then(handleResponse),
