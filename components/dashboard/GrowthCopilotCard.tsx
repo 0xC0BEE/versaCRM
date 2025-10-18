@@ -26,7 +26,7 @@ const GrowthCopilotCard: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [suggestionsGenerated, setSuggestionsGenerated] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const { isLiveCopilotOpen, setIsLiveCopilotOpen, isFeatureEnabled } = useApp();
+    const { isLiveCopilotOpen, setIsLiveCopilotOpen, isFeatureEnabled, currentIndustry, industryConfig } = useApp();
 
     const { contactsQuery, dealsQuery, dealStagesQuery, ticketsQuery, createTaskMutation } = useData();
     const { authenticatedUser } = useAuth();
@@ -50,7 +50,16 @@ const GrowthCopilotCard: React.FC = () => {
                 deals: (deals as Deal[]).slice(0, 5).map(d => ({ name: d.name, value: d.value, stage: (dealStages as DealStage[]).find(s => s.id === d.stageId)?.name })),
             };
 
-            const prompt = `You are a proactive CRM assistant. Analyze this data snapshot: ${JSON.stringify(dataSnapshot)}. Generate exactly 3 concise, actionable, and diverse questions a user might ask about this data. Frame them as if you are suggesting them to the user.`;
+            const basePrompt = `You are a proactive CRM assistant for a ${industryConfig.name} company. The user is a ${industryConfig.teamMemberName}. Analyze this data snapshot. Generate exactly 3 concise, actionable, and diverse questions a ${industryConfig.teamMemberName} might ask about this data. Frame them as if you are suggesting them to the user.`;
+
+            let industrySpecificContext = '';
+            if (currentIndustry === 'Health') {
+                industrySpecificContext = `Focus on patient appointments, treatment plans, and practitioner schedules.`;
+            } else if (currentIndustry === 'Finance') {
+                industrySpecificContext = `Focus on client risk profiles, high-value deals, and financial planning.`;
+            }
+
+            const prompt = `${basePrompt}\n\n${industrySpecificContext}\n\nData Snapshot: ${JSON.stringify(dataSnapshot)}`;
             
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
@@ -88,7 +97,7 @@ const GrowthCopilotCard: React.FC = () => {
             setIsLoading(false);
             setSuggestionsGenerated(true);
         }
-    }, [contacts, deals, dealStages]);
+    }, [contacts, deals, dealStages, currentIndustry, industryConfig]);
 
     useEffect(() => {
         if (isFeatureEnabled('aiCopilotProactive') && !suggestionsGenerated && contactsSuccess && dealsSuccess) {

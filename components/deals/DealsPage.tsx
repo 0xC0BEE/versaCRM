@@ -3,7 +3,7 @@ import PageWrapper from '../layout/PageWrapper';
 import { useData } from '../../contexts/DataContext';
 import { Deal, DealStage, DealForecast, NextBestAction, AnyContact } from '../../types';
 import Button from '../ui/Button';
-import { Plus, Bot } from 'lucide-react';
+import { Plus, Bot, ChevronDown } from 'lucide-react';
 import DealColumn from './DealColumn';
 import DealEditModal from './DealEditModal';
 import DealForecastModal from './DealForecastModal';
@@ -11,6 +11,23 @@ import ContactDetailModal from '../organizations/ContactDetailModal';
 import { useApp } from '../../contexts/AppContext';
 import CreateProjectFromDealModal from './CreateProjectFromDealModal';
 import toast from 'react-hot-toast';
+import { Card, CardHeader, CardContent } from '../ui/Card';
+import DealCard from './DealCard';
+
+const useIsMobile = (breakpoint = 768) => {
+    const [isMobile, setIsMobile] = useState(window.innerWidth < breakpoint);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < breakpoint);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [breakpoint]);
+
+    return isMobile;
+};
+
 
 const DealsPage: React.FC = () => {
     const { dealsQuery, dealStagesQuery, updateDealMutation, contactsQuery, organizationSettingsQuery } = useData();
@@ -26,6 +43,9 @@ const DealsPage: React.FC = () => {
     const [forecastModalData, setForecastModalData] = useState<{ deal: Deal, forecast: DealForecast } | null>(null);
     const [contactModalData, setContactModalData] = useState<{ contact: AnyContact | null, initialTab?: string, initialTemplateId?: string }>({ contact: null });
     const [dealToCreateProjectFrom, setDealToCreateProjectFrom] = useState<Deal | null>(null);
+    const [openStages, setOpenStages] = useState<Record<string, boolean>>({});
+
+    const isMobile = useIsMobile();
 
     const sortedStages = useMemo(() => {
         return (stages as DealStage[]).sort((a, b) => a.order - b.order);
@@ -97,7 +117,72 @@ const DealsPage: React.FC = () => {
         }
     };
 
+    const toggleStage = (stageId: string) => {
+        setOpenStages(prev => ({...prev, [stageId]: !prev[stageId]}));
+    };
+
     const isLoading = dealsLoading || stagesLoading;
+    
+    const MobileView = () => (
+        <div className="space-y-3">
+            {sortedStages.map(stage => {
+                const stageDeals = (deals as Deal[]).filter(d => d.stageId === stage.id);
+                if (stageDeals.length === 0) return null;
+                const totalValue = stageDeals.reduce((sum, deal) => sum + deal.value, 0);
+
+                return (
+                    <Card key={stage.id} className="overflow-hidden">
+                        <CardHeader 
+                            className="p-3 flex-row justify-between items-center cursor-pointer"
+                            onClick={() => toggleStage(stage.id)}
+                        >
+                            <div>
+                                <h3 className="font-semibold text-text-primary">{stage.name} ({stageDeals.length})</h3>
+                                <p className="text-xs text-text-secondary font-medium">
+                                    {totalValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                </p>
+                            </div>
+                            <ChevronDown size={20} className={`transition-transform ${openStages[stage.id] ? 'rotate-180' : ''}`} />
+                        </CardHeader>
+                        {openStages[stage.id] && (
+                            <CardContent className="p-3 border-t border-border-subtle">
+                                <div className="space-y-3">
+                                    {stageDeals.map(deal => (
+                                        <DealCard
+                                            key={deal.id}
+                                            deal={deal}
+                                            isDraggable={false}
+                                            onDragStart={() => {}} // No-op on mobile
+                                            onClick={handleCardClick}
+                                            isForecasting={isForecasting}
+                                            onOpenForecast={handleOpenForecast}
+                                        />
+                                    ))}
+                                </div>
+                            </CardContent>
+                        )}
+                    </Card>
+                )
+            })}
+        </div>
+    );
+
+    const DesktopView = () => (
+        <div className="flex gap-4 overflow-x-auto pb-4">
+            {sortedStages.map(stage => (
+                <DealColumn
+                    key={stage.id}
+                    stage={stage}
+                    deals={(deals as Deal[]).filter(d => d.stageId === stage.id)}
+                    onCardClick={handleCardClick}
+                    onDragStart={handleDragStart}
+                    onDrop={handleDrop}
+                    isForecasting={isForecasting}
+                    onOpenForecast={handleOpenForecast}
+                />
+            ))}
+        </div>
+    );
 
     return (
         <PageWrapper>
@@ -119,24 +204,9 @@ const DealsPage: React.FC = () => {
                 </div>
             </div>
             
-            <div className="flex flex-col md:flex-row gap-4 md:overflow-x-auto pb-4">
-                {isLoading ? (
-                    <p>Loading pipeline...</p>
-                ) : (
-                    sortedStages.map(stage => (
-                        <DealColumn
-                            key={stage.id}
-                            stage={stage}
-                            deals={(deals as Deal[]).filter(d => d.stageId === stage.id)}
-                            onCardClick={handleCardClick}
-                            onDragStart={handleDragStart}
-                            onDrop={handleDrop}
-                            isForecasting={isForecasting}
-                            onOpenForecast={handleOpenForecast}
-                        />
-                    ))
-                )}
-            </div>
+            {isLoading ? (
+                <p>Loading pipeline...</p>
+            ) : isMobile ? <MobileView /> : <DesktopView />}
 
             <DealEditModal
                 isOpen={isModalOpen}

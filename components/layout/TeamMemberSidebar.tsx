@@ -36,7 +36,7 @@ const TeamMemberSidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     ];
 
     return (
-        <div className={`flex flex-col flex-shrink-0 w-64 bg-card-bg border-r border-border-subtle transition-all duration-300`}>
+        <div className={`flex flex-col flex-shrink-0 w-64 h-full bg-card-bg border-r border-border-subtle transition-all duration-300`}>
             <div className="h-16 flex items-center justify-center flex-shrink-0 px-4 shadow-sm">
                 <h1 className="text-2xl font-bold text-text-primary">VersaCRM</h1>
             </div>

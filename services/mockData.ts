@@ -357,8 +357,72 @@ export const MOCK_DOCUMENTS: Document[] = [...MOCK_PROJECT_DOCUMENTS];
 export const MOCK_API_KEYS: ApiKey[] = [];
 export const MOCK_SUPPLIERS: Supplier[] = [];
 export const MOCK_WAREHOUSES: Warehouse[] = [];
-export const MOCK_CUSTOM_OBJECT_DEFINITIONS: CustomObjectDefinition[] = [];
-export const MOCK_CUSTOM_OBJECT_RECORDS: CustomObjectRecord[] = [];
+export let MOCK_CUSTOM_OBJECT_DEFINITIONS: CustomObjectDefinition[] = [
+    {
+        id: 'fin_acct_def',
+        organizationId: 'org_1',
+        nameSingular: 'Financial Account',
+        namePlural: 'Financial Accounts',
+        icon: 'Landmark',
+        fields: [
+            { id: 'account_name', label: 'Account Name', type: 'text' },
+            { id: 'account_number', label: 'Account Number', type: 'text' },
+            { id: 'account_type', label: 'Account Type', type: 'select', options: ['Checking', 'Savings', 'Brokerage', 'Retirement'] },
+            { id: 'balance', label: 'Balance', type: 'number' },
+        ]
+    },
+    {
+        id: 'policy_def',
+        organizationId: 'org_1',
+        nameSingular: 'Insurance Policy',
+        namePlural: 'Insurance Policies',
+        icon: 'ShieldCheck',
+        fields: [
+            { id: 'policy_number', label: 'Policy Number', type: 'text' },
+            { id: 'policy_type', label: 'Policy Type', type: 'select', options: ['Life', 'Auto', 'Home', 'Umbrella'] },
+            { id: 'premium', label: 'Premium', type: 'number' },
+            { id: 'coverage_amount', label: 'Coverage Amount', type: 'number' },
+        ]
+    },
+    {
+        id: 'investment_def',
+        organizationId: 'org_1',
+        nameSingular: 'Investment',
+        namePlural: 'Investments',
+        icon: 'AreaChart',
+        fields: [
+            { id: 'investment_name', label: 'Investment Name', type: 'text' },
+            { id: 'investment_type', label: 'Type', type: 'select', options: ['Stock', 'Bond', 'Mutual Fund', 'ETF'] },
+            { id: 'symbol', label: 'Symbol/Ticker', type: 'text' },
+            { id: 'quantity', label: 'Quantity', type: 'number' },
+            { id: 'current_value', label: 'Current Value', type: 'number' },
+        ]
+    }
+];
+export let MOCK_CUSTOM_OBJECT_RECORDS: CustomObjectRecord[] = [
+    {
+        id: 'fin_acct_rec_1',
+        organizationId: 'org_1',
+        objectDefId: 'fin_acct_def',
+        fields: {
+            account_name: 'Main Checking Account',
+            account_number: '...1234',
+            account_type: 'Checking',
+            balance: 15023.45
+        }
+    },
+    {
+        id: 'policy_rec_1',
+        organizationId: 'org_1',
+        objectDefId: 'policy_def',
+        fields: {
+            policy_number: 'POL-98765',
+            policy_type: 'Auto',
+            premium: 250,
+            coverage_amount: 300000
+        }
+    }
+];
 export const MOCK_ANONYMOUS_SESSIONS: any[] = [];
 export const MOCK_APP_MARKETPLACE_ITEMS: AppMarketplaceItem[] = [
     { id: 'app_slack', name: 'Slack', description: 'Get CRM notifications in your Slack channels.', longDescription: 'The Slack integration for VersaCRM allows you to receive real-time notifications about important CRM events directly in your chosen Slack channels. Get notified about new leads, closed deals, or urgent support tickets without ever leaving your workspace.', logo: 'https://a.slack-edge.com/80588/marketing/img/meta/slack_hash_256.png', category: 'Communication', developer: 'VersaCRM Inc.', website: 'https://slack.com' },

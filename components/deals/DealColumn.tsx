@@ -39,6 +39,7 @@ const DealColumn: React.FC<DealColumnProps> = ({ stage, deals, onCardClick, onDr
                     <DealCard
                         key={deal.id}
                         deal={deal}
+                        isDraggable={true}
                         onDragStart={onDragStart}
                         onClick={onCardClick}
                         isForecasting={isForecasting}

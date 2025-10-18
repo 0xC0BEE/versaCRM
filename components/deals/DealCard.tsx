@@ -10,9 +10,10 @@ interface DealCardProps {
     onClick: (deal: Deal) => void;
     isForecasting: boolean;
     onOpenForecast: (deal: Deal, forecast: DealForecast) => void;
+    isDraggable: boolean;
 }
 
-const DealCard: React.FC<DealCardProps> = ({ deal, onDragStart, onClick, isForecasting, onOpenForecast }) => {
+const DealCard: React.FC<DealCardProps> = ({ deal, onDragStart, onClick, isForecasting, onOpenForecast, isDraggable }) => {
     const { contactsQuery, customObjectDefsQuery } = useData();
     const { data: contacts = [] } = contactsQuery;
     const { data: customObjectDefs = [] } = customObjectDefsQuery;
@@ -62,10 +63,10 @@ const DealCard: React.FC<DealCardProps> = ({ deal, onDragStart, onClick, isForec
 
     return (
         <div
-            draggable
-            onDragStart={(e) => onDragStart(e, deal.id)}
+            draggable={isDraggable}
+            onDragStart={isDraggable ? (e) => onDragStart(e, deal.id) : undefined}
             onClick={() => onClick(deal)}
-            className="p-3 bg-card-bg rounded-lg border border-border-subtle shadow-sm-new cursor-pointer hover:shadow-md-new hover:border-primary/50 transition-all mb-3"
+            className={`p-3 bg-card-bg rounded-lg border border-border-subtle shadow-sm-new ${isDraggable ? 'cursor-grab' : 'cursor-pointer'} hover:shadow-md-new hover:border-primary/50 transition-all`}
         >
             <h4 className="font-semibold text-sm text-text-primary truncate">{deal.name}</h4>
             <p className="text-xs text-text-secondary mt-1">{contactName}</p>
