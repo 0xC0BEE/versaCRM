@@ -10,8 +10,8 @@ import toast from 'react-hot-toast';
 import WorkflowCanvas from './WorkflowCanvas';
 import Toolbox from './Toolbox';
 import ConfigPanel from './ConfigPanel';
-// FIX: Changed default import of 'Card' to a named import '{ Card }' to resolve module export error.
 import { Card } from '../../ui/Card';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AdvancedWorkflowBuilderProps {
     workflow: AdvancedWorkflow | null;
@@ -21,6 +21,7 @@ interface AdvancedWorkflowBuilderProps {
 const AdvancedWorkflowBuilder: React.FC<AdvancedWorkflowBuilderProps> = ({ workflow, onClose }) => {
     const { createAdvancedWorkflowMutation, updateAdvancedWorkflowMutation } = useData();
     const { authenticatedUser } = useAuth();
+    const queryClient = useQueryClient();
     const isNew = !workflow;
 
     const [nodes, setNodes] = useState<Node[]>([]);
@@ -46,7 +47,7 @@ const AdvancedWorkflowBuilder: React.FC<AdvancedWorkflowBuilderProps> = ({ workf
         }
     }, [workflow]);
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!workflowName.trim()) return toast.error("Workflow name is required.");
 
         const workflowData = {
@@ -56,11 +57,22 @@ const AdvancedWorkflowBuilder: React.FC<AdvancedWorkflowBuilderProps> = ({ workf
             nodes,
             edges,
         };
+        
+        try {
+            if (isNew) {
+                await createAdvancedWorkflowMutation.mutateAsync(workflowData as Omit<AdvancedWorkflow, 'id'>);
+            } else {
+                await updateAdvancedWorkflowMutation.mutateAsync({ ...workflow!, ...workflowData });
+            }
+            
+            // Explicitly invalidate queries and wait for it to complete before closing
+            await queryClient.invalidateQueries({ queryKey: ['workflows'] });
+            await queryClient.invalidateQueries({ queryKey: ['advancedWorkflows'] });
 
-        if (isNew) {
-            createAdvancedWorkflowMutation.mutate(workflowData as Omit<AdvancedWorkflow, 'id'>, { onSuccess: onClose });
-        } else {
-            updateAdvancedWorkflowMutation.mutate({ ...workflow!, ...workflowData }, { onSuccess: onClose });
+            toast.success(`Advanced workflow ${isNew ? 'created' : 'updated'}!`);
+            onClose();
+        } catch (error) {
+            // Error is handled by the default onError in DataContext
         }
     };
 

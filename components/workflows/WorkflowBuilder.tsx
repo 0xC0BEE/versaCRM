@@ -11,9 +11,10 @@ import { useForm } from '../../hooks/useForm';
 import { useApp } from '../../contexts/AppContext';
 import toast from 'react-hot-toast';
 import { Card } from '../ui/Card';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface WorkflowBuilderProps {
-    workflow: Workflow | null;
+    workflow: Partial<Workflow> | null;
     onClose: () => void;
 }
 
@@ -41,7 +42,8 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
     const { createWorkflowMutation, updateWorkflowMutation, dealStagesQuery, emailTemplatesQuery, teamMembersQuery, surveysQuery } = useData();
     const { industryConfig } = useApp();
     const { authenticatedUser } = useAuth();
-    const isNew = !workflow;
+    const queryClient = useQueryClient();
+    const isNew = !workflow || !workflow.id;
 
     const [selectedNode, setSelectedNode] = useState<{ type: 'trigger' | 'action', index?: number }>({ type: 'trigger' });
 
@@ -100,14 +102,25 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
         setSelectedNode({ type: 'trigger' }); // Reset selection to trigger
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!formData.name.trim()) return toast.error("Workflow name is required.");
         if (formData.actions.length === 0) return toast.error("A workflow must have at least one action.");
-
-        if (isNew) {
-            createWorkflowMutation.mutate(formData, { onSuccess: onClose });
-        } else {
-            updateWorkflowMutation.mutate(formData as Workflow, { onSuccess: onClose });
+        
+        try {
+            if (isNew) {
+                await createWorkflowMutation.mutateAsync(formData);
+            } else {
+                await updateWorkflowMutation.mutateAsync(formData as Workflow);
+            }
+            
+            // Explicitly invalidate queries and wait for it to complete before closing
+            await queryClient.invalidateQueries({ queryKey: ['workflows'] });
+            await queryClient.invalidateQueries({ queryKey: ['advancedWorkflows'] });
+            
+            toast.success(`Workflow ${isNew ? 'created' : 'updated'}!`);
+            onClose();
+        } catch (error) {
+            // Error toast is handled globally by the mutation's onError
         }
     };
     
@@ -119,7 +132,6 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
                 <Card className="p-4">
                     <h3 className="text-lg font-semibold text-text-primary mb-4">Configure Trigger</h3>
                     <div className="space-y-4">
-                        {/* FIX: Added missing id prop. */}
                         <Select id="trigger-type" label="When this event happens..." value={formData.trigger.type} onChange={e => handleTriggerChange('type', e.target.value)}>
                             {triggerTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                         </Select>
@@ -133,7 +145,6 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
                  <Card className="p-4">
                     <h3 className="text-lg font-semibold text-text-primary mb-4">Configure Action #{selectedNode.index + 1}</h3>
                      <div className="space-y-4">
-                        {/* FIX: Added missing id prop. */}
                         <Select id={`action-type-${selectedNode.index}`} label="Then do this..." value={action.type} onChange={e => handleActionChange(selectedNode.index!, 'type', e.target.value)}>
                             {actionTypes.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
                         </Select>
@@ -151,12 +162,10 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
             case 'contactStatusChanged':
                 return (
                     <div className="grid grid-cols-2 gap-2">
-                        {/* FIX: Added missing id prop. */}
                         <Select id="trigger-from-status" label="From Status (Optional)" value={trigger.fromStatus || ''} onChange={e => handleTriggerChange('fromStatus', e.target.value)}>
                             <option value="">Any</option>
                             {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
                         </Select>
-                        {/* FIX: Added missing id prop. */}
                         <Select id="trigger-to-status" label="To Status (Optional)" value={trigger.toStatus || ''} onChange={e => handleTriggerChange('toStatus', e.target.value)}>
                             <option value="">Any</option>
                             {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
@@ -166,12 +175,10 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
             case 'dealStageChanged':
                 return (
                      <div className="grid grid-cols-2 gap-2">
-                        {/* FIX: Added missing id prop. */}
                         <Select id="trigger-from-stage" label="From Stage (Optional)" value={trigger.fromStageId || ''} onChange={e => handleTriggerChange('fromStageId', e.target.value)}>
                             <option value="">Any</option>
                             {dealStages.map((s: DealStage) => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </Select>
-                        {/* FIX: Added missing id prop. */}
                         <Select id="trigger-to-stage" label="To Stage (Optional)" value={trigger.toStageId || ''} onChange={e => handleTriggerChange('toStageId', e.target.value)}>
                              <option value="">Any</option>
                             {dealStages.map((s: DealStage) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -181,12 +188,10 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
             case 'ticketStatusChanged':
                  return (
                     <div className="grid grid-cols-2 gap-2">
-                        {/* FIX: Added missing id prop. */}
                         <Select id="trigger-ticket-from-status" label="From Status (Optional)" value={trigger.fromStatus || ''} onChange={e => handleTriggerChange('fromStatus', e.target.value)}>
                             <option value="">Any</option>
                             {['New', 'Open', 'Pending', 'Closed'].map(s => <option key={s} value={s}>{s}</option>)}
                         </Select>
-                        {/* FIX: Added missing id prop. */}
                         <Select id="trigger-ticket-to-status" label="To Status (Optional)" value={trigger.toStatus || ''} onChange={e => handleTriggerChange('toStatus', e.target.value)}>
                             <option value="">Any</option>
                             {['New', 'Open', 'Pending', 'Closed'].map(s => <option key={s} value={s}>{s}</option>)}
@@ -202,9 +207,7 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
             case 'createTask':
                 return (
                     <>
-                        {/* FIX: Added missing id prop. */}
                         <Input id={`action-task-title-${index}`} label="Task Title" value={action.taskTitle || ''} onChange={e => handleActionChange(index, 'taskTitle', e.target.value)} placeholder="e.g., Follow up with {{contactName}}"/>
-                        {/* FIX: Added missing id prop. */}
                         <Select id={`action-assignee-${index}`} label="Assign To" value={action.assigneeId || ''} onChange={e => handleActionChange(index, 'assigneeId', e.target.value)}>
                             <option value="">Select a team member...</option>
                             {teamMembers.map((m: User) => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -213,7 +216,6 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
                 );
             case 'sendEmail':
                 return (
-                    // FIX: Added missing id prop.
                     <Select id={`action-email-template-${index}`} label="Email Template" value={action.emailTemplateId || ''} onChange={e => handleActionChange(index, 'emailTemplateId', e.target.value)}>
                         <option value="">Select a template...</option>
                         {emailTemplates.map((t: EmailTemplate) => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -229,12 +231,10 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
             case 'updateContactField':
                 return (
                     <>
-                        {/* FIX: Added missing id prop. */}
                         <Select id={`action-field-id-${index}`} label="Field to Update" value={action.fieldId || ''} onChange={e => handleActionChange(index, 'fieldId', e.target.value)}>
                             <option value="">Select a field...</option>
                             {industryConfig.customFields.map((f: CustomField) => <option key={f.id} value={f.id}>{f.label}</option>)}
                         </Select>
-                         {/* FIX: Added missing id prop. */}
                          <Input id={`action-new-value-${index}`} label="New Value" value={action.newValue || ''} onChange={e => handleActionChange(index, 'newValue', e.target.value)} placeholder="Enter the new value for the field"/>
                     </>
                 );
@@ -245,9 +245,7 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
             case 'sendWebhook':
                 return (
                     <>
-                         {/* FIX: Added missing id prop. */}
                          <Input id={`action-webhook-url-${index}`} label="Webhook URL" value={action.webhookUrl || ''} onChange={e => handleActionChange(index, 'webhookUrl', e.target.value)} placeholder="https://yourapi.com/endpoint"/>
-                         {/* FIX: Added missing id prop. */}
                          <Input id={`action-payload-template-${index}`} label="Payload (JSON Template)" value={action.payloadTemplate || ''} onChange={e => handleActionChange(index, 'payloadTemplate', e.target.value)} placeholder='{ "contact_name": "{{contactName}}" }'/>
                     </>
                 );

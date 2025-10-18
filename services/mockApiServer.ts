@@ -8,7 +8,8 @@ import {
     MOCK_SUPPLIERS, MOCK_WAREHOUSES, MOCK_CUSTOM_OBJECT_DEFINITIONS, MOCK_CUSTOM_OBJECT_RECORDS,
     MOCK_ANONYMOUS_SESSIONS, MOCK_APP_MARKETPLACE_ITEMS, MOCK_INSTALLED_APPS, MOCK_SANDBOXES, MOCK_DOCUMENT_TEMPLATES,
     MOCK_PROJECTS, MOCK_PROJECT_PHASES, MOCK_PROJECT_TEMPLATES, MOCK_CANNED_RESPONSES,
-    MOCK_SURVEYS, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_SNAPSHOTS, MOCK_TEAM_CHANNELS, MOCK_TEAM_CHAT_MESSAGES, MOCK_CLIENT_CHECKLIST_TEMPLATES
+    MOCK_SURVEYS, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_SNAPSHOTS, MOCK_TEAM_CHANNELS, MOCK_TEAM_CHAT_MESSAGES, MOCK_CLIENT_CHECKLIST_TEMPLATES,
+    MOCK_SUBSCRIPTION_PLANS
 } from './mockData';
 import { industryConfigs } from '../config/industryConfig';
 import { generateDashboardData } from './reportGenerator';
@@ -16,7 +17,7 @@ import { checkAndTriggerWorkflows } from './workflowService';
 import { recalculateScoreForContact } from './leadScoringService';
 import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
-import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, Notification, ClientChecklist } from '../types';
+import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, Notification, ClientChecklist, SubscriptionPlan } from '../types';
 
 // Hydrate the in-memory sandbox list from localStorage to persist it across reloads.
 const storedSandboxes = JSON.parse(localStorage.getItem('sandboxesList') || '[]');
@@ -64,6 +65,7 @@ const mainDB = {
     surveyResponses: MOCK_SURVEY_RESPONSES,
     snapshots: MOCK_SNAPSHOTS,
     clientChecklistTemplates: MOCK_CLIENT_CHECKLIST_TEMPLATES,
+    subscriptionPlans: MOCK_SUBSCRIPTION_PLANS,
 };
 
 let sandboxedDBs: { [key: string]: typeof mainDB } = JSON.parse(localStorage.getItem('sandboxedDBs') || '{}');
@@ -120,6 +122,32 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     };
     if (!db.interactions.some(i => i.id === 'int_x_1')) {
         db.interactions.unshift(xMessage);
+    }
+
+    // --- SUBSCRIPTIONS ---
+    if (path.startsWith('/api/v1/subscriptions/plans')) {
+        const planId = path.split('/').pop();
+        if (method === 'GET') {
+            const orgId = searchParams.get('orgId');
+            return respond(db.subscriptionPlans.filter(p => p.organizationId === orgId));
+        }
+        if (method === 'POST') {
+            const newPlan: SubscriptionPlan = { ...body, id: `plan_${Date.now()}` };
+            db.subscriptionPlans.push(newPlan);
+            return respond(newPlan, 201);
+        }
+        if (method === 'PUT' && planId) {
+            const index = db.subscriptionPlans.findIndex(p => p.id === planId);
+            if (index > -1) {
+                db.subscriptionPlans[index] = { ...db.subscriptionPlans[index], ...body };
+                return respond(db.subscriptionPlans[index]);
+            }
+            return respond({ message: 'Not found' }, 404);
+        }
+        if (method === 'DELETE' && planId) {
+            db.subscriptionPlans = db.subscriptionPlans.filter(p => p.id !== planId);
+            return respond(null, 204);
+        }
     }
 
 
@@ -501,10 +529,48 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     
     // --- CONTACTS ---
     if (path.startsWith('/api/v1/contacts')) {
+        const contactId = path.split('/')[4];
+
+        if (path.includes('/subscribe')) {
+            const index = db.contacts.findIndex(c => c.id === contactId);
+            if (index > -1) {
+                const plan = db.subscriptionPlans.find(p => p.id === body.planId);
+                if (plan) {
+                    const newSub = {
+                        id: `sub_${Date.now()}`,
+                        planId: body.planId,
+                        status: 'active' as const,
+                        startDate: new Date().toISOString(),
+                        nextBillingDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(),
+                    };
+                    if (!db.contacts[index].subscriptions) {
+                        db.contacts[index].subscriptions = [];
+                    }
+                    db.contacts[index].subscriptions!.push(newSub);
+                    return respond(db.contacts[index]);
+                }
+            }
+            return respond({ message: 'Contact not found' }, 404);
+        }
+        if (contactId && path.includes('/subscriptions')) {
+            const subId = path.split('/')[6];
+            const index = db.contacts.findIndex(c => c.id === contactId);
+            if (index > -1) {
+                const contact = db.contacts[index];
+                if (contact.subscriptions) {
+                    const subIndex = contact.subscriptions.findIndex(s => s.id === subId);
+                    if (subIndex > -1) {
+                        contact.subscriptions[subIndex].status = 'cancelled';
+                        return respond(contact);
+                    }
+                }
+            }
+            return respond({ message: 'Subscription not found' }, 404);
+        }
+
         if (path.includes('churn-prediction')) return respond({ contactId: 'contact_1', risk: 'Medium', factors: { positive: ['Frequent logins'], negative: ['No recent purchases'] }, nextBestAction: 'Send a follow-up email with a special offer.' });
         if (path.includes('next-best-action')) return respond({ contactId: 'contact_1', action: 'Email', reason: 'Contact has a high lead score but no recent interactions.', templateId: 'template_2'});
 
-        const contactId = path.split('/')[4];
         if (contactId && !path.includes('bulk')) {
             if(method === 'GET') return respond(db.contacts.find(c => c.id === contactId));
             if(method === 'PUT') {

@@ -42,5 +42,17 @@ export const featureFlags: FeatureFlag[] = [
         name: 'AI Process Optimization',
         description: 'Enables the AI-powered process mining and workflow suggestion feature on the Workflows page.',
         isEnabled: false,
+    },
+    {
+        id: 'aiDataHygiene',
+        name: 'AI Data Hygiene',
+        description: 'Enables the AI-powered tool for detecting duplicates and formatting issues in contacts.',
+        isEnabled: false,
+    },
+    {
+        id: 'aiProductDataHygiene',
+        name: 'AI Product Data Hygiene',
+        description: 'Enables the AI-powered tool for detecting duplicates and formatting issues in inventory products.',
+        isEnabled: false,
     }
 ];

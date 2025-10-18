@@ -17,21 +17,23 @@ interface WorkflowsPageProps {
     isTabbedView?: boolean;
 }
 
-const AiProcessOptimizationCard: React.FC<{ onSuggest: (workflow: Partial<Workflow>) => void }> = ({ onSuggest }) => {
+interface AiProcessOptimizationCardProps { onSuggest: (insight: ProcessInsight) => void }
+
+const AiProcessOptimizationCard: React.FC<AiProcessOptimizationCardProps> = ({ onSuggest }) => {
     const [analysisResult, setAnalysisResult] = useState<ProcessInsight[] | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const { dealsQuery, ticketsQuery, dealStagesQuery } = useData();
     const { isFeatureEnabled } = useApp();
-    const isDataLoading = dealsQuery.isLoading || ticketsQuery.isLoading || dealStagesQuery.isLoading;
+    
+    const isDataLoading = dealsQuery.status !== 'success' || ticketsQuery.status !== 'success' || dealStagesQuery.status !== 'success';
 
     const handleAnalyze = async () => {
         setIsAnalyzing(true);
         setAnalysisResult(null);
 
-        // This is the most robust check, ensuring data is not just successfully fetched but also truthy.
-        if (dealsQuery.status !== 'success' || !dealsQuery.data ||
-            ticketsQuery.status !== 'success' || !ticketsQuery.data ||
-            dealStagesQuery.status !== 'success' || !dealStagesQuery.data) {
+        if (dealsQuery.status !== 'success' || !Array.isArray(dealsQuery.data) ||
+            ticketsQuery.status !== 'success' || !Array.isArray(ticketsQuery.data) ||
+            dealStagesQuery.status !== 'success' || !Array.isArray(dealStagesQuery.data)) {
             toast.error("Data is not ready for analysis. Please try again in a moment.");
             setIsAnalyzing(false);
             return;
@@ -40,10 +42,11 @@ const AiProcessOptimizationCard: React.FC<{ onSuggest: (workflow: Partial<Workfl
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
             
-            const deals = dealsQuery.data;
-            const tickets = ticketsQuery.data;
-            const dealStages = dealStagesQuery.data;
+            const deals = dealsQuery.data || [];
+            const tickets = ticketsQuery.data || [];
+            const dealStages = dealStagesQuery.data || [];
 
+            // Summarize data to keep prompt concise
             const dealJourneys = deals.map(deal => ({
                 stage: dealStages.find(s => s.id === deal.stageId)?.name || 'Unknown',
                 durationDays: differenceInDays(new Date(), new Date(deal.createdAt)),
@@ -56,12 +59,15 @@ const AiProcessOptimizationCard: React.FC<{ onSuggest: (workflow: Partial<Workfl
                 return acc;
             }, {});
 
+            // Only send necessary fields for deal stages
+            const stageSummary = dealStages.map(s => ({ id: s.id, name: s.name }));
+
             const prompt = `You are a CRM process optimization expert. Analyze this summary of deal and ticket data to find bottlenecks and suggest simple workflow automations.
 
 Data:
 - Deal Journeys: ${JSON.stringify(dealJourneys.slice(0, 10))}
 - Ticket Summary: ${JSON.stringify(ticketSummary)}
-- Available Deal Stages: ${JSON.stringify(dealStages)}
+- Available Deal Stages: ${JSON.stringify(stageSummary)}
 
 Your response MUST be a JSON object containing an array called 'insights'. Each object in the array should have:
 1. 'observation': A string describing a potential bottleneck (e.g., "Deals over $50k in 'Proposal Sent' seem to be stalling.").
@@ -138,8 +144,23 @@ Analyze the data and return 1-2 distinct insights in the specified JSON format.`
                 }
             });
 
-            const result = JSON.parse(response.text);
-            setAnalysisResult(result.insights || []);
+            // The model can sometimes wrap the JSON in markdown even with the JSON response type.
+            // Robustly clean the response before parsing.
+            let jsonText = response.text.trim();
+            if (jsonText.startsWith('```json')) {
+                jsonText = jsonText.substring(7, jsonText.length - 3).trim();
+            } else if (jsonText.startsWith('```')) {
+                jsonText = jsonText.substring(3, jsonText.length - 3).trim();
+            }
+
+            try {
+                const result = JSON.parse(jsonText);
+                setAnalysisResult(result.insights || []);
+            } catch (parseError) {
+                console.error("AI Process Analysis Error - Failed to parse JSON:", parseError);
+                console.error("Raw AI response:", jsonText); // Log raw text for better debugging
+                toast.error("AI returned an invalid format. Please try again.");
+            }
 
         } catch (error) {
             console.error("AI Process Analysis Error:", error);
@@ -168,7 +189,7 @@ Analyze the data and return 1-2 distinct insights in the specified JSON format.`
                                     <p className="font-semibold text-sm">Observation: <span className="font-normal text-text-secondary">{insight.observation}</span></p>
                                     <p className="font-semibold text-sm mt-1">Suggestion: <span className="font-normal text-text-secondary">{insight.suggestion}</span></p>
                                     <div className="text-right mt-2">
-                                        <Button size="sm" variant="secondary" onClick={() => onSuggest(insight.workflow)} rightIcon={<ArrowRight size={14}/>}>Create Workflow</Button>
+                                        <Button size="sm" variant="secondary" onClick={() => onSuggest(insight)} rightIcon={<ArrowRight size={14}/>}>Create Workflow</Button>
                                     </div>
                                 </div>
                             ))}
@@ -222,11 +243,12 @@ const WorkflowsPage: React.FC<WorkflowsPageProps> = ({ isTabbedView = false }) =
         setView('builder');
     };
     
-    const handleSuggestWorkflow = (suggestedWorkflow: Partial<Workflow>) => {
+    const handleSuggestWorkflow = (insight: ProcessInsight) => {
         setSelectedItem({
-            name: 'AI Suggested Workflow',
+            name: `AI: ${insight.observation.substring(0, 40)}...`,
             isActive: true,
-            ...suggestedWorkflow
+            trigger: insight.workflow.trigger,
+            actions: insight.workflow.actions,
         });
         setView('builder');
     };
@@ -317,7 +339,7 @@ const WorkflowsPage: React.FC<WorkflowsPageProps> = ({ isTabbedView = false }) =
                                                 {w.isActive ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">{w.workflowType === 'Simple' ? (w as Workflow).trigger.type : ('nodes' in w && w.nodes.find(n => n.type === 'trigger')?.data.label)}</td>
+                                        <td className="px-6 py-4">{w.workflowType === 'Simple' && w.trigger?.type ? w.trigger.type : ('nodes' in w && w.nodes.find(n => n.type === 'trigger')?.data.label)}</td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex gap-2 justify-end">
                                                 <Button size="sm" variant="secondary" onClick={() => handleEdit(w)}>Edit</Button>

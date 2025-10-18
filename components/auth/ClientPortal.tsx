@@ -12,6 +12,7 @@ import { useData } from '../../contexts/DataContext';
 import LiveChatWidget from '../chat/LiveChatWidget';
 import ClientProjectsTab from './client_portal/ClientProjectsTab';
 import ClientKBTab from './client_portal/ClientKBTab';
+import ClientBillingTab from './client_portal/ClientBillingTab';
 
 const ClientPortal: React.FC = () => {
     const { authenticatedUser, logout } = useAuth();
@@ -19,7 +20,7 @@ const ClientPortal: React.FC = () => {
     const { organizationSettingsQuery } = useData();
     const { data: settings, isLoading: settingsLoading } = organizationSettingsQuery;
 
-    const tabs = ['Profile', 'Projects', 'History', 'Documents', 'Tickets', 'Knowledge Base', 'AI Assistant'];
+    const tabs = ['Profile', 'Projects', 'Billing', 'History', 'Documents', 'Tickets', 'Knowledge Base', 'AI Assistant'];
 
     const renderContent = () => {
         switch (activeTab) {
@@ -27,6 +28,8 @@ const ClientPortal: React.FC = () => {
                 return <ClientProfileTab />;
             case 'Projects':
                 return <ClientProjectsTab />;
+            case 'Billing':
+                return <ClientBillingTab />;
             case 'History':
                 return <ClientHistoryTab />;
             case 'Documents':

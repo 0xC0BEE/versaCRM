@@ -9,6 +9,7 @@ import AppearanceSettings from './AppearanceSettings';
 import ObjectsAndFieldsSettings from './ObjectsAndFieldsSettings';
 import ChannelsAndLeadGenSettings from './ChannelsAndLeadGenSettings';
 import DeveloperSettings from './DeveloperSettings';
+import SubscriptionSettings from './SubscriptionSettings';
 
 // Standalone components for tabs
 import RolesAndPermissionsPage from './RolesAndPermissionsPage';
@@ -21,6 +22,7 @@ const SettingsPage: React.FC = () => {
         { name: 'Objects & Fields', component: <ObjectsAndFieldsSettings /> },
         { name: 'Appearance', component: <AppearanceSettings /> },
         { name: 'Channels & Lead Gen', component: <ChannelsAndLeadGenSettings /> },
+        { name: 'Billing & Commerce', component: <SubscriptionSettings /> },
         { name: 'Developer & Data', permission: 'settings:manage:api', component: <DeveloperSettings /> },
     ];
 

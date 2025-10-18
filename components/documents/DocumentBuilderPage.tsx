@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
-import { DocumentTemplate, DocumentBlock, Product, User } from '../../types';
+import { DocumentTemplate, DocumentBlock, Product, User, DocumentLineItemBlockContent } from '../../types';
 import PageWrapper from '../layout/PageWrapper';
 import Button from '../ui/Button';
 // FIX: Imported 'GripVertical' to resolve reference error.
@@ -20,6 +19,9 @@ interface DocumentBuilderPageProps {
     templateToEdit: DocumentTemplate | null;
     onClose: () => void;
 }
+
+// FIX: Define a local type for document line items to ensure type safety.
+type DocumentLineItem = DocumentLineItemBlockContent['items'][0];
 
 const placeholders = [
     { label: 'Contact Name', value: '{{contact.contactName}}' },
@@ -165,7 +167,9 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
             case 'text': return <p className="py-2 whitespace-pre-wrap leading-relaxed">{block.content.text}</p>;
             case 'image': return <img src={block.content.src} alt={block.content.alt} className="w-full h-auto rounded-md" />;
             case 'lineItems': {
-                const subtotal = block.content.items.reduce((sum: number, item: any) => sum + item.quantity * item.unitPrice, 0);
+                // FIX: Cast items to DocumentLineItem[] and add a fallback for undefined to prevent runtime errors.
+                const items = (block.content.items || []) as DocumentLineItem[];
+                const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
                 const tax = subtotal * (block.content.taxRate / 100);
                 const total = subtotal + tax;
                 return (
@@ -180,9 +184,14 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                                 </tr>
                             </thead>
                             <tbody>
-                                {block.content.items.map((item: any, index: number) => (
+                                {items.map((item, index) => (
                                     <tr key={index} className="border-b">
-                                        <td className="p-2 font-medium">{item.name}</td>
+                                        <td className="p-2 font-medium">
+                                            {item.name}
+                                            {item.description && (
+                                                <p className="text-xs text-gray-500 whitespace-pre-wrap font-normal">{item.description}</p>
+                                            )}
+                                        </td>
                                         <td className="p-2 text-right">{item.quantity}</td>
                                         <td className="p-2 text-right">{item.unitPrice.toLocaleString('en-US', {style:'currency', currency: 'USD'})}</td>
                                         <td className="p-2 text-right">{(item.quantity * item.unitPrice).toLocaleString('en-US', {style:'currency', currency: 'USD'})}</td>
@@ -237,26 +246,85 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                 </div>
             );
             case 'lineItems': {
-                const items = selectedBlock.content.items || [];
+                const items = (selectedBlock.content.items || []) as DocumentLineItem[];
                 const taxRate = selectedBlock.content.taxRate || 0;
 
                 const handleItemChange = (index: number, field: string, value: any) => {
                     const newItems = [...items];
-                    const item = {...newItems[index]};
-                    (item as any)[field] = value;
+                    const item: any = {...newItems[index]};
+                    item[field] = value;
+
                     if(field === 'productId') {
-                        const product = products.find((p:Product) => p.id === value);
+                        // FIX: Cast `products` to `Product[]` to ensure correct type inference for `product`, fixing property access errors.
+                        const product = (products as Product[]).find(p => p.id === value);
                         if (product) {
                             item.name = product.name;
                             item.unitPrice = product.salePrice;
+                            item.selectedOptions = {}; // Reset options
+                            
+                            // Set default options
+                            if (product.options) {
+                                product.options.forEach(opt => {
+                                    if (opt.choices.length > 0) {
+                                        item.selectedOptions[opt.name] = opt.choices[0].name;
+                                    }
+                                });
+                            }
+                            
+                            if (product.isBundle && product.bundleItemIds) {
+                                const productMap = new Map((products as Product[]).map((p: Product) => [p.id, p]));
+                                const bundleContents = product.bundleItemIds
+                                    .map(id => productMap.get(id)?.name)
+                                    .filter(Boolean)
+                                    .map(name => `- ${name}`)
+                                    .join('\n');
+                                item.description = `Includes:\n${bundleContents}`;
+                            } else {
+                                item.description = '';
+                            }
                         }
                     }
                     newItems[index] = item;
                     updateBlock(selectedBlock.id, { ...selectedBlock.content, items: newItems });
                 };
+                
+                const handleOptionChange = (itemIndex: number, optionName: string, choiceName: string) => {
+                    const newItems = [...items];
+                    const item = { ...newItems[itemIndex] };
+                    if (!item.selectedOptions) item.selectedOptions = {};
+                    item.selectedOptions[optionName] = choiceName;
+
+                    // FIX: Cast `products` to `Product[]` to ensure correct type inference for `product`, fixing property access errors.
+                    const product = (products as Product[]).find(p => p.id === item.productId);
+                    if (product && product.options) {
+                        let price = product.salePrice;
+                        let description = '';
+                        if (product.isBundle && product.bundleItemIds) {
+                           const productMap = new Map((products as Product[]).map((p: Product) => [p.id, p]));
+                            const bundleContents = product.bundleItemIds.map(id => `- ${productMap.get(id)?.name}`).join('\n');
+                            description = `Includes:\n${bundleContents}\n\nCustomizations:\n`;
+                        }
+                        
+                        const selectedOptionDescriptions: string[] = [];
+
+                        product.options.forEach(opt => {
+                            const selectedChoiceName = item.selectedOptions![opt.name];
+                            const choice = opt.choices.find(c => c.name === selectedChoiceName);
+                            if (choice) {
+                                price += choice.priceAdjustment;
+                                selectedOptionDescriptions.push(`- ${opt.name}: ${choice.name}${choice.priceAdjustment !== 0 ? ` (${choice.priceAdjustment > 0 ? '+' : ''}${choice.priceAdjustment.toLocaleString('en-US', {style: 'currency', currency: 'USD'})})` : ''}`);
+                            }
+                        });
+                        item.unitPrice = price;
+                        item.description = (description || '') + selectedOptionDescriptions.join('\n');
+                    }
+
+                    newItems[itemIndex] = item;
+                    updateBlock(selectedBlock.id, { ...selectedBlock.content, items: newItems });
+                };
 
                 const addItem = () => {
-                    const newItem = { productId: '', name: 'New Item', quantity: 1, unitPrice: 0 };
+                    const newItem: DocumentLineItem = { productId: '', name: 'New Item', description: '', quantity: 1, unitPrice: 0 };
                     updateBlock(selectedBlock.id, { ...selectedBlock.content, items: [...items, newItem] });
                 };
                 
@@ -271,23 +339,44 @@ const DocumentBuilderPage: React.FC<DocumentBuilderPageProps> = ({ templateToEdi
                 return (
                     <div className="space-y-4">
                         <h4 className="font-semibold">Line Items</h4>
-                        <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
-                        {items.map((item: any, index: number) => (
-                            <div key={index} className="p-2 border border-border-subtle rounded-md space-y-2">
-                                <div className="flex justify-between items-center">
-                                    <p className="text-sm font-medium">Item #{index + 1}</p>
-                                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeItem(index)} disabled={isReadOnly}><Trash2 size={14} className="text-error"/></Button>
+                        <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-2">
+                        {items.map((item: any, index: number) => {
+                            const product = products.find((p: Product) => p.id === item.productId);
+                            return (
+                                <div key={index} className="p-2 border border-border-subtle rounded-md space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <p className="text-sm font-medium">Item #{index + 1}</p>
+                                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeItem(index)} disabled={isReadOnly}><Trash2 size={14} className="text-error"/></Button>
+                                    </div>
+                                    <Select id={`item-prod-${index}`} label="Product" value={item.productId} onChange={e => handleItemChange(index, 'productId', e.target.value)} disabled={isReadOnly}>
+                                        <option value="">Select a product</option>
+                                        {products.map((p: Product) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    </Select>
+                                    
+                                    {product && product.options && product.options.map(option => (
+                                        <Select
+                                            key={option.name}
+                                            id={`item-opt-${index}-${option.name}`}
+                                            label={option.name}
+                                            value={item.selectedOptions?.[option.name] || ''}
+                                            onChange={e => handleOptionChange(index, option.name, e.target.value)}
+                                            disabled={isReadOnly}
+                                        >
+                                            {option.choices.map(choice => (
+                                                <option key={choice.name} value={choice.name}>
+                                                    {choice.name} {choice.priceAdjustment !== 0 ? `(${choice.priceAdjustment > 0 ? '+' : ''}${choice.priceAdjustment.toLocaleString('en-US', {style:'currency', currency:'USD'})})` : ''}
+                                                </option>
+                                            ))}
+                                        </Select>
+                                    ))}
+
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Input id={`item-qty-${index}`} label="Quantity" type="number" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', parseInt(e.target.value))} disabled={isReadOnly}/>
+                                        <Input id={`item-price-${index}`} label="Unit Price" type="number" step="0.01" value={item.unitPrice} onChange={e => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))} disabled={isReadOnly}/>
+                                    </div>
                                 </div>
-                                <Select id={`item-prod-${index}`} label="Product" value={item.productId} onChange={e => handleItemChange(index, 'productId', e.target.value)} disabled={isReadOnly}>
-                                    <option value="">Select a product</option>
-                                    {products.map((p: Product) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </Select>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Input id={`item-qty-${index}`} label="Quantity" type="number" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', parseInt(e.target.value))} disabled={isReadOnly}/>
-                                    <Input id={`item-price-${index}`} label="Unit Price" type="number" step="0.01" value={item.unitPrice} onChange={e => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))} disabled={isReadOnly}/>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                         </div>
                         <Button size="sm" variant="secondary" className="w-full" onClick={addItem} leftIcon={<Plus size={14}/>} disabled={isReadOnly}>Add Item</Button>
                         <div className="pt-4 border-t border-border-subtle">

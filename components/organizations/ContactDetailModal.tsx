@@ -17,6 +17,7 @@ import EmailTab from './detail_tabs/EmailTab';
 import NextBestActionDisplay from './NextBestActionDisplay';
 import { useData } from '../../contexts/DataContext';
 import JourneyTab from './detail_tabs/JourneyTab';
+import SubscriptionsTab from './detail_tabs/SubscriptionsTab';
 
 interface ContactDetailModalProps {
     isOpen: boolean;
@@ -66,7 +67,7 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
     };
 
     const tabs = useMemo(() => {
-        const coreTabs = ['Profile', 'Journey', 'History', industryConfig.ordersTabName, industryConfig.enrollmentsTabName, 'Billing', 'Email', 'Documents'];
+        const coreTabs = ['Profile', 'Journey', 'History', 'Subscriptions', industryConfig.ordersTabName, industryConfig.enrollmentsTabName, 'Billing', 'Email', 'Documents'];
         if(industryConfig.structuredRecordTypes.length > 0) {
             coreTabs.splice(3, 0, industryConfig.structuredRecordTabName);
         }
@@ -91,6 +92,8 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
                 return <JourneyTab contact={contact} />;
             case 'History':
                 return <HistoryTab contact={contact} />;
+            case 'Subscriptions':
+                return <SubscriptionsTab contact={contact} isReadOnly={false} />;
             case industryConfig.ordersTabName:
                 return <OrdersTab contact={contact} isReadOnly={false} />;
             case industryConfig.enrollmentsTabName:

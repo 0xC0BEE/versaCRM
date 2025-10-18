@@ -18,7 +18,8 @@ import {
     TeamChatMessage,
     Notification,
     ClientChecklistTemplate,
-    ClientChecklist
+    ClientChecklist,
+    SubscriptionPlan
 } from '../types';
 
 // Create a mutable reference to the fetch implementation that can be overridden by the mock server.
@@ -267,6 +268,15 @@ const apiClient = {
     getClientChecklistTemplates: (orgId: string): Promise<ClientChecklistTemplate[]> => fetchImpl(`${API_BASE}/client-checklist-templates?orgId=${orgId}`).then(handleResponse),
     assignChecklistToProject: (data: { projectId: string, templateId: string }): Promise<Project> => fetchImpl(`${API_BASE}/projects/${data.projectId}/assign-checklist`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateClientChecklist: (data: { projectId: string, checklist: ClientChecklist }): Promise<Project> => fetchImpl(`${API_BASE}/projects/${data.projectId}/update-checklist`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+
+    // --- SUBSCRIPTIONS ---
+    getSubscriptionPlans: (orgId: string): Promise<SubscriptionPlan[]> => fetchImpl(`${API_BASE}/subscriptions/plans?orgId=${orgId}`).then(handleResponse),
+    createSubscriptionPlan: (data: Omit<SubscriptionPlan, 'id'>): Promise<SubscriptionPlan> => fetchImpl(`${API_BASE}/subscriptions/plans`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    updateSubscriptionPlan: (data: SubscriptionPlan): Promise<SubscriptionPlan> => fetchImpl(`${API_BASE}/subscriptions/plans/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    deleteSubscriptionPlan: (id: string): Promise<void> => fetchImpl(`${API_BASE}/subscriptions/plans/${id}`, { method: 'DELETE' }).then(handleResponse),
+    subscribeContact: (data: { contactId: string; planId: string }): Promise<AnyContact> => fetchImpl(`${API_BASE}/contacts/${data.contactId}/subscribe`, { method: 'POST', body: JSON.stringify({ planId: data.planId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    cancelSubscription: (data: { contactId: string; subscriptionId: string }): Promise<AnyContact> => fetchImpl(`${API_BASE}/contacts/${data.contactId}/subscriptions/${data.subscriptionId}`, { method: 'DELETE' }).then(handleResponse),
+    paySubscription: (data: { contactId: string; subscriptionId: string }): Promise<AnyContact> => fetchImpl(`${API_BASE}/contacts/${data.contactId}/subscriptions/${data.subscriptionId}/pay`, { method: 'POST' }).then(handleResponse),
 };
 
 export default apiClient;

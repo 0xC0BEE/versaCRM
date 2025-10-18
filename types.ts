@@ -90,6 +90,7 @@ export interface AnyContact {
     avatar?: string;
     campaignEnrollments?: CampaignEnrollment[];
     structuredRecords?: StructuredRecord[];
+    subscriptions?: ContactSubscription[];
 }
 
 export interface Interaction {
@@ -104,6 +105,16 @@ export interface Interaction {
     clickedAt?: string;
 }
 
+export interface ProductOptionChoice {
+    name: string;
+    priceAdjustment: number;
+}
+
+export interface ProductOption {
+    name: string;
+    choices: ProductOptionChoice[];
+}
+
 export interface Product {
     id: string;
     organizationId: string;
@@ -114,6 +125,9 @@ export interface Product {
     costPrice: number;
     salePrice: number;
     stockLevel: number;
+    isBundle?: boolean;
+    bundleItemIds?: string[];
+    options?: ProductOption[];
 }
 
 export interface DealStage {
@@ -216,10 +230,22 @@ export interface Document {
     isVisibleToClient?: boolean;
 }
 
+export interface DocumentLineItemBlockContent {
+    items: {
+        productId: string;
+        name: string;
+        description: string;
+        quantity: number;
+        unitPrice: number;
+        selectedOptions?: Record<string, string>;
+    }[];
+    taxRate: number;
+}
+
 export interface DocumentBlock {
     id: string;
     type: 'header' | 'text' | 'image' | 'lineItems';
-    content: any;
+    content: any | DocumentLineItemBlockContent;
 }
 
 export type DocumentAccessLevel = 'edit' | 'view';
@@ -242,6 +268,7 @@ export interface OrderLineItem {
     description: string;
     quantity: number;
     unitPrice: number;
+    selectedOptions?: Record<string, string>;
 }
 
 export interface Order {
@@ -332,6 +359,24 @@ export interface Project {
   notes?: string;
   checklists?: ClientChecklist[];
 }
+
+// Commerce & Billing
+export interface SubscriptionPlan {
+    id: string;
+    organizationId: string;
+    name: string;
+    price: number;
+    billingCycle: 'monthly' | 'yearly';
+}
+
+export interface ContactSubscription {
+    id: string;
+    planId: string;
+    status: 'active' | 'cancelled';
+    startDate: string;
+    nextBillingDate: string;
+}
+
 
 // Unified Inbox Types
 export interface Message {
@@ -575,6 +620,32 @@ export interface AdvancedWorkflow {
     edges: Edge[];
 }
 
+export interface FormattingSuggestion {
+  contactId: string;
+  contactName: string;
+  suggestion: string;
+  field: keyof AnyContact | string;
+  newValue: any;
+}
+
+export interface DataHygieneSuggestion {
+  duplicates: string[][];
+  formatting: FormattingSuggestion[];
+}
+
+export interface ProductFormattingSuggestion {
+  productId: string;
+  productName: string;
+  suggestion: string;
+  field: keyof Product | string;
+  newValue: any;
+}
+
+export interface ProductDataHygieneSuggestion {
+  duplicates: string[][];
+  formatting: ProductFormattingSuggestion[];
+}
+
 export interface CampaignTargetAudience {
     status?: ContactStatus;
     leadScore?: {
@@ -816,10 +887,19 @@ export interface LiveChatSettings {
     newTicketPriority: Ticket['priority'];
     organizationId?: string;
 }
+
+export interface AiLeadScoringModel {
+    status: 'not_trained' | 'training' | 'trained';
+    lastTrained?: string;
+    positiveFactors: string[];
+    negativeFactors: string[];
+}
+
 export interface OrganizationSettings {
     organizationId: string;
     ticketSla: SLAPolicy;
     leadScoringRules: LeadScoringRule[];
+    aiLeadScoringModel?: AiLeadScoringModel;
     emailIntegration: {
         isConnected: boolean;
         connectedEmail?: string;
@@ -830,6 +910,10 @@ export interface OrganizationSettings {
         provider?: string;
     };
     liveChat: LiveChatSettings;
+    paymentGateway?: {
+        isConnected: boolean;
+        provider?: 'stripe' | 'paypal';
+    };
     featureFlags: Record<string, boolean>;
     dataWarehouse?: {
         isConnected: boolean;
@@ -994,6 +1078,7 @@ export interface DataContextType {
     surveyResponsesQuery: any;
     snapshotsQuery: any;
     clientChecklistTemplatesQuery: any;
+    subscriptionPlansQuery: any;
 
     // Mutations
     createOrganizationMutation: any;
@@ -1111,4 +1196,10 @@ export interface DataContextType {
     deleteSnapshotMutation: any;
     assignChecklistToProjectMutation: any;
     updateClientChecklistMutation: any;
+    createSubscriptionPlanMutation: any;
+    updateSubscriptionPlanMutation: any;
+    deleteSubscriptionPlanMutation: any;
+    subscribeContactMutation: any;
+    cancelSubscriptionMutation: any;
+    paySubscriptionMutation: any;
 }

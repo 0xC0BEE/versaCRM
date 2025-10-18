@@ -27,15 +27,15 @@ This document outlines the next strategic evolution of the VersaCRM platform, bu
 -   [x] **AI-Powered Process Mining & Optimization:**
     -   [x] Have Gemini analyze historical workflow and deal progression data to identify bottlenecks and inefficiencies.
     -   [x] Proactively suggest new workflow rules based on observed patterns (e.g., "Deals in 'Negotiation' for over 14 days are 80% more likely to be lost. Suggestion: Create an automation to notify a sales manager after 10 days.").
--   [ ] **Predictive Lead Scoring:**
-    -   [ ] Replace the manual, rule-based lead scoring system with a predictive AI model.
-    -   [ ] The model will analyze the attributes and interaction patterns of all historical "Won" vs. "Lost" deals to create a dynamic, self-improving lead scoring system that identifies the true indicators of a high-quality lead.
--   [ ] **Conversational BI (Business Intelligence):**
-    -   [ ] Enhance the Live Co-pilot to understand and execute data visualization requests.
-    -   [ ] A user should be able to say, "Show me our top 10 deals this quarter, grouped by lead source," and have the AI generate and display a new custom report chart on the fly.
--   [ ] **Automated Data Hygiene:**
-    -   [ ] Implement an AI-powered process that scans for duplicate contacts and suggests merges.
-    -   [ ] The AI will also identify and suggest corrections for inconsistent or poorly formatted data (e.g., standardizing addresses, capitalizing names).
+-   [x] **Predictive Lead Scoring:**
+    -   [x] Replace the manual, rule-based lead scoring system with a predictive AI model.
+    -   [x] The model will analyze the attributes and interaction patterns of all historical "Won" vs. "Lost" deals to create a dynamic, self-improving lead scoring system that identifies the true indicators of a high-quality lead.
+-   [x] **Conversational BI (Business Intelligence):**
+    -   [x] Enhance the Live Co-pilot to understand and execute data visualization requests.
+    -   [x] A user should be able to say, "Show me our top 10 deals this quarter, grouped by lead source," and have the AI generate and display a new custom report chart on the fly.
+-   [x] **Automated Data Hygiene:**
+    -   [x] Implement an AI-powered process that scans for duplicate contacts and suggests merges.
+    -   [x] The AI will also identify and suggest corrections for inconsistent or poorly formatted data (e.g., standardizing addresses, capitalizing names).
 
 ---
 
@@ -43,15 +43,16 @@ This document outlines the next strategic evolution of the VersaCRM platform, bu
 
 **Goal:** Close the loop from quote-to-cash by building native commerce and billing capabilities directly into VersaCRM, capturing more of the customer value chain.
 
--   [ ] **Subscription Management:**
-    -   [ ] Build tools to create and manage recurring subscription plans.
-    -   [ ] Automate recurring invoicing and billing cycles for subscribed contacts.
--   [ ] **Payment Gateway Integration:**
-    -   [ ] Integrate with Stripe and/or PayPal.
-    -   [ ] Allow customers to pay invoices directly via a secure link on a generated document or from within the Client Portal.
+-   [x] **Subscription Management:**
+    -   [x] Build tools to create and manage recurring subscription plans.
+    -   [x] Automate recurring invoicing and billing cycles for subscribed contacts.
+-   [x] **Payment Gateway Integration:**
+    -   [x] Integrate with Stripe and/or PayPal.
+    -   [x] Allow customers to pay invoices directly via a secure link on a generated document or from within the Client Portal.
 -   [ ] **CPQ (Configure, Price, Quote) Engine:**
-    -   [ ] Evolve the Document Builder's line-item block into a full CPQ tool.
-    -   [ ] Support complex product bundles, configurable options, and rule-based pricing (e.g., "20% discount on Product B if purchased with Product A").
+    -   [x] Support for Product Bundles.
+    -   [x] Add configurable options with price adjustments.
+    -   [ ] Implement rule-based pricing and discounts.
 -   [ ] **Revenue Recognition:** Introduce basic tools to help businesses schedule and recognize revenue over the lifetime of a contract, aiding in compliance with accounting standards like ASC 606.
 
 ---

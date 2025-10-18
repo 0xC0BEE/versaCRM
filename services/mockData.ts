@@ -12,7 +12,8 @@ import {
     Snapshot,
     TeamChannel,
     TeamChatMessage,
-    ClientChecklistTemplate
+    ClientChecklistTemplate,
+    SubscriptionPlan
 } from '../types';
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
@@ -41,7 +42,9 @@ export const MOCK_INTERACTIONS: Interaction[] = [
 ];
 
 let MOCK_CONTACTS_MUTABLE: AnyContact[] = [
-    { id: 'contact_1', organizationId: 'org_1', contactName: 'John Patient', email: 'john.patient@example.com', phone: '555-0101', status: 'Active', leadSource: 'Web', createdAt: '2023-05-01T10:00:00Z', assignedToId: 'user_team_1', customFields: { patientId: 'P001', insuranceProvider: 'Blue Cross' }, interactions: [MOCK_INTERACTIONS[0], MOCK_INTERACTIONS[1]], leadScore: 25 },
+    { id: 'contact_1', organizationId: 'org_1', contactName: 'John Patient', email: 'john.patient@example.com', phone: '555-0101', status: 'Active', leadSource: 'Web', createdAt: '2023-05-01T10:00:00Z', assignedToId: 'user_team_1', customFields: { patientId: 'P001', insuranceProvider: 'Blue Cross' }, interactions: [MOCK_INTERACTIONS[0], MOCK_INTERACTIONS[1]], leadScore: 25, subscriptions: [
+        { id: 'sub_1', planId: 'plan_monthly', status: 'active', startDate: '2023-06-01T10:00:00Z', nextBillingDate: '2023-07-01T10:00:00Z' }
+    ]},
     { id: 'contact_2', organizationId: 'org_1', contactName: 'Jane Doe', email: 'jane.doe@example.com', phone: '555-0102', status: 'Lead', leadSource: 'Referral', createdAt: '2023-04-20T15:00:00Z', assignedToId: 'user_admin_1', customFields: { patientId: 'P002' }, interactions: [MOCK_INTERACTIONS[2], MOCK_INTERACTIONS[3]], leadScore: 10 },
     { id: 'contact_3', organizationId: 'org_1', contactName: 'Peter Jones', email: 'peter.jones@example.com', phone: '555-0103', status: 'Inactive', leadSource: 'Manual', createdAt: '2023-03-15T12:00:00Z', customFields: { patientId: 'P003' }, leadScore: 5 },
 ];
@@ -61,8 +64,38 @@ export const MOCK_DEALS: Deal[] = [
 
 export const MOCK_PRODUCTS: Product[] = [
     { id: 'prod_1', organizationId: 'org_1', name: 'Standard Consultation', sku: 'CONS-STD', category: 'Service', costPrice: 0, salePrice: 150, stockLevel: 9999 },
-    { id: 'prod_2', organizationId: 'org_1', name: 'Advanced Screening', sku: 'SCRN-ADV', category: 'Service', costPrice: 50, salePrice: 450, stockLevel: 9999 },
+    { 
+      id: 'prod_2', 
+      organizationId: 'org_1', 
+      name: 'Advanced Screening', 
+      sku: 'SCRN-ADV', 
+      category: 'Service', 
+      costPrice: 50, 
+      salePrice: 450, 
+      stockLevel: 9999,
+      options: [
+        {
+          name: 'Report Delivery',
+          choices: [
+            { name: 'Standard (24h)', priceAdjustment: 0 },
+            { name: 'Expedited (4h)', priceAdjustment: 100 },
+          ]
+        }
+      ]
+    },
     { id: 'prod_3', organizationId: 'org_1', name: 'Medical Supplies Kit', sku: 'KIT-MED-01', category: 'Goods', costPrice: 25, salePrice: 75, stockLevel: 500 },
+    { 
+      id: 'prod_bundle_1',
+      organizationId: 'org_1',
+      name: 'Wellness Starter Pack',
+      sku: 'PACK-WELL-01',
+      category: 'Bundle',
+      costPrice: 25,
+      salePrice: 200,
+      stockLevel: 100,
+      isBundle: true,
+      bundleItemIds: ['prod_1', 'prod_3'],
+    },
 ];
 
 export const MOCK_TASKS: Task[] = [
@@ -129,6 +162,7 @@ export let MOCK_ORGANIZATION_SETTINGS: OrganizationSettings = {
     emailIntegration: { isConnected: false },
     voip: { isConnected: false },
     liveChat: { isEnabled: true, color: '#3b82f6', welcomeMessage: 'Welcome! How can we help?', autoCreateContact: true, newContactStatus: 'Lead', autoCreateTicket: true, newTicketPriority: 'Medium' },
+    paymentGateway: { isConnected: false },
     featureFlags: {},
     dataWarehouse: {
         isConnected: false,
@@ -278,6 +312,11 @@ let MOCK_SURVEY_RESPONSES: SurveyResponse[] = [];
 
 let MOCK_DASHBOARDS: Dashboard[] = [
     { id: 'dash_default', organizationId: 'org_1', name: 'Organization Dashboard', isDefault: true }
+];
+
+export const MOCK_SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
+    { id: 'plan_monthly', organizationId: 'org_1', name: 'Basic Plan', price: 49, billingCycle: 'monthly' },
+    { id: 'plan_yearly', organizationId: 'org_1', name: 'Pro Plan', price: 990, billingCycle: 'yearly' },
 ];
 
 export const MOCK_CUSTOM_REPORTS: CustomReport[] = [];

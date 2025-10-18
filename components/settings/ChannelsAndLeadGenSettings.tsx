@@ -1,6 +1,7 @@
 import React from 'react';
 import LiveChatSettings from './LiveChatSettings';
-import LeadScoringSettings from './LeadScoringSettings';
+// FIX: Changed import to be a named import to resolve module export error.
+import { AiLeadScoringSettings } from './AiLeadScoringSettings';
 import EmailTemplates from './EmailTemplates';
 import TicketSettings from './TicketSettings';
 import CannedResponses from './CannedResponses';
@@ -11,7 +12,7 @@ const ChannelsAndLeadGenSettings: React.FC = () => {
         <div className="space-y-8">
             <LiveChatSettings />
             <div className="border-t border-border-subtle pt-8">
-                <LeadScoringSettings />
+                <AiLeadScoringSettings />
             </div>
             <div className="border-t border-border-subtle pt-8">
                 <EmailTemplates />
