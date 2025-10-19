@@ -23,10 +23,10 @@ export const kbArticles: KBArticleType[] = [
                 <h3 id="first-steps">First Steps</h3>
                 <ol>
                     <li>
-                        <strong>Choose Your Industry:</strong> The first step is to select an industry that best matches your business. This will tailor the CRM's terminology (e.g., "Patients" vs. "Clients") and add industry-specific custom fields to your contact profiles. You can do this in the top navigation bar.
+                        <strong>AI-Powered Onboarding:</strong> If you're a new organization admin, you'll be greeted with the "5-Minute CRM" wizard. By answering a few questions about your business, our AI will automatically configure your deal stages and create relevant custom objects for you.
                     </li>
                     <li>
-                        <strong>Invite Your Team:</strong> Navigate to <strong>Settings &gt; Team</strong> to invite your team members. You can assign them specific roles to control what they can see and do.
+                        <strong>Invite Your Team:</strong> Navigate to <strong>Team</strong> from the sidebar to invite your team members. You can assign them specific roles to control what they can see and do.
                     </li>
                     <li>
                         <strong>Add a Contact:</strong> Go to the <strong>Contacts</strong> page and click the "New Contact" button. Fill in the details for your first contact to see how the industry-specific fields appear.
@@ -56,22 +56,13 @@ export const kbArticles: KBArticleType[] = [
                         <strong>View All Contacts:</strong> Navigate to the <strong>Contacts</strong> page from the main sidebar. You'll see a table of all your contacts.
                     </li>
                     <li>
-                        <strong>Create a New Contact:</strong> Click the <strong>"New Contact"</strong> button on the top right. A modal will appear where you can fill in the contact's details, including any custom fields specific to your industry.
-                    </li>
-                    <li>
-                        <strong>View Contact Details:</strong> Click on any contact's name in the table to open their detailed 360-degree profile. Here you can see everything about them across various tabs:
-                        <ul>
-                            <li className="!mt-2"><strong>Profile:</strong> Core contact information and custom fields.</li>
-                            <li className="!mt-2"><strong>Journey:</strong> A complete chronological timeline of every interaction. See the "Customer Journey Visualizer" article for more details.</li>
-                            <li className="!mt-2"><strong>History:</strong> A filtered timeline of all interactions like emails, calls, and notes.</li>
-                            <li className="!mt-2"><strong>Website Activity:</strong> If the contact was captured via a tracked form or landing page, this tab shows you every page they viewed <em>before</em> they converted, providing valuable sales intelligence.</li>
-                        </ul>
-                    </li>
-                    <li>
                         <strong>Filter and Search:</strong> Use the "Add Filter" button at the top of the contacts table to narrow down your list based on specific criteria like status or lead source.
                     </li>
                     <li>
-                        <strong>Bulk Actions:</strong> Select multiple contacts by checking the boxes next to their names. A toolbar will appear allowing you to delete them or update their status in bulk.
+                        <strong>Create Audience Profiles:</strong> For complex filters you use often, create a reusable <strong>Audience Profile</strong>. Go to the "Audience Profiles" page, give your segment a name, and define your filter conditions. This saved profile can then be used as a target audience in your marketing campaigns.
+                    </li>
+                    <li>
+                        <strong>View Contact Details:</strong> Click on any contact's name in the table to open their detailed 360-degree profile. Here you can see everything about them across various tabs.
                     </li>
                 </ol>
             </>
@@ -96,16 +87,7 @@ export const kbArticles: KBArticleType[] = [
                         <strong>Navigate to the Journey Tab:</strong> Click on the <strong>"Journey"</strong> tab.
                     </li>
                     <li>
-                        <strong>Analyze the Timeline:</strong> You will see a vertical timeline of every event in the contact's history, sorted from most recent to oldest. Each event type has a unique icon and color, making it easy to distinguish between marketing, sales, and support interactions. Events include:
-                        <ul>
-                            <li className="!mt-2">Anonymous Website Visits</li>
-                            <li className="!mt-2">Form Submissions</li>
-                            <li className="!mt-2">Campaign Enrollments</li>
-                            <li className="!mt-2">Deals being created or won</li>
-                            <li className="!mt-2">Support tickets being opened or closed</li>
-                            <li className="!mt-2">Tasks being completed</li>
-                            <li className="!mt-2">Manually logged calls, emails, and meetings</li>
-                        </ul>
+                        <strong>Analyze the Timeline:</strong> You will see a vertical timeline of every event in the contact's history, sorted from most recent to oldest. Each event type has a unique icon and color, making it easy to distinguish between marketing, sales, and support interactions.
                     </li>
                 </ol>
                 <p className="mt-4">
@@ -130,10 +112,7 @@ export const kbArticles: KBArticleType[] = [
                         <strong>Access the Pipeline:</strong> Click on <strong>Deals</strong> in the main sidebar.
                     </li>
                     <li>
-                        <strong>Create a New Deal:</strong> Click the <strong>"New Deal"</strong> button. Fill in the deal's name, value, associated contact, and expected close date.
-                    </li>
-                    <li>
-                        <strong>Move Deals Between Stages:</strong> Simply click and drag a deal card from one column (stage) to another to update its status. This action is automatically saved.
+                        <strong>Move Deals Between Stages:</strong> Simply click and drag a deal card from one column (stage) to another to update its status.
                     </li>
                     <li>
                         <strong>View Deal Details:</strong> Click on any deal card to open a modal where you can edit its details, update its value, or change its stage.
@@ -142,78 +121,69 @@ export const kbArticles: KBArticleType[] = [
                         <strong>Generate Documents:</strong> From the Deal edit modal, you can click <strong>"Generate Document"</strong> to create a professional proposal or quote using a pre-defined template, automatically populated with this deal's information.
                     </li>
                     <li>
-                        <strong>Create a Project (Post-Sale):</strong> When you drag a deal into a "Won" stage, you will be prompted to automatically create a new project from it. This seamlessly transitions the customer from the sales process to your delivery or onboarding workflow. See the "Project Management" article for more details.
+                        <strong>Create a Project (Post-Sale):</strong> When you drag a deal into a "Won" stage, you will be prompted to automatically create a new project from it. This seamlessly transitions the customer from the sales process to your delivery or onboarding workflow.
                     </li>
                 </ol>
             </>
         ),
     },
     {
-        id: 'project-management',
-        title: 'Project Management',
+        id: 'team-chat',
+        title: 'Team Chat',
         category: 'Core Features',
         content: (
             <>
-                <h2 id="overview-projects">Overview</h2>
+                <h2 id="overview-chat">Overview</h2>
                 <p>
-                    The Project Management hub is designed to manage the entire post-sale customer lifecycle. It bridges the gap between winning a deal and successfully delivering your product or service, ensuring a smooth handover from sales to your delivery team.
+                    Team Chat is a complete, Slack-like chat experience built directly into VersaCRM. It centralizes all internal communication, eliminating the need for a separate messaging tool and ensuring conversations about customers stay within the CRM.
                 </p>
-                <h3 id="how-to-use-projects">How to Use It</h3>
+                <h3 id="how-to-use-chat">How to Use It</h3>
                 <ol>
                     <li>
-                        <strong>Access the Projects Hub:</strong> Click on <strong>Projects</strong> in the main sidebar. You'll see a Kanban board view of all your projects, organized by their current phase (e.g., "Onboarding", "In Progress").
+                        <strong>Access Team Chat:</strong> Click on the <strong>"Team Chat"</strong> icon in the main sidebar to open the chat interface.
                     </li>
                     <li>
-                        <strong>Automatic Project Creation:</strong> The easiest way to create a project is from the <strong>Deals</strong> pipeline. When you move a deal to a "Won" stage, a modal will appear prompting you to create a project from it. You can use a pre-defined Project Template to automatically populate the new project with a standard set of tasks.
+                        <strong>Create Channels:</strong> Create public channels for team-wide discussions (e.g., `#sales`) or private channels for specific topics.
                     </li>
                     <li>
-                        <strong>Manual Project Creation:</strong> You can also click <strong>"New Project"</strong> on the main Projects page to create one from scratch.
+                        <strong>Use @mentions:</strong> Mention a team member (e.g., `@Alice Admin`) to send them a notification and bring their attention to a conversation.
                     </li>
                     <li>
-                        <strong>The Project Workspace:</strong> Click on any project card to open its dedicated workspace. This is the command center for the project and includes several tabs:
-                        <ul>
-                            <li className="!mt-2"><strong>Tasks:</strong> A list of all tasks specific to this project. Add new tasks, mark them as complete, and toggle their visibility for the client.</li>
-                            <li className="!mt-2"><strong>Discussion:</strong> A collaborative feed for your team. Post updates, ask questions, and use @mentions to notify specific team members.</li>
-                            <li className="!mt-2"><strong>Files:</strong> Upload and manage all documents related to the project. You can choose to make specific files visible to the client in their portal.</li>
-                            <li className="!mt-2"><strong>Notes:</strong> A wiki-style notes area for project briefs, key information, and meeting minutes.</li>
-                        </ul>
+                        <strong>Reply in Threads:</strong> Click "Reply" on any message to start a threaded conversation. This keeps the main channel clean and organized.
+                    </li>
+                </ol>
+            </>
+        )
+    },
+    {
+        id: 'unified-inbox',
+        title: 'Unified Inbox',
+        category: 'Core Features',
+        content: (
+            <>
+                <h2 id="overview-inbox">Overview</h2>
+                <p>
+                    The Unified Inbox is your central hub for all one-on-one customer communications across multiple channels. It consolidates conversations from Email, LinkedIn, and X (formerly Twitter) into a single, threaded view.
+                </p>
+                <h3 id="how-to-use-inbox">How to Use It</h3>
+                <ol>
+                    <li>
+                        <strong>Access the Inbox:</strong> Click on the <strong>"Inbox"</strong> icon in the main sidebar.
                     </li>
                     <li>
-                        <strong>Client Portal Integration:</strong> Any tasks or files you mark as "visible to client" will automatically appear in the client's dedicated portal, giving them a transparent, read-only view of project progress.
+                        <strong>View Conversations:</strong> The left panel lists all conversations, grouped by contact and channel. Click any conversation to view the full history.
+                    </li>
+                    <li>
+                        <strong>Reply Directly:</strong> Use the reply box at the bottom of the conversation view to send a new message.
+                    </li>
+                    <li>
+                        <strong>Use Productivity Tools:</strong> Speed up your replies by using <strong>Canned Responses</strong> for common questions or clicking <strong>"AI Suggestions"</strong> to let Gemini draft a reply for you based on the conversation context.
                     </li>
                 </ol>
             </>
         ),
     },
     {
-        id: 'support-tickets',
-        title: 'Support Tickets',
-        category: 'Core Features',
-        content: (
-            <>
-                <h2 id="overview-tickets">Overview</h2>
-                <p>
-                    The ticketing system is your central hub for managing all customer support requests. It allows you to track issues from creation to resolution, ensuring timely responses and a complete history of all support interactions.
-                </p>
-                <h3 id="how-to-use-tickets">How to Use It</h3>
-                <ol>
-                    <li>
-                        <strong>View Tickets:</strong> Navigate to the <strong>Tickets</strong> page from the sidebar to see a table of all support tickets.
-                    </li>
-                    <li>
-                        <strong>Create a New Ticket:</strong> Click <strong>"New Ticket"</strong>, associate it with a contact, and fill in the subject and description. Assign it to a team member and set its priority.
-                    </li>
-                    <li>
-                        <strong>Reply to a Ticket:</strong> Click on a ticket to open its detail modal. Here you can view the conversation history and add a new reply. You can also add internal notes that are only visible to your team by checking the "Internal note only" box.
-                    </li>
-                    <li>
-                        <strong>Update Ticket Status:</strong> In the ticket's "Details" tab, you can change its status (e.g., from 'Open' to 'Pending' or 'Closed') and reassign it to another team member.
-                    </li>
-                </ol>
-            </>
-        ),
-    },
-     {
         id: 'tasks-and-calendar',
         title: 'Tasks & Calendar',
         category: 'Core Features',
@@ -223,40 +193,10 @@ export const kbArticles: KBArticleType[] = [
                 <p>
                     Manage your to-do list and schedule with integrated Tasks and Calendar. This ensures you never miss a follow-up, meeting, or important deadline.
                 </p>
-                <h3 id="how-to-use-tasks">How to Use Tasks</h3>
-                <ol>
-                    <li>
-                        <strong>Access Your Tasks:</strong> Click on <strong>Tasks</strong> in the sidebar.
-                    </li>
-                    <li>
-                        <strong>Create a Task:</strong> Simply type a title in the input field at the top and press Enter or click "Add". The task will be created with a default due date.
-                    </li>
-                    <li>
-                        <strong>Complete a Task:</strong> Click the checkbox next to a task to mark it as complete. It will move to the "Completed" section.
-                    </li>
-                     <li>
-                        <strong>Edit & Link Tasks:</strong> Click the "Edit" button on a task to open a modal. Here you can change the title, due date, and link the task to a specific record from one of your <strong>Custom Objects</strong> (e.g., linking a task to a specific "Property" or "Case"). This provides valuable context for your to-do items.
-                    </li>
-                </ol>
-                <h3 id="how-to-use-calendar">How to Use the Calendar</h3>
-                <ol>
-                    <li>
-                        <strong>Access the Calendar:</strong> Click on <strong>Calendar</strong> in the sidebar.
-                    </li>
-                    <li>
-                        <strong>Create an Event:</strong> Click on any time slot in the calendar. A modal will appear where you can enter the event title and confirm the start/end times.
-                    </li>
-                    <li>
-                        <strong>View Event Details:</strong> Click on an existing event in the calendar to view or edit its details.
-                    </li>
-                </ol>
-                 <p className="mt-4">
-                    <strong>Note for Health Cloud users:</strong> When the "Health" industry is active, the Calendar transforms into a specialized Appointment Scheduler. See the "Health Cloud: Appointment Scheduler" article for more details.
-                </p>
             </>
         ),
     },
-     {
+    {
         id: 'inventory-management',
         title: 'Inventory Management',
         category: 'Core Features',
@@ -266,18 +206,6 @@ export const kbArticles: KBArticleType[] = [
                 <p>
                     The Inventory module allows you to track products, suppliers, and warehouses. This is essential for businesses that sell physical goods and need to manage stock levels and procurement.
                 </p>
-                <h3 id="how-to-use-inventory">How to Use It</h3>
-                <ol>
-                    <li>
-                        <strong>Access Inventory:</strong> Navigate to <strong>Inventory</strong> in the sidebar.
-                    </li>
-                    <li>
-                        <strong>Manage Products:</strong> On the "Products" tab, you can add new products, edit existing ones (including name, SKU, prices, and stock level), and view your entire product catalog.
-                    </li>
-                    <li>
-                        <strong>Manage Suppliers & Warehouses:</strong> Use the "Suppliers" and "Warehouses" tabs to keep a directory of your vendors and storage locations.
-                    </li>
-                </ol>
             </>
         ),
     },
@@ -285,77 +213,34 @@ export const kbArticles: KBArticleType[] = [
     // --- SALES ENABLEMENT ---
     {
         id: 'document-generator',
-        title: 'Document & Proposal Generator',
+        title: 'Document Generator & CPQ',
         category: 'Sales Enablement',
         content: (
             <>
                 <h2 id="overview-docs">Overview</h2>
                 <p>
-                    The Document & Proposal Generator is a powerful sales enablement tool that allows you to create professional, data-driven documents like quotes, proposals, and contracts directly within VersaCRM. It eliminates manual data entry, reduces errors, and ensures brand consistency.
+                    The Document Generator is a powerful sales enablement tool that includes a full CPQ (Configure, Price, Quote) engine. It allows you to create professional, data-driven documents like quotes and proposals directly within VersaCRM.
                 </p>
                 <h3 id="how-to-use-docs">How to Use It</h3>
                 <ol>
                     <li>
-                        <strong>Create a Template:</strong> Navigate to <strong>Documents</strong> in the sidebar. Click "New Template" to open the Document Builder.
+                        <strong>Configure Products:</strong> In the <strong>Inventory</strong> section, you can now create complex products. Use the "Configuration" tab in the product editor to define product **options** (e.g., "Support Tier" with choices like "Standard" and "Premium") and create **bundles** of other products.
                     </li>
                     <li>
-                        <strong>Build Your Template:</strong>
-                         <ul>
-                            <li className="!mt-2"><strong>Add Content Blocks:</strong> Use the Toolbox on the left to add blocks like Headers, Text, Images, and Line Item tables.</li>
-                            <li className="!mt-2"><strong>Use Dynamic Data:</strong> When editing a Text block, use the "Placeholders" section in the right-hand panel to insert variables like <code>&#123;&#123;contact.contactName&#125;&#125;</code> or <code>&#123;&#123;deal.value&#125;&#125;</code>. These will be automatically filled with live data upon generation.</li>
-                             <li className="!mt-2"><strong>Create Quotes:</strong> Add a "Line Items" block. In the configuration panel, you can add products directly from your Inventory, set quantities, and specify a tax rate. The totals are calculated automatically.</li>
-                            <li className="!mt-2"><strong>Generate with AI:</strong> For any Text or Image block, use the "Generate with AI" button in the configuration panel to open the AI Content or Image Studio and create bespoke content on the fly.</li>
-                        </ul>
+                        <strong>Set Pricing Rules:</strong> Use the "Pricing Rules" tab to set up volume-based discounts (e.g., "10% off if quantity is greater than 5").
                     </li>
                     <li>
-                        <strong>Generate a Document from a Deal:</strong> Open any deal from the <strong>Deals</strong> pipeline. Click the <strong>"Generate Document"</strong> button.
+                        <strong>Create a Template:</strong> Navigate to <strong>Documents</strong>. Build a new template using content blocks and dynamic placeholders.
                     </li>
                     <li>
-                        <strong>Preview and Download:</strong> In the generation modal, select your saved template. A live preview will be generated with all data placeholders filled in. Click "Download" to get the final document.
+                        <strong>Generate an Interactive Quote:</strong> From a Deal, click "Generate Document" and select your template. When you add a configurable product to the Line Items block, dropdowns for its options will appear. Selecting an option or changing the quantity will instantly recalculate the price, applying all rules automatically.
                     </li>
                 </ol>
             </>
         ),
     },
-
+    
     // --- AUTOMATION ---
-    {
-        id: 'visual-journeys',
-        title: 'Visual Campaign Journeys',
-        category: 'Automation',
-        content: (
-            <>
-                <h2 id="overview-journeys">Overview</h2>
-                <p>
-                    The Visual Journey Builder is an advanced marketing automation tool. It allows you to create multi-step marketing campaigns with branching logic, enabling you to send the right message to the right person at the right time based on their behavior.
-                </p>
-                <h3 id="how-to-use-journeys">How to Use It</h3>
-                <ol>
-                    <li>
-                        <strong>Access Campaigns:</strong> Navigate to <strong>Campaigns</strong> in the sidebar.
-                    </li>
-                    <li>
-                        <strong>Create a New Journey:</strong> Click <strong>"New Campaign"</strong>. This will open the Visual Journey Builder.
-                    </li>
-                    <li>
-                        <strong>Define Your Audience:</strong> The first node, "Target Audience," is already on the canvas. Click it to configure which contacts will be enrolled (e.g., all contacts with status 'Lead').
-                    </li>
-                    <li>
-                        <strong>Build Your Journey:</strong> Drag nodes from the Toolbox on the left onto the canvas. You can add actions like "Send Email," "Wait (Delay)," or "Create Task."
-                    </li>
-                    <li>
-                        <strong>Add Branching Logic:</strong> Drag an "If/Then" node to create different paths based on user behavior, such as whether a contact opened a previous email.
-                    </li>
-                    <li>
-                        <strong>Connect the Nodes:</strong> Click and drag from the handle at the bottom of a node to the handle at the top of the next node to create a sequence. For "If/Then" nodes, connect from the green (Yes) and red (No) handles to define the different paths.
-                    </li>
-                    <li>
-                        <strong>Save and Launch:</strong> Give your journey a name, save it, and then click "Launch" from the main campaigns page to activate it.
-                    </li>
-                </ol>
-            </>
-        ),
-    },
     {
         id: 'workflow-automation',
         title: 'Workflow Automation',
@@ -364,7 +249,7 @@ export const kbArticles: KBArticleType[] = [
             <>
                 <h2 id="overview-workflows">Overview</h2>
                 <p>
-                    Workflows are powerful automations that handle internal processes. They react to events happening within your CRM (like a deal changing stage) and perform actions automatically, saving your team time and ensuring no steps are missed.
+                    Workflows are powerful automations that handle internal processes. The unified visual builder allows you to create everything from simple "if this, then that" automations to complex processes with multiple conditions and approval steps.
                 </p>
                 <h3 id="how-to-use-workflows">How to Use It</h3>
                 <ol>
@@ -372,20 +257,16 @@ export const kbArticles: KBArticleType[] = [
                         <strong>Access Workflows:</strong> Navigate to <strong>Workflows</strong> from the sidebar.
                     </li>
                     <li>
-                        <strong>Choose a Workflow Type:</strong>
-                        <ul>
-                            <li><strong>Simple Workflows:</strong> Best for linear "if this, then that" logic. Click "New Simple Workflow".</li>
-                            <li><strong>Advanced Workflows:</strong> Best for complex processes with multiple conditions. Click "New Advanced Workflow" to open a visual builder similar to the campaign journey builder.</li>
-                        </ul>
+                        <strong>Build Your Workflow:</strong> Click "New Workflow" to open the visual canvas. Drag nodes from the Toolbox (left) onto the canvas and connect them to build your process.
                     </li>
                     <li>
-                        <strong>Set the Trigger:</strong> In the builder, define what event should start the workflow (e.g., "When a Ticket is Created" and its priority is "High").
+                        <strong>Set the Trigger:</strong> The first node defines what event should start the workflow (e.g., "When a Deal Stage Changes").
                     </li>
                     <li>
-                        <strong>Add Actions:</strong> Define what should happen when the trigger fires. You can add actions like "Create a Task," "Send an Email," or "Update a Contact Field."
+                        <strong>Add Actions & Logic:</strong> Add actions like "Create a Task" or "Send an Email." Use "If/Then" nodes for branching logic and "Request Approval" nodes to create multi-step approval processes.
                     </li>
                     <li>
-                        <strong>Save and Activate:</strong> Give your workflow a name and make sure it is set to "Active" to start running.
+                        <strong>Get AI Suggestions:</strong> Use the "AI Process Optimization" tool in the toolbox to let Gemini analyze your CRM data for bottlenecks and suggest ready-to-use workflows.
                     </li>
                 </ol>
             </>
@@ -393,197 +274,27 @@ export const kbArticles: KBArticleType[] = [
     },
     {
         id: 'lead-scoring',
-        title: 'Lead Scoring',
+        title: 'AI Predictive Lead Scoring',
         category: 'Automation',
         content: (
             <>
                 <h2 id="overview-scoring">Overview</h2>
                 <p>
-                    Lead Scoring is a system that automatically ranks your leads based on their engagement and profile data. It helps your sales team prioritize their efforts by focusing on the "hottest" leads who are most likely to convert.
+                    The AI-Powered Predictive Lead Scoring system replaces manual guesswork with data-driven insights. It analyzes your historical won and lost deals to automatically identify the key attributes of your best leads, helping your sales team prioritize their efforts.
                 </p>
                 <h3 id="how-to-use-scoring">How to Use It</h3>
                 <ol>
                     <li>
-                        <strong>Configure Scoring Rules:</strong> Go to <strong>Settings &gt; Lead Scoring</strong>. Here, you can define your rules. For example:
-                        <ul>
-                            <li>Add `+10` points when an "Appointment" is logged.</li>
-                            <li>Add `+1` point when an "Email" is logged.</li>
-                            <li>Subtract `-5` points if a contact's status becomes "Inactive."</li>
-                        </ul>
+                        <strong>Train the AI Model:</strong> Go to <strong>Settings > Channels & Lead Gen</strong>. In the "AI-Powered Lead Scoring" section, click <strong>"Train Model"</strong>. The AI will analyze your sales history to build a predictive model.
                     </li>
                     <li>
-                        <strong>View Scores:</strong> The lead score will automatically appear on the contact's profile and as a column in the main contacts table. Scores are recalculated automatically whenever a relevant event (like a new interaction) occurs.
+                        <strong>Review Identified Factors:</strong> Once trained, the system will show you the top positive and negative factors it discovered (e.g., "Lead Source is Referral" is a positive factor).
                     </li>
                     <li>
-                        <strong>Use Scores in Automation:</strong>
-                        <ul>
-                            <li>In the **Campaign Journey Builder**, you can set your target audience to only include contacts with a lead score greater than 50.</li>
-                            <li>In the **Advanced Workflow Builder**, you can use an "If/Then" node to check a contact's lead score and trigger actions, like creating a task for a sales rep when a lead's score crosses 75.</li>
-                        </ul>
-                    </li>
-                </ol>
-            </>
-        ),
-    },
-
-    // --- LEAD GENERATION ---
-     {
-        id: 'public-forms',
-        title: 'Public Forms',
-        category: 'Lead Generation',
-        content: (
-            <>
-                <h2 id="overview-forms">Overview</h2>
-                <p>
-                    The Public Form Builder is the cornerstone of your lead generation strategy. It allows you to create custom forms that you can embed on your website to capture new leads directly into VersaCRM, triggering automations instantly.
-                </p>
-                <h3 id="how-to-use-forms">How to Use It</h3>
-                <ol>
-                    <li>
-                        <strong>Access Forms:</strong> Navigate to <strong>Forms</strong> in the sidebar.
+                        <strong>Automatic Scoring:</strong> All new and existing contacts will be automatically scored based on this intelligent model. You can see the score on any contact's profile and in the main contacts table.
                     </li>
                     <li>
-                        <strong>Create a New Form:</strong> Click <strong>"New Form"</strong> to open the interactive builder.
-                    </li>
-                    <li>
-                        <strong>Build Your Form:</strong>
-                        <ul>
-                           <li className="!mt-2"><strong>Add Fields:</strong> Use the Toolbox on the left to add fields. You can add standard fields (Name, Email) and any custom fields you've configured for your industry.</li>
-                           <li className="!mt-2"><strong>Arrange Fields:</strong> In the central preview panel, you can drag and drop fields to reorder them.</li>
-                           <li className="!mt-2"><strong>Edit Fields:</strong> Click on a field in the preview to select it. The Configuration panel on the right will then allow you to edit its label, placeholder text, and mark it as required.</li>
-                        </ul>
-                    </li>
-                    <li>
-                        <strong>Configure Actions:</strong> In the configuration panel on the right (when no specific field is selected), you can define what happens after submission. You can set a custom "thank you" message and, most importantly, choose a <strong>Marketing Journey</strong> to automatically enroll the new contact in.
-                    </li>
-                    <li>
-                        <strong>Embed Your Form:</strong> Once saved, click the <strong>"Embed"</strong> icon from the main forms page. Copy the HTML snippet and paste it into your website's code where you want the form to appear.
-                    </li>
-                    <li>
-                        <strong>Test Your Form:</strong> Use the <strong>"Test"</strong> button to fill out and submit the form yourself. You'll see a new contact created in your CRM, an interaction logged, and the linked automation will begin.
-                    </li>
-                </ol>
-            </>
-        ),
-    },
-    {
-        id: 'landing-pages',
-        title: 'Landing Pages',
-        category: 'Lead Generation',
-        content: (
-            <>
-                <h2 id="overview-lp">Overview</h2>
-                <p>
-                    The Landing Page Builder allows you to create simple, effective marketing pages directly within VersaCRM. This is perfect for campaigns where you need a dedicated page to host a lead capture form, without needing a web developer.
-                </p>
-                <h3 id="how-to-use-lp">How to Use It</h3>
-                <ol>
-                    <li>
-                        <strong>Access Landing Pages:</strong> Navigate to <strong>Landing Pages</strong> in the sidebar.
-                    </li>
-                    <li>
-                        <strong>Create a New Page:</strong> Click <strong>"New Landing Page"</strong>.
-                    </li>
-                    <li>
-                        <strong>Add Content Blocks:</strong> Use the "Components" toolbox on the left to add sections like a Header, Text Block, Image, or a Form.
-                    </li>
-                    <li>
-                        <strong>Embed a Form:</strong> When you add a "Form" component, click on it in the preview. The configuration panel on the right will allow you to select one of the public forms you've already created.
-                    </li>
-                    <li>
-                        <strong>Publish and Share:</strong> Give your page a name and a URL slug (e.g., 'spring-promo'). Once saved, you can click the status badge in the table to switch it from "Draft" to "Published". Use the copy icon to get the live URL and share it.
-                    </li>
-                </ol>
-            </>
-        ),
-    },
-    {
-        id: 'website-analytics',
-        title: 'Website Analytics',
-        category: 'Lead Generation',
-        content: (
-            <>
-                <h2 id="overview-analytics">Overview</h2>
-                <p>
-                    VersaCRM's Website Analytics allows you to connect anonymous visitor activity on your website to a contact's profile once they convert. This gives your sales team invaluable insight into a lead's interests before they even make the first call.
-                </p>
-                <h3 id="how-it-works">How It Works</h3>
-                <ol>
-                    <li>
-                        <strong>Install the Tracking Script:</strong> Navigate to <strong>Settings &gt; Tracking Code</strong>. Copy the provided JavaScript snippet and paste it onto every page of your external website, just before the closing <code>&lt;/body&gt;</code> tag.
-                    </li>
-                    <li>
-                        <strong>Anonymous Tracking:</strong> The script will begin tracking page views for all visitors, assigning a unique, anonymous ID to each person.
-                    </li>
-                    <li>
-                        <strong>Conversion Stitching:</strong> When a visitor submits a VersaCRM form embedded on your site, the script automatically links their entire browsing history to the new contact record that gets created.
-                    </li>
-                    <li>
-                        <strong>View the Activity Timeline:</strong> Open the new contact's profile in the CRM. A new <strong>"Website Activity"</strong> tab will appear, showing a complete timeline of the pages they viewed.
-                    </li>
-                </ol>
-                <p className="mt-4">
-                    <strong>Note:</strong> This tracking script is automatically included on all pages created with the VersaCRM <strong>Landing Page Builder</strong>, so no manual installation is necessary for those pages.
-                </p>
-            </>
-        ),
-    },
-    
-    // --- PLATFORM & EXTENSIBILITY ---
-    {
-        id: 'custom-objects',
-        title: 'Custom Objects',
-        category: 'Platform & Extensibility',
-        content: (
-            <>
-                <h2 id="overview-co">Overview</h2>
-                <p>
-                    Custom Objects are a powerful feature that transforms VersaCRM into a truly extensible platform. They allow you to create entirely new data objects beyond just Contacts and Deals, tailoring the CRM to the unique needs of your business. For example, a real estate agency could create a "Property" object, or a legal firm could create a "Case" object.
-                </p>
-                <h3 id="how-to-use-co">How to Use It</h3>
-                <ol>
-                    <li>
-                        <strong>Define a New Object:</strong> Go to <strong>Settings &gt; Custom Objects</strong> and click "New Object". Give your object a singular and plural name (e.g., "Property", "Properties") and choose an icon to represent it.
-                    </li>
-                    <li>
-                        <strong>Manage Fields:</strong> After creating the object, click "Manage Fields". Here, you can add all the custom fields specific to this object using a familiar field builder (e.g., "Address", "Price", "Square Footage").
-                    </li>
-                    <li>
-                        <strong>Access Your New Object:</strong> Once created, your new object (e.g., "Properties") will automatically appear in the main sidebar under a "Custom" section.
-                    </li>
-                    <li>
-                        <strong>Manage Records:</strong> Click on your new object in the sidebar to view a dynamically generated list page. From here, you can create, view, edit, and delete records for your custom object just like you would for standard contacts or deals.
-                    </li>
-                    <li>
-                        <strong>Link Records:</strong> Custom Object records can be linked to other core CRM items to provide context. You can link records to <strong>Deals</strong>, <strong>Tickets</strong>, and <strong>Tasks</strong> when creating or editing those items.
-                    </li>
-                </ol>
-            </>
-        ),
-    },
-    {
-        id: 'app-marketplace',
-        title: 'App Marketplace',
-        category: 'Platform & Extensibility',
-        content: (
-            <>
-                <h2 id="overview-apps">Overview</h2>
-                <p>
-                    The App Marketplace is your hub for connecting VersaCRM to the other tools you use. It allows you to discover, install, and manage third-party integrations, turning your CRM into the central command center for your entire software ecosystem.
-                </p>
-                <h3 id="how-to-use-apps">How to Use It</h3>
-                <ol>
-                    <li>
-                        <strong>Access the Marketplace:</strong> Navigate to <strong>App Marketplace</strong> from the sidebar (under the "Admin" section).
-                    </li>
-                    <li>
-                        <strong>Discover Apps:</strong> On the "Discover" tab, you can browse a gallery of available applications like Slack, QuickBooks, and Google Calendar.
-                    </li>
-                    <li>
-                        <strong>Install an App:</strong> Click "Learn More" on any app to view its details. From the detail modal, click "Install App".
-                    </li>
-                    <li>
-                        <strong>Manage Installed Apps:</strong> The "Installed Apps" tab shows you all the applications you have connected. From here, you can click "Configure" to manage an app's settings or "Uninstall" it.
+                        <strong>Recalculate Scores:</strong> You can click <strong>"Recalculate All Scores"</strong> at any time to re-score all contacts, which is useful after re-training the model or importing new data.
                     </li>
                 </ol>
             </>
@@ -593,98 +304,82 @@ export const kbArticles: KBArticleType[] = [
     // --- ANALYTICS ---
     {
         id: 'custom-reports',
-        title: 'Custom Reports',
+        title: 'Custom Reports & Snapshots',
         category: 'Analytics',
         content: (
             <>
                 <h2 id="overview-reports">Overview</h2>
                 <p>
-                    The Custom Report Builder is a powerful business intelligence tool that lets you create your own charts and tables from your CRM data. This allows you to track the metrics that matter most to your business.
+                    The Custom Report Builder lets you create charts and tables from your CRM data. You can also create Data Snapshots to save a point-in-time copy of your data for historical analysis.
                 </p>
-                <h3 id="how-to-use-reports">How to Use It</h3>
+                <h3 id="how-to-use-reports">How to Use Reports</h3>
                 <ol>
                     <li>
                         <strong>Access Reports:</strong> Navigate to <strong>Reports</strong> from the sidebar.
                     </li>
                     <li>
-                        <strong>Create a Custom Report:</strong> Click the <strong>"Custom Report"</strong> button.
+                        <strong>Create a Custom Report:</strong> Configure your data source, columns, filters, and visualization type. The Live Preview updates in real-time.
                     </li>
                     <li>
-                        <strong>Configure Your Report:</strong>
-                        <ul>
-                            <li><strong>Data Source:</strong> Choose what you want to report on. You can select standard sources (like Contacts, Products, Deals) or any of your own <strong>Custom Objects</strong>.</li>
-                            <li><strong>Columns:</strong> Select the fields you want to see in your report. These will dynamically update based on your chosen data source.</li>
-                            <li><strong>Filters:</strong> Add conditions to narrow down your data.</li>
-                            <li><strong>Visualization:</strong> Choose how to display your data: as a Table, Bar Chart, Pie Chart, or Line Chart.</li>
-                        </ul>
-                    </li>
-                    <li>
-                        <strong>Live Preview:</strong> As you configure your report, the Live Preview on the right will update in real-time, showing you exactly what your report will look like.
-                    </li>
-                    <li>
-                        <strong>Save and Add to Dashboard:</strong> Give your report a name and save it. From the main reports page, you can then click <strong>"Add to Dashboard"</strong> to make it appear on your main dashboard for easy access.
+                        <strong>Create a Snapshot:</strong> Click "Create Snapshot" to save a read-only copy of your current contacts or deals data, which can be viewed later for comparison.
                     </li>
                 </ol>
             </>
         ),
     },
-     {
-        id: 'custom-dashboard',
-        title: 'Customizable Dashboard',
-        category: 'Analytics',
+    
+    // --- ADMINISTRATION ---
+    {
+        id: 'billing-and-commerce',
+        title: 'Billing & Commerce',
+        category: 'Administration',
         content: (
             <>
-                <h2 id="overview-dash">Overview</h2>
+                <h2 id="overview-billing">Overview</h2>
                 <p>
-                    The Advanced Dashboard Canvas transforms your dashboard into a fully interactive and customizable business intelligence hub. You can rearrange, resize, and add the reports that matter most to you, creating a personalized command center.
+                    The Billing & Commerce settings allow you to manage subscription plans and connect to a payment gateway, enabling you to automate billing and accept payments through the Client Portal.
                 </p>
-                <h3 id="how-to-use-dash">How to Use It</h3>
+                <h3 id="how-to-use-billing">How to Use It</h3>
                 <ol>
                     <li>
-                        <strong>Enter Edit Mode:</strong> On the Dashboard, click the <strong>"Edit Layout"</strong> button. The dashboard will switch to an interactive canvas mode.
+                        <strong>Set Up Plans:</strong> Go to <strong>Settings > Billing & Commerce</strong>. Create your recurring subscription plans (e.g., "Basic Plan - $49/month").
                     </li>
                     <li>
-                        <strong>Rearrange Widgets:</strong> Simply click and drag any widget (like a KPI card or a chart) to a new position on the grid.
+                        <strong>Connect a Gateway:</strong> In the same settings area, connect your Stripe account. This enables the "Pay Now" functionality in the Client Portal.
                     </li>
                     <li>
-                        <strong>Resize Widgets:</strong> Hover over the bottom-right corner of any widget and drag the handle to resize it, making important information more prominent.
+                        <strong>Subscribe a Contact:</strong> Open a contact's profile, go to the "Subscriptions" tab, and subscribe them to one of your plans.
                     </li>
                     <li>
-                        <strong>Add New Widgets:</strong> In edit mode, an "Add Widget" button will appear. Click it to open a modal where you can select any of your saved Custom Reports to add to the dashboard.
-                    </li>
-                     <li>
-                        <strong>Remove Widgets:</strong> In edit mode, an "X" icon appears on each widget. Click it to remove the widget from your dashboard.
-                    </li>
-                    <li>
-                        <strong>Save Your Layout:</strong> Once you are happy with the arrangement, click <strong>"Save Layout"</strong>. Your custom layout, including all positions and sizes, will be saved and restored every time you visit.
+                        <strong>Client Payments:</strong> Your clients can now log into their portal, view their active subscriptions under the "Billing" tab, and click "Pay Now" to complete a payment through a secure modal.
                     </li>
                 </ol>
             </>
         ),
     },
     {
-        id: 'campaign-reports',
-        title: 'Campaign Reports',
-        category: 'Analytics',
+        id: 'data-health',
+        title: 'Data Health Center',
+        category: 'Administration',
         content: (
             <>
-                <h2 id="overview-camp-reports">Overview</h2>
+                <h2 id="overview-health">Overview</h2>
                 <p>
-                    The Campaign Performance Report provides a deep-dive analysis of how your marketing journeys are performing. It helps you understand engagement, identify drop-off points, and optimize your marketing efforts.
+                    The Data Health Center is a centralized hub that uses AI to proactively find and help you fix data quality issues, ensuring your CRM data remains clean, accurate, and reliable.
                 </p>
-                <h3 id="how-to-use-camp-reports">How to Use It</h3>
+                <h3 id="how-to-use-health">How to Use It</h3>
                 <ol>
                     <li>
-                        <strong>Access the Report:</strong> Navigate to <strong>Campaigns</strong>. For any active or completed campaign, click the <strong>"Report"</strong> button.
+                        <strong>Access the Center:</strong> Navigate to <strong>Settings > Developer & Data > Data Health</strong>.
                     </li>
                     <li>
-                        <strong>Analyze KPIs:</strong> At the top of the page, you'll see key metrics like Open Rate and Click-Through Rate.
+                        <strong>View Your Health Score:</strong> The dashboard provides an at-a-glance summary of your data quality, including a Health Score and counts of potential issues.
                     </li>
                     <li>
-                        <strong>View the Funnel:</strong> The Campaign Funnel chart visualizes how many contacts moved through each stage of your campaign, from initial recipients down to those who clicked.
+                        <strong>Review Duplicates:</strong> The system automatically groups potential duplicate contacts and products for your review.
                     </li>
                     <li>
-                        <strong>Drill Down into Contacts:</strong> Use the tabs at the bottom of the page to see the specific lists of contacts who opened your emails or clicked links within them.
+                        <strong>Apply Formatting Fixes:</strong> Review a list of AI-suggested formatting corrections (e.g., "Capitalize name") and apply each fix with a single click.
                     </li>
                 </ol>
             </>
@@ -693,333 +388,59 @@ export const kbArticles: KBArticleType[] = [
 
     // --- AI & PREDICTIVE INTELLIGENCE ---
     {
-        id: 'deal-forecasting',
-        title: 'AI Deal Forecasting',
+        id: 'conversational-bi',
+        title: 'Conversational BI',
         category: 'AI & Predictive Intelligence',
         content: (
             <>
-                <h2 id="overview-deal-ai">Overview</h2>
+                <h2 id="overview-conv-bi">Overview</h2>
                 <p>
-                    The AI Deal Forecasting feature transforms your sales pipeline into an intelligent advisor. It analyzes your open deals and predicts the likelihood of each one closing successfully, allowing your team to focus their efforts where they will have the most impact.
+                    Conversational Business Intelligence transforms the Growth Co-pilot into an on-demand data analyst. You can ask complex questions about your CRM data in plain English and get instant visualizations and summaries in response.
                 </p>
-                <h3 id="how-to-use-deal-ai">How to Use It</h3>
+                <h3 id="how-to-use-conv-bi">How to Use It</h3>
                 <ol>
                     <li>
-                        <strong>Activate the Forecast:</strong> Navigate to the <strong>Deals</strong> page. Click the "AI Forecast" button at the top right.
+                        <strong>Open the Co-pilot:</strong> On the Dashboard, use the Growth Co-pilot card.
                     </li>
                     <li>
-                        <strong>View Win Probability:</strong> Each deal card will now display a color-coded "Win Probability" badge (Green for High, Yellow for Medium, Red for Low), giving you an at-a-glance overview of your pipeline's health.
-                    </li>
-                    <li>
-                        <strong>Get a Detailed Analysis:</strong> Click on any probability badge to open the "Deal Forecast Analysis" modal.
-                    </li>
-                    <li>
-                        <strong>Understand the "Why":</strong> The modal provides a detailed breakdown of the AI's reasoning, listing the key <strong>Positive Factors</strong> (strengths) and <strong>Negative Factors</strong> (risks) influencing the score.
-                    </li>
-                    <li>
-                        <strong>Take Action:</strong> The modal also provides a clear, AI-generated <strong>"Next Best Action"</strong>—a specific, actionable recommendation on what step to take next to improve the deal's chances of success.
-                    </li>
-                </ol>
-            </>
-        ),
-    },
-    {
-        id: 'churn-prediction',
-        title: 'AI Churn Prediction',
-        category: 'AI & Predictive Intelligence',
-        content: (
-            <>
-                <h2 id="overview-churn-ai">Overview</h2>
-                <p>
-                    The AI Churn Prediction feature is a proactive tool for customer retention. It analyzes contact behavior to identify customers who are at risk of leaving, allowing your support and account management teams to intervene before it's too late.
-                </p>
-                <h3 id="how-to-use-churn-ai">How to Use It</h3>
-                <ol>
-                    <li>
-                        <strong>Activate Churn Risk:</strong> Navigate to the <strong>Contacts</strong> page. Click the "AI Churn Risk" button at the top right.
-                    </li>
-                    <li>
-                        <strong>Identify At-Risk Contacts:</strong> A new "Churn Risk" column will appear in the contacts table. Each active contact will display a color-coded badge indicating their risk level (Low, Medium, or High).
-                    </li>
-                    <li>
-                        <strong>Get a Detailed Analysis:</strong> Click on any risk badge to open the "Churn Prediction Analysis" modal.
-                    </li>
-                    <li>
-                        <strong>Understand the Factors:</strong> The modal breaks down the AI's reasoning, listing <strong>Retention Factors</strong> (positive signals) and <strong>Churn Risks</strong> (red flags).
-                    </li>
-                    <li>
-                        <strong>Take Action:</strong> The modal provides a clear, AI-generated <strong>"Next Best Action"</strong>—a specific, actionable recommendation to help you mitigate the risk and retain the customer.
-                    </li>
-                </ol>
-            </>
-        ),
-    },
-    {
-        id: 'next-best-action',
-        title: 'Next Best Action',
-        category: 'AI & Predictive Intelligence',
-        content: (
-            <>
-                <h2 id="overview-nba">Overview</h2>
-                <p>
-                    The "Next Best Action" feature is the culmination of our AI efforts. It's an intelligent recommendation engine that analyzes a contact's complete profile—including their deal forecasts and churn risk—to suggest the single most impactful action you can take at that moment.
-                </p>
-                <h3 id="how-to-use-nba">How to Use It</h3>
-                <ol>
-                    <li>
-                        <strong>View a Contact:</strong> Open any contact's detail modal from the Contacts page or anywhere else in the CRM.
-                    </li>
-                    <li>
-                        <strong>See the Recommendation:</strong> At the top of the modal, the "Next Best Action" component will appear, displaying the AI's suggestion and the reason behind it. For example, it might suggest calling a high-scoring lead or emailing a high-churn-risk customer.
-                    </li>
-                    <li>
-                        <strong>Take Action with One Click:</strong> Click the <strong>"Take Action"</strong> button. The system will intelligently perform the suggested action for you:
+                        <strong>Ask Analytical Questions:</strong> Type or speak questions like:
                         <ul>
-                            <li className="!mt-2">If the suggestion is to **make a call**, it will open the VoIP Call Control modal, ready to dial.</li>
-                            <li className="!mt-2">If the suggestion is to **send an email**, it will switch you to the Email tab and pre-populate the composer with the recommended template.</li>
+                            <li className="!mt-2">"Show me our top 5 deals in the Proposal stage"</li>
+                            <li className="!mt-2">"Chart the number of tickets by priority"</li>
+                            <li className="!mt-2">"What is the total value of deals we won this month?"</li>
                         </ul>
                     </li>
-                </ol>
-            </>
-        ),
-    },
-
-
-    // --- INTEGRATIONS ---
-    {
-        id: 'email-sync',
-        title: 'Two-Way Email Sync',
-        category: 'Integrations',
-        content: (
-            <>
-                <h2 id="overview-email">Overview</h2>
-                <p>
-                    The Two-Way Email Sync integration connects your personal email inbox (like Gmail or Outlook) to VersaCRM. It automatically finds conversations with your contacts and logs them as Email interactions on their history timeline, ensuring your CRM is always a single source of truth for all communication.
-                </p>
-                <h3 id="how-to-use-email">How to Use It</h3>
-                <ol>
                     <li>
-                        <strong>Connect Your Account:</strong> Navigate to <strong>Settings &gt; API & Apps &gt; Integrations</strong>. Click the "Connect Email Account" button to simulate the secure connection process.
-                    </li>
-                    <li>
-                        <strong>Trigger a Sync:</strong> Go to the new <strong>Synced Email</strong> page in the sidebar. Click the <strong>"Sync Now"</strong> button.
-                    </li>
-                    <li>
-                        <strong>View Synced Emails:</strong> The sync engine will "scan" your inbox, match emails to your CRM contacts, and create new interaction records. These will appear in the list on the Synced Email page and, more importantly, on the "History" tab of the corresponding contacts.
+                        <strong>Get Instant Visualizations:</strong> The AI will query your data and generate a chart or table to visualize the answer directly within the chat interface, along with a written summary.
                     </li>
                 </ol>
             </>
         ),
     },
     {
-        id: 'voip-telephony',
-        title: 'VoIP Telephony',
-        category: 'Integrations',
+        id: 'vertical-ai',
+        title: 'Vertical-Specific AI Models',
+        category: 'AI & Predictive Intelligence',
         content: (
             <>
-                <h2 id="overview-voip">Overview</h2>
+                <h2 id="overview-vertical-ai">Overview</h2>
                 <p>
-                    The VoIP Telephony integration turns VersaCRM into a complete communication hub. It enables "click-to-call" functionality directly from the CRM and automatically logs every call as an interaction, complete with duration and an optional AI-generated summary.
+                    This feature makes all AI interactions in VersaCRM smarter and more relevant to your business. The AI automatically adopts the persona of an expert in your selected industry, understanding and using the correct terminology.
                 </p>
-                <h3 id="how-to-use-voip">How to Use It</h3>
-                <ol>
-                    <li>
-                        <strong>Connect Your Provider:</strong> Go to <strong>Settings &gt; API & Apps &gt; Integrations</strong> and click "Connect Provider" in the VoIP section.
-                    </li>
-                    <li>
-                        <strong>Make a Call:</strong> Find any phone number in the application (e.g., on a contact's profile or in the contacts table). If the integration is active, you'll see a phone icon. Click the number or the icon to launch the in-app Call Control modal.
-                    </li>
-                    <li>
-                        <strong>Manage the Call:</strong> The modal will simulate the call process ("Dialing...", "Connected") and includes a live timer and controls like "End Call".
-                    </li>
-                    <li>
-                        <strong>Automatic Logging:</strong> When you end the call, an interaction record is automatically created on the contact's history tab, noting the call duration.
-                    </li>
-                    <li>
-                        <strong>Generate AI Summary:</strong> After the call is logged, a button will appear in the modal to "Generate AI Summary". Clicking this uses Gemini to create a concise summary of the call, which is then appended to the interaction notes.
-                    </li>
-                </ol>
-            </>
-        ),
-    },
-     {
-        id: 'live-chat',
-        title: 'Live Chat Widget',
-        category: 'Integrations',
-        content: (
-            <>
-                <h2 id="overview-chat">Overview</h2>
+                <h3 id="how-it-works">How It Works</h3>
                 <p>
-                    The Live Chat widget allows you to engage with visitors on your website in real-time. It's a powerful tool for both lead generation and customer support, feeding new conversations directly into your CRM.
+                    This feature works automatically based on the industry you select for your organization in <strong>Settings > Organization</strong>.
                 </p>
-                <h3 id="how-to-use-chat">How to Use It</h3>
-                <ol>
-                    <li>
-                        <strong>Configure the Widget:</strong> Go to <strong>Settings &gt; Live Chat</strong>. Here you can enable the widget, customize its color and welcome message, and set up automation rules (e.g., "automatically create a new Ticket for every new chat").
+                <ul>
+                    <li className="!mt-2">
+                        If you're in the **Health Cloud**, the AI will understand terms like "Patient," "Practitioner," and "Appointment."
                     </li>
-                    <li>
-                        <strong>Embed on Your Site:</strong> Copy the provided embed code and paste it into your website's HTML.
+                    <li className="!mt-2">
+                        If you're in the **Finance Cloud**, it will talk about "Clients," "Advisors," and "Portfolios."
                     </li>
-                    <li>
-                        <strong>Test the Flow:</strong> To simulate the widget, navigate to the <strong>Client Portal</strong>. You will see the chat bubble in the bottom-right corner.
-                    </li>
-                    <li>
-                        <strong>Start a Chat:</strong> Open the widget and send a message. Based on your settings, this will automatically create a new Contact and/or a new Ticket in your CRM, which your team can see and respond to immediately.
-                    </li>
-                </ol>
-            </>
-        ),
-    },
-
-    // --- INDUSTRY VERTICALS ---
-    {
-        id: 'health-cloud-scheduler',
-        title: 'Health Cloud: Appointment Scheduler',
-        category: 'Industry Verticals',
-        content: (
-            <>
-                <h2 id="overview-health-scheduler">Overview</h2>
-                <p>
-                    When your organization's industry is set to "Health", the standard Calendar is transformed into a specialized Appointment Scheduler, designed specifically for the needs of clinics and healthcare providers.
-                </p>
-                <h3 id="key-features">Key Features</h3>
-                <ol>
-                    <li>
-                        <strong>Multi-Practitioner View:</strong> The default view is a "Day" view that shows the schedules of multiple practitioners side-by-side in columns. This gives schedulers and front-desk staff a complete overview of the clinic's availability.
-                    </li>
-                    <li>
-                        <strong>Practitioner Filtering:</strong> Use the dropdown menu at the top of the scheduler to select which practitioners' schedules you want to view. This is useful for large clinics or for focusing on a specific department.
-                    </li>
-                    <li>
-                        <strong>Appointment-Specific Fields:</strong> When creating or editing an event, you will see new fields tailored for healthcare:
-                        <ul>
-                            <li className="!mt-2"><strong>Appointment Type:</strong> Categorize visits with types like "New Patient Visit," "Follow-up," or "Annual Physical."</li>
-                            <li className="!mt-2"><strong>Appointment Status:</strong> Track the lifecycle of an appointment with statuses like "Scheduled," "Confirmed," "Checked-in," "Completed," and "No-show."</li>
-                        </ul>
-                    </li>
-                     <li>
-                        <strong>Status-Based Color Coding:</strong> Appointments on the calendar are automatically color-coded based on their status, providing an instant visual understanding of the day's progress. For example, "Confirmed" appointments might be green, while "No-shows" are yellow.
-                    </li>
-                </ol>
-            </>
-        ),
-    },
-
-    // --- ADMIN & PLATFORM ---
-    {
-        id: 'roles-permissions',
-        title: 'Roles & Permissions',
-        category: 'Administration',
-        content: (
-            <>
-                <h2 id="overview-roles">Overview</h2>
-                <p>
-                    The Roles & Permissions system gives you granular control over what your users can see and do within VersaCRM. You can create custom roles that perfectly match your team's structure and security requirements.
-                </p>
-                <h3 id="how-to-use-roles">How to Use It</h3>
-                <ol>
-                    <li>
-                        <strong>Access Role Management:</strong> Navigate to <strong>Settings &gt; Roles & Permissions</strong>.
-                    </li>
-                    <li>
-                        <strong>Create a New Role:</strong> Click <strong>"New Role"</strong>. Give the role a name and description.
-                    </li>
-                    <li>
-                        <strong>Define Permissions:</strong> In the role editor, you'll see a matrix of all available permissions (e.g., `contacts:create`, `deals:delete`). Check the boxes for the permissions you want to grant to this role.
-                    </li>
-                    <li>
-                        <strong>Assign Roles to Users:</strong> Go to the <strong>Team</strong> page. When you invite a new team member or edit an existing one, you can now select one of your custom roles from the dropdown menu.
-                    </li>
-                    <li>
-                        <strong>UI Enforcement:</strong> The CRM interface will automatically adapt for users with this role. Buttons, pages, and actions they don't have permission for will be hidden or disabled.
-                    </li>
-                </ol>
-            </>
-        ),
-    },
-    {
-        id: 'api-access',
-        title: 'API Access',
-        category: 'Administration',
-        content: (
-            <>
-                <h2 id="overview-api">Overview</h2>
-                <p>
-                    VersaCRM is designed as an open platform. The API allows your developers or third-party applications to programmatically interact with your CRM data, enabling custom integrations and extending the platform's capabilities.
-                </p>
-                <h3 id="how-to-use-api">How to Use It</h3>
-                <ol>
-                    <li>
-                        <strong>Manage API Keys:</strong> Go to <strong>Settings &gt; API & Apps</strong>. Here, you can generate new API keys, view existing ones, and revoke keys that are no longer needed.
-                    </li>
-                    <li>
-                        <strong>Consult the Documentation:</strong> Navigate to the <strong>API Docs</strong> page from the sidebar. This page provides all the information a developer needs to start using the API, including authentication instructions and example endpoints.
-                    </li>
-                </ol>
-            </>
-        ),
-    },
-    {
-        id: 'ui-design-system',
-        title: 'UI & Design System',
-        category: 'Administration',
-        content: (
-            <>
-                <h2 id="overview-ui">Design Philosophy</h2>
-                <p>
-                    VersaCRM's user interface is built upon a modern, consistent, and accessible design system. Our approach is heavily inspired by the principles of industry-leading component libraries like <strong>shadcn/ui</strong>.
-                </p>
-                <h3 id="core-principles">Core Principles</h3>
-                <ol>
-                    <li>
-                        <strong>Composability:</strong> Our UI components (Buttons, Cards, Modals, etc.) are built as small, reusable blocks. This allows us to construct complex layouts with consistency and flexibility. For example, a <code>Card</code> is composed of <code>CardHeader</code>, <code>CardContent</code>, and <code>CardFooter</code>, giving developers fine-grained control over its structure.
-                    </li>
-                    <li>
-                        <strong>Accessibility (A11y):</strong> We prioritize making the application usable for everyone. This includes proper use of ARIA attributes, keyboard navigation, and sufficient color contrast.
-                    </li>
-                    <li>
-                        <strong>Theming with CSS Variables:</strong> The entire application's color scheme is controlled by a set of CSS variables. This allows for seamless switching between Light and Dark modes and enables the powerful Custom Theme Builder, which lets you define your own brand colors.
-                    </li>
-                </ol>
-                <p className="mt-4">
-                    By not being tied to a specific third-party component library and instead adopting these principles, we maintain full control over the look, feel, and performance of the application, ensuring a world-class user experience.
-                </p>
-            </>
-        ),
-    },
-     {
-        id: 'sandbox-environments',
-        title: 'Sandbox Environments',
-        category: 'Administration',
-        content: (
-            <>
-                <h2 id="overview-sandbox">Overview</h2>
-                <p>
-                    Sandbox Environments are safe, isolated copies of your production environment. They are an essential tool for enterprise-grade CRM management, allowing you to test changes, train users, and validate configurations without any risk to your live business data.
-                </p>
-                <h3 id="how-to-use-sandbox">How to Use It</h3>
-                <ol>
-                    <li>
-                        <strong>Create a Sandbox:</strong> Navigate to <strong>Settings &gt; Developer & Data</strong>. In the "Sandboxes" section, give your new sandbox a name and click "Create Sandbox". This will create a full copy of your current production data and settings.
-                    </li>
-                    <li>
-                        <strong>Switch Environments:</strong> A new environment switcher dropdown will appear in the main header, next to your profile name. Use this to switch between your "Production" environment and any sandboxes you've created.
-                    </li>
-                    <li>
-                        <strong>Work in the Sandbox:</strong> When you switch to a sandbox, a prominent banner will appear at the top of the application, reminding you that you are in a safe testing environment. You can now make any changes you want—create test contacts, modify workflows, build new custom objects—without affecting your real data.
-                    </li>
-                     <li>
-                        <strong>Refresh a Sandbox:</strong> In the Sandbox settings, click the "Refresh" button next to a sandbox. This will completely overwrite the sandbox with a fresh copy of your current production data. This is useful for starting a new round of testing.
-                    </li>
-                     <li>
-                        <strong>Delete a Sandbox:</strong> Click the "Delete" button to permanently remove a sandbox environment you no longer need.
-                    </li>
-                    <li>
-                        <strong>Switch Back to Production:</strong> When you're done testing, simply use the environment switcher to return to "Production". All your live data will be exactly as you left it.
-                    </li>
-                </ol>
-                <p className="mt-4">
-                    <strong>Note:</strong> Changes made in a sandbox are not automatically moved to production. You must manually replicate any successful changes (like a new workflow) in your production environment.
+                </ul>
+                <p className="mt-2">
+                    This deeper context allows all AI features—from the Growth Co-pilot to Deal Forecasting—to provide more insightful and actionable recommendations that speak your language.
                 </p>
             </>
         ),

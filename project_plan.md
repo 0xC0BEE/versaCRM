@@ -4,7 +4,7 @@ This document outlines the phased development plan for VersaCRM, a foundational,
 
 **All initial project phases (1-11) are now complete.** The platform is feature-rich, stable, and provides a solid foundation for future growth.
 
-Our strategic vision is now focused on achieving market leadership. The next chapter of development is outlined in our new roadmap document:
+Our strategic vision is now focused on achieving market leadership. The next chapter of development is outlined in our new roadmap document. All future planning and progress tracking will be maintained there.
 
 **[➡️ View the VersaCRM 2.0 Strategic Roadmap](./future_product_roadmap.md)**
 
