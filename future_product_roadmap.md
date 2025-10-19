@@ -25,14 +25,12 @@ This document outlines the next strategic evolution of the VersaCRM platform, bu
 **Goal:** Evolve our AI capabilities from a helpful "co-pilot" to a "virtual strategist" that uncovers deep insights and automates complex decision-making, leveraging the full power of advanced Gemini models.
 
 -   [x] **AI-Powered Process Mining & Optimization:**
-    -   [x] Have Gemini analyze historical workflow and deal progression data to identify bottlenecks and inefficiencies.
-    -   [x] Proactively suggest new workflow rules based on observed patterns (e.g., "Deals in 'Negotiation' for over 14 days are 80% more likely to be lost. Suggestion: Create an automation to notify a sales manager after 10 days.").
+    -   [x] **Refactored & Stabilized:** Unified simple and advanced builders, resolving AI-related instability.
 -   [x] **Predictive Lead Scoring:**
-    -   [x] Replace the manual, rule-based lead scoring system with a predictive AI model.
-    -   [x] The model will analyze the attributes and interaction patterns of all historical "Won" vs. "Lost" deals to create a dynamic, self-improving lead scoring system that identifies the true indicators of a high-quality lead.
--   [x] **Conversational BI (Business Intelligence):**
-    -   [x] Enhance the Live Co-pilot to understand and execute data visualization requests.
-    -   [x] A user should be able to say, "Show me our top 10 deals this quarter, grouped by lead source," and have the AI generate and display a new custom report chart on the fly.
+    -   [x] **Complete:** Replaced the manual, rule-based system with a predictive AI model that learns from historical deal outcomes.
+-   [ ] **Conversational BI (Business Intelligence):**
+    -   [ ] Enhance the Live Co-pilot to understand and execute data visualization requests.
+    -   [ ] A user should be able to say, "Show me our top 10 deals this quarter, grouped by lead source," and have the AI generate and display a new custom report chart on the fly.
 -   [x] **Automated Data Hygiene:**
     -   [x] Implement an AI-powered process that scans for duplicate contacts and suggests merges.
     -   [x] The AI will also identify and suggest corrections for inconsistent or poorly formatted data (e.g., standardizing addresses, capitalizing names).
@@ -69,9 +67,9 @@ This document outlines the next strategic evolution of the VersaCRM platform, bu
     -   [x] Add compliance tracking features for regulations like KYC (Know Your Customer) and AML (Anti-Money Laundering).
     -   [x] Create advanced data models for household/relationship mapping (e.g., connecting family members, financial advisors, and accountants).
     -   [x] Develop tools for managing financial accounts, insurance policies, and investment portfolios as custom objects.
--   [x] **Vertical-Specific AI Models:**
-    -   [x] Fine-tune separate Gemini models on industry-specific data, terminology, and regulations.
-    -   [x] This will allow the AI Co-pilot to provide far more accurate and relevant insights for each vertical (e.g., understanding medical terminology in Health Cloud).
+-   [ ] **Vertical-Specific AI Models:**
+    -   [ ] Fine-tune separate Gemini models on industry-specific data, terminology, and regulations.
+    -   [ ] This will allow the AI Co-pilot to provide far more accurate and relevant insights for each vertical (e.g., understanding medical terminology in Health Cloud).
 
 ---
 

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, Dispatch, SetStateAction } from 'react';
 // Import and export Node/Edge types from reactflow for use in workflow/campaign definitions.
 import type { Node, Edge } from 'reactflow';
 
@@ -6,7 +6,7 @@ export type { Node, Edge };
 
 // Basic Types
 export type Industry = 'Health' | 'Finance' | 'Legal' | 'Generic';
-export type Page = 'Dashboard' | 'Organizations' | 'OrganizationDetails' | 'Contacts' | 'Deals' | 'Tickets' | 'Interactions' | 'SyncedEmail' | 'Campaigns' | 'Forms' | 'LandingPages' | 'Documents' | 'Projects' | 'Calendar' | 'Tasks' | 'Reports' | 'Inventory' | 'Team' | 'Workflows' | 'Settings' | 'ApiDocs' | 'KnowledgeBase' | 'CustomObjects' | 'AppMarketplace' | 'Inbox' | 'TeamChat' | 'Notifications';
+export type Page = 'Dashboard' | 'Organizations' | 'OrganizationDetails' | 'Contacts' | 'Deals' | 'Tickets' | 'Interactions' | 'SyncedEmail' | 'Campaigns' | 'Forms' | 'LandingPages' | 'Documents' | 'Projects' | 'Calendar' | 'Tasks' | 'Reports' | 'Inventory' | 'Team' | 'Workflows' | 'Settings' | 'ApiDocs' | 'KnowledgeBase' | 'CustomObjects' | 'AppMarketplace' | 'Inbox' | 'TeamChat' | 'Notifications' | 'AudienceProfiles';
 export type Theme = 'light' | 'dark' | 'system';
 export type ReportType = 'sales' | 'inventory' | 'financial' | 'contacts' | 'team' | 'deals';
 export type ContactStatus = 'Lead' | 'Active' | 'Needs Attention' | 'Inactive' | 'Do Not Contact';
@@ -585,7 +585,8 @@ export interface AppContextType {
     isLiveCopilotOpen: boolean;
     setIsLiveCopilotOpen: (isOpen: boolean) => void;
     dashboardDateRange: { start: Date; end: Date };
-    setDashboardDateRange: (range: { start: Date; end: Date }) => void;
+    // FIX: The type for 'setDashboardDateRange' in 'AppContextType' was incorrect. It was defined as a simple function type, which did not allow for functional updates (e.g., 'setter(prev => ...)' ). It has been corrected to use React's 'Dispatch<SetStateAction<...>>' type, which is the correct type for a state setter from 'useState' and supports both direct value and functional updates.
+    setDashboardDateRange: Dispatch<SetStateAction<{ start: Date; end: Date }>>;
     currentDashboardId: string;
     setCurrentDashboardId: (id: string) => void;
     initialRecordLink: { page: Page; recordId?: string } | null;
@@ -645,21 +646,39 @@ export interface NotificationContextType {
 }
 
 // Automation
+// FIX: Renamed Workflow to AdvancedWorkflow and created new simple Workflow types
+export type NodeExecutionType =
+    | 'contactCreated' | 'contactStatusChanged' | 'dealCreated' | 'dealStageChanged'
+    | 'ticketCreated' | 'ticketStatusChanged' | 'sendEmail' | 'createTask' | 'wait'
+    | 'ifCondition' | 'updateContactField' | 'sendSurvey' | 'approval' | 'sendWebhook';
+
+export type WorkflowNodeType = 'trigger' | 'action' | 'condition' | 'approval';
+
+export type WorkflowTriggerType =
+    | 'contactCreated' | 'contactStatusChanged' | 'dealCreated' | 'dealStageChanged'
+    | 'ticketCreated' | 'ticketStatusChanged';
+
 export interface WorkflowTrigger {
-    type: 'contactCreated' | 'contactStatusChanged' | 'dealCreated' | 'dealStageChanged' | 'ticketCreated' | 'ticketStatusChanged';
-    fromStatus?: ContactStatus | 'New' | 'Open' | 'Pending' | 'Closed';
-    toStatus?: ContactStatus | 'New' | 'Open' | 'Pending' | 'Closed';
+    type: WorkflowTriggerType;
+    fromStatus?: string;
+    toStatus?: string;
     fromStageId?: string;
     toStageId?: string;
-    priority?: 'Low' | 'Medium' | 'High';
+    priority?: string;
 }
-export type WorkflowAction = 
-    | { type: 'createTask', taskTitle?: string; assigneeId?: string }
-    | { type: 'sendEmail', emailTemplateId?: string }
-    | { type: 'updateContactField', fieldId?: string; newValue?: string }
-    | { type: 'wait', days: number }
-    | { type: 'sendWebhook', webhookUrl?: string; payloadTemplate?: string }
-    | { type: 'sendSurvey', surveyId?: string };
+
+export interface WorkflowAction {
+    type: NodeExecutionType;
+    taskTitle?: string;
+    assigneeId?: string;
+    emailTemplateId?: string;
+    fieldId?: string;
+    newValue?: any;
+    days?: number;
+    webhookUrl?: string;
+    payloadTemplate?: string;
+    surveyId?: string;
+}
 
 export interface Workflow {
     id: string;
@@ -670,12 +689,6 @@ export interface Workflow {
     actions: WorkflowAction[];
 }
 
-export interface ProcessInsight {
-  observation: string;
-  suggestion: string;
-  workflow: Omit<Workflow, 'id' | 'name' | 'organizationId' | 'isActive'>;
-}
-
 export interface AdvancedWorkflow {
     id: string;
     organizationId: string;
@@ -683,6 +696,12 @@ export interface AdvancedWorkflow {
     isActive: boolean;
     nodes: Node[];
     edges: Edge[];
+}
+
+export interface ProcessInsight {
+  observation: string;
+  suggestion: string;
+  workflow: Omit<Workflow, 'id' | 'name' | 'organizationId' | 'isActive'>;
 }
 
 export interface FormattingSuggestion {
@@ -844,6 +863,14 @@ export interface ReportVisualization {
         type: 'count' | 'sum' | 'average';
         column?: string;
     };
+}
+
+export interface AudienceProfile {
+  id: string;
+  organizationId: string;
+  name: string;
+  description: string;
+  filters: FilterCondition[];
 }
 
 export interface CustomReport {
@@ -1085,13 +1112,7 @@ export interface StructuredRecord {
     fields: Record<string, any>;
 }
 
-export type NodeExecutionType =
-    | 'contactCreated' | 'contactStatusChanged' | 'dealCreated' | 'dealStageChanged'
-    | 'ticketCreated' | 'ticketStatusChanged' | 'sendEmail' | 'createTask' | 'wait'
-    | 'ifCondition' | 'updateContactField' | 'sendSurvey' | 'approval';
     
-export type WorkflowNodeType = 'trigger' | 'action' | 'condition' | 'approval';
-
 export type JourneyNodeType = 'journeyTrigger' | 'journeyAction' | 'journeyCondition';
 export type JourneyExecutionType = 'targetAudience' | 'sendEmail' | 'wait' | 'ifEmailOpened' | 'createTask';
 
@@ -1150,6 +1171,7 @@ export interface DataContextType {
     clientChecklistTemplatesQuery: any;
     subscriptionPlansQuery: any;
     systemAuditLogsQuery: any;
+    audienceProfilesQuery: any;
 
     // Mutations
     createOrganizationMutation: any;
@@ -1201,6 +1223,7 @@ export interface DataContextType {
     runEmailSyncMutation: any;
     createWorkflowMutation: any;
     updateWorkflowMutation: any;
+    deleteWorkflowMutation: any;
     createAdvancedWorkflowMutation: any;
     updateAdvancedWorkflowMutation: any;
     deleteAdvancedWorkflowMutation: any;
@@ -1275,4 +1298,7 @@ export interface DataContextType {
     subscribeContactMutation: any;
     cancelSubscriptionMutation: any;
     paySubscriptionMutation: any;
+    createAudienceProfileMutation: any;
+    updateAudienceProfileMutation: any;
+    deleteAudienceProfileMutation: any;
 }

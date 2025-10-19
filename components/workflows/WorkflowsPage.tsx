@@ -342,8 +342,8 @@ const WorkflowsPage: React.FC<WorkflowsPageProps> = ({ isTabbedView = false }) =
                                         <td className="px-6 py-4">{w.workflowType === 'Simple' && w.trigger?.type ? w.trigger.type : ('nodes' in w && w.nodes.find(n => n.type === 'trigger')?.data.label)}</td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex gap-2 justify-end">
-                                                <Button size="sm" variant="secondary" onClick={() => handleEdit(w)}>Edit</Button>
-                                                <Button size="sm" variant="danger" onClick={() => handleDelete(w)} disabled={deleteAdvancedWorkflowMutation.isPending}>
+                                                <Button size="sm" variant="secondary" onClick={() => handleEdit(w as any)}>Edit</Button>
+                                                <Button size="sm" variant="danger" onClick={() => handleDelete(w as any)} disabled={deleteAdvancedWorkflowMutation.isPending}>
                                                     <Trash2 size={14}/>
                                                 </Button>
                                             </div>

@@ -1,7 +1,6 @@
 import React from 'react';
 import LiveChatSettings from './LiveChatSettings';
-// FIX: Changed import to be a named import to resolve module export error.
-import { AiLeadScoringSettings } from './AiLeadScoringSettings';
+import AiLeadScoringSettings from './AiLeadScoringSettings';
 import EmailTemplates from './EmailTemplates';
 import TicketSettings from './TicketSettings';
 import CannedResponses from './CannedResponses';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { Zap, Send, CheckSquare, Clock, GitFork, Edit, ClipboardCheck, UserCheck } from 'lucide-react';
-import { NodeExecutionType } from '../../../types';
+import { NodeExecutionType } from '../../types';
 
 const nodeIcons: Record<string, React.ReactNode> = {
     contactCreated: <Zap size={16} className="text-yellow-500"/>,

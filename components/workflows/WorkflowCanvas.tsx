@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import ReactFlow, {
   Controls,
+  Background,
   addEdge,
   Connection,
   Edge,

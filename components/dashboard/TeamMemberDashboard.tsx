@@ -31,9 +31,7 @@ const TeamMemberDashboard: React.FC<TeamMemberDashboardProps> = ({ isTabbedView 
     const pendingTasks = React.useMemo(() => tasks.filter((task: Task) => !task.isCompleted), [tasks]);
     
     const openDeals = React.useMemo(() => {
-        const closedStageIds = (stages as DealStage[])
-            .filter(s => s.name === 'Closed Won' || s.name === 'Closed Lost')
-            .map(s => s.id);
+        const closedStageIds = (stages as DealStage[]).filter(s => s.name === 'Closed Won' || s.name === 'Closed Lost').map(s => s.id);
         return deals.filter((deal: Deal) => !closedStageIds.includes(deal.stageId));
     }, [deals, stages]);
     

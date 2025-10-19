@@ -36,7 +36,7 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, event }) => {
         start: '',
         end: '',
         contactId: '',
-        practitionerIds: [],
+        practitionerIds: [] as string[],
         appointmentType: isHealthCloud ? appointmentTypes[0] : '',
         status: isHealthCloud ? 'Scheduled' as AppointmentStatus : undefined,
     }), [isHealthCloud]);
@@ -44,13 +44,15 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, event }) => {
     const formDependency = useMemo(() => {
         if (!event) return null;
         return {
+            // FIX: Spread initialState first to ensure the dependency object has all required fields, satisfying TypeScript.
+            ...initialState,
             ...event,
             title: event.title || '',
             start: event.start ? format(new Date(event.start), "yyyy-MM-dd'T'HH:mm") : '',
             end: event.end ? format(new Date(event.end), "yyyy-MM-dd'T'HH:mm") : '',
             practitionerIds: event.practitionerIds || [],
         };
-    }, [event]);
+    }, [event, initialState]);
 
     const { formData, handleChange, setFormData } = useForm(initialState, formDependency);
 
@@ -60,18 +62,30 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, event }) => {
             return;
         }
 
-        const eventData = {
-            ...event,
-            ...formData,
-            start: new Date(formData.start),
-            end: new Date(formData.end),
-        };
-        
         try {
             if (isNew) {
-                await createCalendarEventMutation.mutateAsync(eventData as Omit<CalendarEvent, 'id'>);
+                const eventToCreate: Omit<CalendarEvent, 'id'> = {
+                    title: formData.title,
+                    start: new Date(formData.start),
+                    end: new Date(formData.end),
+                    practitionerIds: formData.practitionerIds,
+                    contactId: formData.contactId,
+                    appointmentType: formData.appointmentType,
+                    status: formData.status,
+                };
+                await createCalendarEventMutation.mutateAsync(eventToCreate);
             } else {
-                await updateCalendarEventMutation.mutateAsync(eventData as CalendarEvent);
+                const eventToUpdate: CalendarEvent = {
+                    id: event.id!,
+                    title: formData.title,
+                    start: new Date(formData.start),
+                    end: new Date(formData.end),
+                    practitionerIds: formData.practitionerIds,
+                    contactId: formData.contactId,
+                    appointmentType: formData.appointmentType,
+                    status: formData.status,
+                };
+                await updateCalendarEventMutation.mutateAsync(eventToUpdate);
             }
             
             await queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });

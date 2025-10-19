@@ -5,16 +5,17 @@ import Button from '../ui/Button';
 import { Plus, Bot, Sparkles, Loader } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { AnyContact, ContactStatus, ContactChurnPrediction, DataHygieneSuggestion } from '../../types';
-import ContactsTable from './ContactsTable';
-import ContactDetailModal from './ContactDetailModal';
-import ContactFilterBar from './ContactFilterBar';
-import BulkActionsToolbar from './BulkActionsToolbar';
-import BulkStatusUpdateModal from './BulkStatusUpdateModal';
+// FIX: Corrected import path for ContactsTable.
+import ContactsTable from '../organizations/ContactsTable';
+import ContactDetailModal from '../organizations/ContactDetailModal';
+import ContactFilterBar from '../organizations/ContactFilterBar';
+import BulkActionsToolbar from '../organizations/BulkActionsToolbar';
+import BulkStatusUpdateModal from '../organizations/BulkStatusUpdateModal';
 import { useAuth } from '../../contexts/AuthContext';
-import ChurnPredictionModal from './ChurnPredictionModal';
+import ChurnPredictionModal from '../organizations/ChurnPredictionModal';
 import { GoogleGenAI, Type } from '@google/genai';
 import toast from 'react-hot-toast';
-import DataHygieneModal from './DataHygieneModal';
+import DataHygieneModal from '../organizations/DataHygieneModal';
 import { useApp } from '../../contexts/AppContext';
 
 interface ContactsPageProps {

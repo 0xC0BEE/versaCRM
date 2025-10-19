@@ -42,7 +42,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, subscripti
                     <h4 className="font-semibold text-sm mb-2">Payment Details (Simulation)</h4>
                     <div className="space-y-3 p-4 border border-border-subtle rounded-lg">
                         <Input id="card-name" label="Name on Card" defaultValue={contact.contactName} disabled />
-                        <Input id="card-number" label="Card Number" defaultValue="**** **** **** 4242" disabled leftIcon={<CreditCard size={16} />} />
+                        <Input id="card-number" label="Card Number" defaultValue="**** **** **** 4242" disabled leftIcon={<CreditCard />} />
                         <div className="grid grid-cols-2 gap-3">
                             <Input id="card-expiry" label="Expiry (MM/YY)" defaultValue="12/25" disabled />
                             <Input id="card-cvc" label="CVC" defaultValue="123" disabled />

@@ -4,7 +4,7 @@ import { Page, Permission } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import {
     Home, Building, Users, Briefcase, Inbox, Calendar, BarChart2, Settings, Package, Handshake,
-    LifeBuoy, Zap, Mails, ClipboardList, BookOpen, LayoutTemplate, Bot, HelpCircle, Shapes, FileText, FolderKanban, History, MessageSquare, Bell, ChevronDown
+    LifeBuoy, Zap, Mails, ClipboardList, BookOpen, LayoutTemplate, Bot, HelpCircle, Shapes, FileText, FolderKanban, History, MessageSquare, Bell, ChevronDown, ScanSearch
 } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import * as LucideIcons from 'lucide-react';
@@ -100,6 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                 { page: 'Projects', icon: FolderKanban, permission: 'deals:read' },
                 { page: 'Tickets', icon: LifeBuoy, permission: 'tickets:read' },
                 { page: 'Campaigns', icon: Zap, permission: 'automations:manage' },
+                { page: 'AudienceProfiles', icon: ScanSearch, label: 'Audience Profiles', permission: 'automations:manage' },
                 { page: 'Forms', icon: ClipboardList, permission: 'automations:manage' },
                 { page: 'LandingPages', icon: LayoutTemplate, permission: 'automations:manage' },
                 { page: 'Documents', icon: FileText, permission: 'deals:read' },

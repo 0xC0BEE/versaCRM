@@ -21,7 +21,8 @@ import {
     ClientChecklist,
     SubscriptionPlan,
     SystemAuditLogEntry,
-    Relationship
+    Relationship,
+    AudienceProfile
 } from '../types';
 
 // Create a mutable reference to the fetch implementation that can be overridden by the mock server.
@@ -126,6 +127,12 @@ const apiClient = {
     createSnapshot: (data: { orgId: string, name: string, dataSource: 'contacts' | 'deals' }): Promise<Snapshot> => fetchImpl(`${API_BASE}/snapshots`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteSnapshot: (id: string): Promise<void> => fetchImpl(`${API_BASE}/snapshots/${id}`, { method: 'DELETE' }).then(handleResponse),
 
+    // --- AUDIENCE PROFILES ---
+    getAudienceProfiles: (orgId: string): Promise<AudienceProfile[]> => fetchImpl(`${API_BASE}/audience-profiles?orgId=${orgId}`).then(handleResponse),
+    createAudienceProfile: (data: Omit<AudienceProfile, 'id'>): Promise<AudienceProfile> => fetchImpl(`${API_BASE}/audience-profiles`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    updateAudienceProfile: (data: AudienceProfile): Promise<AudienceProfile> => fetchImpl(`${API_BASE}/audience-profiles/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    deleteAudienceProfile: (id: string): Promise<void> => fetchImpl(`${API_BASE}/audience-profiles/${id}`, { method: 'DELETE' }).then(handleResponse),
+
     // --- OTHER ENTITIES (Simplified) ---
     getTasks: (orgId: string, userId: string, canViewAll: boolean): Promise<Task[]> => fetchImpl(`${API_BASE}/tasks?orgId=${orgId}&userId=${userId}&canViewAll=${canViewAll}`).then(handleResponse),
     createTask: (taskData: Omit<Task, 'id' | 'isCompleted'>): Promise<Task> => fetchImpl(`${API_BASE}/tasks`, { method: 'POST', body: JSON.stringify(taskData), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
@@ -177,6 +184,7 @@ const apiClient = {
     getWorkflows: (orgId: string): Promise<Workflow[]> => fetchImpl(`${API_BASE}/workflows?orgId=${orgId}`).then(handleResponse),
     createWorkflow: (data: Omit<Workflow, 'id'>): Promise<Workflow> => fetchImpl(`${API_BASE}/workflows`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateWorkflow: (data: Workflow): Promise<Workflow> => fetchImpl(`${API_BASE}/workflows/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    deleteWorkflow: (id: string): Promise<void> => fetchImpl(`${API_BASE}/workflows/${id}`, { method: 'DELETE' }).then(handleResponse),
     getAdvancedWorkflows: (orgId: string): Promise<AdvancedWorkflow[]> => fetchImpl(`${API_BASE}/advanced-workflows?orgId=${orgId}`).then(handleResponse),
     createAdvancedWorkflow: (data: Omit<AdvancedWorkflow, 'id'>): Promise<AdvancedWorkflow> => fetchImpl(`${API_BASE}/advanced-workflows`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateAdvancedWorkflow: (data: AdvancedWorkflow): Promise<AdvancedWorkflow> => fetchImpl(`${API_BASE}/advanced-workflows/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),

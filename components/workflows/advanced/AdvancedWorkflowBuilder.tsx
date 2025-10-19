@@ -1,80 +1,81 @@
-import React, { useState, useEffect } from 'react';
-import { ReactFlowProvider, Node, Edge } from 'reactflow';
+import React, { useState, useEffect, useCallback } from 'react';
+import { ReactFlowProvider, Node, Edge, useReactFlow } from 'reactflow';
 import PageWrapper from '../../layout/PageWrapper';
 import Button from '../../ui/Button';
-import { AdvancedWorkflow } from '../../../types';
+import { AdvancedWorkflow, ProcessInsight } from '../../../types';
 import { ArrowLeft, Monitor } from 'lucide-react';
 import { useData } from '../../../contexts/DataContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
-import WorkflowCanvas from './WorkflowCanvas';
-import Toolbox from './Toolbox';
-import ConfigPanel from './ConfigPanel';
 import { Card } from '../../ui/Card';
-import { useQueryClient } from '@tanstack/react-query';
+import WorkflowCanvas from './WorkflowCanvas';
+import Toolbox from '../Toolbox';
+import ConfigPanel from './ConfigPanel';
 
 interface AdvancedWorkflowBuilderProps {
     workflow: AdvancedWorkflow | null;
     onClose: () => void;
 }
 
-const AdvancedWorkflowBuilder: React.FC<AdvancedWorkflowBuilderProps> = ({ workflow, onClose }) => {
+const AdvancedWorkflowBuilderComponent: React.FC<AdvancedWorkflowBuilderProps> = ({ workflow, onClose }) => {
     const { createAdvancedWorkflowMutation, updateAdvancedWorkflowMutation } = useData();
     const { authenticatedUser } = useAuth();
-    const queryClient = useQueryClient();
     const isNew = !workflow;
-
+    
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const [workflowName, setWorkflowName] = useState('');
-    const [isActive, setIsActive] = useState(true);
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+
+    const reactFlowInstance = useReactFlow();
 
     useEffect(() => {
         if (workflow) {
             setNodes(workflow.nodes || []);
             setEdges(workflow.edges || []);
             setWorkflowName(workflow.name || '');
-            setIsActive(workflow.isActive);
         } else {
-            // Default for a new workflow
             setNodes([
                 { id: '1', type: 'trigger', position: { x: 250, y: 5 }, data: { label: 'Contact is Created', nodeType: 'contactCreated' } }
             ]);
             setEdges([]);
             setWorkflowName('');
-            setIsActive(true);
         }
     }, [workflow]);
 
-    const handleSave = async () => {
+    const handleSave = () => {
         if (!workflowName.trim()) return toast.error("Workflow name is required.");
 
         const workflowData = {
             name: workflowName,
             organizationId: authenticatedUser!.organizationId!,
-            isActive,
+            isActive: workflow?.isActive ?? true,
             nodes,
             edges,
         };
-        
-        try {
-            if (isNew) {
-                await createAdvancedWorkflowMutation.mutateAsync(workflowData as Omit<AdvancedWorkflow, 'id'>);
-            } else {
-                await updateAdvancedWorkflowMutation.mutateAsync({ ...workflow!, ...workflowData });
-            }
-            
-            // Explicitly invalidate queries and wait for it to complete before closing
-            await queryClient.invalidateQueries({ queryKey: ['workflows'] });
-            await queryClient.invalidateQueries({ queryKey: ['advancedWorkflows'] });
 
-            toast.success(`Advanced workflow ${isNew ? 'created' : 'updated'}!`);
-            onClose();
-        } catch (error) {
-            // Error is handled by the default onError in DataContext
+        if (isNew) {
+            createAdvancedWorkflowMutation.mutate(workflowData, { onSuccess: onClose });
+        } else {
+            updateAdvancedWorkflowMutation.mutate({ ...workflow!, ...workflowData }, { onSuccess: onClose });
         }
     };
+
+    const handleSuggest = useCallback((insight: ProcessInsight) => {
+        toast.success("AI suggestion applied to the canvas!");
+        setWorkflowName(insight.suggestion.substring(0, 50));
+        // FIX: The ProcessInsight type's 'workflow' property is for simple workflows.
+        // The AI prompt for advanced workflows correctly provides nodes/edges.
+        // Casting to the AdvancedWorkflow shape aligns with the actual data received from the AI.
+        // FIX: The type assertion from 'Omit<Workflow, ...>' to 'Omit<AdvancedWorkflow, ...>' was failing because the types do not sufficiently overlap. By first casting to 'unknown', we can perform the assertion as intended by the developer comment, resolving the TypeScript error.
+        const workflowData = insight.workflow as unknown as Omit<AdvancedWorkflow, 'id' | 'name' | 'organizationId' | 'isActive'>;
+        setNodes(workflowData.nodes);
+        setEdges(workflowData.edges);
+        // This is a bit of a hack to get React Flow to re-layout
+        setTimeout(() => {
+            reactFlowInstance.fitView({ duration: 300 });
+        }, 100);
+    }, [setNodes, setEdges, setWorkflowName, reactFlowInstance]);
 
     const isPending = createAdvancedWorkflowMutation.isPending || updateAdvancedWorkflowMutation.isPending;
 
@@ -85,46 +86,47 @@ const AdvancedWorkflowBuilder: React.FC<AdvancedWorkflowBuilderProps> = ({ workf
                 <div className="hidden md:flex items-center gap-4">
                     <input
                         id="workflow-name"
-                        placeholder="Enter Workflow Name..."
+                        placeholder="Enter Advanced Workflow Name..."
                         value={workflowName}
                         onChange={e => setWorkflowName(e.target.value)}
                         className="w-72 bg-transparent text-xl font-semibold focus:outline-none focus:border-b border-border-subtle"
                     />
-                    <label className="flex items-center text-sm font-medium text-text-primary cursor-pointer">
-                        <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} className="h-4 w-4 rounded border-border-subtle text-primary focus:ring-primary"/>
-                        <span className="ml-2">Active</span>
-                    </label>
                     <Button onClick={handleSave} disabled={isPending}>{isPending ? 'Saving...' : 'Save Workflow'}</Button>
                 </div>
             </div>
-
             <div className="hidden md:grid grid-cols-12 gap-4 h-[calc(100vh-12rem)]">
                 <Card className="col-span-3 p-4 overflow-y-auto">
-                    <Toolbox />
+                    <Toolbox onSuggest={handleSuggest} />
                 </Card>
                 <div className="col-span-6 h-full">
-                    <ReactFlowProvider>
-                        <WorkflowCanvas 
-                            nodes={nodes}
-                            edges={edges}
-                            setNodes={setNodes}
-                            setEdges={setEdges}
-                            onNodeClick={(event, node) => setSelectedNode(node)}
-                            onPaneClick={() => setSelectedNode(null)}
-                        />
-                    </ReactFlowProvider>
+                    <WorkflowCanvas
+                        nodes={nodes}
+                        edges={edges}
+                        setNodes={setNodes}
+                        setEdges={setEdges}
+                        onNodeClick={(event, node) => setSelectedNode(node)}
+                        onPaneClick={() => setSelectedNode(null)}
+                    />
                 </div>
                 <Card className="col-span-3 p-4 overflow-y-auto">
-                    <ConfigPanel selectedNode={selectedNode} setNodes={setNodes} />
+                   <ConfigPanel selectedNode={selectedNode} setNodes={setNodes} />
                 </Card>
             </div>
-             <div className="md:hidden flex flex-col items-center justify-center h-[calc(100vh-12rem)] text-center p-4">
+            <div className="md:hidden flex flex-col items-center justify-center h-[calc(100vh-12rem)] text-center p-4">
                 <Monitor size={48} className="text-text-secondary" />
                 <h3 className="mt-4 font-semibold text-lg">Builder Not Available on Mobile</h3>
-                <p className="text-text-secondary mt-1">Please switch to a desktop or tablet to use the advanced workflow builder.</p>
+                <p className="text-text-secondary mt-1">Please switch to a desktop or tablet to use the workflow builder.</p>
             </div>
         </PageWrapper>
     );
 };
+
+// Wrap with provider for useReactFlow hook
+const AdvancedWorkflowBuilder: React.FC<AdvancedWorkflowBuilderProps> = (props) => (
+    <ReactFlowProvider>
+        <AdvancedWorkflowBuilderComponent {...props} />
+    </ReactFlowProvider>
+);
+
 
 export default AdvancedWorkflowBuilder;

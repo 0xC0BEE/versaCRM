@@ -2,7 +2,7 @@ import { setFetchImplementation } from './apiClient';
 import { 
     MOCK_ORGANIZATIONS, MOCK_USERS, MOCK_ROLES, MOCK_CONTACTS_MUTABLE,
     MOCK_INTERACTIONS, MOCK_PRODUCTS, MOCK_DEALS, MOCK_DEAL_STAGES, MOCK_TASKS,
-    MOCK_CALENDAR_EVENTS, MOCK_EMAIL_TEMPLATES, MOCK_WORKFLOWS, MOCK_ADVANCED_WORKFLOWS,
+    MOCK_CALENDAR_EVENTS, MOCK_EMAIL_TEMPLATES, MOCK_WORKFLOWS,
     MOCK_ORGANIZATION_SETTINGS, MOCK_API_KEYS, MOCK_TICKETS, MOCK_FORMS, MOCK_CAMPAIGNS,
     MOCK_LANDING_PAGES, MOCK_DOCUMENTS, MOCK_CUSTOM_REPORTS, MOCK_DASHBOARD_WIDGETS,
     MOCK_SUPPLIERS, MOCK_WAREHOUSES, MOCK_CUSTOM_OBJECT_DEFINITIONS, MOCK_CUSTOM_OBJECT_RECORDS,
@@ -10,7 +10,8 @@ import {
     MOCK_PROJECTS, MOCK_PROJECT_PHASES, MOCK_PROJECT_TEMPLATES, MOCK_CANNED_RESPONSES,
     MOCK_SURVEYS, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_SNAPSHOTS, MOCK_TEAM_CHANNELS, MOCK_TEAM_CHAT_MESSAGES, MOCK_CLIENT_CHECKLIST_TEMPLATES,
     MOCK_SUBSCRIPTION_PLANS,
-    MOCK_SYSTEM_AUDIT_LOGS
+    MOCK_SYSTEM_AUDIT_LOGS,
+    MOCK_AUDIENCE_PROFILES
 } from './mockData';
 import { industryConfigs } from '../config/industryConfig';
 import { generateDashboardData } from './reportGenerator';
@@ -18,7 +19,8 @@ import { checkAndTriggerWorkflows } from './workflowService';
 import { recalculateScoreForContact } from './leadScoringService';
 import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
-import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, Notification, ClientChecklist, SubscriptionPlan, Relationship } from '../types';
+import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, Notification, ClientChecklist, SubscriptionPlan, Relationship, AudienceProfile, AnyContact, Deal, DealStage } from '../types';
+import { GoogleGenAI, Type } from '@google/genai';
 
 // Hydrate the in-memory sandbox list from localStorage to persist it across reloads.
 const storedSandboxes = JSON.parse(localStorage.getItem('sandboxesList') || '[]');
@@ -39,7 +41,6 @@ const mainDB = {
     emailTemplates: MOCK_EMAIL_TEMPLATES,
     documentTemplates: MOCK_DOCUMENT_TEMPLATES,
     workflows: MOCK_WORKFLOWS,
-    advancedWorkflows: MOCK_ADVANCED_WORKFLOWS,
     settings: MOCK_ORGANIZATION_SETTINGS,
     apiKeys: MOCK_API_KEYS,
     tickets: MOCK_TICKETS,
@@ -68,6 +69,7 @@ const mainDB = {
     clientChecklistTemplates: MOCK_CLIENT_CHECKLIST_TEMPLATES,
     subscriptionPlans: MOCK_SUBSCRIPTION_PLANS,
     systemAuditLogs: MOCK_SYSTEM_AUDIT_LOGS,
+    audienceProfiles: MOCK_AUDIENCE_PROFILES,
 };
 
 let sandboxedDBs: { [key: string]: typeof mainDB } = JSON.parse(localStorage.getItem('sandboxedDBs') || '{}');
@@ -125,6 +127,80 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     if (!db.interactions.some(i => i.id === 'int_x_1')) {
         db.interactions.unshift(xMessage);
     }
+
+    // --- SETTINGS ---
+    if (path.endsWith('/settings')) {
+        if (method === 'GET') {
+            return respond(db.settings);
+        }
+        if (method === 'PUT') {
+            // Check for AI model training request
+            if (body.aiLeadScoringModel?.status === 'training') {
+                db.settings.aiLeadScoringModel = { ...db.settings.aiLeadScoringModel, status: 'training' };
+                
+                // Simulate async AI training
+                setTimeout(async () => {
+                    try {
+                        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+                        const contacts = db.contacts;
+                        const deals = db.deals;
+                        const dealStages = db.dealStages;
+                        
+                        const wonStageId = dealStages.find(s => s.name.toLowerCase().includes('won'))?.id;
+                        const lostStageId = dealStages.find(s => s.name.toLowerCase().includes('lost'))?.id;
+
+                        const getContactDataForDeal = (deal: Deal) => {
+                            const contact = contacts.find(c => c.id === deal.contactId);
+                            if (!contact) return null;
+                            return { leadSource: contact.leadSource };
+                        };
+                        
+                        const wonDealsData = deals.filter(d => d.stageId === wonStageId).map(getContactDataForDeal).filter(Boolean);
+                        const lostDealsData = deals.filter(d => d.stageId === lostStageId).map(getContactDataForDeal).filter(Boolean);
+
+                        const prompt = `Analyze this CRM data of won vs. lost deals. Based on the contact properties, identify the top 2-3 single-word positive factors (attributes common in won deals) and top 2-3 single-word negative factors (attributes common in lost deals). These factors should correspond to values in the data (e.g., 'Referral', 'Web').
+
+Won Deals' Contact Data: ${JSON.stringify(wonDealsData.slice(0, 10))}
+Lost Deals' Contact Data: ${JSON.stringify(lostDealsData.slice(0, 10))}
+
+Respond with a JSON object containing 'positiveFactors' and 'negativeFactors', each being an array of short, single-word strings.`;
+
+                        const response = await ai.models.generateContent({
+                            model: 'gemini-2.5-flash',
+                            contents: prompt,
+                            config: {
+                                responseMimeType: "application/json",
+                                responseSchema: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        positiveFactors: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                        negativeFactors: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                    }
+                                }
+                            }
+                        });
+
+                        const newModel = {
+                            status: 'trained' as const,
+                            lastTrained: new Date().toISOString(),
+                            ...JSON.parse(response.text)
+                        };
+                        db.settings.aiLeadScoringModel = newModel;
+                        console.log('[Mock AI] Model training complete:', newModel);
+                    } catch (e) {
+                        console.error('[Mock AI] Model training failed:', e);
+                        db.settings.aiLeadScoringModel = { ...db.settings.aiLeadScoringModel, status: 'not_trained' };
+                    }
+                }, 5000); // 5 second training simulation
+
+                return respond(db.settings);
+            }
+
+            db.settings = { ...db.settings, ...body };
+            return respond(db.settings);
+        }
+    }
+
 
     // --- SUBSCRIPTIONS ---
     if (path.startsWith('/api/v1/subscriptions/plans')) {
@@ -258,6 +334,32 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
         }
         if (method === 'DELETE' && snapshotId) {
             db.snapshots = db.snapshots.filter(s => s.id !== snapshotId);
+            return respond(null, 204);
+        }
+    }
+
+    // --- AUDIENCE PROFILES ---
+    if (path.startsWith('/api/v1/audience-profiles')) {
+        const profileId = path.split('/')[4];
+        if (method === 'GET') {
+            const orgId = searchParams.get('orgId');
+            return respond(db.audienceProfiles.filter(p => p.organizationId === orgId));
+        }
+        if (method === 'POST') {
+            const newProfile: AudienceProfile = { ...body, id: `prof_${Date.now()}` };
+            db.audienceProfiles.push(newProfile);
+            return respond(newProfile, 201);
+        }
+        if (method === 'PUT' && profileId) {
+            const index = db.audienceProfiles.findIndex(p => p.id === profileId);
+            if (index > -1) {
+                db.audienceProfiles[index] = { ...db.audienceProfiles[index], ...body };
+                return respond(db.audienceProfiles[index]);
+            }
+            return respond({ message: 'Not found' }, 404);
+        }
+        if (method === 'DELETE' && profileId) {
+            db.audienceProfiles = db.audienceProfiles.filter(p => p.id !== profileId);
             return respond(null, 204);
         }
     }
@@ -957,311 +1059,46 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
             db.dealStages = db.dealStages.filter(ds => ds.organizationId !== orgId);
             // Add new stages
             const newStages = body.stages.map((name: string, index: number) => ({
-                id: `stage_${orgId}_${index}`,
+                id: `stage_${orgId}_${index + 1}`,
                 organizationId: orgId,
-                name: name,
+                name,
                 order: index + 1,
             }));
             db.dealStages.push(...newStages);
             return respond(newStages);
         }
     }
-    if (path.startsWith('/api/v1/deals')) {
-        const dealId = path.split('/')[4];
-        if (path.includes('forecast')) {
-            const prob = Math.floor(Math.random() * 80) + 10;
-            return respond({ 
-                dealId: 'deal_1', 
-                probability: prob, 
-                factors: { positive: ['Strong contact engagement'], negative: ['Competitor mentioned'] }, 
-                nextBestAction: {
-                    action: 'Email',
-                    reason: 'Address competitor concerns with a targeted case study.',
-                    templateId: 'template_2'
-                }
-            });
-        }
-        if (dealId) {
-            if (method === 'PUT') {
-                const index = db.deals.findIndex(d => d.id === dealId);
-                const oldDeal = {...db.deals[index]};
-                db.deals[index] = body;
-                checkAndTriggerWorkflows('dealStageChanged', { deal: body, oldDeal, contact: db.contacts.find(c => c.id === body.contactId) });
-                return respond(body);
-            }
-             if (method === 'DELETE') {
-                db.deals = db.deals.filter(d => d.id !== dealId);
-                return respond(null, 204);
-            }
-        }
-        if (method === 'GET') return respond(db.deals.filter(d => d.organizationId === searchParams.get('orgId')));
-        if (method === 'POST') {
-            const newDeal = { ...body, id: `deal_${Date.now()}`, createdAt: new Date().toISOString() };
-            db.deals.push(newDeal);
-            checkAndTriggerWorkflows('dealCreated', { deal: newDeal, contact: db.contacts.find(c => c.id === newDeal.contactId) });
-            return respond(newDeal);
-        }
-    }
-
-    // --- TICKETS ---
-    if (path.startsWith('/api/v1/tickets')) {
-        const ticketId = path.split('/')[4];
-        if (ticketId) {
-            const ticketIndex = db.tickets.findIndex(t => t.id === ticketId);
-            if (ticketIndex === -1) return respond({ message: "Ticket not found"}, 404);
-
-            if (path.includes('/replies')) {
-                const newReply = { ...body.reply, id: `reply_${Date.now()}`, timestamp: new Date().toISOString() };
-                db.tickets[ticketIndex].replies.push(newReply);
-                db.tickets[ticketIndex].updatedAt = new Date().toISOString();
-                return respond(db.tickets[ticketIndex]);
-            }
-
-            if (method === 'PUT') {
-                const oldTicket = { ...db.tickets[ticketIndex] };
-                db.tickets[ticketIndex] = body;
-                if (oldTicket.status !== body.status) {
-                    checkAndTriggerWorkflows('ticketStatusChanged', { ticket: body, oldTicket });
-                }
-                return respond(body);
-            }
-        }
-        if (method === 'GET') {
-            return respond(db.tickets.filter(t => t.organizationId === searchParams.get('orgId')));
-        }
-        if (method === 'POST') {
-            const newTicket = { 
-                ...body, 
-                id: `ticket_${Date.now()}`, 
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                replies: [],
-            };
-            db.tickets.push(newTicket);
-            checkAndTriggerWorkflows('ticketCreated', { ticket: newTicket, contact: db.contacts.find(c => c.id === newTicket.contactId) });
-            return respond(newTicket);
-        }
-    }
     
-    // --- SETTINGS ---
-    if (path.startsWith('/api/v1/industry-config/')) {
-        const industry = path.split('/')[4];
-        return respond((industryConfigs as any)[industry]);
-    }
-    if (path.endsWith('/settings')) {
-         if (method === 'GET') return respond(db.settings);
-         if (method === 'PUT') {
-             db.settings = { ...db.settings, ...body };
-             return respond(db.settings);
-         }
-    }
-    
-    // --- DOCUMENTS ---
-     if (path.startsWith('/api/v1/documents')) {
-        const docId = path.split('/')[4];
-        if(method === 'GET') {
-            const contactId = searchParams.get('contactId');
-            const projectId = searchParams.get('projectId');
-            let docs = db.documents;
-            if (contactId) docs = docs.filter(d => d.contactId === contactId);
-            if (projectId) docs = docs.filter(d => d.projectId === projectId);
-            return respond(docs);
-        }
-        if (method === 'POST') {
-            const newDoc = { ...body, id: `doc_${Date.now()}`, uploadDate: new Date().toISOString() };
-            db.documents.push(newDoc);
-            return respond(newDoc);
-        }
-        if (method === 'PUT' && docId) {
-            const index = db.documents.findIndex(d => d.id === docId);
-            if (index > -1) {
-                db.documents[index] = { ...db.documents[index], ...body };
-                return respond(db.documents[index]);
-            }
-            return respond({ message: 'Document not found' }, 404);
-        }
-        if(method === 'DELETE') {
-            db.documents = db.documents.filter(d => d.id !== docId);
-            return respond(null, 204);
-        }
-    }
-    
-    // --- OTHER GETS ---
-    if (path.endsWith('/calendar-events')) return respond(db.calendarEvents);
-    if (path.endsWith('/products')) return respond(db.products);
-    if (path.endsWith('/email-templates')) return respond(db.emailTemplates);
-    if (path.endsWith('/workflows')) return respond(db.workflows);
-    if (path.endsWith('/advanced-workflows')) return respond(db.advancedWorkflows);
-    if (path.endsWith('/api-keys')) return respond(db.apiKeys);
-    if (path.endsWith('/forms')) return respond(db.forms);
-    if (path.startsWith('/api/v1/campaigns')) {
-        const campaignId = path.split('/')[4];
-
-        if (path.includes('/attribution')) {
-            const campaign = db.campaigns.find(c => c.id === campaignId);
-            if (!campaign) return respond({ message: 'Campaign not found' }, 404);
-
-            const wonStageId = db.dealStages.find(s => s.name === 'Won')?.id;
-            const wonDeals = db.deals.filter(d => d.stageId === wonStageId);
-            const attributedDeals: any[] = [];
-
-            for (const deal of wonDeals) {
-                const contact = db.contacts.find(c => c.id === deal.contactId);
-                if (!contact || !contact.interactions) continue;
-
-                const relevantInteractions = contact.interactions
-                    .filter(i => 
-                        i.notes.includes('(Campaign:') && 
-                        new Date(i.date) < new Date(deal.createdAt)
-                    )
-                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                
-                if (relevantInteractions.length > 0) {
-                    const lastTouch = relevantInteractions[0];
-                    if (lastTouch.notes.includes(`(Campaign: ${campaign.name})`)) {
-                        attributedDeals.push({
-                            dealId: deal.id,
-                            dealName: deal.name,
-                            dealValue: deal.value,
-                            contactName: contact.contactName,
-                            closedAt: deal.expectedCloseDate,
-                        });
-                    }
-                }
-            }
-            return respond(attributedDeals);
-        }
-
+    // --- WORKFLOWS ---
+    if (path.startsWith('/api/v1/workflows')) {
+        const workflowId = path.split('/')[4];
         if (method === 'GET') {
             const orgId = searchParams.get('orgId');
-            return respond(db.campaigns.filter(c => c.organizationId === orgId));
+            return respond(db.workflows.filter(w => w.organizationId === orgId));
         }
-    }
-    if (path.endsWith('/landing-pages')) return respond(db.landingPages);
-    if (path.endsWith('/public/landing-pages/' + path.split('/').pop())) {
-        return respond(db.landingPages.find(p => p.slug === path.split('/').pop()));
-    }
-    if (path.endsWith('/reports/custom')) return respond(db.customReports);
-    if (path.startsWith('/api/v1/dashboard/widgets/')) {
-        const widgetId = path.split('/')[5];
-        if (method === 'DELETE') {
-            db.dashboardWidgets = db.dashboardWidgets.filter(w => w.id !== widgetId);
+        if (method === 'POST') {
+            const newWorkflow = { ...body, id: `wf_${Date.now()}` };
+            db.workflows.push(newWorkflow);
+            return respond(newWorkflow, 201);
+        }
+        if (method === 'PUT' && workflowId) {
+            const index = db.workflows.findIndex(w => w.id === workflowId);
+            if (index > -1) {
+                db.workflows[index] = body;
+                return respond(body);
+            }
+            return respond({ message: 'Not found' }, 404);
+        }
+        if (method === 'DELETE' && workflowId) {
+            db.workflows = db.workflows.filter(w => w.id !== workflowId);
             return respond(null, 204);
         }
     }
-    if (path.endsWith('/dashboard/widgets')) {
-        if (method === 'GET') {
-            const dashboardId = searchParams.get('dashboardId');
-            return respond(db.dashboardWidgets.filter(w => w.dashboardId === dashboardId));
-        }
-        if (method === 'POST') {
-            const { reportId, dashboardId } = body;
-            const newWidget = {
-                id: `widget_${Date.now()}`,
-                widgetId: `custom-report-${reportId}`,
-                organizationId: 'org_1', // assuming from context
-                reportId,
-                dashboardId,
-            };
-            db.dashboardWidgets.push(newWidget);
-            return respond(newWidget, 201);
-        }
-    }
 
-    // --- OTHER POSTS ---
-    if (path.endsWith('/reports/custom/generate')) {
-        const { config, orgId, dateRange } = body;
-        const getSourceData = (sourceName: string) => {
-             if (sourceName === 'surveyResponses') {
-                const orgSurveys = db.surveys.filter(s => s.organizationId === orgId).map(s => s.id);
-                return db.surveyResponses.filter(r => orgSurveys.includes(r.surveyId));
-            }
-            return (db as any)[sourceName]?.filter((r: any) => r.organizationId === orgId) || [];
-        }
-        
-        let primaryData = getSourceData(config.dataSource);
-
-        if (config.join) {
-            const joinedData = getSourceData(config.join.with);
-            const joinedMap = new Map();
-            joinedData.forEach((row: any) => {
-                const key = row[config.join.equals];
-                if (!joinedMap.has(key)) joinedMap.set(key, []);
-                joinedMap.get(key).push(row);
-            });
-
-            const result = [];
-            for (const primaryRow of primaryData) {
-                const joinMatches = joinedMap.get((primaryRow as any)[config.join.on]) || [];
-                if (joinMatches.length > 0) {
-                    for (const joinedRow of joinMatches) {
-                        const mergedRow: Record<string, any> = {};
-                        for (const key in primaryRow) mergedRow[`${config.dataSource}.${key}`] = (primaryRow as any)[key];
-                        for (const key in joinedRow) mergedRow[`${config.join.with}.${key}`] = (joinedRow as any)[key];
-                        result.push(mergedRow);
-                    }
-                } else {
-                     const mergedRow: Record<string, any> = {};
-                     for (const key in primaryRow) mergedRow[`${config.dataSource}.${key}`] = (primaryRow as any)[key];
-                     result.push(mergedRow);
-                }
-            }
-            primaryData = result;
-        }
-
-        const dateFilteredData = dateRange ? primaryData.filter(row => {
-            const dateField = config.join ? `${config.dataSource}.createdAt` : 'createdAt';
-            const rowDate = new Date(row[dateField]);
-            const start = new Date(dateRange.start);
-            const end = new Date(dateRange.end);
-            end.setHours(23, 59, 59, 999);
-            return rowDate >= start && rowDate <= end;
-        }) : primaryData;
-
-        const filteredData = dateFilteredData.filter(row => 
-            (config.filters || []).every((filter: any) => {
-                const rowValue = String(row[filter.field] || '').toLowerCase();
-                const filterValue = String(filter.value).toLowerCase();
-                 switch (filter.operator) {
-                    case 'is': return rowValue === filterValue;
-                    case 'is_not': return rowValue !== filterValue;
-                    case 'contains': return rowValue.includes(filterValue);
-                    case 'does_not_contain': return !rowValue.includes(filterValue);
-                    default: return true;
-                }
-            })
-        );
-        
-        const finalData = filteredData.map(row => {
-            const newRow: Record<string, any> = {};
-            (config.columns || []).forEach((col: string) => {
-                newRow[col] = row[col];
-            });
-            return newRow;
-        });
-        
-        return respond(finalData);
-    }
-    if (path.endsWith('/campaigns/bulk-enroll')) {
-        campaignService.enrollContacts(body.campaignId);
-        return respond({ success: true });
-    }
-    if (path.includes('/launch')) {
-        const campId = path.split('/')[4];
-        campaignService.enrollContacts(campId);
-        return respond({ success: true });
-    }
-    if (path.endsWith('/scheduler/advance-day')) {
-        const newDate = new Date(body.currentDate);
-        newDate.setDate(newDate.getDate() + 1);
-        campaignSchedulerService.processScheduledCampaigns(newDate);
-        return respond(newDate.toISOString());
-    }
-
-    return respond({ message: `Mock route for ${method} ${path} not found.` }, 404);
+    // Default catch-all for any unhandled routes
+    return respond({ message: `Mock API endpoint not found: ${method} ${path}` }, 404);
 };
 
-export function startMockServer() {
-    console.log('--- MOCK API SERVER STARTED ---');
+export const startMockServer = () => {
     setFetchImplementation(mockFetch);
-}
+};

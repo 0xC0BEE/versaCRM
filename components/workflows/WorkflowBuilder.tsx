@@ -60,7 +60,7 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onClose }) 
         actions: [],
     }), [authenticatedUser]);
 
-    const { formData, handleChange, setFormData } = useForm(initialState, workflow);
+    const { formData, handleChange, setFormData } = useForm(initialState, workflow as Workflow | null);
 
     const handleTriggerChange = (field: string, value: any) => {
         let newTrigger: WorkflowTrigger;

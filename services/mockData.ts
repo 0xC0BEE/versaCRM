@@ -14,7 +14,8 @@ import {
     TeamChatMessage,
     ClientChecklistTemplate,
     SubscriptionPlan,
-    SystemAuditLogEntry
+    SystemAuditLogEntry,
+    AudienceProfile
 } from '../types';
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
@@ -168,11 +169,9 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
     },
 ];
 
-export const MOCK_WORKFLOWS: Workflow[] = [
-    { id: 'wf_1', organizationId: 'org_1', name: 'New Lead Follow-up', isActive: true, trigger: { type: 'contactCreated' }, actions: [ { type: 'createTask', taskTitle: 'Call new lead: {{contactName}}', assigneeId: 'user_admin_1' } ] }
-];
+export let MOCK_WORKFLOWS: Workflow[] = [];
 
-export const MOCK_ADVANCED_WORKFLOWS: AdvancedWorkflow[] = [
+export let MOCK_ADVANCED_WORKFLOWS: AdvancedWorkflow[] = [
     { id: 'adv_workflow_1', organizationId: 'org_1', name: 'Advanced Lead Nurturing', isActive: true, nodes: [ { id: '1', type: 'trigger', position: { x: 250, y: 5 }, data: { label: 'Contact is Created', nodeType: 'contactCreated' } }, { id: '2', type: 'action', position: { x: 250, y: 125 }, data: { label: 'Send Welcome Email', nodeType: 'sendEmail', emailTemplateId: 'template_1' } }, { id: '3', type: 'action', position: { x: 250, y: 250 }, data: { label: 'Wait 3 Days', nodeType: 'wait', days: 3 } }, { id: '4', type: 'action', position: { x: 250, y: 375 }, data: { label: 'Create Follow-up Task', nodeType: 'createTask', taskTitle: 'Follow up with {{contactName}}', assigneeId: 'user_admin_1' } }, ], edges: [ { id: 'e1-2', source: '1', target: '2' }, { id: 'e2-3', source: '2', target: '3' }, { id: 'e3-4', source: '3', target: '4' }, ], }
 ];
 
@@ -180,6 +179,11 @@ export let MOCK_ORGANIZATION_SETTINGS: OrganizationSettings = {
     organizationId: 'org_1',
     ticketSla: { responseTime: { high: 1, medium: 4, low: 24 }, resolutionTime: { high: 8, medium: 24, low: 72 } },
     leadScoringRules: [ { id: 'rule_1', event: 'interaction', points: 10, interactionType: 'Appointment' }, { id: 'rule_2', event: 'status_change', points: 20, status: 'Active' } ],
+    aiLeadScoringModel: {
+        status: 'not_trained',
+        positiveFactors: [],
+        negativeFactors: [],
+    },
     emailIntegration: { isConnected: false },
     voip: { isConnected: false },
     liveChat: { isEnabled: true, color: '#3b82f6', welcomeMessage: 'Welcome! How can we help?', autoCreateContact: true, newContactStatus: 'Lead', autoCreateTicket: true, newTicketPriority: 'Medium' },
@@ -351,6 +355,24 @@ export const MOCK_SYSTEM_AUDIT_LOGS: SystemAuditLogEntry[] = [
     { id: 'sys_log_4', timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), userId: 'user_admin_1', action: 'export', entityType: 'Contacts', entityId: 'org_1', details: 'Exported 3 contacts to CSV' },
 ];
 
+// FIX: Removed 'export' from this line to prevent redeclaration error.
+let MOCK_AUDIENCE_PROFILES: AudienceProfile[] = [
+    {
+        id: 'prof_1',
+        organizationId: 'org_1',
+        name: 'High-Value Leads',
+        description: 'Leads with a score over 20.',
+        filters: [{ field: 'leadScore', operator: 'gt', value: 20 }, { field: 'status', operator: 'is', value: 'Lead' }]
+    },
+    {
+        id: 'prof_2',
+        organizationId: 'org_1',
+        name: 'Inactive Active Contacts',
+        description: 'Contacts who are "Active" but have not been contacted recently.',
+        filters: [{ field: 'status', operator: 'is', value: 'Active' }]
+    }
+];
+
 export const MOCK_CUSTOM_REPORTS: CustomReport[] = [];
 let MOCK_DASHBOARD_WIDGETS: DashboardWidget[] = [];
 export const MOCK_DOCUMENTS: Document[] = [...MOCK_PROJECT_DOCUMENTS];
@@ -436,4 +458,4 @@ export let MOCK_SNAPSHOTS: Snapshot[] = [];
 
 // Export mutable arrays for services that modify data in place
 // FIX: Export MOCK_TEAM_CHANNELS to make it available for import.
-export { MOCK_CONTACTS_MUTABLE, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_DASHBOARD_WIDGETS, MOCK_TEAM_CHANNELS };
+export { MOCK_CONTACTS_MUTABLE, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_DASHBOARD_WIDGETS, MOCK_TEAM_CHANNELS, MOCK_AUDIENCE_PROFILES };

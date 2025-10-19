@@ -27,6 +27,7 @@ import ProjectsPage from '../projects/ProjectsPage';
 import InboxPage from '../inbox/InboxPage';
 import TeamChatPage from '../team_chat/TeamChatPage';
 import NotificationsPage from '../notifications/NotificationsPage';
+import ProfilesPage from '../profiles/ProfilesPage';
 
 const PageRenderer: React.FC = () => {
     const { currentPage } = useApp();
@@ -58,6 +59,8 @@ const PageRenderer: React.FC = () => {
             return <SyncedEmailPage />;
         case 'Campaigns':
             return <CampaignsPage />;
+        case 'AudienceProfiles':
+            return <ProfilesPage />;
         case 'Forms':
             return <FormsPage />;
         case 'LandingPages':

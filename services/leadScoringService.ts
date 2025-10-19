@@ -1,26 +1,36 @@
-
-// FIX: Corrected import path for mockData.
 import { MOCK_CONTACTS_MUTABLE, MOCK_ORGANIZATION_SETTINGS } from './mockData';
 import { AnyContact, LeadScoringRule } from '../types';
 
 function calculateLeadScore(contact: AnyContact, rules: LeadScoringRule[]): number {
+    const model = MOCK_ORGANIZATION_SETTINGS.aiLeadScoringModel;
+
+    // Use AI model if trained, otherwise fall back to manual rules
+    if (model && model.status === 'trained') {
+        let score = 0;
+        const contactDataString = `${contact.leadSource} ${contact.status}`.toLowerCase();
+        
+        model.positiveFactors.forEach(factor => {
+            if (contactDataString.includes(factor.toLowerCase())) {
+                score += 10;
+            }
+        });
+        model.negativeFactors.forEach(factor => {
+            if (contactDataString.includes(factor.toLowerCase())) {
+                score -= 5;
+            }
+        });
+        return score;
+    }
+
+    // Fallback to manual rules
     let score = 0;
-    
-    // Score based on interactions
     (contact.interactions || []).forEach(interaction => {
         const rule = rules.find(r => r.event === 'interaction' && r.interactionType === interaction.type);
         if (rule) score += rule.points;
     });
-
-    // Score based on current status from the contact object itself
     const statusRule = rules.find(r => r.event === 'status_change' && r.status === contact.status);
     if (statusRule) score += statusRule.points;
     
-    // A better approach for status changes might be to look at audit logs,
-    // but for simplicity and performance, scoring the current status is effective.
-    // If a status changes from A to B, the old score from A is implicitly removed
-    // and the new score for B is added during recalculation.
-
     return score;
 }
 
@@ -32,7 +42,7 @@ export const recalculateScoreForContact = (contactId: string): void => {
     }
     
     const contact = MOCK_CONTACTS_MUTABLE[contactIndex];
-    const rules = MOCK_ORGANIZATION_SETTINGS.leadScoringRules; // In a real app, fetch this per-org
+    const rules = MOCK_ORGANIZATION_SETTINGS.leadScoringRules;
     
     const newScore = calculateLeadScore(contact, rules);
     
