@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { AnyContact, Interaction } from '../../../types';
 import InteractionsTimeline from '../../common/InteractionsTimeline';
-import { useQuery } from '@tanstack/react-query';
-import apiClient from '../../../services/apiClient';
+import InteractionEditModal from '../../interactions/InteractionEditModal';
 import Button from '../../ui/Button';
 import { Plus } from 'lucide-react';
-import InteractionEditModal from '../../interactions/InteractionEditModal';
 
 interface HistoryTabProps {
     contact: AnyContact;
@@ -13,11 +11,7 @@ interface HistoryTabProps {
 
 const HistoryTab: React.FC<HistoryTabProps> = ({ contact }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    
-    const { data: interactions = [], isLoading } = useQuery<Interaction[], Error>({
-        queryKey: ['contactInteractions', contact.id],
-        queryFn: () => apiClient.getInteractionsByContact(contact.id),
-    });
+    const interactions = contact.interactions || [];
 
     return (
         <div className="mt-4 max-h-[55vh] overflow-y-auto p-1">
@@ -27,18 +21,13 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ contact }) => {
                     Log Interaction
                 </Button>
             </div>
-            {isLoading ? (
-                <div>Loading history...</div>
-            ) : (
-                <InteractionsTimeline interactions={interactions} />
-            )}
-            {isModalOpen && (
-                <InteractionEditModal 
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    contact={contact}
-                />
-            )}
+            <InteractionsTimeline interactions={interactions} />
+            <InteractionEditModal 
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                contact={contact}
+                interaction={null}
+            />
         </div>
     );
 };

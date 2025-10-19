@@ -1,3 +1,5 @@
+
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import { useData } from '../../contexts/DataContext';
@@ -25,6 +27,8 @@ import Modal from '../ui/Modal';
 import toast from 'react-hot-toast';
 import Input from '../ui/Input';
 import { format } from 'date-fns';
+import MobileDashboard from './MobileDashboard';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -51,6 +55,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
     const [isRenameDashboardModalOpen, setIsRenameDashboardModalOpen] = useState(false);
     const [modalInputName, setModalInputName] = useState('');
     const menuRef = useRef<HTMLDivElement>(null);
+    const isMobile = useIsMobile();
     
     const { data: dashboardData, isLoading: isDashboardLoading } = dashboardDataQuery;
     const { data: contacts = [], isLoading: isContactsLoading } = contactsQuery;
@@ -255,8 +260,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
 
     const isLoading = isDashboardLoading || isContactsLoading || isWidgetsLoading || dashboardsLoading;
 
-    if (!canSeeOrgDashboard) {
-        return <TeamMemberDashboard />;
+    if (isLoading) {
+        return <PageWrapper><LoadingSpinner /></PageWrapper>;
+    }
+
+    if (!canSeeOrgDashboard || isMobile) {
+        return <TeamMemberDashboard isMobile={isMobile} />;
     }
 
     const renderOrgDashboard = () => (
@@ -340,26 +349,24 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
                 </div>
             )}
             
-            {isLoading ? <LoadingSpinner /> : (
-                <ResponsiveGridLayout
-                    className={`layout ${isEditMode ? 'is-editing' : ''}`}
-                    layouts={currentLayouts}
-                    breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                    cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-                    rowHeight={30}
-                    onLayoutChange={onLayoutChange}
-                    isDraggable={isEditMode}
-                    isResizable={isEditMode}
-                    margin={[16, 16]}
-                    containerPadding={[0, 0]}
-                >
-                    {allItems.map(itemId => (
-                        <div key={itemId}>
-                           {renderWidget(itemId)}
-                        </div>
-                    ))}
-                </ResponsiveGridLayout>
-            )}
+            <ResponsiveGridLayout
+                className={`layout ${isEditMode ? 'is-editing' : ''}`}
+                layouts={currentLayouts}
+                breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+                rowHeight={30}
+                onLayoutChange={onLayoutChange}
+                isDraggable={isEditMode}
+                isResizable={isEditMode}
+                margin={[16, 16]}
+                containerPadding={[0, 0]}
+            >
+                {allItems.map(itemId => (
+                    <div key={itemId}>
+                        {renderWidget(itemId)}
+                    </div>
+                ))}
+            </ResponsiveGridLayout>
         </>
     );
 
@@ -373,7 +380,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
                 <Tabs tabs={["Organization", "My Dashboard"]} activeTab={activeTab} setActiveTab={setActiveTab} />
             </div>
             
-            {activeTab === 'Organization' ? renderOrgDashboard() : <TeamMemberDashboard isTabbedView />}
+            {activeTab === 'Organization' ? renderOrgDashboard() : <TeamMemberDashboard />}
 
             <Modal isOpen={isCreateDashboardModalOpen} onClose={() => setIsCreateDashboardModalOpen(false)} title="Create New Dashboard">
                 <Input id="new-dashboard-name" label="Dashboard Name" value={modalInputName} onChange={e => setModalInputName(e.target.value)} />

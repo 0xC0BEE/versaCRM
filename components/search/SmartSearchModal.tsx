@@ -23,6 +23,7 @@ const SmartSearchModal: React.FC<SmartSearchModalProps> = ({ isOpen, onClose }) 
     const [result, setResult] = useState<{ report?: string; filters?: FilterCondition[]; kbArticleId?: string } | null>(null);
     
     const { contactsQuery, productsQuery } = useData();
+    // FIX: Destructure setInitialKbArticleId from useApp hook
     const { setContactFilters, setCurrentPage, setInitialKbArticleId } = useApp();
 
     const { data: contacts = [] } = contactsQuery;

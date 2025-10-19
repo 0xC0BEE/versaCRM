@@ -1,117 +1,150 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
-import { AppContextType, Industry, Page, IndustryConfig, FilterCondition, AnyContact, Sandbox, Dashboard } from '../types';
+import React, { createContext, useContext, useState, useMemo, ReactNode, useCallback } from 'react';
+import { Page, Industry, IndustryConfig, FilterCondition, FeatureFlag } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
-import { useAuth } from './AuthContext';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-// FIX: Changed to default import for apiClient.
-import apiClient from '../services/apiClient';
-import { industryConfigs as fallbackConfigs } from '../config/industryConfig';
-import { useData } from './DataContext';
+import { industryConfigs } from '../config/industryConfig';
 import { featureFlags as defaultFlags } from '../config/featureFlags';
-import { subDays } from 'date-fns';
+import { AnyContact } from '../types';
+
+interface AppContextType {
+    // Page navigation
+    currentPage: Page;
+    setCurrentPage: (page: Page) => void;
+    initialRecordLink: { page: Page; recordId?: string } | null;
+    setInitialRecordLink: (link: { page: Page; recordId?: string } | null) => void;
+
+    // Industry config
+    currentIndustry: Industry;
+    setCurrentIndustry: (industry: Industry) => void;
+    industryConfig: IndustryConfig;
+
+    // Custom Objects
+    currentCustomObjectDefId: string | null;
+    setCurrentCustomObjectDefId: (id: string | null) => void;
+
+    // Filters
+    contactFilters: FilterCondition[];
+    setContactFilters: React.Dispatch<React.SetStateAction<FilterCondition[]>>;
+
+    // Dashboard
+    dashboardDateRange: { start: Date; end: Date };
+    setDashboardDateRange: React.Dispatch<React.SetStateAction<{ start: Date; end: Date }>>;
+    currentDashboardId: string;
+    setCurrentDashboardId: (id: string) => void;
+    
+    // Modals & Interaction
+    isCallModalOpen: boolean;
+    setIsCallModalOpen: (isOpen: boolean) => void;
+    callContact: AnyContact | null;
+    setCallContact: (contact: AnyContact | null) => void;
+    isLiveCopilotOpen: boolean;
+    setIsLiveCopilotOpen: (isOpen: boolean) => void;
+
+    // Reports
+    reportToEditId: string | null;
+    setReportToEditId: (id: string | null) => void;
+    
+    // Feature Flags & Environment
+    isFeatureEnabled: (featureId: string) => boolean;
+    currentEnvironment: string;
+    setCurrentEnvironment: (env: string) => void;
+    simulatedDate: Date;
+    setSimulatedDate: React.Dispatch<React.SetStateAction<Date>>;
+    
+    // FIX: Add properties for deep-linking to KB articles
+    initialKbArticleId: string | null;
+    setInitialKbArticleId: (id: string | null) => void;
+}
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-interface AppProviderProps {
-    children: ReactNode;
-}
-
-export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-    const { authenticatedUser } = useAuth();
-    const queryClient = useQueryClient();
+export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [currentPage, setCurrentPage] = useLocalStorage<Page>('page', 'Dashboard');
     const [currentIndustry, setCurrentIndustry] = useLocalStorage<Industry>('industry', 'Health');
-    const [currentEnvironment, _setCurrentEnvironment] = useLocalStorage<string>('currentEnvironment', 'production');
-    const [contactFilters, setContactFilters] = useState<FilterCondition[]>([]);
-    const [simulatedDate, setSimulatedDate] = useState(new Date());
-    const [reportToEditId, setReportToEditId] = useState<string | null>(null);
+    const [contactFilters, setContactFilters] = useLocalStorage<FilterCondition[]>('contact-filters', []);
+    const [dashboardDateRange, setDashboardDateRange] = useState({ start: new Date(new Date().setDate(new Date().getDate() - 30)), end: new Date() });
     const [isCallModalOpen, setIsCallModalOpen] = useState(false);
     const [callContact, setCallContact] = useState<AnyContact | null>(null);
-    const [initialKbArticleId, setInitialKbArticleId] = useState<string | null>(null);
-    const [currentCustomObjectDefId, setCurrentCustomObjectDefId] = useState<string | null>(null);
     const [isLiveCopilotOpen, setIsLiveCopilotOpen] = useState(false);
-    const [dashboardDateRange, setDashboardDateRange] = useState({ start: subDays(new Date(), 30), end: new Date() });
-    const [currentDashboardId, setCurrentDashboardId] = useLocalStorage<string>('currentDashboardId', 'dash_default');
-    const [initialRecordLink, setInitialRecordLink] = useState<{ page: Page, recordId?: string } | null>(null);
-    
-    const { organizationSettingsQuery } = useData();
-    const { data: orgSettings } = organizationSettingsQuery;
+    const [currentCustomObjectDefId, setCurrentCustomObjectDefId] = useLocalStorage<string | null>('current-custom-object-def-id', null);
+    const [reportToEditId, setReportToEditId] = useState<string | null>(null);
+    const [currentEnvironment, setCurrentEnvironment] = useLocalStorage<string>('currentEnvironment', 'production');
+    const [simulatedDate, setSimulatedDate] = useLocalStorage('simulatedDate', new Date());
+    const [currentDashboardId, setCurrentDashboardId] = useLocalStorage<string>('current-dashboard-id', 'dash_default');
+    const [initialRecordLink, setInitialRecordLink] = useState<{ page: Page; recordId?: string } | null>(null);
+    // FIX: Add state for KB article deep-linking
+    const [initialKbArticleId, setInitialKbArticleId] = useState<string | null>(null);
 
-    const { data: sandboxes = [] } = useQuery<Sandbox[]>({
-        queryKey: ['sandboxes', authenticatedUser?.organizationId],
-        queryFn: () => apiClient.getSandboxes(authenticatedUser!.organizationId),
-        enabled: !!authenticatedUser,
-    });
+    const industryConfig = useMemo(() => industryConfigs[currentIndustry] || industryConfigs.Generic, [currentIndustry]);
     
-    // When the user logs out, reset the page to Dashboard and environment to production.
-    useEffect(() => {
-        if (!authenticatedUser) {
-            setCurrentPage('Dashboard');
-            _setCurrentEnvironment('production');
-            setCurrentDashboardId('dash_default');
+    const featureFlags = useMemo(() => {
+        const storedSettings = localStorage.getItem('organizationSettings');
+        if (storedSettings) {
+            try {
+                const settings = JSON.parse(storedSettings);
+                return settings.featureFlags || {};
+            } catch (e) {
+                return {};
+            }
         }
-    }, [authenticatedUser, setCurrentPage, _setCurrentEnvironment, setCurrentDashboardId]);
+        return {};
+    }, []);
 
-    const setCurrentEnvironment = useCallback((env: string) => {
-        _setCurrentEnvironment(env);
-        queryClient.invalidateQueries();
-    }, [_setCurrentEnvironment, queryClient]);
+    const isFeatureEnabled = useCallback((featureId: string) => {
+        const defaultFlag = defaultFlags.find(f => f.id === featureId);
+        return featureFlags[featureId] ?? defaultFlag?.isEnabled ?? false;
+    }, [featureFlags]);
 
-    const { data } = useQuery<IndustryConfig | null>({
-        queryKey: ['industryConfig', currentIndustry],
-        queryFn: () => apiClient.getIndustryConfig(currentIndustry),
-    });
-
-    const industryConfig = data || fallbackConfigs[currentIndustry];
+    const handleSetCurrentIndustry = (industry: Industry) => {
+        setCurrentIndustry(industry);
+        window.location.reload();
+    }
     
-    const isFeatureEnabled = useCallback((flagId: string): boolean => {
-        // Default to the flag's default state
-        const defaultState = defaultFlags.find(f => f.id === flagId)?.isEnabled || false;
-        // Org settings override the default
-        return orgSettings?.featureFlags?.[flagId] ?? defaultState;
-    }, [orgSettings]);
+    const handleSetCurrentEnvironment = (env: string) => {
+        setCurrentEnvironment(env);
+        window.location.reload();
+    }
 
 
     const value: AppContextType = useMemo(() => ({
         currentPage,
         setCurrentPage,
         currentIndustry,
-        setCurrentIndustry,
+        setCurrentIndustry: handleSetCurrentIndustry,
         industryConfig,
         contactFilters,
         setContactFilters,
-        simulatedDate,
-        setSimulatedDate,
-        reportToEditId,
-        setReportToEditId,
+        dashboardDateRange,
+        setDashboardDateRange,
         isCallModalOpen,
         setIsCallModalOpen,
         callContact,
         setCallContact,
-        initialKbArticleId,
-        setInitialKbArticleId,
-        currentCustomObjectDefId,
-        setCurrentCustomObjectDefId,
-        currentEnvironment,
-        setCurrentEnvironment,
-        sandboxes: sandboxes || [],
-        isFeatureEnabled,
         isLiveCopilotOpen,
         setIsLiveCopilotOpen,
-        dashboardDateRange,
-        setDashboardDateRange,
+        currentCustomObjectDefId,
+        setCurrentCustomObjectDefId,
+        reportToEditId,
+        setReportToEditId,
+        isFeatureEnabled,
+        currentEnvironment,
+        setCurrentEnvironment: handleSetCurrentEnvironment,
+        simulatedDate: new Date(simulatedDate),
+        setSimulatedDate: setSimulatedDate as any,
         currentDashboardId,
         setCurrentDashboardId,
         initialRecordLink,
         setInitialRecordLink,
+        // FIX: Provide KB article link state to context
+        initialKbArticleId,
+        setInitialKbArticleId,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }), [
-        currentPage, setCurrentPage, currentIndustry, setCurrentIndustry, industryConfig, 
-        contactFilters, setContactFilters, simulatedDate, setSimulatedDate, reportToEditId, 
-        setReportToEditId, isCallModalOpen, setIsCallModalOpen, callContact, setCallContact, 
-        initialKbArticleId, setInitialKbArticleId, currentCustomObjectDefId, 
-        setCurrentCustomObjectDefId, currentEnvironment, setCurrentEnvironment, sandboxes, isFeatureEnabled,
-        isLiveCopilotOpen, setIsLiveCopilotOpen, dashboardDateRange, setDashboardDateRange,
-        currentDashboardId, setCurrentDashboardId, initialRecordLink, setInitialRecordLink
+        currentPage, setCurrentPage, currentIndustry, industryConfig, 
+        contactFilters, setContactFilters, dashboardDateRange, 
+        isCallModalOpen, callContact, isLiveCopilotOpen, 
+        currentCustomObjectDefId, reportToEditId, isFeatureEnabled,
+        currentEnvironment, simulatedDate, currentDashboardId,
+        initialRecordLink, initialKbArticleId
     ]);
 
     return (

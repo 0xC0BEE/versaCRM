@@ -8,6 +8,7 @@ import { kbArticles } from '../../config/kbContent';
 import { useApp } from '../../contexts/AppContext';
 
 const KnowledgeBasePage: React.FC = () => {
+    // FIX: Destructure initialKbArticleId and setInitialKbArticleId from useApp
     const { initialKbArticleId, setInitialKbArticleId } = useApp();
     const [selectedArticleId, setSelectedArticleId] = useState<string>('getting-started');
     

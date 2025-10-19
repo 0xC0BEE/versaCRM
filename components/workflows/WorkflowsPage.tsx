@@ -244,13 +244,18 @@ const WorkflowsPage: React.FC<WorkflowsPageProps> = ({ isTabbedView = false }) =
     };
     
     const handleSuggestWorkflow = (insight: ProcessInsight) => {
-        setSelectedItem({
-            name: `AI: ${insight.observation.substring(0, 40)}...`,
-            isActive: true,
-            trigger: insight.workflow.trigger,
-            actions: insight.workflow.actions,
-        });
-        setView('builder');
+        // FIX: Add type guard to ensure insight.workflow is a simple workflow
+        if ('trigger' in insight.workflow && 'actions' in insight.workflow) {
+            setSelectedItem({
+                name: `AI: ${insight.observation.substring(0, 40)}...`,
+                isActive: true,
+                trigger: insight.workflow.trigger,
+                actions: insight.workflow.actions,
+            });
+            setView('builder');
+        } else {
+            toast.error("AI suggested an advanced workflow. Please use the advanced builder to apply this suggestion.");
+        }
     };
 
     const handleNewAdvanced = () => {

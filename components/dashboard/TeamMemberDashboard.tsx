@@ -1,3 +1,4 @@
+
 import React from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import { useData } from '../../contexts/DataContext';
@@ -6,16 +7,17 @@ import LoadingSpinner from '../ui/LoadingSpinner';
 import KpiCard from './KpiCard';
 import { Task, Deal, CalendarEvent, DealStage } from '../../types';
 import { format, isFuture } from 'date-fns';
-// FIX: Changed default import of 'Card' to a named import '{ Card, CardHeader, CardTitle, CardContent }' and refactored usage to resolve module export error.
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { useApp } from '../../contexts/AppContext';
 import Button from '../ui/Button';
+import MobileDashboard from './MobileDashboard';
 
 interface TeamMemberDashboardProps {
     isTabbedView?: boolean;
+    isMobile?: boolean;
 }
 
-const TeamMemberDashboard: React.FC<TeamMemberDashboardProps> = ({ isTabbedView = false }) => {
+const TeamMemberDashboard: React.FC<TeamMemberDashboardProps> = ({ isTabbedView = false, isMobile = false }) => {
     const { authenticatedUser } = useAuth();
     const { setCurrentPage } = useApp();
     const { tasksQuery, dealsQuery, calendarEventsQuery, dealStagesQuery } = useData();
@@ -37,11 +39,17 @@ const TeamMemberDashboard: React.FC<TeamMemberDashboardProps> = ({ isTabbedView 
     
     const upcomingAppointments = React.useMemo(() => 
         (events as CalendarEvent[])
-            // FIX: The property on CalendarEvent is `practitionerIds`, not `userIds`.
             .filter(e => isFuture(new Date(e.start)) && e.practitionerIds.includes(authenticatedUser!.id))
             .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()), 
     [events, authenticatedUser]);
 
+    if (isLoading) {
+        return <PageWrapper><LoadingSpinner /></PageWrapper>;
+    }
+    
+    if (isMobile) {
+        return <MobileDashboard />;
+    }
 
     const pageContent = (
         <div className="space-y-6">
@@ -108,10 +116,6 @@ const TeamMemberDashboard: React.FC<TeamMemberDashboardProps> = ({ isTabbedView 
             </div>
         </div>
     );
-
-    if (isLoading) {
-        return <LoadingSpinner />;
-    }
 
     if (isTabbedView) {
         return <div className="p-1">{pageContent}</div>;

@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import { Card } from '../ui/Card';
@@ -33,122 +31,75 @@ const CalendarPage: React.FC = () => {
 
     const [selectedEvent, setSelectedEvent] = useState<Partial<CalendarEvent> | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    
-    // For Health Scheduler
-    const [visiblePractitioners, setVisiblePractitioners] = useState<string[]>(() => 
-        (teamMembers as User[]).map(tm => tm.id)
-    );
+    const [selectedPractitioners, setSelectedPractitioners] = useState<string[]>([]);
 
-    const isLoading = eventsLoading || membersLoading;
+    const practitionerOptions = useMemo(() => 
+        (teamMembers as User[]).map(tm => ({ value: tm.id, label: tm.name })),
+    [teamMembers]);
+
+    const filteredEvents = useMemo(() => {
+        if (selectedPractitioners.length === 0) {
+            return events;
+        }
+        return (events as CalendarEvent[]).filter(event => 
+            event.practitionerIds.some(id => selectedPractitioners.includes(id))
+        );
+    }, [events, selectedPractitioners]);
+
+    const handleSelectSlot = (slotInfo: SlotInfo) => {
+        setSelectedEvent({ start: slotInfo.start, end: slotInfo.end });
+        setIsModalOpen(true);
+    };
 
     const handleSelectEvent = (event: CalendarEvent) => {
         setSelectedEvent(event);
         setIsModalOpen(true);
     };
 
-    const handleSelectSlot = (slotInfo: SlotInfo & { resourceId?: string }) => {
-        setSelectedEvent({
-            start: slotInfo.start,
-            end: slotInfo.end,
-            practitionerIds: slotInfo.resourceId ? [slotInfo.resourceId] : [authenticatedUser!.id],
-            contactId: '', // To be filled in modal
-        });
-        setIsModalOpen(true);
-    };
-    
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-        setSelectedEvent(null);
-    };
-    
-    const eventPropGetter = (event: CalendarEvent): React.HTMLAttributes<HTMLDivElement> => {
-        const style: React.CSSProperties = {
-            backgroundColor: event.status ? appointmentStatusColors[event.status] : '#3174ad',
-            borderRadius: '5px',
-            opacity: 0.8,
-            color: 'white',
-            border: '0px',
-            display: 'block',
-        };
-        return { style };
-    };
-
-    const renderHealthScheduler = () => {
-        const practitioners = (teamMembers as User[]).map(tm => ({ resourceId: tm.id, resourceTitle: tm.name }));
-        const visiblePractitionerResources = practitioners.filter(p => visiblePractitioners.includes(p.resourceId));
-
-        return (
-            <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-semibold text-text-heading">Appointment Scheduler</h1>
-                    <div className="w-80">
-                         <MultiSelectDropdown
-                            options={practitioners.map(p => ({ value: p.resourceId, label: p.resourceTitle }))}
-                            selectedValues={visiblePractitioners}
-                            onChange={setVisiblePractitioners}
-                            placeholder="Filter Practitioners..."
-                        />
-                    </div>
-                </div>
-                <Card>
-                    <div className="p-6 h-[75vh]">
-                        <Calendar
-                            localizer={localizer}
-                            events={events}
-                            startAccessor="start"
-                            endAccessor="end"
-                            defaultView="day"
-                            views={['day', 'week', 'month']}
-                            step={15}
-                            timeslots={4}
-                            resources={visiblePractitionerResources}
-                            resourceIdAccessor="resourceId"
-                            resourceTitleAccessor="resourceTitle"
-                            onSelectEvent={handleSelectEvent}
-                            onSelectSlot={handleSelectSlot as any}
-                            selectable
-                            eventPropGetter={eventPropGetter}
-                        />
-                    </div>
-                </Card>
-            </div>
-        );
-    };
-
-    const renderGenericCalendar = () => (
-        <>
-            <h1 className="text-2xl font-semibold text-text-heading mb-6">Calendar</h1>
-            <Card>
-                <div className="p-6 h-[75vh]">
-                    <Calendar
-                        localizer={localizer}
-                        events={events}
-                        startAccessor="start"
-                        endAccessor="end"
-                        style={{ height: '100%' }}
-                        onSelectEvent={handleSelectEvent}
-                        onSelectSlot={handleSelectSlot}
-                        selectable
-                    />
-                </div>
-            </Card>
-        </>
+    const CustomEvent: React.FC<EventProps<CalendarEvent>> = ({ event }) => (
+        <div className={`p-1 text-white rounded-sm text-xs ${event.status ? appointmentStatusColors[event.status] : 'bg-primary'}`}>
+            <strong className="truncate block">{event.title}</strong>
+        </div>
     );
+    
+    const isHealthCloud = currentIndustry === 'Health';
 
     return (
         <PageWrapper>
-            {isLoading ? (
-                <div className="p-8 text-center">Loading calendar...</div>
-            ) : currentIndustry === 'Health' ? (
-                renderHealthScheduler()
-            ) : (
-                renderGenericCalendar()
-            )}
-            
-            {selectedEvent && (
-                <EventModal
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-semibold text-text-heading">Calendar</h1>
+                {isHealthCloud && (
+                    <div className="w-72">
+                         <MultiSelectDropdown 
+                            options={practitionerOptions}
+                            selectedValues={selectedPractitioners}
+                            onChange={setSelectedPractitioners}
+                            placeholder={`Filter by ${industryConfig.teamMemberName}...`}
+                         />
+                    </div>
+                )}
+            </div>
+            <Card className="h-[calc(100vh-10rem)] p-4">
+                {(eventsLoading || membersLoading) ? <p>Loading calendar...</p> : (
+                    <Calendar
+                        localizer={localizer}
+                        events={filteredEvents}
+                        startAccessor="start"
+                        endAccessor="end"
+                        style={{ height: '100%' }}
+                        selectable
+                        onSelectSlot={handleSelectSlot}
+                        onSelectEvent={handleSelectEvent}
+                        components={{
+                            event: CustomEvent,
+                        }}
+                    />
+                )}
+            </Card>
+            {isModalOpen && selectedEvent && (
+                <EventModal 
                     isOpen={isModalOpen}
-                    onClose={handleCloseModal}
+                    onClose={() => setIsModalOpen(false)}
                     event={selectedEvent}
                 />
             )}
