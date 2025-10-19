@@ -6,7 +6,7 @@ import { Plus, Edit, Trash2, Power, PowerOff, CheckCircle } from 'lucide-react';
 import SubscriptionPlanEditModal from './SubscriptionPlanEditModal';
 import toast from 'react-hot-toast';
 
-const SubscriptionSettings: React.FC = () => {
+const BillingAndCommerceSettings: React.FC = () => {
     const { subscriptionPlansQuery, deleteSubscriptionPlanMutation, organizationSettingsQuery, updateOrganizationSettingsMutation } = useData();
     const { data: plans = [], isLoading: plansLoading } = subscriptionPlansQuery;
     const { data: settings, isLoading: settingsLoading } = organizationSettingsQuery;
@@ -114,4 +114,4 @@ const SubscriptionSettings: React.FC = () => {
     );
 };
 
-export default SubscriptionSettings;
+export default BillingAndCommerceSettings;

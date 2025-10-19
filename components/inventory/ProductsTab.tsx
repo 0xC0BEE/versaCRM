@@ -1,27 +1,18 @@
 import React, { useState } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { Product, ProductDataHygieneSuggestion } from '../../types';
+import { Product } from '../../types';
 import Button from '../ui/Button';
-import { Plus, Sparkles, Loader } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import ProductEditModal from './ProductEditModal';
-import { useApp } from '../../contexts/AppContext';
-import toast from 'react-hot-toast';
-import { GoogleGenAI, Type } from '@google/genai';
-import ProductDataHygieneModal from './ProductDataHygieneModal';
 
 const ProductsTab: React.FC = () => {
     const { productsQuery } = useData();
     const { authenticatedUser } = useAuth();
-    const { isFeatureEnabled } = useApp();
     const { data: products = [], isLoading } = productsQuery;
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-
-    const [isHygieneModalOpen, setIsHygieneModalOpen] = useState(false);
-    const [hygieneResults, setHygieneResults] = useState<ProductDataHygieneSuggestion | null>(null);
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     const handleEdit = (product: Product) => {
         setSelectedProduct(product);
@@ -33,75 +24,11 @@ const ProductsTab: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const handleAnalyzeDataHygiene = async () => {
-        setIsAnalyzing(true);
-        toast.promise(
-            (async () => {
-                const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
-                const productSample = (products as Product[]).slice(0, 50).map(p => ({ id: p.id, name: p.name, sku: p.sku, category: p.category }));
-                
-                const prompt = `You are a data hygiene expert for a CRM's product inventory. Analyze this list of products: ${JSON.stringify(productSample)}.
-    Identify potential duplicate products and products with formatting issues.
-    
-    Your response MUST be a JSON object with two keys: 'duplicates' and 'formatting'.
-    - 'duplicates': An array of arrays, where each inner array contains the IDs of products that are likely duplicates of each other. Group them based on similar names or SKUs.
-    - 'formatting': An array of objects for products that need formatting fixes. Each object should have 'productId', 'productName', 'suggestion' (e.g., 'Capitalize name'), 'field' (e.g., 'name' or 'category'), and 'newValue'. Only suggest fixes for obviously incorrect formatting, like all-lowercase names.`;
-    
-                const response = await ai.models.generateContent({
-                    model: 'gemini-2.5-flash',
-                    contents: prompt,
-                    config: {
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: Type.OBJECT,
-                            properties: {
-                                duplicates: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.STRING } } },
-                                formatting: {
-                                    type: Type.ARRAY,
-                                    items: {
-                                        type: Type.OBJECT,
-                                        properties: {
-                                            productId: { type: Type.STRING },
-                                            productName: { type: Type.STRING },
-                                            suggestion: { type: Type.STRING },
-                                            field: { type: Type.STRING },
-                                            newValue: { type: Type.STRING }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-                
-                const results = JSON.parse(response.text);
-                setHygieneResults(results);
-                setIsHygieneModalOpen(true);
-            })(),
-            {
-                loading: 'AI is analyzing your product data...',
-                success: 'Analysis complete!',
-                error: 'AI analysis failed. Please try again.',
-            }
-        ).finally(() => setIsAnalyzing(false));
-    };
-
     return (
         <div>
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-text-primary">Products</h3>
                 <div className="flex items-center gap-2">
-                    {isFeatureEnabled('aiProductDataHygiene') && (
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={handleAnalyzeDataHygiene}
-                            leftIcon={isAnalyzing ? <Loader size={16} className="animate-spin"/> : <Sparkles size={16} />}
-                            disabled={isAnalyzing}
-                        >
-                            AI Data Hygiene
-                        </Button>
-                    )}
                     <Button size="sm" onClick={handleAdd} leftIcon={<Plus size={14} />}>
                         New Product
                     </Button>
@@ -148,13 +75,6 @@ const ProductsTab: React.FC = () => {
                     onClose={() => setIsModalOpen(false)}
                     product={selectedProduct}
                     organizationId={authenticatedUser!.organizationId!}
-                />
-            )}
-            {hygieneResults && (
-                <ProductDataHygieneModal
-                    isOpen={isHygieneModalOpen}
-                    onClose={() => setIsHygieneModalOpen(false)}
-                    initialResults={hygieneResults}
                 />
             )}
         </div>

@@ -9,14 +9,9 @@ This document outlines the next strategic evolution of the VersaCRM platform, bu
 **Goal:** Make VersaCRM the single source of truth and central nervous system for all internal and external team collaboration, keeping every conversation in context with the customer record.
 
 -   [x] **Internal Team Chat:** A fully-featured, Slack-like chat experience within VersaCRM.
-    -   [x] Create channels that can be automatically linked to specific records (e.g., a chat channel for `Deal-123`).
-    -   [x] Support @mentions, file sharing, and threaded conversations.
 -   [x] **Notifications 2.0:** A unified, global notification center that aggregates @mentions from records, projects, and the new team chat, creating a single action inbox for each user.
 -   [x] **Collaborative Documents:** Implement real-time, Google Docs-style co-editing for the Document Builder, allowing multiple team members to work on a proposal or quote simultaneously.
 -   [x] **Interactive Client Portal:** Evolve the portal from a read-only view to an interactive collaboration space.
-    -   [x] Allow clients to upload documents directly to their shared files.
-    -   [x] Enable a commenting system on tasks and milestones that are marked as client-visible.
-    -   [x] Create simple "Checklists" or "Questionnaires" that can be assigned to clients to complete within the portal.
 
 ---
 
@@ -28,9 +23,9 @@ This document outlines the next strategic evolution of the VersaCRM platform, bu
     -   [x] **Refactored & Stabilized:** Unified simple and advanced builders, resolving AI-related instability.
 -   [x] **Predictive Lead Scoring:**
     -   [x] **Complete:** Replaced the manual, rule-based system with a predictive AI model that learns from historical deal outcomes.
--   [ ] **Conversational BI (Business Intelligence):**
-    -   [ ] Enhance the Live Co-pilot to understand and execute data visualization requests.
-    -   [ ] A user should be able to say, "Show me our top 10 deals this quarter, grouped by lead source," and have the AI generate and display a new custom report chart on the fly.
+-   [x] **Conversational BI (Business Intelligence):**
+    -   [x] Enhance the Live Co-pilot to understand and execute data visualization requests.
+    -   [x] A user should be able to say, "Show me our top 10 deals this quarter, grouped by lead source," and have the AI generate and display a new custom report chart on the fly.
 -   [x] **Automated Data Hygiene:**
     -   [x] Implement an AI-powered process that scans for duplicate contacts and suggests merges.
     -   [x] The AI will also identify and suggest corrections for inconsistent or poorly formatted data (e.g., standardizing addresses, capitalizing names).

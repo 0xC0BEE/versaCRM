@@ -78,9 +78,62 @@ export const createTaskTool: FunctionDeclaration = {
   },
 };
 
+export const generateChartTool: FunctionDeclaration = {
+  name: 'generateChart',
+  description: 'Generates a chart or data table from CRM data to answer analytical questions. Use this when the user asks to "show", "list", "summarize", "count", or "chart" data like contacts, deals, or tickets.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      chartType: {
+        type: Type.STRING,
+        description: 'The type of chart to generate. Use "table" for lists or detailed data. Use "bar", "pie", or "line" for visualizations.',
+        enum: ['bar', 'pie', 'line', 'table'],
+      },
+      dataSource: {
+        type: Type.STRING,
+        description: 'The primary data source for the chart (e.g., "contacts", "deals", "tickets").',
+        enum: ['contacts', 'deals', 'tickets'],
+      },
+      metric: {
+        type: Type.STRING,
+        description: 'The aggregation metric to calculate (e.g., "count", "sum", "average"). Required for bar, pie, and line charts.',
+        enum: ['count', 'sum', 'average'],
+      },
+      metricColumn: {
+        type: Type.STRING,
+        description: 'The column to perform the metric on (required for "sum" and "average"). E.g., for "sum of deal values", this would be "value".',
+      },
+      groupBy: {
+        type: Type.STRING,
+        description: 'The column to group the data by for the chart\'s labels/categories. E.g., for "deals by stage", this would be "stageId". Required for bar, pie, and line charts.',
+      },
+      columns: {
+        type: Type.ARRAY,
+        description: 'An array of column names to display. Primarily used for "table" chartType.',
+        items: { type: Type.STRING }
+      },
+      filters: {
+        type: Type.ARRAY,
+        description: 'An array of filter conditions to apply to the data source before aggregation.',
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            field: { type: Type.STRING, description: 'The field to filter on.' },
+            operator: { type: Type.STRING, description: 'The filter operator (e.g., "is", "gt", "lt", "contains").' },
+            value: { type: Type.STRING, description: 'The value to filter against.' },
+          },
+        },
+      },
+    },
+    required: ['chartType', 'dataSource'],
+  },
+};
+
+
 export const copilotTools: FunctionDeclaration[] = [
   findDealsTool,
   findContactsTool,
   summarizeTicketsTool,
   createTaskTool,
+  generateChartTool,
 ];

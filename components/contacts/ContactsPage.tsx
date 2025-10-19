@@ -2,20 +2,16 @@ import React, { useState, useMemo, useEffect } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import { Card } from '../ui/Card';
 import Button from '../ui/Button';
-import { Plus, Bot, Sparkles, Loader } from 'lucide-react';
+import { Plus, Bot } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
-import { AnyContact, ContactStatus, ContactChurnPrediction, DataHygieneSuggestion } from '../../types';
-// FIX: Corrected import path for ContactsTable.
+import { AnyContact, ContactStatus, ContactChurnPrediction } from '../../types';
 import ContactsTable from '../organizations/ContactsTable';
 import ContactDetailModal from '../organizations/ContactDetailModal';
 import ContactFilterBar from '../organizations/ContactFilterBar';
-import BulkActionsToolbar from '../organizations/BulkActionsToolbar';
-import BulkStatusUpdateModal from '../organizations/BulkStatusUpdateModal';
+import BulkActionsToolbar from './BulkActionsToolbar';
+import BulkStatusUpdateModal from './BulkStatusUpdateModal';
 import { useAuth } from '../../contexts/AuthContext';
 import ChurnPredictionModal from '../organizations/ChurnPredictionModal';
-import { GoogleGenAI, Type } from '@google/genai';
-import toast from 'react-hot-toast';
-import DataHygieneModal from '../organizations/DataHygieneModal';
 import { useApp } from '../../contexts/AppContext';
 
 interface ContactsPageProps {
@@ -23,7 +19,6 @@ interface ContactsPageProps {
 }
 
 const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => {
-    // FIX: Import 'useApp' hook to resolve reference error.
     const { industryConfig, contactFilters, isFeatureEnabled, initialRecordLink, setInitialRecordLink } = useApp();
     const { authenticatedUser } = useAuth();
     const { 
@@ -42,10 +37,6 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [isChurning, setIsChurning] = useState(false);
     const [churnModalData, setChurnModalData] = useState<{contact: AnyContact, prediction: ContactChurnPrediction} | null>(null);
-
-    const [isHygieneModalOpen, setIsHygieneModalOpen] = useState(false);
-    const [hygieneResults, setHygieneResults] = useState<DataHygieneSuggestion | null>(null);
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     const handleRowClick = (contact: AnyContact) => {
         setSelectedContact(contact);
@@ -69,8 +60,6 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
         return contacts.filter((contact: AnyContact) => {
             return contactFilters.every(filter => {
                 const contactValue = String((contact as any)[filter.field] || '').toLowerCase();
-                // FIX: The `filter.value` can be a number, which does not have a `toLowerCase` method.
-                // It is now explicitly converted to a string before the method call to prevent runtime errors.
                 const filterValue = String(filter.value).toLowerCase();
                 switch (filter.operator) {
                     case 'is': return contactValue === filterValue;
@@ -85,7 +74,6 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
 
 
     const handleAdd = () => {
-        // Provide a default empty structure for a new contact
         setSelectedContact({
             id: '',
             organizationId: authenticatedUser!.organizationId!,
@@ -139,58 +127,6 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
         setChurnModalData({ contact, prediction });
     };
 
-    const handleAnalyzeDataHygiene = async () => {
-        setIsAnalyzing(true);
-        toast.promise(
-            (async () => {
-                const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
-                const contactSample = (contacts as AnyContact[]).slice(0, 50).map(c => ({ id: c.id, name: c.contactName, email: c.email, phone: c.phone }));
-                const prompt = `You are a data hygiene expert for a CRM. Analyze this list of contacts: ${JSON.stringify(contactSample)}.
-    Identify potential duplicate contacts and contacts with formatting issues.
-    
-    Your response MUST be a JSON object with two keys: 'duplicates' and 'formatting'.
-    - 'duplicates': An array of arrays, where each inner array contains the IDs of contacts that are likely duplicates of each other. Group them based on similar names, emails, etc.
-    - 'formatting': An array of objects for contacts that need formatting fixes. Each object should have 'contactId', 'contactName', 'suggestion' (a brief explanation of the issue), 'field' (the field to change, e.g., 'contactName'), and 'newValue' (the corrected value). Only suggest fixes for obviously incorrect formatting, like all-lowercase names.`;
-    
-                const response = await ai.models.generateContent({
-                    model: 'gemini-2.5-flash',
-                    contents: prompt,
-                    config: {
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: Type.OBJECT,
-                            properties: {
-                                duplicates: { type: Type.ARRAY, items: { type: Type.ARRAY, items: { type: Type.STRING } } },
-                                formatting: {
-                                    type: Type.ARRAY,
-                                    items: {
-                                        type: Type.OBJECT,
-                                        properties: {
-                                            contactId: { type: Type.STRING },
-                                            contactName: { type: Type.STRING },
-                                            suggestion: { type: Type.STRING },
-                                            field: { type: Type.STRING },
-                                            newValue: { type: Type.STRING }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-                
-                const results = JSON.parse(response.text);
-                setHygieneResults(results);
-                setIsHygieneModalOpen(true);
-            })(),
-            {
-                loading: 'AI is analyzing your contact data...',
-                success: 'Analysis complete!',
-                error: 'AI analysis failed. Please try again.',
-            }
-        ).finally(() => setIsAnalyzing(false));
-    };
-
     const isMutationLoading = createContactMutation.isPending || updateContactMutation.isPending || deleteContactMutation.isPending;
 
     const pageContent = (
@@ -199,16 +135,6 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-semibold text-text-heading">{industryConfig.contactNamePlural}</h1>
                     <div className="flex items-center gap-2">
-                        {isFeatureEnabled('aiDataHygiene') && (
-                            <Button
-                                variant='secondary'
-                                onClick={handleAnalyzeDataHygiene}
-                                leftIcon={isAnalyzing ? <Loader size={16} className="animate-spin"/> : <Sparkles size={16} />}
-                                disabled={isAnalyzing}
-                            >
-                                AI Data Hygiene
-                            </Button>
-                        )}
                         {isFeatureEnabled('aiPredictiveForecasting') && (
                             <Button
                                 variant={isChurning ? 'primary' : 'secondary'}
@@ -273,13 +199,6 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
                     onClose={() => setChurnModalData(null)}
                     contact={churnModalData.contact}
                     prediction={churnModalData.prediction}
-                />
-            )}
-            {hygieneResults && (
-                <DataHygieneModal
-                    isOpen={isHygieneModalOpen}
-                    onClose={() => setIsHygieneModalOpen(false)}
-                    initialResults={hygieneResults}
                 />
             )}
         </>

@@ -4,14 +4,15 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/Card
 import Button from '../ui/Button';
 import { Bot, Loader, Send, User as UserIcon, Mic } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
-import { AnyContact, Deal, DealStage, Ticket } from '../../types';
+import { AnyContact, Deal, DealStage, Ticket, CustomReport } from '../../types';
 import toast from 'react-hot-toast';
 import { copilotTools } from '../../config/copilotTools';
 import AiGeneratedChart from './AiGeneratedChart';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
+import apiClient from '../../services/apiClient';
 
-type ChartType = 'list' | 'bar' | 'kpi';
+type ChartType = 'list' | 'bar' | 'kpi' | 'line' | 'table';
 
 type Message = {
     role: 'user' | 'model';
@@ -113,6 +114,19 @@ const GrowthCopilotCard: React.FC = () => {
     const executeTool = useCallback(async (name: string, args: any) => {
         console.log(`[Co-pilot] Executing tool: ${name}`, args);
         switch (name) {
+            case 'generateChart': {
+                const config: CustomReport['config'] = {
+                    dataSource: args.dataSource,
+                    columns: args.columns || ['*'],
+                    filters: args.filters || [],
+                    visualization: {
+                        type: args.chartType,
+                        metric: { type: args.metric || 'count', column: args.metricColumn },
+                        groupByKey: args.groupBy,
+                    }
+                };
+                return apiClient.generateCustomReport(config, authenticatedUser!.organizationId);
+            }
             case 'findContacts': {
                 let filteredContacts = [...contacts];
                 if (args.status) {
@@ -187,16 +201,22 @@ const GrowthCopilotCard: React.FC = () => {
         try {
             const systemInstruction = {
                 role: 'system',
-                parts: [{ text: `You are a helpful CRM assistant. Your goal is to answer user queries by using the provided tools. If a tool returns data, provide a concise, natural language summary of the data and, if appropriate, format the most important information into a chart.
+                parts: [{ text: `You are a helpful CRM assistant. Your goal is to answer user queries by using the provided tools.
                 
-                Your response after a successful tool call MUST be a single JSON object with the keys 'summary' (string), 'chartType' ('list', 'bar', or 'kpi'), and 'chartData' (an array of objects formatted for that chart type).
-                
+                If you call the 'generateChart' tool, it will return raw JSON data. Your next task is to process this raw data.
+                Your final response MUST be a single valid JSON object with 'summary', 'chartType', and 'chartData' keys.
+                - 'summary': A concise, natural language summary of the tool's findings based on the raw data.
+                - 'chartType': The same 'chartType' you requested from the tool ('list', 'bar', 'pie', 'line', or 'table').
+                - 'chartData': The raw data from the tool, but reformatted into the required structure for that chart type.
+
                 Chart Data Formats:
                 - 'list': [{ "title": "string", "subtitle": "string" }]
-                - 'bar': [{ "name": "string", "numericValue": "number" }]
+                - 'bar', 'pie', or 'line': [{ "name": "string", "value": "number" }]
+                - 'table': The raw JSON data array from the tool.
                 - 'kpi': [{ "title": "string", "textValue": "string" }]
                 
-                Always use a tool if the user's request matches a tool's description.`}]
+                If a tool other than 'generateChart' is called, or if the user's request is a command (like creating a task), just provide a simple confirmation message as plain text.
+                If the user's request is conversational and doesn't require a tool, just respond naturally with plain text.`}]
             };
 
             const generateContentRequest = {
@@ -229,7 +249,7 @@ const GrowthCopilotCard: React.FC = () => {
                             properties: {
                                 summary: { type: Type.STRING },
                                 chartType: { type: Type.STRING },
-                                chartData: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: {} } }
+                                chartData: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: {}, additionalProperties: true } }
                             }
                         }
                     }
@@ -243,16 +263,20 @@ const GrowthCopilotCard: React.FC = () => {
             let aiMessage: Message = { role: 'model', text: text };
             
             try {
-                const jsonResponse = JSON.parse(text);
+                // The response might be wrapped in markdown, clean it up.
+                const cleanedText = text.trim().replace(/^```json/, '').replace(/```$/, '').trim();
+                const jsonResponse = JSON.parse(cleanedText);
                 if (jsonResponse.summary && jsonResponse.chartType && jsonResponse.chartData) {
                     aiMessage = {
                         role: 'model',
                         text: jsonResponse.summary,
-                        chartType: jsonResponse.chartType,
+                        chartType: jsonResponse.chartType as ChartType,
                         chartData: jsonResponse.chartData,
                     };
                 }
-            } catch (e) {}
+            } catch (e) {
+                // Not a JSON response, treat as plain text
+            }
 
             setHistory(prev => [...prev, aiMessage]);
 

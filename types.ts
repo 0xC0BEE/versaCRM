@@ -730,6 +730,11 @@ export interface ProductDataHygieneSuggestion {
   formatting: ProductFormattingSuggestion[];
 }
 
+export interface DataHealthSummary {
+  contactHygiene: DataHygieneSuggestion;
+  productHygiene: ProductDataHygieneSuggestion;
+}
+
 export interface CampaignTargetAudience {
     status?: ContactStatus;
     leadScore?: {
@@ -1172,6 +1177,7 @@ export interface DataContextType {
     subscriptionPlansQuery: any;
     systemAuditLogsQuery: any;
     audienceProfilesQuery: any;
+    dataHygieneQuery: any;
 
     // Mutations
     createOrganizationMutation: any;

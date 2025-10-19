@@ -6,6 +6,7 @@ import DataMigration from './DataMigration';
 import SandboxSettings from './SandboxSettings';
 import FeatureFlagsSettings from './FeatureFlagsSettings';
 import DataWarehouseSettings from './DataWarehouseSettings';
+import DataHealthSettings from './DataHealthSettings';
 
 const DeveloperSettings: React.FC = () => {
     return (
@@ -19,6 +20,9 @@ const DeveloperSettings: React.FC = () => {
             </div>
              <div className="border-t border-border-subtle pt-8">
                 <FeatureFlagsSettings />
+            </div>
+            <div className="border-t border-border-subtle pt-8">
+                <DataHealthSettings />
             </div>
             <div className="border-t border-border-subtle pt-8">
                 <DataMigration />

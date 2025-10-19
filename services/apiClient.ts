@@ -22,7 +22,8 @@ import {
     SubscriptionPlan,
     SystemAuditLogEntry,
     Relationship,
-    AudienceProfile
+    AudienceProfile,
+    DataHealthSummary
 } from '../types';
 
 // Create a mutable reference to the fetch implementation that can be overridden by the mock server.
@@ -133,6 +134,9 @@ const apiClient = {
     updateAudienceProfile: (data: AudienceProfile): Promise<AudienceProfile> => fetchImpl(`${API_BASE}/audience-profiles/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteAudienceProfile: (id: string): Promise<void> => fetchImpl(`${API_BASE}/audience-profiles/${id}`, { method: 'DELETE' }).then(handleResponse),
 
+    // --- DATA HYGIENE ---
+    getDataHygieneSuggestions: (orgId: string): Promise<DataHealthSummary> => fetchImpl(`${API_BASE}/data-hygiene/analyze?orgId=${orgId}`).then(handleResponse),
+
     // --- OTHER ENTITIES (Simplified) ---
     getTasks: (orgId: string, userId: string, canViewAll: boolean): Promise<Task[]> => fetchImpl(`${API_BASE}/tasks?orgId=${orgId}&userId=${userId}&canViewAll=${canViewAll}`).then(handleResponse),
     createTask: (taskData: Omit<Task, 'id' | 'isCompleted'>): Promise<Task> => fetchImpl(`${API_BASE}/tasks`, { method: 'POST', body: JSON.stringify(taskData), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
@@ -213,83 +217,98 @@ const apiClient = {
     getCampaignAttribution: (campaignId: string): Promise<AttributedDeal[]> => fetchImpl(`${API_BASE}/campaigns/${campaignId}/attribution`).then(handleResponse),
     createCampaign: (data: any): Promise<Campaign> => fetchImpl(`${API_BASE}/campaigns`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateCampaign: (data: Campaign): Promise<Campaign> => fetchImpl(`${API_BASE}/campaigns/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-    launchCampaign: (campaignId: string): Promise<void> => fetchImpl(`${API_BASE}/campaigns/${campaignId}/launch`, { method: 'POST' }).then(handleResponse),
-    advanceDay: (currentDate: Date): Promise<string> => fetchImpl(`${API_BASE}/scheduler/advance-day`, { method: 'POST', body: JSON.stringify({ currentDate }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-
+    launchCampaign: (id: string): Promise<Campaign> => fetchImpl(`${API_BASE}/campaigns/${id}/launch`, { method: 'POST' }).then(handleResponse),
+    advanceDay: (currentDate: Date): Promise<string> => fetchImpl(`${API_BASE}/campaigns/advance-day`, { method: 'POST', body: JSON.stringify({ currentDate }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     getLandingPages: (orgId: string): Promise<LandingPage[]> => fetchImpl(`${API_BASE}/landing-pages?orgId=${orgId}`).then(handleResponse),
+    getLandingPageBySlug: (slug: string): Promise<LandingPage | null> => fetchImpl(`${API_BASE}/landing-pages/slug/${slug}`).then(handleResponse),
     createLandingPage: (data: any): Promise<LandingPage> => fetchImpl(`${API_BASE}/landing-pages`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateLandingPage: (data: LandingPage): Promise<LandingPage> => fetchImpl(`${API_BASE}/landing-pages/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteLandingPage: (id: string): Promise<void> => fetchImpl(`${API_BASE}/landing-pages/${id}`, { method: 'DELETE' }).then(handleResponse),
-    getLandingPageBySlug: (slug: string): Promise<LandingPage | null> => fetchImpl(`${API_BASE}/public/landing-pages/${slug}`).then(handleResponse),
-    trackPageView: (data: { sessionId: string, orgId: string, url: string }): Promise<void> => fetchImpl(`${API_BASE}/tracking/page-view`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    trackPageView: (data: { sessionId: string, orgId: string, url: string }): Promise<void> => fetchImpl(`${API_BASE}/tracking/pageview`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+
+    // --- CUSTOM REPORTS ---
+    getCustomReports: (orgId: string): Promise<CustomReport[]> => fetchImpl(`${API_BASE}/reports?orgId=${orgId}`).then(handleResponse),
+    createCustomReport: (data: any): Promise<CustomReport> => fetchImpl(`${API_BASE}/reports`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    updateCustomReport: (data: CustomReport): Promise<CustomReport> => fetchImpl(`${API_BASE}/reports/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    deleteCustomReport: (id: string): Promise<void> => fetchImpl(`${API_BASE}/reports/${id}`, { method: 'DELETE' }).then(handleResponse),
+    generateCustomReport: (config: CustomReport['config'], orgId: string, dateRange?: { start: Date, end: Date }): Promise<any[]> => fetchImpl(`${API_BASE}/reports/generate`, { method: 'POST', body: JSON.stringify({ config, orgId, dateRange }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+
+    // --- DASHBOARD WIDGETS ---
+    getDashboardWidgets: (dashboardId: string): Promise<DashboardWidget[]> => fetchImpl(`${API_BASE}/dashboard-widgets?dashboardId=${dashboardId}`).then(handleResponse),
+    addDashboardWidget: ({ reportId, dashboardId }: { reportId: string, dashboardId: string }): Promise<DashboardWidget> => fetchImpl(`${API_BASE}/dashboard-widgets`, { method: 'POST', body: JSON.stringify({ reportId, dashboardId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    removeDashboardWidget: (id: string): Promise<void> => fetchImpl(`${API_BASE}/dashboard-widgets/${id}`, { method: 'DELETE' }).then(handleResponse),
     
-    getCustomReports: (orgId: string): Promise<CustomReport[]> => fetchImpl(`${API_BASE}/reports/custom?orgId=${orgId}`).then(handleResponse),
-    createCustomReport: (data: any): Promise<CustomReport> => fetchImpl(`${API_BASE}/reports/custom`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-    updateCustomReport: (data: CustomReport): Promise<CustomReport> => fetchImpl(`${API_BASE}/reports/custom/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-    deleteCustomReport: (id: string): Promise<void> => fetchImpl(`${API_BASE}/reports/custom/${id}`, { method: 'DELETE' }).then(handleResponse),
-    generateCustomReport: (config: any, orgId: string, dateRange?: { start: Date, end: Date }): Promise<any[]> => fetchImpl(`${API_BASE}/reports/custom/generate`, { method: 'POST', body: JSON.stringify({ config, orgId, dateRange }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-
-    getDashboardWidgets: (dashboardId: string): Promise<DashboardWidget[]> => fetchImpl(`${API_BASE}/dashboard/widgets?dashboardId=${dashboardId}`).then(handleResponse),
-    addDashboardWidget: ({ reportId, dashboardId }: { reportId: string; dashboardId: string }): Promise<DashboardWidget> => fetchImpl(`${API_BASE}/dashboard/widgets`, { method: 'POST', body: JSON.stringify({ reportId, dashboardId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-    removeDashboardWidget: (widgetId: string): Promise<void> => fetchImpl(`${API_BASE}/dashboard/widgets/${widgetId}`, { method: 'DELETE' }).then(handleResponse),
-
+    // --- ORDERS & TRANSACTIONS ---
     createOrder: (data: Omit<Order, 'id'>): Promise<Order> => fetchImpl(`${API_BASE}/orders`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateOrder: (data: Order): Promise<Order> => fetchImpl(`${API_BASE}/orders/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-    deleteOrder: (data: { contactId: string, orderId: string }): Promise<void> => fetchImpl(`${API_BASE}/orders/${data.orderId}`, { method: 'DELETE', body: JSON.stringify({ contactId: data.contactId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-    createTransaction: (data: { contactId: string, data: Omit<Transaction, 'id'> }): Promise<Transaction> => fetchImpl(`${API_BASE}/transactions`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-
+    deleteOrder: ({ contactId, orderId }: { contactId: string, orderId: string }): Promise<void> => fetchImpl(`${API_BASE}/orders/${orderId}?contactId=${contactId}`, { method: 'DELETE' }).then(handleResponse),
+    createTransaction: ({ contactId, data }: { contactId: string, data: Omit<Transaction, 'id'> }): Promise<Transaction> => fetchImpl(`${API_BASE}/transactions?contactId=${contactId}`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    
+    // --- CUSTOM OBJECTS ---
     getCustomObjectDefs: (orgId: string): Promise<CustomObjectDefinition[]> => fetchImpl(`${API_BASE}/custom-object-definitions?orgId=${orgId}`).then(handleResponse),
     createCustomObjectDef: (data: any): Promise<CustomObjectDefinition> => fetchImpl(`${API_BASE}/custom-object-definitions`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateCustomObjectDef: (data: CustomObjectDefinition): Promise<CustomObjectDefinition> => fetchImpl(`${API_BASE}/custom-object-definitions/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteCustomObjectDef: (id: string): Promise<void> => fetchImpl(`${API_BASE}/custom-object-definitions/${id}`, { method: 'DELETE' }).then(handleResponse),
-
-    getCustomObjectRecords: (defId: string | null): Promise<CustomObjectRecord[]> => fetchImpl(`${API_BASE}/custom-object-records?defId=${defId}`).then(handleResponse),
+    getCustomObjectRecords: (defId: string | null): Promise<CustomObjectRecord[]> => fetchImpl(`${API_BASE}/custom-object-records?defId=${defId || 'all'}`).then(handleResponse),
     createCustomObjectRecord: (data: any): Promise<CustomObjectRecord> => fetchImpl(`${API_BASE}/custom-object-records`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateCustomObjectRecord: (data: CustomObjectRecord): Promise<CustomObjectRecord> => fetchImpl(`${API_BASE}/custom-object-records/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteCustomObjectRecord: (id: string): Promise<void> => fetchImpl(`${API_BASE}/custom-object-records/${id}`, { method: 'DELETE' }).then(handleResponse),
-
-    getMarketplaceApps: (orgId: string): Promise<AppMarketplaceItem[]> => fetchImpl(`${API_BASE}/marketplace/apps?orgId=${orgId}`).then(handleResponse),
-    getInstalledApps: (orgId: string): Promise<InstalledApp[]> => fetchImpl(`${API_BASE}/marketplace/installed?orgId=${orgId}`).then(handleResponse),
-    installApp: (appId: string): Promise<InstalledApp> => fetchImpl(`${API_BASE}/marketplace/install`, { method: 'POST', body: JSON.stringify({ appId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-    uninstallApp: (installedAppId: string): Promise<void> => fetchImpl(`${API_BASE}/marketplace/uninstall/${installedAppId}`, { method: 'DELETE' }).then(handleResponse),
     
-    handleNewChatMessage: (data: any): Promise<void> => fetchImpl(`${API_BASE}/chat/message`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    // --- APP MARKETPLACE ---
+    getMarketplaceApps: (orgId: string): Promise<AppMarketplaceItem[]> => fetchImpl(`${API_BASE}/marketplace-apps`).then(handleResponse),
+    getInstalledApps: (orgId: string): Promise<InstalledApp[]> => fetchImpl(`${API_BASE}/installed-apps?orgId=${orgId}`).then(handleResponse),
+    installApp: (appId: string): Promise<InstalledApp> => fetchImpl(`${API_BASE}/installed-apps`, { method: 'POST', body: JSON.stringify({ appId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    uninstallApp: (id: string): Promise<void> => fetchImpl(`${API_BASE}/installed-apps/${id}`, { method: 'DELETE' }).then(handleResponse),
     
+    // --- LIVE CHAT ---
+    handleNewChatMessage: (data: any): Promise<void> => fetchImpl(`${API_BASE}/live-chat/message`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    
+    // --- SANDBOXES ---
     getSandboxes: (orgId: string): Promise<Sandbox[]> => fetchImpl(`${API_BASE}/sandboxes?orgId=${orgId}`).then(handleResponse),
     createSandbox: (data: { orgId: string, name: string }): Promise<Sandbox> => fetchImpl(`${API_BASE}/sandboxes`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-    refreshSandbox: (sandboxId: string): Promise<void> => fetchImpl(`${API_BASE}/sandboxes/${sandboxId}/refresh`, { method: 'POST' }).then(handleResponse),
+    refreshSandbox: (id: string): Promise<void> => fetchImpl(`${API_BASE}/sandboxes/${id}/refresh`, { method: 'POST' }).then(handleResponse),
     deleteSandbox: (id: string): Promise<void> => fetchImpl(`${API_BASE}/sandboxes/${id}`, { method: 'DELETE' }).then(handleResponse),
-    
+
+    // --- DOCUMENTS ---
+    getDocuments: (filters: { contactId?: string, projectId?: string }): Promise<Document[]> => {
+        let query = new URLSearchParams();
+        if (filters.contactId) query.append('contactId', filters.contactId);
+        if (filters.projectId) query.append('projectId', filters.projectId);
+        return fetchImpl(`${API_BASE}/documents?${query.toString()}`).then(handleResponse);
+    },
+    uploadDocument: (data: Omit<Document, 'id'|'uploadDate'>): Promise<Document> => fetchImpl(`${API_BASE}/documents`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    updateDocument: (data: Document): Promise<Document> => fetchImpl(`${API_BASE}/documents/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    deleteDocument: (id: string): Promise<void> => fetchImpl(`${API_BASE}/documents/${id}`, { method: 'DELETE' }).then(handleResponse),
+
+    // --- DOCUMENT TEMPLATES ---
     getDocumentTemplates: (orgId: string): Promise<DocumentTemplate[]> => fetchImpl(`${API_BASE}/document-templates?orgId=${orgId}`).then(handleResponse),
     createDocumentTemplate: (data: Omit<DocumentTemplate, 'id'>): Promise<DocumentTemplate> => fetchImpl(`${API_BASE}/document-templates`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateDocumentTemplate: (data: DocumentTemplate): Promise<DocumentTemplate> => fetchImpl(`${API_BASE}/document-templates/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteDocumentTemplate: (id: string): Promise<void> => fetchImpl(`${API_BASE}/document-templates/${id}`, { method: 'DELETE' }).then(handleResponse),
     updateDocumentTemplatePermissions: (id: string, permissions: DocumentPermission[]): Promise<DocumentTemplate> => fetchImpl(`${API_BASE}/document-templates/${id}/permissions`, { method: 'PUT', body: JSON.stringify({ permissions }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     
-    getDocuments: (params: { contactId?: string, projectId?: string }): Promise<Document[]> => fetchImpl(`${API_BASE}/documents?contactId=${params.contactId || ''}&projectId=${params.projectId || ''}`).then(handleResponse),
-    uploadDocument: (data: Omit<Document, 'id'|'uploadDate'>): Promise<Document> => fetchImpl(`${API_BASE}/documents`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-    updateDocument: (data: Document): Promise<Document> => fetchImpl(`${API_BASE}/documents/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-    deleteDocument: (id: string): Promise<void> => fetchImpl(`${API_BASE}/documents/${id}`, { method: 'DELETE' }).then(handleResponse),
-
+    // --- PROJECTS ---
     getProjects: (orgId: string): Promise<Project[]> => fetchImpl(`${API_BASE}/projects?orgId=${orgId}`).then(handleResponse),
+    getProjectPhases: (orgId: string): Promise<ProjectPhase[]> => fetchImpl(`${API_BASE}/project-phases?orgId=${orgId}`).then(handleResponse),
     createProject: (data: Omit<Project, 'id'|'createdAt'>): Promise<Project> => fetchImpl(`${API_BASE}/projects`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateProject: (data: Project): Promise<Project> => fetchImpl(`${API_BASE}/projects/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteProject: (id: string): Promise<void> => fetchImpl(`${API_BASE}/projects/${id}`, { method: 'DELETE' }).then(handleResponse),
-    addProjectComment: (data: { projectId: string; comment: Omit<ProjectComment, 'id' | 'timestamp'> }): Promise<Project> => fetchImpl(`${API_BASE}/projects/${data.projectId}/comments`, { method: 'POST', body: JSON.stringify(data.comment), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-    getProjectPhases: (orgId: string): Promise<ProjectPhase[]> => fetchImpl(`${API_BASE}/project-phases?orgId=${orgId}`).then(handleResponse),
-
+    addProjectComment: (data: { projectId: string, comment: Omit<ProjectComment, 'id'|'timestamp'> }): Promise<Project> => fetchImpl(`${API_BASE}/projects/${data.projectId}/comments`, { method: 'POST', body: JSON.stringify(data.comment), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    
+    // --- CHECKLISTS ---
     getClientChecklistTemplates: (orgId: string): Promise<ClientChecklistTemplate[]> => fetchImpl(`${API_BASE}/client-checklist-templates?orgId=${orgId}`).then(handleResponse),
-    assignChecklistToProject: (data: { projectId: string, templateId: string }): Promise<Project> => fetchImpl(`${API_BASE}/projects/${data.projectId}/assign-checklist`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-    updateClientChecklist: (data: { projectId: string, checklist: ClientChecklist }): Promise<Project> => fetchImpl(`${API_BASE}/projects/${data.projectId}/update-checklist`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    assignChecklistToProject: (data: { projectId: string, templateId: string }): Promise<Project> => fetchImpl(`${API_BASE}/projects/${data.projectId}/assign-checklist`, { method: 'POST', body: JSON.stringify({ templateId: data.templateId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    updateClientChecklist: (data: { projectId: string, checklist: ClientChecklist }): Promise<Project> => fetchImpl(`${API_BASE}/projects/${data.projectId}/update-checklist`, { method: 'POST', body: JSON.stringify({ checklist: data.checklist }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
 
     // --- SUBSCRIPTIONS ---
     getSubscriptionPlans: (orgId: string): Promise<SubscriptionPlan[]> => fetchImpl(`${API_BASE}/subscriptions/plans?orgId=${orgId}`).then(handleResponse),
     createSubscriptionPlan: (data: Omit<SubscriptionPlan, 'id'>): Promise<SubscriptionPlan> => fetchImpl(`${API_BASE}/subscriptions/plans`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     updateSubscriptionPlan: (data: SubscriptionPlan): Promise<SubscriptionPlan> => fetchImpl(`${API_BASE}/subscriptions/plans/${data.id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
     deleteSubscriptionPlan: (id: string): Promise<void> => fetchImpl(`${API_BASE}/subscriptions/plans/${id}`, { method: 'DELETE' }).then(handleResponse),
-    subscribeContact: (data: { contactId: string; planId: string }): Promise<AnyContact> => fetchImpl(`${API_BASE}/contacts/${data.contactId}/subscribe`, { method: 'POST', body: JSON.stringify({ planId: data.planId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
-    cancelSubscription: (data: { contactId: string; subscriptionId: string }): Promise<AnyContact> => fetchImpl(`${API_BASE}/contacts/${data.contactId}/subscriptions/${data.subscriptionId}`, { method: 'DELETE' }).then(handleResponse),
-    paySubscription: (data: { contactId: string; subscriptionId: string }): Promise<AnyContact> => fetchImpl(`${API_BASE}/contacts/${data.contactId}/subscriptions/${data.subscriptionId}/pay`, { method: 'POST' }).then(handleResponse),
+    subscribeContact: (data: { contactId: string, planId: string }): Promise<AnyContact> => fetchImpl(`${API_BASE}/contacts/${data.contactId}/subscribe`, { method: 'POST', body: JSON.stringify({ planId: data.planId }), headers: { 'Content-Type': 'application/json' } }).then(handleResponse),
+    cancelSubscription: (data: { contactId: string, subscriptionId: string }): Promise<AnyContact> => fetchImpl(`${API_BASE}/contacts/${data.contactId}/subscriptions/${data.subscriptionId}/cancel`, { method: 'POST' }).then(handleResponse),
+    paySubscription: (data: { contactId: string, subscriptionId: string }): Promise<AnyContact> => fetchImpl(`${API_BASE}/contacts/${data.contactId}/subscriptions/${data.subscriptionId}/pay`, { method: 'POST' }).then(handleResponse),
+
 };
 
 export default apiClient;

@@ -9,7 +9,7 @@ import AppearanceSettings from './AppearanceSettings';
 import ObjectsAndFieldsSettings from './ObjectsAndFieldsSettings';
 import ChannelsAndLeadGenSettings from './ChannelsAndLeadGenSettings';
 import DeveloperSettings from './DeveloperSettings';
-import SubscriptionSettings from './SubscriptionSettings';
+import BillingAndCommerceSettings from './SubscriptionSettings';
 import ComplianceSettings from './ComplianceSettings';
 import OrganizationProfileSettings from './OrganizationProfileSettings';
 
@@ -25,7 +25,7 @@ const SettingsPage: React.FC = () => {
         { name: 'Objects & Fields', component: <ObjectsAndFieldsSettings /> },
         { name: 'Appearance', component: <AppearanceSettings /> },
         { name: 'Channels & Lead Gen', component: <ChannelsAndLeadGenSettings /> },
-        { name: 'Billing & Commerce', component: <SubscriptionSettings /> },
+        { name: 'Billing & Commerce', component: <BillingAndCommerceSettings /> },
         { name: 'Compliance & Audit', component: <ComplianceSettings /> },
         { name: 'Developer & Data', permission: 'settings:manage:api', component: <DeveloperSettings /> },
     ];

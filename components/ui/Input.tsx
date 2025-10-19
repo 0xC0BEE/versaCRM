@@ -29,8 +29,8 @@ const Input: React.FC<InputProps> = ({ label, id, className, size = 'md', leftIc
             <div className="relative">
                 {leftIcon && (
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        {/* FIX: Use React.isValidElement as a type guard before cloning to resolve TypeScript error. */}
-                        {React.isValidElement(leftIcon) && React.cloneElement(leftIcon, { className: 'h-5 w-5 text-text-secondary' })}
+                        {/* FIX: Cast leftIcon to a type that accepts className to fix TypeScript error with React.cloneElement. */}
+                        {React.isValidElement(leftIcon) && React.cloneElement(leftIcon as React.ReactElement<{ className?: string }>, { className: 'h-5 w-5 text-text-secondary' })}
                     </div>
                 )}
                 <input

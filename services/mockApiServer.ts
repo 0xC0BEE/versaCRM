@@ -21,6 +21,7 @@ import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
 import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, Notification, ClientChecklist, SubscriptionPlan, Relationship, AudienceProfile, AnyContact, Deal, DealStage } from '../types';
 import { GoogleGenAI, Type } from '@google/genai';
+import { addMonths } from 'date-fns';
 
 // Hydrate the in-memory sandbox list from localStorage to persist it across reloads.
 const storedSandboxes = JSON.parse(localStorage.getItem('sandboxesList') || '[]');
@@ -706,7 +707,23 @@ Respond with a JSON object containing 'positiveFactors' and 'negativeFactors', e
                     const subIndex = contact.subscriptions.findIndex(s => s.id === subId);
                     if (subIndex > -1) {
                         if (path.endsWith('/pay')) {
-                            contact.subscriptions[subIndex].nextBillingDate = new Date(new Date(contact.subscriptions[subIndex].nextBillingDate).setMonth(new Date(contact.subscriptions[subIndex].nextBillingDate).getMonth() + 1)).toISOString();
+                            const sub = contact.subscriptions[subIndex];
+                            const plan = db.subscriptionPlans.find(p => p.id === sub.planId);
+                            if (plan) {
+                                // Add transaction
+                                const newTransaction = {
+                                    id: `txn_${Date.now()}`,
+                                    type: 'Payment' as const,
+                                    amount: plan.price,
+                                    date: new Date().toISOString(),
+                                    method: 'Credit Card' as const
+                                };
+                                if (!contact.transactions) contact.transactions = [];
+                                contact.transactions.push(newTransaction);
+                            }
+                            // Advance billing date
+                            const currentNext = new Date(contact.subscriptions[subIndex].nextBillingDate);
+                            contact.subscriptions[subIndex].nextBillingDate = addMonths(currentNext, 1).toISOString();
                         } else { // Cancel
                             contact.subscriptions[subIndex].status = 'cancelled';
                         }

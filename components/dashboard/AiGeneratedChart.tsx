@@ -1,9 +1,10 @@
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Card } from '../ui/Card';
+import CustomReportDataTable from '../reports/CustomReportDataTable';
 
-type ChartType = 'list' | 'bar' | 'kpi';
+type ChartType = 'list' | 'bar' | 'kpi' | 'line' | 'table';
 
 interface AiGeneratedChartProps {
     chartType: ChartType;
@@ -48,11 +49,30 @@ const AiGeneratedChart: React.FC<AiGeneratedChartProps> = ({ chartType, data, on
                                 cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }}
                                 contentStyle={{ backgroundColor: 'rgb(var(--card-bg))', border: '1px solid rgb(var(--border-subtle))', borderRadius: '0.5rem' }}
                             />
-                            <Bar dataKey="numericValue" fill="rgb(var(--primary))" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="value" fill="rgb(var(--primary))" radius={[4, 4, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
             );
+        case 'line':
+            return (
+                 <div style={{ width: '100%', height: 200 }}>
+                    <ResponsiveContainer>
+                        <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke={strokeColor} />
+                            <XAxis dataKey="name" tick={{ fill: tickColor, fontSize: 10 }} axisLine={false} tickLine={false} />
+                            <YAxis tick={{ fill: tickColor, fontSize: 10 }} axisLine={false} tickLine={false} />
+                             <Tooltip
+                                cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }}
+                                contentStyle={{ backgroundColor: 'rgb(var(--card-bg))', border: '1px solid rgb(var(--border-subtle))', borderRadius: '0.5rem' }}
+                            />
+                            <Line type="monotone" dataKey="value" name="Value" stroke="rgb(var(--primary))" strokeWidth={2} dot={{r: 3}} activeDot={{r: 5}} />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            );
+        case 'table':
+            return <CustomReportDataTable data={data} />;
         case 'kpi':
             const kpi = data[0];
             return (

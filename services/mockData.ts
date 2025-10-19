@@ -15,7 +15,8 @@ import {
     ClientChecklistTemplate,
     SubscriptionPlan,
     SystemAuditLogEntry,
-    AudienceProfile
+    AudienceProfile,
+    DataHealthSummary
 } from '../types';
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
@@ -373,6 +374,8 @@ let MOCK_AUDIENCE_PROFILES: AudienceProfile[] = [
     }
 ];
 
+let MOCK_DATA_HYGIENE_RESULTS: DataHealthSummary | null = null;
+
 export const MOCK_CUSTOM_REPORTS: CustomReport[] = [];
 let MOCK_DASHBOARD_WIDGETS: DashboardWidget[] = [];
 export const MOCK_DOCUMENTS: Document[] = [...MOCK_PROJECT_DOCUMENTS];
@@ -458,4 +461,4 @@ export let MOCK_SNAPSHOTS: Snapshot[] = [];
 
 // Export mutable arrays for services that modify data in place
 // FIX: Export MOCK_TEAM_CHANNELS to make it available for import.
-export { MOCK_CONTACTS_MUTABLE, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_DASHBOARD_WIDGETS, MOCK_TEAM_CHANNELS, MOCK_AUDIENCE_PROFILES };
+export { MOCK_CONTACTS_MUTABLE, MOCK_SURVEY_RESPONSES, MOCK_DASHBOARDS, MOCK_DASHBOARD_WIDGETS, MOCK_TEAM_CHANNELS, MOCK_AUDIENCE_PROFILES, MOCK_DATA_HYGIENE_RESULTS };
