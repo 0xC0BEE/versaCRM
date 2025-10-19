@@ -23,7 +23,7 @@ const AiProcessOptimizationCard: React.FC<AiProcessOptimizationCardProps> = ({ o
     const [analysisResult, setAnalysisResult] = useState<ProcessInsight[] | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const { dealsQuery, ticketsQuery, dealStagesQuery } = useData();
-    const { isFeatureEnabled } = useApp();
+    const { isFeatureEnabled, industryConfig } = useApp();
     
     const isDataLoading = dealsQuery.status !== 'success' || ticketsQuery.status !== 'success' || dealStagesQuery.status !== 'success';
 
@@ -62,7 +62,7 @@ const AiProcessOptimizationCard: React.FC<AiProcessOptimizationCardProps> = ({ o
             // Only send necessary fields for deal stages
             const stageSummary = dealStages.map(s => ({ id: s.id, name: s.name }));
 
-            const prompt = `You are a CRM process optimization expert. Analyze this summary of deal and ticket data to find bottlenecks and suggest simple workflow automations.
+            const prompt = `${industryConfig.aiContextPrompt} You are a CRM process optimization expert. Analyze this summary of deal and ticket data to find bottlenecks and suggest simple workflow automations.
 
 Data:
 - Deal Journeys: ${JSON.stringify(dealJourneys.slice(0, 10))}

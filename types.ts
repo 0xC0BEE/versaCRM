@@ -548,6 +548,7 @@ export interface IndustryConfig {
         enabled: boolean;
         tabName: string;
     };
+    aiContextPrompt?: string;
 }
 
 export interface FeatureFlag {

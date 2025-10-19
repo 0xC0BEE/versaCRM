@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import { Bot, Loader } from 'lucide-react';
 import { DashboardData } from '../../types';
 import toast from 'react-hot-toast';
+import { useApp } from '../../contexts/AppContext';
 
 interface AiInsightsCardProps {
     dashboardData: DashboardData | undefined;
@@ -14,6 +15,7 @@ interface AiInsightsCardProps {
 const AiInsightsCard: React.FC<AiInsightsCardProps> = ({ dashboardData, isLoading: isDataLoading }) => {
     const [insight, setInsight] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
+    const { industryConfig } = useApp();
 
     const generateInsight = async () => {
         if (!dashboardData) {
@@ -24,7 +26,7 @@ const AiInsightsCard: React.FC<AiInsightsCardProps> = ({ dashboardData, isLoadin
         setInsight('');
         try {
             const ai = new GoogleGenAI({apiKey: process.env.API_KEY!});
-            const prompt = `Analyze the following CRM dashboard data and provide a concise, actionable insight for an organization admin. Focus on identifying potential anomalies, trends, or areas needing attention. Data: ${JSON.stringify(dashboardData.kpis)}`;
+            const prompt = `${industryConfig.aiContextPrompt} Analyze the following CRM dashboard data and provide a concise, actionable insight for an organization admin. Focus on identifying potential anomalies, trends, or areas needing attention. Data: ${JSON.stringify(dashboardData.kpis)}`;
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,

@@ -41,7 +41,8 @@ export let industryConfigs: Record<Industry, IndustryConfig> = {
                 { dataKey: 'contactsByStatus', title: 'Patients by Status', type: 'pie' },
                 { dataKey: 'appointmentsByMonth', title: 'Appointments This Year', type: 'bar' },
             ]
-        }
+        },
+        aiContextPrompt: 'You are an expert AI assistant for a healthcare CRM. Refer to contacts as "Patients" and team members as "Practitioners". Understand terms like appointments, treatments, and SOAP notes.'
     },
     Finance: {
         name: 'Finance',
@@ -90,7 +91,8 @@ export let industryConfigs: Record<Industry, IndustryConfig> = {
         relationshipMapping: {
             enabled: true,
             tabName: 'Relationships',
-        }
+        },
+        aiContextPrompt: 'You are an expert AI assistant for a financial services CRM. Refer to contacts as "Clients" and team members as "Advisors". Understand terms like portfolios, compliance, KYC/AML, and risk profiles.'
     },
     Legal: {
         name: 'Legal',
@@ -127,7 +129,8 @@ export let industryConfigs: Record<Industry, IndustryConfig> = {
                 { dataKey: 'contactsByStatus', title: 'Clients by Status', type: 'pie' },
                 { dataKey: 'appointmentsByMonth', title: 'Meetings This Year', type: 'bar' },
             ]
-        }
+        },
+        aiContextPrompt: 'You are an expert AI assistant for a legal CRM. Refer to contacts as "Clients" and team members as "Lawyers". Understand terms like cases, billable hours, and retainers.'
     },
     Generic: {
         name: 'Generic',
@@ -157,6 +160,7 @@ export let industryConfigs: Record<Industry, IndustryConfig> = {
                 { dataKey: 'contactsByStatus', title: 'Contacts by Status', type: 'pie' },
                 { dataKey: 'appointmentsByMonth', title: 'Meetings This Year', type: 'bar' },
             ]
-        }
+        },
+        aiContextPrompt: 'You are a helpful AI assistant for a general-purpose CRM.'
     },
 };

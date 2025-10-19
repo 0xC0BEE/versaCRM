@@ -51,16 +51,9 @@ const GrowthCopilotCard: React.FC = () => {
                 deals: (deals as Deal[]).slice(0, 5).map(d => ({ name: d.name, value: d.value, stage: (dealStages as DealStage[]).find(s => s.id === d.stageId)?.name })),
             };
 
-            const basePrompt = `You are a proactive CRM assistant for a ${industryConfig.name} company. The user is a ${industryConfig.teamMemberName}. Analyze this data snapshot. Generate exactly 3 concise, actionable, and diverse questions a ${industryConfig.teamMemberName} might ask about this data. Frame them as if you are suggesting them to the user.`;
+            const basePrompt = `You are a proactive CRM assistant. Analyze this data snapshot. Generate exactly 3 concise, actionable, and diverse questions a user might ask about this data. Frame them as if you are suggesting them to the user.`;
 
-            let industrySpecificContext = '';
-            if (currentIndustry === 'Health') {
-                industrySpecificContext = `Focus on patient appointments, treatment plans, and practitioner schedules.`;
-            } else if (currentIndustry === 'Finance') {
-                industrySpecificContext = `Focus on client risk profiles, high-value deals, and financial planning.`;
-            }
-
-            const prompt = `${basePrompt}\n\n${industrySpecificContext}\n\nData Snapshot: ${JSON.stringify(dataSnapshot)}`;
+            const prompt = `${industryConfig.aiContextPrompt} ${basePrompt}\n\nData Snapshot: ${JSON.stringify(dataSnapshot)}`;
             
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
@@ -98,7 +91,7 @@ const GrowthCopilotCard: React.FC = () => {
             setIsLoading(false);
             setSuggestionsGenerated(true);
         }
-    }, [contacts, deals, dealStages, currentIndustry, industryConfig]);
+    }, [contacts, deals, dealStages, industryConfig.aiContextPrompt]);
 
     useEffect(() => {
         if (isFeatureEnabled('aiCopilotProactive') && !suggestionsGenerated && contactsSuccess && dealsSuccess) {
@@ -201,7 +194,7 @@ const GrowthCopilotCard: React.FC = () => {
         try {
             const systemInstruction = {
                 role: 'system',
-                parts: [{ text: `You are a helpful CRM assistant. Your goal is to answer user queries by using the provided tools.
+                parts: [{ text: `${industryConfig.aiContextPrompt} You are a helpful CRM assistant. Your goal is to answer user queries by using the provided tools.
                 
                 If you call the 'generateChart' tool, it will return raw JSON data. Your next task is to process this raw data.
                 Your final response MUST be a single valid JSON object with 'summary', 'chartType', and 'chartData' keys.

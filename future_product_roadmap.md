@@ -1,78 +1,66 @@
-# VersaCRM 2.0: The Path to Market Leadership
+# VersaCRM 2.0: Strategic Roadmap
 
-This document outlines the next strategic evolution of the VersaCRM platform, building upon our completed foundational plan. The goal is to establish a dominant market position by focusing on four key pillars: Collaboration, Advanced Intelligence, Commerce, and Deep Verticalization.
-
----
-
-## Pillar 1 - Phase 12: The Collaborative Hub
-
-**Goal:** Make VersaCRM the single source of truth and central nervous system for all internal and external team collaboration, keeping every conversation in context with the customer record.
-
--   [x] **Internal Team Chat:** A fully-featured, Slack-like chat experience within VersaCRM.
--   [x] **Notifications 2.0:** A unified, global notification center that aggregates @mentions from records, projects, and the new team chat, creating a single action inbox for each user.
--   [x] **Collaborative Documents:** Implement real-time, Google Docs-style co-editing for the Document Builder, allowing multiple team members to work on a proposal or quote simultaneously.
--   [x] **Interactive Client Portal:** Evolve the portal from a read-only view to an interactive collaboration space.
+This document outlines the strategic vision for the next chapter of VersaCRM's development, building upon our completed foundational platform. Our focus now shifts from building features to creating an unassailable market position by deepening our unique advantages.
 
 ---
 
-## Pillar 2 - Phase 13: The Intelligence Layer 2.0
+## Pillar 1 - The Collaborative Hub (Complete)
 
-**Goal:** Evolve our AI capabilities from a helpful "co-pilot" to a "virtual strategist" that uncovers deep insights and automates complex decision-making, leveraging the full power of advanced Gemini models.
-
--   [x] **AI-Powered Process Mining & Optimization:**
-    -   [x] **Refactored & Stabilized:** Unified simple and advanced builders, resolving AI-related instability.
--   [x] **Predictive Lead Scoring:**
-    -   [x] **Complete:** Replaced the manual, rule-based system with a predictive AI model that learns from historical deal outcomes.
--   [x] **Conversational BI (Business Intelligence):**
-    -   [x] Enhance the Live Co-pilot to understand and execute data visualization requests.
-    -   [x] A user should be able to say, "Show me our top 10 deals this quarter, grouped by lead source," and have the AI generate and display a new custom report chart on the fly.
--   [x] **Automated Data Hygiene:**
-    -   [x] Implement an AI-powered process that scans for duplicate contacts and suggests merges.
-    -   [x] The AI will also identify and suggest corrections for inconsistent or poorly formatted data (e.g., standardizing addresses, capitalizing names).
+-   [x] **Internal Team Chat:** A real-time, channel-based chat system (like Slack) built directly into the CRM.
+-   [x] **Contextual Conversations:** Ability to link chat channels to specific records (Deals, Projects) to keep all communication in one place.
+-   [x] **@mentions & Notifications:** Notify team members directly, creating a notification in their global notification center.
 
 ---
 
-## Pillar 3 - Phase 14: The Commerce & Billing Engine
+## Pillar 2 - The Intelligence Layer 2.0 (Complete)
 
-**Goal:** Close the loop from quote-to-cash by building native commerce and billing capabilities directly into VersaCRM, capturing more of the customer value chain.
+-   [x] **Conversational BI (Business Intelligence):** Enhance the Growth Co-pilot to understand natural language queries about data and generate charts/reports on the fly (e.g., "Show me our top 5 deals this quarter").
+-   [x] **Automated Data Hygiene:** Evolve the AI Data Hygiene tool into a persistent, automated "Data Health Center" that proactively finds and suggests fixes for duplicates and formatting errors.
+-   [x] **Vertical-Specific AI Models:** Fine-tune separate Gemini models for each industry vertical (Health, Finance) to provide more accurate, context-aware suggestions and insights.
 
--   [x] **Subscription Management:**
-    -   [x] Build tools to create and manage recurring subscription plans.
-    -   [x] Automate recurring invoicing and billing cycles for subscribed contacts.
--   [x] **Payment Gateway Integration:**
-    -   [x] Integrate with Stripe and/or PayPal.
-    -   [x] Allow customers to pay invoices directly via a secure link on a generated document or from within the Client Portal.
+---
+
+## Pillar 3 - The Commerce & Billing Engine (In Progress)
+
+-   [x] **Subscription Management:** Create and manage recurring subscription plans.
+-   [x] **Automated Billing Records:** Automatically log billing cycles and next-payment-due dates for subscribed contacts.
+-   [x] **Payment Gateway Integration:** Connect to payment providers (e.g., Stripe) to accept payments directly through the Client Portal.
 -   [x] **CPQ (Configure, Price, Quote) Engine:**
-    -   [x] Support for Product Bundles.
-    -   [x] Add configurable options with price adjustments.
-    -   [x] Implement rule-based pricing and discounts.
--   [x] **Revenue Recognition:** Introduce basic tools to help businesses schedule and recognize revenue over the lifetime of a contract, aiding in compliance with accounting standards like ASC 606.
+    -   [x] Product Bundles & Configurable Options with price adjustments.
+    -   [x] Rule-based pricing (e.g., volume discounts).
+-   [ ] **Revenue Recognition:** Tools to manage and report on recognized revenue from deals over custom time periods.
 
 ---
 
-## Pillar 4 - Phase 15: Deep Verticalization
+## Pillar 4 - The Vertical Clouds 2.0 (Next Up)
 
-**Goal:** Go beyond our current industry templates and build deep, specialized "Cloud" solutions with unique data models, workflows, and compliance features, mirroring the successful strategy of Salesforce.
-
--   [x] **Health Cloud:**
-    -   [x] Introduce features to ensure HIPAA compliance (e.g., data encryption, audit trails).
-    -   [x] Build connectors for EMR/EHR (Electronic Health Record) systems.
-    -   [x] Develop specialized patient scheduling and appointment management tools.
--   [x] **Financial Services Cloud:**
-    -   [x] Add compliance tracking features for regulations like KYC (Know Your Customer) and AML (Anti-Money Laundering).
-    -   [x] Create advanced data models for household/relationship mapping (e.g., connecting family members, financial advisors, and accountants).
-    -   [x] Develop tools for managing financial accounts, insurance policies, and investment portfolios as custom objects.
--   [ ] **Vertical-Specific AI Models:**
-    -   [ ] Fine-tune separate Gemini models on industry-specific data, terminology, and regulations.
-    -   [ ] This will allow the AI Co-pilot to provide far more accurate and relevant insights for each vertical (e.g., understanding medical terminology in Health Cloud).
+-   [ ] **Financial Services Cloud:**
+    -   [ ] **Compliance Center:** Tools for managing KYC/AML checks and reporting.
+    -   [ ] **Relationship Mapping:** A visual tool to map complex relationships between contacts and entities (households, trusts, etc.).
+-   [ ] **Real Estate Cloud:**
+    -   [ ] **MLS Integration:** Connect to Multiple Listing Services to pull in property data.
+    -   [ ] **"Property" Custom Object:** A pre-built custom object for tracking listings, showings, and offers.
 
 ---
 
-## Pillar 5 - Phase 16: The Mobile-First Experience
+## Pillar 5 - The Mobile-First Experience (Next Up)
 
-**Goal:** Make VersaCRM fully accessible and powerful for teams on the go, ensuring that productivity doesn't stop when you step away from your desk.
+-   [ ] **Mobile-Optimized Dashboard:** A new, streamlined dashboard experience designed specifically for on-the-go users.
+-   [ ] **Offline Mode & Sync:** Ability to view key information (contacts, calendar) and create simple records (notes) while offline, with automatic syncing.
+-   [ ] **Push Notifications:** Native mobile notifications for high-priority events like @mentions or critical deal updates.
+---
 
--   [x] **Responsive Redesign for Core Workflows:** A comprehensive overhaul of key pages like Contacts, Deals, and Tasks to ensure they are not just usable, but delightful on mobile devices.
--   [ ] **Mobile-Optimized Dashboard:** A new, streamlined dashboard view for mobile users, focusing on daily agendas, urgent notifications, and quick-add actions.
--   [ ] **Offline Mode & Sync:** Implement foundational offline capabilities, allowing users to view cached data and create simple records (like notes or contacts) that will automatically sync when a connection is restored.
--   [ ] **Push Notifications:** Integrate with native device notification systems for high-priority alerts like @mentions, new task assignments, and critical deal updates.
+## Pillar 6 - Onboarding & Guidance 2.0 (Next Up)
+
+-   [ ] **AI-Powered "5-Minute CRM":** An intelligent onboarding interview where users can opt to answer a detailed questionnaire about their business, sales process, marketing efforts, and customer support flows. The AI will use these answers to automatically:
+    -   Configure deal stages.
+    -   Create relevant custom objects and fields.
+    -   Draft a "Welcome" email template.
+    -   Set up a basic lead capture form.
+    -   Build a simple lead nurturing campaign journey.
+-   [ ] **Proactive AI Feature Onboarding:** Following the setup, present a summary of recommended AI features (e.g., Deal Forecasting, Churn Prediction, AI Reply Suggestions) based on the user's industry and goals. Allow one-click activation of these features, with a clear link to manage them later in Settings.
+-   [ ] **Interactive Guided Tours:** Role-based product tours (Admin vs. Team Member) that guide users through key workflows, such as creating their first deal, resolving a ticket, or building a custom report.
+-   [ ] **Personalized AI Tips Engine:**
+    -   An AI agent that observes individual user habits and patterns (e.g., frequently filtering contacts by the same criteria, manually sending similar emails).
+    -   Proactively suggest creating time-saving assets like a saved "Audience Profile," a new workflow, or a "Canned Response" based on these observed habits.
+    -   Include a global setting for users to enable or disable these predictive tips.
