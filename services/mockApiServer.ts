@@ -1,4 +1,3 @@
-
 import { setFetchImplementation } from './apiClient';
 import { 
     MOCK_ORGANIZATIONS, MOCK_USERS, MOCK_ROLES, MOCK_CONTACTS_MUTABLE,
@@ -179,6 +178,11 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     // --- GET BY ORG ID ---
     const orgId = searchParams.get('orgId');
     if (orgId) {
+        // FIX: The handler for the dashboard data endpoint was missing. This has been added back to ensure dashboard charts can load their data.
+        if (path === '/api/v1/dashboard') {
+            const dashboardData = generateDashboardData(db.contacts, db.interactions);
+            return respond(dashboardData);
+        }
         if (path === '/api/v1/contacts') return respond(db.contacts.filter(c => c.organizationId === orgId));
         if (path === '/api/v1/team') return respond(db.users.filter(u => u.organizationId === orgId && !u.isClient));
         if (path === '/api/v1/roles') return respond(db.roles.filter(r => r.organizationId === orgId));

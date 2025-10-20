@@ -974,6 +974,7 @@ export interface TourStep {
   title: string;
   content: string;
   page?: Page;
+  openSection?: string;
 }
 
 // Context types

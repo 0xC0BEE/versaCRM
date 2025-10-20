@@ -22,6 +22,8 @@ export const adminTourSteps: TourStep[] = [
         selector: '[data-tour-id="sidebar-settings"]',
         title: 'Configure Your CRM',
         content: 'The real power comes from customization. Head to Settings to configure workflows, integrations, custom fields, and more.',
+        page: 'Contacts',
+        openSection: 'Admin',
     },
     {
         selector: '[data-tour-id="settings-page"]',

@@ -61,6 +61,9 @@ interface AppContextType {
     tourStep: number;
     setTourStep: React.Dispatch<React.SetStateAction<number>>;
     tourConfig: TourStep[] | null;
+    openSidebarSection: (sectionName: string) => void;
+    openSections: Record<string, boolean>;
+    setOpenSections: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -81,9 +84,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [initialRecordLink, setInitialRecordLink] = useState<{ page: Page; recordId?: string } | null>(null);
     const [initialKbArticleId, setInitialKbArticleId] = useState<string | null>(null);
 
-    // Guided Tour State
+    // Guided Tour & Sidebar State
     const [tourConfig, setTourConfig] = useState<TourStep[] | null>(null);
     const [tourStep, setTourStep] = useState(0);
+    const [openSections, setOpenSections] = useState<Record<string, boolean>>({ Core: true });
     const isTourOpen = useMemo(() => tourConfig !== null, [tourConfig]);
 
     const startTour = useCallback((tour: TourStep[]) => {
@@ -99,6 +103,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setTourConfig(null);
         setTourStep(0);
     }, []);
+    
+    const openSidebarSection = useCallback((sectionName: string) => {
+        setOpenSections(prev => ({ ...prev, [sectionName]: true }));
+    }, []);
+
 
     const industryConfig = useMemo(() => industryConfigs[currentIndustry] || industryConfigs.Generic, [currentIndustry]);
     
@@ -162,13 +171,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setInitialRecordLink,
         initialKbArticleId,
         setInitialKbArticleId,
-        // Tour
+        // Tour & Sidebar
         isTourOpen,
         startTour,
         closeTour,
         tourStep,
         setTourStep,
         tourConfig,
+        openSidebarSection,
+        openSections,
+        setOpenSections,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }), [
         currentPage, setCurrentPage, currentIndustry, industryConfig, 
@@ -177,7 +189,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         currentCustomObjectDefId, reportToEditId, isFeatureEnabled,
         currentEnvironment, simulatedDate, currentDashboardId,
         initialRecordLink, initialKbArticleId,
-        isTourOpen, startTour, closeTour, tourStep, tourConfig
+        isTourOpen, startTour, closeTour, tourStep, tourConfig, openSidebarSection, openSections
     ]);
 
     return (

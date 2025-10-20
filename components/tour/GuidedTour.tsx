@@ -15,7 +15,7 @@ interface GuidedTourProps {
 }
 
 const GuidedTour: React.FC<GuidedTourProps> = ({ tourKey }) => {
-    const { isTourOpen, closeTour, tourStep, setTourStep, tourConfig, setCurrentPage } = useApp();
+    const { isTourOpen, closeTour, tourStep, setTourStep, tourConfig, setCurrentPage, openSidebarSection } = useApp();
     const [targetRect, setTargetRect] = useState<TourStepRect | null>(null);
     const [, setTourCompleted] = useLocalStorage(tourKey, false);
     const popoverRef = useRef<HTMLDivElement>(null);
@@ -57,9 +57,12 @@ const GuidedTour: React.FC<GuidedTourProps> = ({ tourKey }) => {
         if (!tourConfig) return;
         const nextStep = tourStep + 1;
         if (nextStep < tourConfig.length) {
-            const nextPage = tourConfig[nextStep].page;
-            if (nextPage) {
-                setCurrentPage(nextPage);
+            const nextStepConfig = tourConfig[nextStep];
+            if (nextStepConfig.openSection) {
+                openSidebarSection(nextStepConfig.openSection);
+            }
+            if (nextStepConfig.page) {
+                setCurrentPage(nextStepConfig.page);
             }
             setTourStep(nextStep);
         } else {
@@ -71,9 +74,12 @@ const GuidedTour: React.FC<GuidedTourProps> = ({ tourKey }) => {
         if (!tourConfig) return;
         const prevStep = tourStep - 1;
         if (prevStep >= 0) {
-             const prevPage = tourConfig[prevStep].page;
-            if (prevPage) {
-                setCurrentPage(prevPage);
+            const prevStepConfig = tourConfig[prevStep];
+            if (prevStepConfig.openSection) {
+                openSidebarSection(prevStepConfig.openSection);
+            }
+            if (prevStepConfig.page) {
+                setCurrentPage(prevStepConfig.page);
             }
             setTourStep(prevStep);
         }

@@ -32,13 +32,11 @@ interface NavSection {
 
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
-    const { currentPage, setCurrentPage, industryConfig, setCurrentCustomObjectDefId } = useApp();
+    const { currentPage, setCurrentPage, industryConfig, setCurrentCustomObjectDefId, openSections, setOpenSections } = useApp();
     const { hasPermission, authenticatedUser } = useAuth();
     const { customObjectDefsQuery } = useData();
     const { unreadCount } = useNotifications();
     const { data: customObjectDefs = [] } = customObjectDefsQuery;
-
-    const [openSections, setOpenSections] = useState<Record<string, boolean>>({ 'Core': true });
 
     const toggleSection = (title: string) => {
         setOpenSections(prev => ({ ...prev, [title]: !prev[title] }));
