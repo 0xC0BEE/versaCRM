@@ -121,6 +121,32 @@ input[type="color"] {
     color-scheme: dark;
 }
 
+/* --- Guided Tour Styles --- */
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+.tour-spotlight {
+  position: absolute;
+  border-radius: 6px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.tour-popover {
+  position: absolute;
+  z-index: 1001;
+  width: 320px;
+  background-color: rgb(var(--card-bg));
+  border-radius: 0.75rem;
+  border: 1px solid rgb(var(--border-subtle));
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+
 /* --- React Big Calendar Overrides --- */
 .rbc-calendar {
   border-radius: var(--radius-lg);

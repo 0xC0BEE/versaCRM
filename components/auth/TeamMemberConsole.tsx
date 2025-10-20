@@ -1,10 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TeamMemberSidebar from '../layout/TeamMemberSidebar';
 import Header from '../layout/Header';
 import PageRenderer from '../common/PageRenderer';
+import { useApp } from '../../contexts/AppContext';
+import useLocalStorage from '../../hooks/useLocalStorage';
+import { teamTourSteps } from '../../config/tourConfig';
+import GuidedTour from '../tour/GuidedTour';
 
 const TeamMemberConsole: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const { startTour } = useApp();
+    const [tourCompleted, setTourCompleted] = useLocalStorage('tourCompleted_team', false);
+
+    useEffect(() => {
+        // Start tour on first load for a team member
+        if (!tourCompleted) {
+            setTimeout(() => startTour(teamTourSteps), 1000);
+        }
+    }, [tourCompleted, startTour]);
 
     return (
         <div className="h-screen flex overflow-hidden bg-bg-primary text-text-primary">
@@ -26,6 +39,7 @@ const TeamMemberConsole: React.FC = () => {
                 <Header toggleSidebar={() => setSidebarOpen(true)} />
                 <main className="flex-1 relative overflow-y-auto focus:outline-none">
                     <PageRenderer />
+                    <GuidedTour tourKey="tourCompleted_team" />
                 </main>
             </div>
         </div>

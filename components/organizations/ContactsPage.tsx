@@ -217,7 +217,7 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
                                 AI Churn Risk
                             </Button>
                         )}
-                        <Button onClick={handleAdd} leftIcon={<Plus size={16} />}>
+                        <Button onClick={handleAdd} leftIcon={<Plus size={16} />} data-tour-id="contacts-new-button">
                             New {industryConfig.contactName}
                         </Button>
                     </div>

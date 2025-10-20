@@ -22,7 +22,7 @@ const TeamMemberSidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         }
     };
     
-    const navItems: { page: Page; icon: React.ElementType; label?: string; permission?: Permission }[] = [
+    const navItems: { page: Page; icon: React.ElementType; label?: string; permission?: Permission, tourId?: string }[] = [
         { page: 'Dashboard', icon: Home },
         { page: 'Inbox', icon: Inbox, permission: 'contacts:read:own' },
         { page: 'TeamChat', icon: MessageSquare, label: 'Team Chat', permission: 'contacts:read:own' },
@@ -31,7 +31,7 @@ const TeamMemberSidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         { page: 'Projects', icon: FolderKanban, permission: 'deals:read' },
         { page: 'Tickets', icon: LifeBuoy, permission: 'tickets:read' },
         { page: 'Documents', icon: FileText, permission: 'deals:read' },
-        { page: 'Tasks', icon: Briefcase, permission: 'contacts:read:own' },
+        { page: 'Tasks', icon: Briefcase, permission: 'contacts:read:own', tourId: 'sidebar-tasks' },
         { page: 'Calendar', icon: Calendar, permission: 'contacts:read:own' },
     ];
 
@@ -47,6 +47,7 @@ const TeamMemberSidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                             <button
                                 key={item.page}
                                 onClick={() => handleNavigation(item.page)}
+                                data-tour-id={item.tourId}
                                 className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md w-full text-left ${
                                     currentPage === item.page
                                         ? 'bg-primary/10 text-primary'

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useMemo, ReactNode, useCallback } from 'react';
-import { Page, Industry, IndustryConfig, FilterCondition, FeatureFlag } from '../types';
+import { Page, Industry, IndustryConfig, FilterCondition, FeatureFlag, TourStep } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { industryConfigs } from '../config/industryConfig';
 import { featureFlags as defaultFlags } from '../config/featureFlags';
@@ -53,6 +53,14 @@ interface AppContextType {
     // FIX: Add properties for deep-linking to KB articles
     initialKbArticleId: string | null;
     setInitialKbArticleId: (id: string | null) => void;
+
+    // Guided Tour
+    isTourOpen: boolean;
+    startTour: (tour: TourStep[]) => void;
+    closeTour: () => void;
+    tourStep: number;
+    setTourStep: React.Dispatch<React.SetStateAction<number>>;
+    tourConfig: TourStep[] | null;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -71,8 +79,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [simulatedDate, setSimulatedDate] = useLocalStorage('simulatedDate', new Date());
     const [currentDashboardId, setCurrentDashboardId] = useLocalStorage<string>('current-dashboard-id', 'dash_default');
     const [initialRecordLink, setInitialRecordLink] = useState<{ page: Page; recordId?: string } | null>(null);
-    // FIX: Add state for KB article deep-linking
     const [initialKbArticleId, setInitialKbArticleId] = useState<string | null>(null);
+
+    // Guided Tour State
+    const [tourConfig, setTourConfig] = useState<TourStep[] | null>(null);
+    const [tourStep, setTourStep] = useState(0);
+    const isTourOpen = useMemo(() => tourConfig !== null, [tourConfig]);
+
+    const startTour = useCallback((tour: TourStep[]) => {
+        setTourConfig(tour);
+        setTourStep(0);
+        // The first step of any tour should always define a page.
+        if (tour[0]?.page) {
+            setCurrentPage(tour[0].page);
+        }
+    }, [setCurrentPage]);
+
+    const closeTour = useCallback(() => {
+        setTourConfig(null);
+        setTourStep(0);
+    }, []);
 
     const industryConfig = useMemo(() => industryConfigs[currentIndustry] || industryConfigs.Generic, [currentIndustry]);
     
@@ -134,9 +160,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setCurrentDashboardId,
         initialRecordLink,
         setInitialRecordLink,
-        // FIX: Provide KB article link state to context
         initialKbArticleId,
         setInitialKbArticleId,
+        // Tour
+        isTourOpen,
+        startTour,
+        closeTour,
+        tourStep,
+        setTourStep,
+        tourConfig,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }), [
         currentPage, setCurrentPage, currentIndustry, industryConfig, 
@@ -144,7 +176,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         isCallModalOpen, callContact, isLiveCopilotOpen, 
         currentCustomObjectDefId, reportToEditId, isFeatureEnabled,
         currentEnvironment, simulatedDate, currentDashboardId,
-        initialRecordLink, initialKbArticleId
+        initialRecordLink, initialKbArticleId,
+        isTourOpen, startTour, closeTour, tourStep, tourConfig
     ]);
 
     return (

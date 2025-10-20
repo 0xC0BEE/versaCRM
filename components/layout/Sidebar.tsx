@@ -22,6 +22,7 @@ interface NavItem {
     permission?: Permission;
     isSuperAdminOnly?: boolean;
     customObjectDefId?: string;
+    tourId?: string;
 }
 
 interface NavSection {
@@ -81,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                 { page: 'Notifications', icon: Bell, permission: 'contacts:read:own' },
                 { page: 'Inbox', icon: Inbox, permission: 'contacts:read:own' },
                 { page: 'TeamChat', icon: MessageSquare, label: 'Team Chat', permission: 'contacts:read:own' },
-                { page: 'Contacts', icon: Users, label: industryConfig.contactNamePlural, permission: 'contacts:read:own' },
+                { page: 'Contacts', icon: Users, label: industryConfig.contactNamePlural, permission: 'contacts:read:own', tourId: 'sidebar-contacts' },
                 { page: 'Deals', icon: Handshake, permission: 'deals:read' },
                 { page: 'Tasks', icon: Briefcase, permission: 'contacts:read:own' },
                 { page: 'Calendar', icon: Calendar, permission: 'contacts:read:own' },
@@ -133,7 +134,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
             items: [
                 { page: 'Team', icon: Users, permission: 'settings:manage:team' },
                 { page: 'AppMarketplace', icon: Shapes, label: 'App Marketplace', permission: 'settings:manage:apps'},
-                { page: 'Settings', icon: Settings, permission: 'settings:access' },
+                { page: 'Settings', icon: Settings, permission: 'settings:access', tourId: 'sidebar-settings' },
                  { page: 'Organizations', icon: Building, isSuperAdminOnly: true },
             ]
         }
@@ -175,6 +176,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                                             <button
                                                 key={item.label || item.page}
                                                 onClick={() => handleNavigation(item.page, item.customObjectDefId)}
+                                                data-tour-id={item.tourId}
                                                 className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md w-full text-left ${
                                                     (currentPage === item.page && (!item.customObjectDefId || item.customObjectDefId === (useApp().currentCustomObjectDefId)))
                                                         ? 'bg-primary/10 text-primary'

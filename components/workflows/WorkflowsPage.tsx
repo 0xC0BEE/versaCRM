@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
@@ -5,10 +6,10 @@ import Button from '../ui/Button';
 import { Plus, Zap, Code, Trash2, TestTube2, Wand2, Loader, ArrowRight } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { Workflow, AdvancedWorkflow, ProcessInsight, Deal, Ticket, DealStage } from '../../types';
-import WorkflowBuilder from './WorkflowBuilder';
-import AdvancedWorkflowBuilder from './advanced/AdvancedWorkflowBuilder';
+import WorkflowBuilder from '../workflows/WorkflowBuilder';
+import AdvancedWorkflowBuilder from '../workflows/advanced/AdvancedWorkflowBuilder';
 import toast from 'react-hot-toast';
-import WorkflowTestModal from './WorkflowTestModal';
+import WorkflowTestModal from '../workflows/WorkflowTestModal';
 import { GoogleGenAI, Type } from '@google/genai';
 import { differenceInDays } from 'date-fns';
 import { useApp } from '../../contexts/AppContext';
@@ -62,7 +63,7 @@ const AiProcessOptimizationCard: React.FC<AiProcessOptimizationCardProps> = ({ o
             // Only send necessary fields for deal stages
             const stageSummary = dealStages.map(s => ({ id: s.id, name: s.name }));
 
-            const prompt = `${industryConfig.aiContextPrompt} You are a CRM process optimization expert. Analyze this summary of deal and ticket data to find bottlenecks and suggest simple workflow automations.
+            const prompt = `Analyze this summary of deal and ticket data to find bottlenecks and suggest simple workflow automations.
 
 Data:
 - Deal Journeys: ${JSON.stringify(dealJourneys.slice(0, 10))}
@@ -89,6 +90,7 @@ Analyze the data and return 1-2 distinct insights in the specified JSON format.`
                 model: 'gemini-2.5-flash',
                 contents: prompt,
                 config: {
+                    systemInstruction: `${industryConfig.aiContextPrompt} You are a CRM process optimization expert.`,
                     responseMimeType: "application/json",
                     responseSchema: {
                         type: Type.OBJECT,

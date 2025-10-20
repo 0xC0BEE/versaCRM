@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Sidebar from '../layout/Sidebar';
 import Header from '../layout/Header';
 import PageRenderer from '../common/PageRenderer';
@@ -6,17 +6,31 @@ import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import OnboardingWizard from '../onboarding/OnboardingWizard';
 import LoadingSpinner from '../ui/LoadingSpinner';
+import { useApp } from '../../contexts/AppContext';
+import useLocalStorage from '../../hooks/useLocalStorage';
+import { adminTourSteps } from '../../config/tourConfig';
+import GuidedTour from '../tour/GuidedTour';
 
 const OrganizationConsole: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const { organizationsQuery } = useData();
     const { authenticatedUser } = useAuth();
+    const { startTour } = useApp();
+    const [tourCompleted, setTourCompleted] = useLocalStorage('tourCompleted_admin', false);
     
     const { data: organizations = [], isLoading: orgsLoading } = organizationsQuery;
 
     const currentOrg = useMemo(() => {
         return organizations.find((o: any) => o.id === authenticatedUser?.organizationId);
     }, [organizations, authenticatedUser]);
+
+    useEffect(() => {
+        // Start tour on first load after setup is complete
+        if (currentOrg?.isSetupComplete && !tourCompleted) {
+            // Use a timeout to ensure the UI has rendered
+            setTimeout(() => startTour(adminTourSteps), 1000);
+        }
+    }, [currentOrg?.isSetupComplete, tourCompleted, startTour]);
 
     if (orgsLoading) {
         return <div className="h-screen w-screen flex items-center justify-center"><LoadingSpinner /></div>
@@ -46,6 +60,7 @@ const OrganizationConsole: React.FC = () => {
                 <Header toggleSidebar={() => setSidebarOpen(true)} />
                 <main className="flex-1 relative overflow-y-auto focus:outline-none">
                     <PageRenderer />
+                    <GuidedTour tourKey="tourCompleted_admin" />
                 </main>
             </div>
         </div>

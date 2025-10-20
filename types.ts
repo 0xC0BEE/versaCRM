@@ -1,4 +1,6 @@
 // This file defines all the core data structures and types used throughout the application.
+// FIX: Import `ReactNode` to resolve missing React namespace error.
+import type { ReactNode } from 'react';
 
 // Basic types
 export type Industry = 'Health' | 'Finance' | 'Legal' | 'Generic';
@@ -725,7 +727,7 @@ export interface IndustryConfig {
         enabled: boolean;
         tabName: string;
     };
-    aiContextPrompt: string;
+    aiContextPrompt?: string;
 }
 
 export interface LeadScoringRule {
@@ -966,6 +968,14 @@ export interface Notification {
     linkTo?: { page: Page; recordId?: string; };
 }
 
+// Guided Tour
+export interface TourStep {
+  selector: string;
+  title: string;
+  content: string;
+  page?: Page;
+}
+
 // Context types
 export interface AuthContextType {
     authenticatedUser: User | null;
@@ -1080,7 +1090,8 @@ export interface KBArticleType {
     id: string;
     title: string;
     category: string;
-    content: React.ReactNode;
+    // FIX: Use `ReactNode` type directly instead of `React.ReactNode`.
+    content: ReactNode;
 }
 
 export interface AttributedDeal {

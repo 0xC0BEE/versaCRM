@@ -342,7 +342,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
                                     <option value="analytics">Analytics Focus</option>
                                     <option value="compact">Compact View</option>
                                 </Select>
-                                <Button size="sm" variant="secondary" onClick={() => setIsEditMode(true)} leftIcon={<Edit size={14} />}>Edit Layout</Button>
+                                <Button data-tour-id="dashboard-edit-layout" size="sm" variant="secondary" onClick={() => setIsEditMode(true)} leftIcon={<Edit size={14} />}>Edit Layout</Button>
                             </>
                         )}
                     </div>

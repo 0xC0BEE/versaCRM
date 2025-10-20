@@ -79,7 +79,7 @@ const MyTasksPage: React.FC = () => {
             <h1 className="text-2xl font-semibold text-text-heading mb-6">{pageTitle}</h1>
             <Card>
                 <div className="p-4 border-b border-border-subtle">
-                    <form onSubmit={handleAddTask} className="flex gap-2">
+                    <form onSubmit={handleAddTask} className="flex gap-2" data-tour-id="tasks-add-task-form">
                         <Input 
                             id="new-task"
                             label=""

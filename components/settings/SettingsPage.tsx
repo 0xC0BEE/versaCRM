@@ -40,7 +40,7 @@ const SettingsPage: React.FC = () => {
     return (
         <PageWrapper>
              <h1 className="text-2xl font-semibold text-text-heading mb-6">Settings</h1>
-            <Card>
+            <Card data-tour-id="settings-page">
                 <div className="p-6">
                     <Tabs tabs={availableTabs.map(t => t.name)} activeTab={activeTab} setActiveTab={setActiveTab} />
                     <div className="mt-6">

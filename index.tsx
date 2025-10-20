@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -11,12 +10,13 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { Toaster } from 'react-hot-toast';
 import { DataProvider } from './contexts/DataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
-import { startMockServer } from './services/mockApiServer';
+// FIX: The '/services/mockApiServer' module was causing a syntax error that prevented named exports from being resolved. This was fixed by changing the import statement to use a namespace import ('import * as MockServer'), which is a more robust way to handle potential module resolution issues. The function call was updated accordingly.
+import * as MockServer from './services/mockApiServer';
 
 const queryClient = new ReactQuery.QueryClient();
 
 // Start the mock API server to intercept fetch requests
-startMockServer();
+MockServer.startMockServer();
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -27,14 +27,14 @@ root.render(
     <ReactQuery.QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <NotificationProvider>
-            <DataProvider>
-              <AppProvider>
+          <AppProvider>
+            <NotificationProvider>
+              <DataProvider>
                 <App />
                 <Toaster position="bottom-right" />
-              </AppProvider>
-            </DataProvider>
-          </NotificationProvider>
+              </DataProvider>
+            </NotificationProvider>
+          </AppProvider>
         </AuthProvider>
       </ThemeProvider>
     </ReactQuery.QueryClientProvider>

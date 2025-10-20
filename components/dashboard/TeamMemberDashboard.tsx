@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import { useData } from '../../contexts/DataContext';
@@ -53,7 +54,7 @@ const TeamMemberDashboard: React.FC<TeamMemberDashboardProps> = ({ isTabbedView 
 
     const pageContent = (
         <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-tour-id="dashboard-team-kpis">
                 <KpiCard title="My Pending Tasks" value={pendingTasks.length} iconName="Ticket" />
                 <KpiCard title="My Open Deals" value={openDeals.length} iconName="Handshake" />
                 <KpiCard title="Upcoming Appointments" value={upcomingAppointments.length} iconName="Calendar" />

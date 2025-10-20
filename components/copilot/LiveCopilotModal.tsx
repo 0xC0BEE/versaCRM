@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob, LiveSession, Content } from '@google/genai';
 import { useApp } from '../../contexts/AppContext';
@@ -23,7 +24,7 @@ type Message = {
 
 
 const LiveCopilotModal: React.FC = () => {
-    const { isLiveCopilotOpen, setIsLiveCopilotOpen } = useApp();
+    const { isLiveCopilotOpen, setIsLiveCopilotOpen, industryConfig } = useApp();
     const { createTaskMutation, contactsQuery, dealsQuery, dealStagesQuery, ticketsQuery } = useData();
     const { authenticatedUser } = useAuth();
     
@@ -148,7 +149,7 @@ const LiveCopilotModal: React.FC = () => {
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
             
-            const systemInstruction = `You are a helpful and friendly CRM assistant named Versa. Today's date is ${new Date().toISOString()}. Be concise.
+            const systemInstruction = `${industryConfig.aiContextPrompt} You are a helpful and friendly CRM assistant named Versa. Today's date is ${new Date().toISOString()}. Be concise.
 Your goal is to answer user queries by using the provided tools.
 When a tool call is successful and returns data to be shown to the user, your final response (both text and audio) MUST be a single valid JSON object with 'summary', 'chartType', and 'chartData' keys.
 - 'summary': A concise, natural language summary of the tool's findings. This is what you will speak.

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { GoogleGenAI, GenerateContentResponse, Type, Content } from '@google/genai';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/Card';
@@ -53,12 +54,13 @@ const GrowthCopilotCard: React.FC = () => {
 
             const basePrompt = `You are a proactive CRM assistant. Analyze this data snapshot. Generate exactly 3 concise, actionable, and diverse questions a user might ask about this data. Frame them as if you are suggesting them to the user.`;
 
-            const prompt = `${industryConfig.aiContextPrompt} ${basePrompt}\n\nData Snapshot: ${JSON.stringify(dataSnapshot)}`;
+            const prompt = `Data Snapshot: ${JSON.stringify(dataSnapshot)}`;
             
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,
                 config: {
+                    systemInstruction: `${industryConfig.aiContextPrompt} ${basePrompt}`,
                     responseMimeType: "application/json",
                     responseSchema: {
                         type: Type.OBJECT,

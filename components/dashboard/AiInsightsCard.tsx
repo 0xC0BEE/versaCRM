@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/Card';
@@ -26,10 +27,13 @@ const AiInsightsCard: React.FC<AiInsightsCardProps> = ({ dashboardData, isLoadin
         setInsight('');
         try {
             const ai = new GoogleGenAI({apiKey: process.env.API_KEY!});
-            const prompt = `${industryConfig.aiContextPrompt} Analyze the following CRM dashboard data and provide a concise, actionable insight for an organization admin. Focus on identifying potential anomalies, trends, or areas needing attention. Data: ${JSON.stringify(dashboardData.kpis)}`;
+            const prompt = `Analyze the following CRM dashboard data and provide a concise, actionable insight for an organization admin. Focus on identifying potential anomalies, trends, or areas needing attention. Data: ${JSON.stringify(dashboardData.kpis)}`;
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,
+                config: {
+                    systemInstruction: industryConfig.aiContextPrompt,
+                }
             });
             setInsight(response.text);
         } catch (error) {

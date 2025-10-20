@@ -2,6 +2,7 @@ import React, { createContext, useContext, ReactNode, useMemo, useEffect, useCal
 import useLocalStorage from '../hooks/useLocalStorage';
 import { Notification, NotificationContextType } from '../types';
 import { useAuth } from './AuthContext';
+import { useApp } from './AppContext';
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
@@ -41,7 +42,16 @@ const mockNotifications: Omit<Notification, 'userId'>[] = [
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
     const { authenticatedUser } = useAuth();
+    const { setCurrentPage, setInitialRecordLink } = useApp();
     const [allNotifications, setAllNotifications] = useLocalStorage<Notification[]>('notifications', []);
+    
+    // Request permission on mount
+    useEffect(() => {
+        // Check if the Notification API is available and if permission has not been granted or denied yet.
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    }, []);
     
     // On first load for a user, populate with mock data
     useEffect(() => {
@@ -69,7 +79,26 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             isRead: false,
         };
         setAllNotifications(prev => [newNotification, ...prev]);
-    }, [setAllNotifications]);
+
+        // Show browser notification if permission is granted and the tab is not active
+        if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+            const browserNotification = new Notification('New Notification from VersaCRM', {
+                body: newNotification.message,
+                icon: '/vite.svg', // A generic icon
+                tag: newNotification.id, // Use ID to prevent duplicate notifications
+            });
+
+            // Handle click event to navigate user
+            browserNotification.onclick = () => {
+                if (newNotification.linkTo) {
+                    setCurrentPage(newNotification.linkTo.page);
+                    setInitialRecordLink(newNotification.linkTo);
+                }
+                window.focus(); // Bring the tab to the front
+            };
+        }
+
+    }, [setAllNotifications, setCurrentPage, setInitialRecordLink]);
     
     const markAsRead = useCallback((notificationId: string) => {
         setAllNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n));
