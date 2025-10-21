@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { CustomRole, Permission } from '../../types';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -87,6 +87,14 @@ const RoleEditModal: React.FC<RoleEditModalProps> = ({ isOpen, onClose, role }) 
     }), [authenticatedUser]);
 
     const { formData, handleChange, setFormData } = useForm(initialState, role);
+    
+    useEffect(() => {
+        if (createRoleMutation.isSuccess || updateRoleMutation.isSuccess) {
+            onClose();
+            createRoleMutation.reset();
+            updateRoleMutation.reset();
+        }
+    }, [createRoleMutation.isSuccess, updateRoleMutation.isSuccess, onClose, createRoleMutation, updateRoleMutation]);
 
     const handlePermissionChange = (permissionId: Permission, isChecked: boolean) => {
         setFormData(prev => ({
@@ -105,9 +113,9 @@ const RoleEditModal: React.FC<RoleEditModalProps> = ({ isOpen, onClose, role }) 
         }
 
         if (isNew) {
-            createRoleMutation.mutate(formData, { onSuccess: onClose });
+            createRoleMutation.mutate(formData);
         } else {
-            updateRoleMutation.mutate(formData as CustomRole, { onSuccess: onClose });
+            updateRoleMutation.mutate(formData as CustomRole);
         }
     };
     

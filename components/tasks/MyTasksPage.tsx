@@ -49,6 +49,13 @@ const MyTasksPage: React.FC = () => {
         }
     }, [initialRecordLink, tasks, setInitialRecordLink]);
 
+    useEffect(() => {
+        if (createTaskMutation.isSuccess) {
+            setNewTaskTitle('');
+            createTaskMutation.reset();
+        }
+    }, [createTaskMutation.isSuccess]);
+
     const handleAddTask = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newTaskTitle.trim()) {
@@ -61,10 +68,6 @@ const MyTasksPage: React.FC = () => {
             dueDate: addDays(new Date(), 1).toISOString(),
             userId: authenticatedUser!.id,
             organizationId: authenticatedUser!.organizationId!,
-        }, {
-            onSuccess: () => {
-                setNewTaskTitle('');
-            }
         });
     };
     

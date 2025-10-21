@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from '../../contexts/DataContext';
 import PageWrapper from '../layout/PageWrapper';
 import { Card } from '../ui/Card';
@@ -28,23 +28,26 @@ const OrganizationsPage: React.FC = () => {
         setSelectedOrg(null);
         setIsModalOpen(true);
     };
+
+    useEffect(() => {
+        if (createOrganizationMutation.isSuccess || updateOrganizationMutation.isSuccess || deleteOrganizationMutation.isSuccess) {
+            setIsModalOpen(false);
+            createOrganizationMutation.reset();
+            updateOrganizationMutation.reset();
+            deleteOrganizationMutation.reset();
+        }
+    }, [createOrganizationMutation.isSuccess, updateOrganizationMutation.isSuccess, deleteOrganizationMutation.isSuccess, createOrganizationMutation, updateOrganizationMutation, deleteOrganizationMutation]);
     
     const handleSave = (orgData: Partial<Organization>) => {
         if (selectedOrg) {
-            updateOrganizationMutation.mutate({ ...selectedOrg, ...orgData }, {
-                onSuccess: () => setIsModalOpen(false)
-            });
+            updateOrganizationMutation.mutate({ ...selectedOrg, ...orgData });
         } else {
-            createOrganizationMutation.mutate(orgData as Omit<Organization, 'id' | 'createdAt'>, {
-                onSuccess: () => setIsModalOpen(false)
-            });
+            createOrganizationMutation.mutate(orgData as Omit<Organization, 'id' | 'createdAt'>);
         }
     };
 
     const handleDelete = (orgId: string) => {
-        deleteOrganizationMutation.mutate(orgId, {
-             onSuccess: () => setIsModalOpen(false)
-        });
+        deleteOrganizationMutation.mutate(orgId);
     };
 
     const isMutationPending = 

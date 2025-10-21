@@ -6,18 +6,14 @@ This document outlines the strategic vision for VersaCRM, building upon our comp
 
 ## In Progress (Phase 12)
 
-### Pillar 6 - Onboarding & Guidance 2.0
--   [ ] **Interactive Guided Tours for Users:** Role-based product tours providing step-by-step walkthroughs for Admins (configuration) and Team Members (daily workflow).
+### Pillar 7 - Platform Optimization & Scalability
+-   [ ] **API Call Optimization:** Implement a smart caching strategy by configuring appropriate `staleTime` for different data types within React Query to significantly reduce unnecessary API calls.
 
 ---
 
 ## Next Up
 
-### Pillar 6 - Onboarding & Guidance 2.0
--   [ ] **Personalized, Habit-Forming AI Tips Engine:** A toggleable AI tips engine that learns from each user's habits and proactively suggests workflow improvements (e.g., "You frequently filter by 'Status is Lead'. Would you like to save this as a reusable 'Audience Profile'?").
-
 ### Pillar 7 - Platform Optimization & Scalability
--   [ ] **API Call Optimization:** Implement a smart caching strategy by configuring appropriate `staleTime` for different data types within React Query to significantly reduce unnecessary API calls.
 -   [ ] **Real-time Data Sync with WebSockets:** For high-frequency data like notifications and chat, investigate and implement a WebSocket-based push system to replace polling, ensuring instant updates and lower server load.
 
 ---
@@ -53,6 +49,8 @@ This document outlines the strategic vision for VersaCRM, building upon our comp
 ### Pillar 6 - Onboarding & Guidance 2.0
 -   [x] **AI-Powered "5-Minute CRM":** An intelligent onboarding interview that asks about the user's business, sales process, and marketing goals, allowing the AI to automatically configure deal stages, custom fields, and a starter lead-nurturing campaign.
 -   [x] **Proactive AI Feature Onboarding:** After the initial setup, the system will suggest a set of AI features to activate based on the user's answers, explaining the value of each one (e.g., "Since you have a sales team, we recommend activating AI Deal Forecasting.").
+-   [x] **Interactive Guided Tours for Users:** Role-based product tours providing step-by-step walkthroughs for Admins (configuration) and Team Members (daily workflow).
+-   [x] **Personalized, Habit-Forming AI Tips Engine:** A toggleable AI tips engine that learns from each user's habits and proactively suggests workflow improvements (e.g., "You frequently filter by 'Status is Lead'. Would you like to save this as a reusable 'Audience Profile'?").
 
 ---
 _This roadmap is a living document and will be updated as strategic priorities evolve._

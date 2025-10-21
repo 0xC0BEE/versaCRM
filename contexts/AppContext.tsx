@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useMemo, ReactNode, useCallback } from 'react';
-import { Page, Industry, IndustryConfig, FilterCondition, FeatureFlag, TourStep } from '../types';
+import { Page, Industry, IndustryConfig, FilterCondition, FeatureFlag, TourStep, UserAction, AiTip } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { industryConfigs } from '../config/industryConfig';
 import { featureFlags as defaultFlags } from '../config/featureFlags';
@@ -64,6 +64,12 @@ interface AppContextType {
     openSidebarSection: (sectionName: string) => void;
     openSections: Record<string, boolean>;
     setOpenSections: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+
+    // AI Tips Engine
+    actionsLog: UserAction[];
+    logUserAction: (type: string, payload: any) => void;
+    activeAiTip: AiTip | null;
+    setActiveAiTip: React.Dispatch<React.SetStateAction<AiTip | null>>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -89,6 +95,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [tourStep, setTourStep] = useState(0);
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({ Core: true });
     const isTourOpen = useMemo(() => tourConfig !== null, [tourConfig]);
+
+    // AI Tips Engine State
+    const [actionsLog, setActionsLog] = useLocalStorage<UserAction[]>('user-actions-log', []);
+    const [activeAiTip, setActiveAiTip] = useLocalStorage<AiTip | null>('active-ai-tip', null);
+
+    const logUserAction = useCallback((type: string, payload: any) => {
+        const newAction: UserAction = { type, payload, timestamp: new Date().toISOString() };
+        // Keep the log from getting too big
+        setActionsLog(prev => [newAction, ...prev.slice(0, 19)]);
+    }, [setActionsLog]);
 
     const startTour = useCallback((tour: TourStep[]) => {
         setTourConfig(tour);
@@ -181,6 +197,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         openSidebarSection,
         openSections,
         setOpenSections,
+        // AI Tips
+        actionsLog,
+        logUserAction,
+        activeAiTip,
+        setActiveAiTip,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }), [
         currentPage, setCurrentPage, currentIndustry, industryConfig, 
@@ -189,7 +210,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         currentCustomObjectDefId, reportToEditId, isFeatureEnabled,
         currentEnvironment, simulatedDate, currentDashboardId,
         initialRecordLink, initialKbArticleId,
-        isTourOpen, startTour, closeTour, tourStep, tourConfig, openSidebarSection, openSections
+        isTourOpen, startTour, closeTour, tourStep, tourConfig, openSidebarSection, openSections,
+        actionsLog, logUserAction, activeAiTip, setActiveAiTip
     ]);
 
     return (

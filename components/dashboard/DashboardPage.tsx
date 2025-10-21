@@ -1,6 +1,7 @@
 
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import PageWrapper from '../layout/PageWrapper';
 import { useData } from '../../contexts/DataContext';
 import { useApp } from '../../contexts/AppContext';
@@ -15,7 +16,7 @@ import ContactCard from './ContactCard';
 import ReviewPromptCard from './ReviewPromptCard';
 import Tabs from '../ui/Tabs';
 import ContactDetailModal from '../organizations/ContactDetailModal';
-import { AnyContact, CustomReport, Dashboard, DashboardLayout, DashboardWidget as WidgetType } from '../../types';
+import { AnyContact, CustomReport, Dashboard, DashboardLayout, DashboardWidget as WidgetType, AiTip } from '../../types';
 import DashboardWidget from './DashboardWidget';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import { defaultLayouts } from '../../config/layouts';
@@ -29,6 +30,8 @@ import Input from '../ui/Input';
 import { format } from 'date-fns';
 import MobileDashboard from './MobileDashboard';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { GoogleGenAI, Type } from '@google/genai';
+import AiTipCard from './AiTipCard';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -40,7 +43,7 @@ interface DashboardPageProps {
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) => {
     const { authenticatedUser, hasPermission } = useAuth();
-    const { industryConfig, setCurrentPage, setReportToEditId, dashboardDateRange, setDashboardDateRange, setContactFilters, currentDashboardId, setCurrentDashboardId } = useApp();
+    const { industryConfig, setCurrentPage, setReportToEditId, dashboardDateRange, setDashboardDateRange, setContactFilters, currentDashboardId, setCurrentDashboardId, actionsLog, activeAiTip, setActiveAiTip } = useApp();
     const { dashboardDataQuery, contactsQuery, customReportsQuery, dashboardWidgetsQuery, dashboardsQuery, createDashboardMutation, updateDashboardMutation, deleteDashboardMutation, removeDashboardWidgetMutation, addDashboardWidgetMutation } = useData();
 
     const [userLayouts, setUserLayouts] = useLocalStorage<Record<string, Layouts>>('dashboard-layouts', {});
@@ -57,6 +60,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
     const menuRef = useRef<HTMLDivElement>(null);
     const isMobile = useIsMobile();
     
+    const [isAnalyzingForTip, setIsAnalyzingForTip] = useState(false);
+    
     const { data: dashboardData, isLoading: isDashboardLoading } = dashboardDataQuery;
     const { data: contacts = [], isLoading: isContactsLoading } = contactsQuery;
     const { data: customReports = [] } = customReportsQuery;
@@ -67,6 +72,63 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
 
     const currentDashboard = useMemo(() => (dashboards as Dashboard[]).find((d: Dashboard) => d.id === currentDashboardId), [dashboards, currentDashboardId]);
     
+    // AI Tips Engine Logic
+    useEffect(() => {
+        const analyzeActions = async () => {
+            const filterActions = actionsLog.filter(a => a.type === 'filter_contacts');
+            if (filterActions.length < 2) return;
+
+            const counts: Record<string, number> = {};
+            let mostFrequentPayload: any = null;
+            let maxCount = 0;
+
+            filterActions.forEach(action => {
+                const key = JSON.stringify(action.payload.filters);
+                counts[key] = (counts[key] || 0) + 1;
+                if (counts[key] > maxCount) {
+                    maxCount = counts[key];
+                    mostFrequentPayload = action.payload;
+                }
+            });
+
+            if (maxCount > 1) {
+                setIsAnalyzingForTip(true);
+                try {
+                    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+                    const prompt = `A user frequently applies this filter: "${mostFrequentPayload.filters}". Generate a concise suggestion to save this as a reusable "Audience Profile".`;
+                    const response = await ai.models.generateContent({
+                        model: 'gemini-2.5-flash',
+                        contents: prompt,
+                        config: {
+                             systemInstruction: "You are a helpful CRM assistant that suggests efficiency improvements. Be concise and friendly."
+                        }
+                    });
+                    
+                    const newTip: AiTip = {
+                        id: `tip_${Date.now()}`,
+                        suggestion: `${response.text} Would you like to save this as a reusable 'Audience Profile' to access it with one click?`,
+                        action: {
+                            type: 'navigate',
+                            page: 'AudienceProfiles',
+                            payload: mostFrequentPayload.rawFilters,
+                        }
+                    };
+                    setActiveAiTip(newTip);
+
+                } catch (error) {
+                    console.error("AI Tip Generation Error:", error);
+                } finally {
+                    setIsAnalyzingForTip(false);
+                }
+            }
+        };
+
+        if (!activeAiTip && !isAnalyzingForTip && actionsLog.length > 1) {
+            analyzeActions();
+        }
+    }, [actionsLog, activeAiTip, isAnalyzingForTip, setActiveAiTip]);
+
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -270,6 +332,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isTabbedView = false }) =
 
     const renderOrgDashboard = () => (
         <>
+            <AiTipCard />
             {!isTabbedView && (
                 <div className="flex justify-between items-center mb-6">
                     <div className="relative" ref={menuRef}>

@@ -24,61 +24,65 @@ import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyRespo
 import { GoogleGenAI, Type } from '@google/genai';
 import { addMonths } from 'date-fns';
 
-// Hydrate the in-memory sandbox list from localStorage to persist it across reloads.
-const storedSandboxes = JSON.parse(localStorage.getItem('sandboxesList') || '[]');
-MOCK_SANDBOXES.splice(0, MOCK_SANDBOXES.length, ...storedSandboxes);
-
-// A simple in-memory representation of the backend
-const mainDB = {
-    organizations: MOCK_ORGANIZATIONS,
-    users: MOCK_USERS,
-    roles: MOCK_ROLES,
-    contacts: MOCK_CONTACTS_MUTABLE,
-    interactions: MOCK_INTERACTIONS,
-    products: MOCK_PRODUCTS,
-    deals: MOCK_DEALS,
-    dealStages: MOCK_DEAL_STAGES,
-    tasks: MOCK_TASKS,
-    calendarEvents: MOCK_CALENDAR_EVENTS,
-    emailTemplates: MOCK_EMAIL_TEMPLATES,
-    documentTemplates: MOCK_DOCUMENT_TEMPLATES,
-    workflows: MOCK_WORKFLOWS,
-    advancedWorkflows: MOCK_ADVANCED_WORKFLOWS,
-    settings: MOCK_ORGANIZATION_SETTINGS,
-    apiKeys: MOCK_API_KEYS,
-    tickets: MOCK_TICKETS,
-    forms: MOCK_FORMS,
-    campaigns: MOCK_CAMPAIGNS,
-    landingPages: MOCK_LANDING_PAGES,
-    documents: MOCK_DOCUMENTS,
-    customReports: MOCK_CUSTOM_REPORTS,
-    dashboards: MOCK_DASHBOARDS,
-    dashboardWidgets: MOCK_DASHBOARD_WIDGETS,
-    suppliers: MOCK_SUPPLIERS,
-    warehouses: MOCK_WAREHOUSES,
-    customObjectDefs: MOCK_CUSTOM_OBJECT_DEFINITIONS,
-    customObjectRecords: MOCK_CUSTOM_OBJECT_RECORDS,
-    anonymousSessions: MOCK_ANONYMOUS_SESSIONS,
-    marketplaceApps: MOCK_APP_MARKETPLACE_ITEMS,
-    installedApps: MOCK_INSTALLED_APPS,
-    sandboxes: MOCK_SANDBOXES,
-    projects: MOCK_PROJECTS,
-    projectPhases: MOCK_PROJECT_PHASES,
-    projectTemplates: MOCK_PROJECT_TEMPLATES,
-    cannedResponses: MOCK_CANNED_RESPONSES,
-    surveys: MOCK_SURVEYS,
-    surveyResponses: MOCK_SURVEY_RESPONSES,
-    snapshots: MOCK_SNAPSHOTS,
-    clientChecklistTemplates: MOCK_CLIENT_CHECKLIST_TEMPLATES,
-    subscriptionPlans: MOCK_SUBSCRIPTION_PLANS,
-    systemAuditLogs: MOCK_SYSTEM_AUDIT_LOGS,
-    audienceProfiles: MOCK_AUDIENCE_PROFILES,
-    dataHygieneResults: MOCK_DATA_HYGIENE_RESULTS,
-    teamChannels: MOCK_TEAM_CHANNELS,
-    teamChatMessages: MOCK_TEAM_CHAT_MESSAGES,
+// Function to get a fresh, deep-copied initial state of the database.
+// This ensures that every session starts with the full set of mock data.
+const getInitialDBState = () => {
+    return JSON.parse(JSON.stringify({
+        organizations: MOCK_ORGANIZATIONS,
+        users: MOCK_USERS,
+        roles: MOCK_ROLES,
+        contacts: MOCK_CONTACTS_MUTABLE,
+        interactions: MOCK_INTERACTIONS,
+        products: MOCK_PRODUCTS,
+        deals: MOCK_DEALS,
+        dealStages: MOCK_DEAL_STAGES,
+        tasks: MOCK_TASKS,
+        calendarEvents: MOCK_CALENDAR_EVENTS,
+        emailTemplates: MOCK_EMAIL_TEMPLATES,
+        documentTemplates: MOCK_DOCUMENT_TEMPLATES,
+        workflows: MOCK_WORKFLOWS,
+        advancedWorkflows: MOCK_ADVANCED_WORKFLOWS,
+        settings: MOCK_ORGANIZATION_SETTINGS,
+        apiKeys: MOCK_API_KEYS,
+        tickets: MOCK_TICKETS,
+        forms: MOCK_FORMS,
+        campaigns: MOCK_CAMPAIGNS,
+        landingPages: MOCK_LANDING_PAGES,
+        documents: MOCK_DOCUMENTS,
+        customReports: MOCK_CUSTOM_REPORTS,
+        dashboards: MOCK_DASHBOARDS,
+        dashboardWidgets: MOCK_DASHBOARD_WIDGETS,
+        suppliers: MOCK_SUPPLIERS,
+        warehouses: MOCK_WAREHOUSES,
+        customObjectDefs: MOCK_CUSTOM_OBJECT_DEFINITIONS,
+        customObjectRecords: MOCK_CUSTOM_OBJECT_RECORDS,
+        anonymousSessions: MOCK_ANONYMOUS_SESSIONS,
+        marketplaceApps: MOCK_APP_MARKETPLACE_ITEMS,
+        installedApps: MOCK_INSTALLED_APPS,
+        projects: MOCK_PROJECTS,
+        projectPhases: MOCK_PROJECT_PHASES,
+        projectTemplates: MOCK_PROJECT_TEMPLATES,
+        cannedResponses: MOCK_CANNED_RESPONSES,
+        surveys: MOCK_SURVEYS,
+        surveyResponses: MOCK_SURVEY_RESPONSES,
+        snapshots: MOCK_SNAPSHOTS,
+        clientChecklistTemplates: MOCK_CLIENT_CHECKLIST_TEMPLATES,
+        subscriptionPlans: MOCK_SUBSCRIPTION_PLANS,
+        systemAuditLogs: MOCK_SYSTEM_AUDIT_LOGS,
+        audienceProfiles: MOCK_AUDIENCE_PROFILES,
+        dataHygieneResults: MOCK_DATA_HYGIENE_RESULTS,
+        teamChannels: MOCK_TEAM_CHANNELS,
+        teamChatMessages: MOCK_TEAM_CHAT_MESSAGES,
+    }));
 };
 
+// Main in-memory DB for the "production" environment. Initialized fresh on each page load.
+let mainDB = getInitialDBState();
+
+// Sandboxed environments are persisted in localStorage to survive reloads.
 let sandboxedDBs: { [key: string]: typeof mainDB } = JSON.parse(localStorage.getItem('sandboxedDBs') || '{}');
+let sandboxes: Sandbox[] = JSON.parse(localStorage.getItem('sandboxesList') || '[]');
+
 
 const getActiveDb = () => {
     const env = JSON.parse(localStorage.getItem('currentEnvironment') || '"production"');
@@ -113,6 +117,47 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
         if (user) return respond(user);
         return respond({ message: 'Invalid credentials' }, 401);
     }
+    
+    // --- SANDBOXES (Managed outside the main DB object) ---
+    if (path === '/api/v1/sandboxes' && method === 'GET') {
+        return respond(sandboxes);
+    }
+     if (path === '/api/v1/sandboxes' && method === 'POST') {
+        const newSandbox: Sandbox = {
+            id: `sbx_${Date.now()}`,
+            organizationId: body.orgId,
+            name: body.name,
+            createdAt: new Date().toISOString(),
+        };
+        // Create sandbox from a pristine copy of the initial data
+        sandboxedDBs[newSandbox.id] = getInitialDBState();
+        sandboxes.push(newSandbox);
+        localStorage.setItem('sandboxedDBs', JSON.stringify(sandboxedDBs));
+        localStorage.setItem('sandboxesList', JSON.stringify(sandboxes));
+        return respond(newSandbox, 201);
+    }
+    const sandboxRefreshMatch = path.match(/^\/api\/v1\/sandboxes\/(.+)\/refresh$/);
+    if (sandboxRefreshMatch && method === 'POST') {
+        const sandboxId = sandboxRefreshMatch[1];
+        if (sandboxedDBs[sandboxId]) {
+            // Refresh sandbox from a pristine copy
+            sandboxedDBs[sandboxId] = getInitialDBState();
+            localStorage.setItem('sandboxedDBs', JSON.stringify(sandboxedDBs));
+            return respond({ message: 'Sandbox refreshed' });
+        }
+    }
+     const sandboxDeleteMatch = path.match(/^\/api\/v1\/sandboxes\/(.+)$/);
+    if (sandboxDeleteMatch && method === 'DELETE') {
+        const sandboxId = sandboxDeleteMatch[1];
+        if (sandboxedDBs[sandboxId]) {
+            delete sandboxedDBs[sandboxId];
+            sandboxes = sandboxes.filter(s => s.id !== sandboxId);
+            localStorage.setItem('sandboxedDBs', JSON.stringify(sandboxedDBs));
+            localStorage.setItem('sandboxesList', JSON.stringify(sandboxes));
+            return respond(null, 204);
+        }
+    }
+
 
     // --- ORGANIZATIONS ---
     if (path === '/api/v1/organizations' && method === 'GET') return respond(db.organizations);
@@ -178,7 +223,6 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     // --- GET BY ORG ID ---
     const orgId = searchParams.get('orgId');
     if (orgId) {
-        // FIX: The handler for the dashboard data endpoint was missing. This has been added back to ensure dashboard charts can load their data.
         if (path === '/api/v1/dashboard') {
             const dashboardData = generateDashboardData(db.contacts, db.interactions);
             return respond(dashboardData);
@@ -208,6 +252,37 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
         if (path === '/api/v1/custom-reports') return respond(db.customReports.filter(r => r.organizationId === orgId));
         if (path === '/api/v1/dashboards') return respond(db.dashboards.filter(d => d.organizationId === orgId));
         if (path === '/api/v1/custom-object-definitions') return respond(db.customObjectDefs.filter(d => d.organizationId === orgId));
+        if (path === '/api/v1/inbox') {
+            const conversations: Conversation[] = [];
+            const interactionGroups = db.interactions.reduce((acc, i) => {
+                if (!i.notes.includes('Subject:')) return acc; // Only process emails
+                const key = `${i.contactId}-${i.notes.match(/Subject: (.*)/)![1]}`;
+                if (!acc[key]) acc[key] = [];
+                acc[key].push(i);
+                return acc;
+            }, {} as Record<string, Interaction[]>);
+
+            for (const key in interactionGroups) {
+                const group = interactionGroups[key].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                const last = group[group.length - 1];
+                const contact = db.contacts.find(c => c.id === last.contactId);
+                const teamMember = db.users.find(u => u.id === last.userId);
+                if (contact && teamMember) {
+                     conversations.push({
+                        id: `conv_${contact.id}_${group[0].id}`,
+                        contactId: contact.id,
+                        subject: last.notes.match(/Subject: (.*)/)![1],
+                        channel: 'Email',
+                        lastMessageTimestamp: last.date,
+                        lastMessageSnippet: last.notes.split('\n\n')[1] || last.notes,
+                        messages: group.map(i => ({ id: i.id, senderId: i.userId, body: i.notes.split('\n\n')[1] || i.notes, timestamp: i.date })),
+                        participants: [{id: contact.id, name: contact.contactName, email: contact.email}, {id: teamMember.id, name: teamMember.name, email: teamMember.email}],
+                    });
+                }
+            }
+            return respond(conversations.sort((a,b) => new Date(b.lastMessageTimestamp).getTime() - new Date(a.lastMessageTimestamp).getTime()));
+        }
+        if (path === '/api/v1/team-channels') return respond(db.teamChannels.filter(c => c.organizationId === orgId));
         // ... and so on for all other GET endpoints that are filtered by orgId
     }
     

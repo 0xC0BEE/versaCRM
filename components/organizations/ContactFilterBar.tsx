@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { FilterCondition } from '../../types';
 import Button from '../ui/Button';
@@ -16,7 +16,15 @@ const operatorOptions = [
 const availableColumns = [ 'contactName', 'email', 'phone', 'status', 'leadSource' ];
 
 const ContactFilterBar: React.FC = () => {
-    const { contactFilters, setContactFilters } = useApp();
+    const { contactFilters, setContactFilters, logUserAction } = useApp();
+
+    useEffect(() => {
+        if (contactFilters.length > 0) {
+            const filterDesc = contactFilters.map(f => `${f.field} ${f.operator} '${f.value}'`).join(' & ');
+            logUserAction('filter_contacts', { filters: filterDesc, rawFilters: contactFilters });
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [contactFilters]); // Only log when filters change, not on every render.
 
     const addFilter = () => {
         setContactFilters([...contactFilters, { field: 'contactName', operator: 'contains', value: '' }]);
@@ -42,7 +50,7 @@ const ContactFilterBar: React.FC = () => {
                     <Select id={`filter-op-${index}`} label="" value={filter.operator} onChange={e => updateFilter(index, 'operator', e.target.value as any)} className="w-1/4">
                         {operatorOptions.map(op => <option key={op.id} value={op.id}>{op.name}</option>)}
                     </Select>
-                    <Input id={`filter-val-${index}`} label="" value={filter.value} onChange={e => updateFilter(index, 'value', e.target.value)} className="flex-grow" />
+                    <Input id={`filter-val-${index}`} label="" value={filter.value as string} onChange={e => updateFilter(index, 'value', e.target.value)} className="flex-grow" />
                     <Button variant="secondary" size="sm" onClick={() => removeFilter(index)}><Trash2 size={14}/></Button>
                 </div>
             ))}

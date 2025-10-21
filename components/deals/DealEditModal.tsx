@@ -108,7 +108,6 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
             });
 
             const text = response.text;
-            // Clean the response to remove markdown code block fences before parsing
             const cleanedText = text.trim().replace(/^```json\s*/, '').replace(/```$/, '').trim();
             const match = JSON.parse(cleanedText);
             
@@ -135,10 +134,10 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
         if (deal?.relatedObjectDefId) {
             setSelectedDefId(deal.relatedObjectDefId);
         }
-         if (!isOpen) { // Reset suggestion on close
+         if (!isOpen) {
             setAiSuggestion(null);
         } else {
-            setActiveTab('Details'); // Reset to details tab on open
+            setActiveTab('Details');
         }
     }, [deal, isOpen]);
 
@@ -146,7 +145,7 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
         const newDefId = e.target.value;
         setSelectedDefId(newDefId);
         handleChange('relatedObjectDefId', newDefId);
-        handleChange('relatedObjectRecordId', ''); // Reset record selection
+        handleChange('relatedObjectRecordId', '');
     };
     
     const applyAiSuggestion = () => {
@@ -162,6 +161,15 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
         }
     };
 
+    useEffect(() => {
+        if (createDealMutation.isSuccess || updateDealMutation.isSuccess || deleteDealMutation.isSuccess) {
+            onClose();
+            createDealMutation.reset();
+            updateDealMutation.reset();
+            deleteDealMutation.reset();
+        }
+    }, [createDealMutation.isSuccess, updateDealMutation.isSuccess, deleteDealMutation.isSuccess, onClose, createDealMutation, updateDealMutation, deleteDealMutation]);
+
     const handleSave = () => {
         if (!formData.name.trim() || !formData.contactId) {
             toast.error("Deal Name and Contact are required.");
@@ -173,38 +181,23 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
             value: Number(formData.value),
             organizationId: authenticatedUser!.organizationId!,
         };
-        
-        const wonStageId = (dealStages as DealStage[]).find(s => s.name === 'Won')?.id;
-        const isMovingToWon = dealData.stageId === wonStageId && deal?.stageId !== wonStageId;
 
         if (isNew) {
-            createDealMutation.mutate(dealData, { onSuccess: onClose });
+            createDealMutation.mutate(dealData);
         } else {
-            updateDealMutation.mutate({ ...deal!, ...dealData }, { 
-                onSuccess: () => {
-                    if (isMovingToWon && settings?.accounting?.isConnected) {
-                        toast.success(`Invoice created in QuickBooks for "${dealData.name}"`);
-                    }
-                    onClose();
-                }
-            });
+            updateDealMutation.mutate({ ...deal!, ...dealData });
         }
     };
 
     const handleDelete = () => {
         if (deal && window.confirm(`Are you sure you want to delete the deal "${deal.name}"?`)) {
-            deleteDealMutation.mutate(deal.id, { onSuccess: onClose });
+            deleteDealMutation.mutate(deal.id);
         }
     };
 
     const handleApprovalAction = (status: 'Approved' | 'Rejected') => {
         if (!deal) return;
-        updateDealMutation.mutate({ ...deal, approvalStatus: status, currentApproverId: undefined }, {
-            onSuccess: () => {
-                toast.success(`Deal ${status.toLowerCase()}!`);
-                onClose();
-            }
-        });
+        updateDealMutation.mutate({ ...deal, approvalStatus: status, currentApproverId: undefined });
     };
     
     const isPending = createDealMutation.isPending || updateDealMutation.isPending || deleteDealMutation.isPending;

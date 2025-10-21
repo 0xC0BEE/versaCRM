@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Select from '../ui/Select';
@@ -41,6 +41,14 @@ const InteractionEditModal: React.FC<InteractionEditModalProps> = ({ isOpen, onC
 
     const { formData, handleChange } = useForm(initialState, formDependency);
 
+    useEffect(() => {
+        if (createInteractionMutation.isSuccess || updateInteractionMutation.isSuccess) {
+            onClose();
+            createInteractionMutation.reset();
+            updateInteractionMutation.reset();
+        }
+    }, [createInteractionMutation.isSuccess, updateInteractionMutation.isSuccess, onClose, createInteractionMutation, updateInteractionMutation]);
+
     const handleSave = () => {
         if (!formData.notes.trim()) {
             toast.error("Notes are required for an interaction.");
@@ -56,19 +64,9 @@ const InteractionEditModal: React.FC<InteractionEditModalProps> = ({ isOpen, onC
         };
 
         if (isNew) {
-            createInteractionMutation.mutate(interactionData, {
-                onSuccess: () => {
-                    toast.success("Interaction logged!");
-                    onClose();
-                }
-            });
+            createInteractionMutation.mutate(interactionData);
         } else {
-            updateInteractionMutation.mutate({ ...interaction!, ...interactionData }, {
-                onSuccess: () => {
-                    toast.success("Interaction updated!");
-                    onClose();
-                }
-            });
+            updateInteractionMutation.mutate({ ...interaction!, ...interactionData });
         }
     };
     

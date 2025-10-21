@@ -1,11 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
 import { EmailTemplate } from '../../types';
 import toast from 'react-hot-toast';
-// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from '../../hooks/useForm';
@@ -29,6 +28,14 @@ const EmailTemplateEditModal: React.FC<EmailTemplateEditModalProps> = ({ isOpen,
     
     const { formData, handleChange } = useForm(initialState, template);
 
+    useEffect(() => {
+        if (createEmailTemplateMutation.isSuccess || updateEmailTemplateMutation.isSuccess) {
+            onClose();
+            createEmailTemplateMutation.reset();
+            updateEmailTemplateMutation.reset();
+        }
+    }, [createEmailTemplateMutation.isSuccess, updateEmailTemplateMutation.isSuccess, onClose, createEmailTemplateMutation, updateEmailTemplateMutation]);
+
     const handleSave = () => {
         if (!formData.name.trim() || !formData.subject.trim() || !formData.body.trim()) {
             toast.error("All fields are required.");
@@ -39,15 +46,11 @@ const EmailTemplateEditModal: React.FC<EmailTemplateEditModalProps> = ({ isOpen,
             createEmailTemplateMutation.mutate({
                 ...formData,
                 organizationId: authenticatedUser!.organizationId!,
-            }, {
-                onSuccess: () => onClose()
             });
         } else {
             updateEmailTemplateMutation.mutate({
                 ...template!,
                 ...formData,
-            }, {
-                onSuccess: () => onClose()
             });
         }
     };

@@ -15,7 +15,7 @@ import ThreadSidebar from './ThreadSidebar';
 import { useApp } from '../../contexts/AppContext';
 
 const TeamChatPage: React.FC = () => {
-    const { teamChannelsQuery, teamMembersQuery } = useData();
+    const { teamChannelsQuery, teamMembersQuery, postTeamChatMessageMutation, createTeamChannelMutation } = useData();
     const { authenticatedUser } = useAuth();
     const { initialRecordLink, setInitialRecordLink } = useApp();
 
@@ -82,7 +82,7 @@ const TeamChatPage: React.FC = () => {
     );
 
     const MessagePane = () => {
-        const { teamChannelMessagesQuery, postTeamChatMessageMutation } = useData();
+        const { teamChannelMessagesQuery } = useData();
         const { data: messages = [], isLoading: messagesLoading } = teamChannelMessagesQuery(selectedChannelId);
         const [newMessage, setNewMessage] = useState('');
         const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -91,22 +91,31 @@ const TeamChatPage: React.FC = () => {
             messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
         }, [messages]);
 
+        useEffect(() => {
+            if (postTeamChatMessageMutation.isSuccess) {
+                setNewMessage('');
+                postTeamChatMessageMutation.reset();
+            }
+        }, [postTeamChatMessageMutation.isSuccess]);
+
         const { mainMessages, threads } = useMemo(() => {
             const threads = new Map<string, TeamChatMessage[]>();
             const mainMessages: TeamChatMessage[] = [];
-
-            (messages as TeamChatMessage[]).forEach(message => {
-                if (message.threadId) {
-                    if (!threads.has(message.threadId)) {
-                        threads.set(message.threadId, []);
+            
+            if (Array.isArray(messages)) {
+                (messages as TeamChatMessage[]).forEach(message => {
+                    if (message.threadId) {
+                        if (!threads.has(message.threadId)) {
+                            threads.set(message.threadId, []);
+                        }
+                        threads.get(message.threadId)!.push(message);
+                    } else {
+                        mainMessages.push(message);
                     }
-                    threads.get(message.threadId)!.push(message);
-                } else {
-                    mainMessages.push(message);
-                }
-            });
-            threads.forEach(replies => replies.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()));
-            mainMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+                });
+                threads.forEach(replies => replies.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()));
+                mainMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+            }
             return { mainMessages, threads };
         }, [messages]);
 
@@ -117,8 +126,6 @@ const TeamChatPage: React.FC = () => {
                 channelId: selectedChannelId,
                 userId: authenticatedUser.id,
                 message: newMessage,
-            }, {
-                onSuccess: () => setNewMessage('')
             });
         };
 
@@ -194,10 +201,18 @@ const TeamChatPage: React.FC = () => {
     };
 
     const CreateChannelModal = () => {
-        const { createTeamChannelMutation } = useData();
         const [name, setName] = useState('');
         const [description, setDescription] = useState('');
         const [isPrivate, setIsPrivate] = useState(false);
+
+        useEffect(() => {
+            if (createTeamChannelMutation.isSuccess) {
+                const newChannel = createTeamChannelMutation.data as TeamChannel;
+                setIsCreateChannelModalOpen(false);
+                setSelectedChannelId(newChannel.id);
+                createTeamChannelMutation.reset();
+            }
+        }, [createTeamChannelMutation.isSuccess, createTeamChannelMutation.data]);
 
         const handleCreate = () => {
             if (!name.trim()) return toast.error("Channel name is required.");
@@ -207,12 +222,6 @@ const TeamChatPage: React.FC = () => {
                 description,
                 isPrivate,
                 memberIds: [authenticatedUser!.id] // Creator is always a member
-            }, {
-                onSuccess: (newChannel) => {
-                    toast.success(`Channel #${newChannel.name} created!`);
-                    setIsCreateChannelModalOpen(false);
-                    setSelectedChannelId(newChannel.id);
-                }
             });
         };
 

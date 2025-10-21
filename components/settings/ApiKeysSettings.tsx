@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { ApiKey } from '../../types';
@@ -17,17 +17,21 @@ const ApiKeysSettings: React.FC = () => {
     const [newKey, setNewKey] = useState<{ key: ApiKey, secret: string } | null>(null);
     const [keyName, setKeyName] = useState('');
 
+    useEffect(() => {
+        if (createApiKeyMutation.isSuccess) {
+            const result = createApiKeyMutation.data as { key: ApiKey, secret: string };
+            setNewKey(result);
+            setKeyName('');
+            createApiKeyMutation.reset();
+        }
+    }, [createApiKeyMutation.isSuccess, createApiKeyMutation.data, createApiKeyMutation]);
+
     const handleGenerateKey = () => {
         if (!keyName.trim()) {
             toast.error("Please provide a name for the API key.");
             return;
         }
-        createApiKeyMutation.mutate({ orgId: authenticatedUser!.organizationId, name: keyName }, {
-            onSuccess: (result: { key: ApiKey, secret: string }) => {
-                setNewKey(result);
-                setKeyName('');
-            }
-        });
+        createApiKeyMutation.mutate({ orgId: authenticatedUser!.organizationId, name: keyName });
     };
 
     const handleDeleteKey = (key: ApiKey) => {

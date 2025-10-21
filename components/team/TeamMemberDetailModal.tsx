@@ -1,11 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
-// FIX: Corrected import path for types.
 import { User, CustomRole } from '../../types';
-// FIX: Corrected import path for DataContext.
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from '../../hooks/useForm';
@@ -33,11 +31,27 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({ isOpen, o
         roleId: (roles as CustomRole[])[0]?.id || '',
         organizationId: authenticatedUser!.organizationId!,
         isClient: false,
-        //FIX: Added role property to satisfy type
         role: ''
     }), [authenticatedUser, roles]);
 
     const { formData, handleChange, resetForm } = useForm(initialState, member);
+
+    useEffect(() => {
+        if (createUserMutation.isSuccess) {
+            const newUser = createUserMutation.data as User;
+            const tempPassword = 'password123';
+            setNewUserCredentials({ email: newUser.email, password: tempPassword });
+            createUserMutation.reset();
+        }
+    }, [createUserMutation.isSuccess, createUserMutation.data, createUserMutation]);
+
+    useEffect(() => {
+        if (updateUserMutation.isSuccess || deleteUserMutation.isSuccess) {
+            onClose();
+            updateUserMutation.reset();
+            deleteUserMutation.reset();
+        }
+    }, [updateUserMutation.isSuccess, deleteUserMutation.isSuccess, onClose, updateUserMutation, deleteUserMutation]);
 
     const handleSave = () => {
         if (!formData.name.trim() || !formData.email.trim()) {
@@ -50,37 +64,22 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({ isOpen, o
         }
 
         if (isNew) {
-            createUserMutation.mutate(formData, {
-                onSuccess: (newUser) => {
-                    const tempPassword = 'password123'; // In a real app, this would be generated securely
-                    setNewUserCredentials({ email: newUser.email, password: tempPassword });
-                },
-            });
+            createUserMutation.mutate(formData);
         } else {
-            updateUserMutation.mutate({ ...member!, ...formData }, {
-                onSuccess: () => {
-                    toast.success("Team member updated.");
-                    onClose();
-                }
-            });
+            updateUserMutation.mutate({ ...member!, ...formData });
         }
     };
 
     const handleDelete = () => {
         if (member && window.confirm(`Are you sure you want to remove ${member.name}?`)) {
-            deleteUserMutation.mutate(member.id, {
-                onSuccess: () => {
-                    toast.success("Team member removed.");
-                    onClose();
-                }
-            });
+            deleteUserMutation.mutate(member.id);
         }
     };
     
     const handleCredentialsModalClose = () => {
         setNewUserCredentials(null);
         resetForm();
-        onClose(); // Close the main modal now
+        onClose();
     };
 
     const isPending = createUserMutation.isPending || updateUserMutation.isPending || deleteUserMutation.isPending;
@@ -99,7 +98,7 @@ const TeamMemberDetailModal: React.FC<TeamMemberDetailModalProps> = ({ isOpen, o
                 </div>
                 <div className="mt-6 flex justify-between items-center">
                     <div>
-                        {!isNew && member?.id !== authenticatedUser?.id && ( // Prevent self-deletion
+                        {!isNew && member?.id !== authenticatedUser?.id && (
                             <Button variant="danger" onClick={handleDelete} disabled={isPending} leftIcon={<Trash2 size={16} />}>
                                 {deleteUserMutation.isPending ? 'Removing...' : 'Remove Member'}
                             </Button>

@@ -43,9 +43,8 @@ const ThreadSidebar: React.FC<ThreadSidebarProps> = ({ channelId, threadId, onCl
             userId: authenticatedUser.id,
             message: newMessage,
             threadId,
-        }, {
-            onSuccess: () => setNewMessage('')
         });
+        setNewMessage('');
     };
 
     const Message: React.FC<{ msg: TeamChatMessage }> = ({ msg }) => {

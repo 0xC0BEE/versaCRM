@@ -977,6 +977,23 @@ export interface TourStep {
   openSection?: string;
 }
 
+// AI Tips Engine
+export type UserAction = {
+    type: string;
+    payload: any;
+    timestamp: string;
+};
+
+export type AiTip = {
+    id: string;
+    suggestion: string;
+    action: {
+        type: 'navigate';
+        page: Page;
+        payload?: any;
+    };
+};
+
 // Context types
 export interface AuthContextType {
     authenticatedUser: User | null;

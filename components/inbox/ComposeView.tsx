@@ -39,6 +39,13 @@ const ComposeView: React.FC<ComposeViewProps> = ({ onCancel, onSent }) => {
         };
     }, []);
 
+    useEffect(() => {
+        if (sendNewEmailMutation.isSuccess) {
+            onSent();
+            sendNewEmailMutation.reset();
+        }
+    }, [sendNewEmailMutation.isSuccess, onSent]);
+
     const handleSelectCanned = (response: CannedResponse) => {
         const contact = (contacts as AnyContact[]).find(c => c.id === to);
         let processedBody = response.body;
@@ -61,11 +68,6 @@ const ComposeView: React.FC<ComposeViewProps> = ({ onCancel, onSent }) => {
             userId: authenticatedUser!.id,
             subject,
             body,
-        }, {
-            onSuccess: () => {
-                toast.success('Email sent!');
-                onSent();
-            }
         });
     };
 
