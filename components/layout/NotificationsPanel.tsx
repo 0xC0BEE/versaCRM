@@ -2,14 +2,14 @@ import React from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { Bell, X, AtSign, CheckSquare, LifeBuoy, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { Notification } from '../../types';
+import { AppNotification } from '../../types';
 import { useApp } from '../../contexts/AppContext';
 
 interface NotificationsPanelProps {
     onClose: () => void;
 }
 
-const getNotificationIcon = (type: Notification['type']) => {
+const getNotificationIcon = (type: AppNotification['type']) => {
     switch (type) {
         case 'mention':
             return <AtSign className="h-5 w-5 text-purple-500" />;
@@ -29,7 +29,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ onClose }) => {
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
     const { setCurrentPage, setInitialRecordLink } = useApp();
 
-    const handleNotificationClick = (notification: Notification) => {
+    const handleNotificationClick = (notification: AppNotification) => {
         markAsRead(notification.id);
         if (notification.linkTo) {
             setInitialRecordLink(notification.linkTo);

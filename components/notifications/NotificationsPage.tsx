@@ -4,12 +4,12 @@ import { Card } from '../ui/Card';
 import Tabs from '../ui/Tabs';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useApp } from '../../contexts/AppContext';
-import { Notification } from '../../types';
+import { AppNotification } from '../../types';
 import { AtSign, Bell, CheckSquare, LifeBuoy, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import Button from '../ui/Button';
 
-const getNotificationIcon = (type: Notification['type']) => {
+const getNotificationIcon = (type: AppNotification['type']) => {
     switch (type) {
         case 'mention': return <AtSign className="h-5 w-5 text-purple-500" />;
         case 'chat_mention': return <MessageSquare className="h-5 w-5 text-indigo-500" />;
@@ -33,7 +33,7 @@ const NotificationsPage: React.FC = () => {
         return notifications;
     }, [notifications, activeTab]);
 
-    const handleNotificationClick = (notification: Notification) => {
+    const handleNotificationClick = (notification: AppNotification) => {
         markAsRead(notification.id);
         if (notification.linkTo) {
             setInitialRecordLink(notification.linkTo);

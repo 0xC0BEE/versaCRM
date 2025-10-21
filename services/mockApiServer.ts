@@ -20,7 +20,7 @@ import { checkAndTriggerWorkflows } from './workflowService';
 import { recalculateAllScores, recalculateScoreForContact } from './leadScoringService';
 import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
-import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, Notification, ClientChecklist, SubscriptionPlan, Relationship, AudienceProfile, AnyContact, Deal, DealStage, Document, Product, CustomObjectRecord, CustomObjectDefinition, User, Project } from '../types';
+import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, AppNotification, ClientChecklist, SubscriptionPlan, Relationship, AudienceProfile, AnyContact, Deal, DealStage, Document, Product, CustomObjectRecord, CustomObjectDefinition, User, Project } from '../types';
 import { GoogleGenAI, Type } from '@google/genai';
 import { addMonths } from 'date-fns';
 
@@ -201,6 +201,51 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
         }));
         db.dealStages.push(...newStages);
         return respond(newStages);
+    }
+
+    // --- TEAM CHAT ---
+    const messagesMatch = path.match(/^\/api\/v1\/team-channels\/(.+)\/messages$/);
+    if (messagesMatch && method === 'POST') {
+        const channelId = messagesMatch[1];
+        const { userId, message, threadId } = body;
+
+        const newMessage: TeamChatMessage = {
+            id: `msg_${Date.now()}`,
+            channelId,
+            userId,
+            message,
+            timestamp: new Date().toISOString(),
+            threadId,
+        };
+        db.teamChatMessages.push(newMessage);
+
+        const channel = db.teamChannels.find((c: TeamChannel) => c.id === channelId);
+        const sender = db.users.find((u: User) => u.id === userId);
+        const notifications: AppNotification[] = [];
+
+        if (channel && sender) {
+            const mentionRegex = /@([A-Za-z\s]+)/g;
+            let match;
+            while ((match = mentionRegex.exec(message)) !== null) {
+                const mentionedName = match[1].trim();
+                const mentionedUser = db.users.find((u: User) => u.name === mentionedName);
+
+                if (mentionedUser && mentionedUser.id !== sender.id) {
+                    const newNotification: AppNotification = {
+                        id: `notif_${Date.now()}`,
+                        userId: mentionedUser.id,
+                        type: 'chat_mention',
+                        message: `${sender.name} mentioned you in #${channel.name}`,
+                        timestamp: new Date().toISOString(),
+                        isRead: false,
+                        linkTo: { page: 'TeamChat', recordId: channel.id },
+                    };
+                    notifications.push(newNotification);
+                }
+            }
+        }
+
+        return respond({ message: newMessage, notifications });
     }
 
     // --- SETTINGS ---

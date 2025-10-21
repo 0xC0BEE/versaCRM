@@ -13,7 +13,8 @@ import {
     Snapshot,
     TeamChannel,
     TeamChatMessage,
-    Notification,
+    // FIX: Changed Notification to AppNotification to match the exported type.
+    AppNotification,
     ClientChecklist,
     SubscriptionPlan,
     SystemAuditLogEntry,

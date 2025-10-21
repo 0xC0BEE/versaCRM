@@ -958,7 +958,7 @@ export interface TeamChatMessage {
 }
 
 // Notifications
-export interface Notification {
+export interface AppNotification {
     id: string;
     userId: string;
     type: 'mention' | 'task_assigned' | 'deal_won' | 'ticket_assigned' | 'ticket_reply' | 'chat_mention';
@@ -1017,9 +1017,9 @@ export interface CustomTheme {
 
 // FIX: Add missing NotificationContextType
 export interface NotificationContextType {
-    notifications: Notification[];
+    notifications: AppNotification[];
     unreadCount: number;
-    addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => void;
+    addNotification: (notification: Omit<AppNotification, 'id' | 'timestamp' | 'isRead'>) => void;
     markAsRead: (notificationId: string) => void;
     markAllAsRead: () => void;
 }

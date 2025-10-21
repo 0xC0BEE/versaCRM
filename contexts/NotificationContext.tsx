@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode, useMemo, useEffect, useCallback } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
-import { Notification, NotificationContextType } from '../types';
+import { AppNotification, NotificationContextType } from '../types';
 import { useAuth } from './AuthContext';
 import { useApp } from './AppContext';
 
@@ -10,7 +10,7 @@ interface NotificationProviderProps {
     children: ReactNode;
 }
 
-const mockNotifications: Omit<Notification, 'userId'>[] = [
+const mockNotifications: Omit<AppNotification, 'userId'>[] = [
   {
     id: 'notif_1',
     type: 'mention',
@@ -43,7 +43,7 @@ const mockNotifications: Omit<Notification, 'userId'>[] = [
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
     const { authenticatedUser } = useAuth();
     const { setCurrentPage, setInitialRecordLink } = useApp();
-    const [allNotifications, setAllNotifications] = useLocalStorage<Notification[]>('notifications', []);
+    const [allNotifications, setAllNotifications] = useLocalStorage<AppNotification[]>('notifications', []);
     
     // Request permission on mount
     useEffect(() => {
@@ -71,8 +71,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     
     const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
 
-    const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
-        const newNotification: Notification = {
+    const addNotification = useCallback((notification: Omit<AppNotification, 'id' | 'timestamp' | 'isRead'>) => {
+        const newNotification: AppNotification = {
             ...notification,
             id: `notif_${Date.now()}`,
             timestamp: new Date().toISOString(),

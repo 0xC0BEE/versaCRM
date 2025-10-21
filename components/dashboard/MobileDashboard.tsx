@@ -1,8 +1,10 @@
 
+
 import React, { useMemo, useState } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { Task, CalendarEvent, Notification } from '../../types';
+// FIX: Changed Notification to AppNotification to match the exported type.
+import { Task, Deal, CalendarEvent, AppNotification } from '../../types';
 import { format, isToday, isFuture } from 'date-fns';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Calendar, CheckSquare, Bell, Plus, StickyNote } from 'lucide-react';
@@ -11,7 +13,12 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import TaskEditModal from '../tasks/TaskEditModal';
 import { useApp } from '../../contexts/AppContext';
 
-const MobileDashboard: React.FC = () => {
+interface MobileDashboardProps {
+    isTabbedView?: boolean;
+    isMobile?: boolean;
+}
+
+const MobileDashboard: React.FC<MobileDashboardProps> = ({ isTabbedView = false, isMobile = false }) => {
     const { authenticatedUser } = useAuth();
     const { setCurrentPage } = useApp();
     const { tasksQuery, calendarEventsQuery } = useData();
