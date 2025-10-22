@@ -28,10 +28,7 @@ const GuidedTour: React.FC<GuidedTourProps> = ({ tourKey }) => {
             return;
         }
 
-        let intervalId: number | null = null;
-        let attempts = 0;
-
-        const findAndSetTarget = () => {
+        const updateTarget = () => {
             const targetElement = document.querySelector(currentStepConfig.selector);
             if (targetElement) {
                 const rect = targetElement.getBoundingClientRect();
@@ -41,37 +38,18 @@ const GuidedTour: React.FC<GuidedTourProps> = ({ tourKey }) => {
                     width: rect.width,
                     height: rect.height,
                 });
-                if (intervalId) {
-                    clearInterval(intervalId);
-                    intervalId = null;
-                }
-                return true;
+            } else {
+                setTargetRect(null); // Hide if element not found
             }
-            return false;
         };
-
-        // Poll for the element to appear
-        intervalId = window.setInterval(() => {
-            attempts++;
-            if (findAndSetTarget() || attempts > 50) { // Try for up to 5 seconds
-                if (intervalId) {
-                    clearInterval(intervalId);
-                    intervalId = null;
-                }
-                if (attempts > 50 && !findAndSetTarget()) {
-                    console.warn(`Tour element not found: ${currentStepConfig.selector}`);
-                    setTargetRect(null); // Hide if not found after timeout
-                }
-            }
-        }, 100);
-
-        window.addEventListener('resize', findAndSetTarget);
-
+        
+        // Use a timeout to allow the page to render before finding the element
+        const timer = setTimeout(updateTarget, 100);
+        
+        window.addEventListener('resize', updateTarget);
         return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
-            window.removeEventListener('resize', findAndSetTarget);
+            clearTimeout(timer);
+            window.removeEventListener('resize', updateTarget);
         };
     }, [isTourOpen, tourStep, currentStepConfig]);
     
@@ -119,6 +97,7 @@ const GuidedTour: React.FC<GuidedTourProps> = ({ tourKey }) => {
     const popoverPosition = {
         top: 0,
         left: 0,
+        transform: 'translate(0, 0)',
     };
 
     if (targetRect && popoverRef.current) {
@@ -167,10 +146,9 @@ const GuidedTour: React.FC<GuidedTourProps> = ({ tourKey }) => {
                 <div className="px-4 py-3 bg-hover-bg flex justify-between items-center">
                     <span className="text-xs text-text-secondary">{tourStep + 1} / {tourConfig.length}</span>
                     <div className="flex gap-2">
-                        <Button variant="link" size="sm" onClick={handleFinish}>Skip</Button>
                         {tourStep > 0 && <Button variant="secondary" size="sm" onClick={handleBack}>Back</Button>}
                         <Button size="sm" onClick={handleNext}>
-                            {tourStep === (tourConfig.length - 1) ? 'Finish' : 'Next'}
+                            {tourStep === tourConfig.length - 1 ? 'Finish' : 'Next'}
                         </Button>
                     </div>
                 </div>

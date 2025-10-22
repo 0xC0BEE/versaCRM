@@ -8,12 +8,6 @@ export const featureFlags: FeatureFlag[] = [
         isEnabled: true,
     },
     {
-        id: 'guidedTours',
-        name: 'Interactive Guided Tours',
-        description: 'Enables interactive product tours for new users.',
-        isEnabled: true,
-    },
-    {
         id: 'aiContentStudio',
         name: 'AI Content Studio',
         description: 'Enables the AI-powered content generation modal for creating marketing emails and landing page copy.',
