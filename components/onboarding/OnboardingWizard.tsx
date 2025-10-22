@@ -194,7 +194,14 @@ Generate a JSON object with three keys: 'customObjects', 'dealStages', and 'star
                 }
             });
 
-            const config = JSON.parse(response.text);
+            // The model can sometimes wrap the JSON in markdown. Robustly clean it before parsing.
+            let jsonText = response.text.trim();
+            if (jsonText.startsWith('```json')) {
+                jsonText = jsonText.substring(7, jsonText.length - 3).trim();
+            } else if (jsonText.startsWith('```')) {
+                jsonText = jsonText.substring(3, jsonText.length - 3).trim();
+            }
+            const config = JSON.parse(jsonText);
 
             if (config.customObjects) {
                 for (const obj of config.customObjects) {

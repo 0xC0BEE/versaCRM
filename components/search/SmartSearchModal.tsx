@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import { useData } from '../../contexts/DataContext';
@@ -100,7 +97,14 @@ Inventory Data: ${JSON.stringify(productsContext)}
             });
 
             // FIX: Access response text via .text property
-            const parsedResult = JSON.parse(response.text);
+            // The model can sometimes wrap the JSON in markdown. Robustly clean it before parsing.
+            let jsonText = response.text.trim();
+            if (jsonText.startsWith('```json')) {
+                jsonText = jsonText.substring(7, jsonText.length - 3).trim();
+            } else if (jsonText.startsWith('```')) {
+                jsonText = jsonText.substring(3, jsonText.length - 3).trim();
+            }
+            const parsedResult = JSON.parse(jsonText);
             setResult(parsedResult);
 
         } catch (error) {

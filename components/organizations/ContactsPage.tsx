@@ -178,7 +178,14 @@ const ContactsPage: React.FC<ContactsPageProps> = ({ isTabbedView = false }) => 
                     }
                 });
                 
-                const results = JSON.parse(response.text);
+                // The model can sometimes wrap the JSON in markdown. Robustly clean it before parsing.
+                let jsonText = response.text.trim();
+                if (jsonText.startsWith('```json')) {
+                    jsonText = jsonText.substring(7, jsonText.length - 3).trim();
+                } else if (jsonText.startsWith('```')) {
+                    jsonText = jsonText.substring(3, jsonText.length - 3).trim();
+                }
+                const results = JSON.parse(jsonText);
                 setHygieneResults(results);
                 setIsHygieneModalOpen(true);
             })(),

@@ -20,7 +20,7 @@ import { checkAndTriggerWorkflows } from './workflowService';
 import { recalculateAllScores, recalculateScoreForContact } from './leadScoringService';
 import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
-import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, AppNotification, ClientChecklist, SubscriptionPlan, Relationship, AudienceProfile, AnyContact, Deal, DealStage, Document, Product, CustomObjectRecord, CustomObjectDefinition, User, Project } from '../types';
+import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, AppNotification, ClientChecklist, SubscriptionPlan, Relationship, AudienceProfile, AnyContact, Deal, DealStage, Document, Product, CustomObjectRecord, CustomObjectDefinition, User, Project, AttributedDeal, Campaign } from '../types';
 import { GoogleGenAI, Type } from '@google/genai';
 import { addMonths } from 'date-fns';
 
@@ -156,6 +156,42 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
             localStorage.setItem('sandboxesList', JSON.stringify(sandboxes));
             return respond(null, 204);
         }
+    }
+
+    // --- CAMPAIGN ATTRIBUTION ---
+    const campaignAttributionMatch = path.match(/^\/api\/v1\/campaigns\/(.+)\/attribution$/);
+    if (campaignAttributionMatch && method === 'GET') {
+        const campaignId = campaignAttributionMatch[1];
+        const campaign = db.campaigns.find((c: Campaign) => c.id === campaignId);
+        if (!campaign) {
+            return respond({ message: 'Campaign not found' }, 404);
+        }
+
+        const enrolledContactIds = new Set<string>();
+        db.contacts.forEach((contact: AnyContact) => {
+            if (contact.campaignEnrollments?.some(e => e.campaignId === campaignId)) {
+                enrolledContactIds.add(contact.id);
+            }
+        });
+        
+        const wonStageId = db.dealStages.find((s: DealStage) => s.name === 'Won')?.id;
+        const attributedDealsData: AttributedDeal[] = db.deals
+            .filter((deal: Deal) => 
+                deal.stageId === wonStageId &&
+                enrolledContactIds.has(deal.contactId)
+            )
+            .map((deal: Deal) => {
+                const contact = db.contacts.find((c: AnyContact) => c.id === deal.contactId);
+                return {
+                    dealId: deal.id,
+                    dealName: deal.name,
+                    dealValue: deal.value,
+                    contactName: contact?.contactName || 'Unknown Contact',
+                    closedAt: deal.expectedCloseDate,
+                };
+            });
+
+        return respond(attributedDealsData);
     }
 
 
