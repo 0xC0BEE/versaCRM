@@ -28,7 +28,10 @@ const GuidedTour: React.FC<GuidedTourProps> = ({ tourKey }) => {
             return;
         }
 
-        const updateTarget = () => {
+        let intervalId: number | null = null;
+        let attempts = 0;
+
+        const findAndSetTarget = () => {
             const targetElement = document.querySelector(currentStepConfig.selector);
             if (targetElement) {
                 const rect = targetElement.getBoundingClientRect();
@@ -38,18 +41,37 @@ const GuidedTour: React.FC<GuidedTourProps> = ({ tourKey }) => {
                     width: rect.width,
                     height: rect.height,
                 });
-            } else {
-                setTargetRect(null); // Hide if element not found
+                if (intervalId) {
+                    clearInterval(intervalId);
+                    intervalId = null;
+                }
+                return true;
             }
+            return false;
         };
-        
-        // Use a timeout to allow the page to render before finding the element
-        const timer = setTimeout(updateTarget, 100);
-        
-        window.addEventListener('resize', updateTarget);
+
+        // Poll for the element to appear
+        intervalId = window.setInterval(() => {
+            attempts++;
+            if (findAndSetTarget() || attempts > 50) { // Try for up to 5 seconds
+                if (intervalId) {
+                    clearInterval(intervalId);
+                    intervalId = null;
+                }
+                if (attempts > 50) {
+                    console.warn(`Tour element not found: ${currentStepConfig.selector}`);
+                    setTargetRect(null); // Hide if not found after timeout
+                }
+            }
+        }, 100);
+
+        window.addEventListener('resize', findAndSetTarget);
+
         return () => {
-            clearTimeout(timer);
-            window.removeEventListener('resize', updateTarget);
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+            window.removeEventListener('resize', findAndSetTarget);
         };
     }, [isTourOpen, tourStep, currentStepConfig]);
     

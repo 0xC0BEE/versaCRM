@@ -48,20 +48,13 @@ interface AppContextType {
     currentEnvironment: string;
     setCurrentEnvironment: (env: string) => void;
     simulatedDate: Date;
-    setSimulatedDate: React.Dispatch<React.SetStateAction<Date>>;
+    setSimulatedDate: (date: Date) => void;
     
     // FIX: Add properties for deep-linking to KB articles
     initialKbArticleId: string | null;
     setInitialKbArticleId: (id: string | null) => void;
 
-    // Guided Tour
-    isTourOpen: boolean;
-    startTour: (tour: TourStep[]) => void;
-    closeTour: () => void;
-    tourStep: number;
-    setTourStep: React.Dispatch<React.SetStateAction<number>>;
-    tourConfig: TourStep[] | null;
-    openSidebarSection: (sectionName: string) => void;
+    // Sidebar State
     openSections: Record<string, boolean>;
     setOpenSections: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 
@@ -78,23 +71,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [currentPage, setCurrentPage] = useLocalStorage<Page>('page', 'Dashboard');
     const [currentIndustry, setCurrentIndustry] = useLocalStorage<Industry>('industry', 'Health');
     const [contactFilters, setContactFilters] = useLocalStorage<FilterCondition[]>('contact-filters', []);
-    const [dashboardDateRange, setDashboardDateRange] = useState({ start: new Date(new Date().setDate(new Date().getDate() - 30)), end: new Date() });
+    const [dashboardDateRange, setDashboardDateRange] = useState(() => ({ 
+        start: new Date(new Date().setDate(new Date().getDate() - 30)), 
+        end: new Date() 
+    }));
     const [isCallModalOpen, setIsCallModalOpen] = useState(false);
     const [callContact, setCallContact] = useState<AnyContact | null>(null);
     const [isLiveCopilotOpen, setIsLiveCopilotOpen] = useState(false);
     const [currentCustomObjectDefId, setCurrentCustomObjectDefId] = useLocalStorage<string | null>('current-custom-object-def-id', null);
     const [reportToEditId, setReportToEditId] = useState<string | null>(null);
     const [currentEnvironment, setCurrentEnvironment] = useLocalStorage<string>('currentEnvironment', 'production');
-    const [simulatedDate, setSimulatedDate] = useLocalStorage('simulatedDate', new Date());
+    
+    const [simulatedDateString, setSimulatedDateString] = useLocalStorage('simulatedDate', new Date().toISOString());
+
     const [currentDashboardId, setCurrentDashboardId] = useLocalStorage<string>('current-dashboard-id', 'dash_default');
     const [initialRecordLink, setInitialRecordLink] = useState<{ page: Page; recordId?: string } | null>(null);
     const [initialKbArticleId, setInitialKbArticleId] = useState<string | null>(null);
 
-    // Guided Tour & Sidebar State
-    const [tourConfig, setTourConfig] = useState<TourStep[] | null>(null);
-    const [tourStep, setTourStep] = useState(0);
-    const [openSections, setOpenSections] = useState<Record<string, boolean>>({ Core: true });
-    const isTourOpen = useMemo(() => tourConfig !== null, [tourConfig]);
+    // Sidebar State
+    // FIX: The use of an object literal `({ Core: true })` as the initial state for `useState`
+    // created a new object on every render. This caused an unstable context value and an infinite re-render loop,
+    // freezing the application on reload. The fix is to use the function initializer form `() => ({ Core: true })`,
+    // which ensures the initial state object is created only once.
+    const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({ Core: true }));
 
     // AI Tips Engine State
     const [actionsLog, setActionsLog] = useLocalStorage<UserAction[]>('user-actions-log', []);
@@ -105,25 +104,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // Keep the log from getting too big
         setActionsLog(prev => [newAction, ...prev.slice(0, 19)]);
     }, [setActionsLog]);
-
-    const startTour = useCallback((tour: TourStep[]) => {
-        setTourConfig(tour);
-        setTourStep(0);
-        // The first step of any tour should always define a page.
-        if (tour[0]?.page) {
-            setCurrentPage(tour[0].page);
-        }
-    }, [setCurrentPage]);
-
-    const closeTour = useCallback(() => {
-        setTourConfig(null);
-        setTourStep(0);
-    }, []);
-    
-    const openSidebarSection = useCallback((sectionName: string) => {
-        setOpenSections(prev => ({ ...prev, [sectionName]: true }));
-    }, []);
-
 
     const industryConfig = useMemo(() => industryConfigs[currentIndustry] || industryConfigs.Generic, [currentIndustry]);
     
@@ -145,16 +125,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return featureFlags[featureId] ?? defaultFlag?.isEnabled ?? false;
     }, [featureFlags]);
 
-    const handleSetCurrentIndustry = (industry: Industry) => {
+    const handleSetCurrentIndustry = useCallback((industry: Industry) => {
         setCurrentIndustry(industry);
-        window.location.reload();
-    }
+    }, [setCurrentIndustry]);
     
-    const handleSetCurrentEnvironment = (env: string) => {
+    const handleSetCurrentEnvironment = useCallback((env: string) => {
         setCurrentEnvironment(env);
-        window.location.reload();
-    }
+        window.location.reload(); // Reload is still needed for sandbox environment switching
+    }, [setCurrentEnvironment]);
 
+    const memoizedSimulatedDate = useMemo(() => new Date(simulatedDateString), [simulatedDateString]);
+    const setSimulatedDate = useCallback((date: Date) => {
+        setSimulatedDateString(date.toISOString());
+    }, [setSimulatedDateString]);
 
     const value: AppContextType = useMemo(() => ({
         currentPage,
@@ -179,22 +162,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         isFeatureEnabled,
         currentEnvironment,
         setCurrentEnvironment: handleSetCurrentEnvironment,
-        simulatedDate: new Date(simulatedDate),
-        setSimulatedDate: setSimulatedDate as any,
+        simulatedDate: memoizedSimulatedDate,
+        setSimulatedDate,
         currentDashboardId,
         setCurrentDashboardId,
         initialRecordLink,
         setInitialRecordLink,
         initialKbArticleId,
         setInitialKbArticleId,
-        // Tour & Sidebar
-        isTourOpen,
-        startTour,
-        closeTour,
-        tourStep,
-        setTourStep,
-        tourConfig,
-        openSidebarSection,
+        // Sidebar
         openSections,
         setOpenSections,
         // AI Tips
@@ -202,15 +178,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         logUserAction,
         activeAiTip,
         setActiveAiTip,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }), [
-        currentPage, setCurrentPage, currentIndustry, industryConfig, 
-        contactFilters, setContactFilters, dashboardDateRange, 
-        isCallModalOpen, callContact, isLiveCopilotOpen, 
-        currentCustomObjectDefId, reportToEditId, isFeatureEnabled,
-        currentEnvironment, simulatedDate, currentDashboardId,
-        initialRecordLink, initialKbArticleId,
-        isTourOpen, startTour, closeTour, tourStep, tourConfig, openSidebarSection, openSections,
+        currentPage, setCurrentPage, currentIndustry, handleSetCurrentIndustry, industryConfig, 
+        contactFilters, setContactFilters, dashboardDateRange, setDashboardDateRange, 
+        isCallModalOpen, setIsCallModalOpen, callContact, setCallContact, isLiveCopilotOpen, setIsLiveCopilotOpen, 
+        currentCustomObjectDefId, setCurrentCustomObjectDefId, reportToEditId, setReportToEditId, isFeatureEnabled,
+        currentEnvironment, handleSetCurrentEnvironment, memoizedSimulatedDate, setSimulatedDate, currentDashboardId, setCurrentDashboardId,
+        initialRecordLink, setInitialRecordLink, initialKbArticleId, setInitialKbArticleId,
+        openSections, setOpenSections,
         actionsLog, logUserAction, activeAiTip, setActiveAiTip
     ]);
 

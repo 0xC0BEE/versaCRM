@@ -5,7 +5,7 @@ export const featureFlags: FeatureFlag[] = [
         id: 'aiOnboardingWizard',
         name: 'AI-Powered "5-Minute CRM" Onboarding',
         description: 'Enables the AI-driven setup wizard for new organizations to automatically configure their CRM.',
-        isEnabled: true,
+        isEnabled: false,
     },
     {
         id: 'aiContentStudio',
