@@ -4,6 +4,7 @@ import useLocalStorage from '../hooks/useLocalStorage';
 import { industryConfigs } from '../config/industryConfig';
 import { featureFlags as defaultFlags } from '../config/featureFlags';
 import { AnyContact } from '../types';
+import { adminTourSteps, teamTourSteps } from '../config/tourConfig';
 
 interface AppContextType {
     // Page navigation
@@ -58,6 +59,15 @@ interface AppContextType {
     openSections: Record<string, boolean>;
     setOpenSections: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 
+    // Guided Tour
+    isTourOpen: boolean;
+    startTour: (tourType: 'admin' | 'team') => void;
+    closeTour: () => void;
+    tourStep: number;
+    setTourStep: (step: number) => void;
+    tourConfig: TourStep[] | null;
+    openSidebarSection: (section: string) => void;
+
     // AI Tips Engine
     actionsLog: UserAction[];
     logUserAction: (type: string, payload: any) => void;
@@ -89,11 +99,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [initialKbArticleId, setInitialKbArticleId] = useState<string | null>(null);
 
     // Sidebar State
-    // FIX: The use of an object literal `({ Core: true })` as the initial state for `useState`
-    // created a new object on every render. This caused an unstable context value and an infinite re-render loop,
-    // freezing the application on reload. The fix is to use the function initializer form `() => ({ Core: true })`,
-    // which ensures the initial state object is created only once.
     const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({ Core: true }));
+
+    // Guided Tour State
+    const [isTourOpen, setIsTourOpen] = useState(false);
+    const [tourStep, setTourStep] = useState(0);
+    const [tourConfig, setTourConfig] = useState<TourStep[] | null>(null);
 
     // AI Tips Engine State
     const [actionsLog, setActionsLog] = useLocalStorage<UserAction[]>('user-actions-log', []);
@@ -124,6 +135,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const defaultFlag = defaultFlags.find(f => f.id === featureId);
         return featureFlags[featureId] ?? defaultFlag?.isEnabled ?? false;
     }, [featureFlags]);
+    
+    const startTour = useCallback((tourType: 'admin' | 'team') => {
+        const config = tourType === 'admin' ? adminTourSteps : teamTourSteps;
+        setTourConfig(config);
+        setTourStep(0);
+        
+        const firstStep = config[0];
+        if (firstStep.page) {
+            setCurrentPage(firstStep.page);
+        }
+        if (firstStep.openSection) {
+            setOpenSections(prev => ({ ...prev, [firstStep.openSection!]: true }));
+        }
+
+        setIsTourOpen(true);
+    }, [setCurrentPage, setOpenSections]);
+
+    const closeTour = useCallback(() => {
+        setIsTourOpen(false);
+        setTourConfig(null);
+        setTourStep(0);
+    }, []);
+    
+    const openSidebarSection = useCallback((section: string) => {
+        setOpenSections(prev => ({...prev, [section]: true }));
+    }, [setOpenSections]);
 
     const handleSetCurrentIndustry = useCallback((industry: Industry) => {
         setCurrentIndustry(industry);
@@ -173,20 +210,50 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // Sidebar
         openSections,
         setOpenSections,
+        // Guided Tour
+        isTourOpen,
+        startTour,
+        closeTour,
+        tourStep,
+        setTourStep,
+        tourConfig,
+        openSidebarSection,
         // AI Tips
         actionsLog,
         logUserAction,
         activeAiTip,
         setActiveAiTip,
+    // FIX: Removed stable state setters from the useMemo dependency array. React guarantees that state setter functions have a stable identity and do not need to be included in dependency arrays. Their inclusion was causing a build error.
     }), [
-        currentPage, setCurrentPage, currentIndustry, handleSetCurrentIndustry, industryConfig, 
-        contactFilters, setContactFilters, dashboardDateRange, setDashboardDateRange, 
-        isCallModalOpen, setIsCallModalOpen, callContact, setCallContact, isLiveCopilotOpen, setIsLiveCopilotOpen, 
-        currentCustomObjectDefId, setCurrentCustomObjectDefId, reportToEditId, setReportToEditId, isFeatureEnabled,
-        currentEnvironment, handleSetCurrentEnvironment, memoizedSimulatedDate, setSimulatedDate, currentDashboardId, setCurrentDashboardId,
-        initialRecordLink, setInitialRecordLink, initialKbArticleId, setInitialKbArticleId,
-        openSections, setOpenSections,
-        actionsLog, logUserAction, activeAiTip, setActiveAiTip
+        currentPage,
+        currentIndustry,
+        handleSetCurrentIndustry,
+        industryConfig,
+        contactFilters,
+        dashboardDateRange,
+        isCallModalOpen,
+        callContact,
+        isLiveCopilotOpen,
+        currentCustomObjectDefId,
+        reportToEditId,
+        isFeatureEnabled,
+        currentEnvironment,
+        handleSetCurrentEnvironment,
+        memoizedSimulatedDate,
+        setSimulatedDate,
+        currentDashboardId,
+        initialRecordLink,
+        initialKbArticleId,
+        openSections,
+        isTourOpen,
+        startTour,
+        closeTour,
+        tourStep,
+        tourConfig,
+        openSidebarSection,
+        actionsLog,
+        logUserAction,
+        activeAiTip,
     ]);
 
     return (

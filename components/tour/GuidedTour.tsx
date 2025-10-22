@@ -58,7 +58,7 @@ const GuidedTour: React.FC<GuidedTourProps> = ({ tourKey }) => {
                     clearInterval(intervalId);
                     intervalId = null;
                 }
-                if (attempts > 50) {
+                if (attempts > 50 && !findAndSetTarget()) {
                     console.warn(`Tour element not found: ${currentStepConfig.selector}`);
                     setTargetRect(null); // Hide if not found after timeout
                 }
@@ -119,7 +119,6 @@ const GuidedTour: React.FC<GuidedTourProps> = ({ tourKey }) => {
     const popoverPosition = {
         top: 0,
         left: 0,
-        transform: 'translate(0, 0)',
     };
 
     if (targetRect && popoverRef.current) {
@@ -168,9 +167,10 @@ const GuidedTour: React.FC<GuidedTourProps> = ({ tourKey }) => {
                 <div className="px-4 py-3 bg-hover-bg flex justify-between items-center">
                     <span className="text-xs text-text-secondary">{tourStep + 1} / {tourConfig.length}</span>
                     <div className="flex gap-2">
+                        <Button variant="link" size="sm" onClick={handleFinish}>Skip</Button>
                         {tourStep > 0 && <Button variant="secondary" size="sm" onClick={handleBack}>Back</Button>}
                         <Button size="sm" onClick={handleNext}>
-                            {tourStep === tourConfig.length - 1 ? 'Finish' : 'Next'}
+                            {tourStep === (tourConfig.length - 1) ? 'Finish' : 'Next'}
                         </Button>
                     </div>
                 </div>
