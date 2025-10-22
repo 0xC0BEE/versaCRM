@@ -45,6 +45,7 @@ const DocumentGenerationModal: React.FC<DocumentGenerationModalProps> = ({ isOpe
         const previewElement = document.getElementById('doc-preview-content');
         if (previewElement) {
             const htmlContent = `
+                <!DOCTYPE html>
                 <html>
                     <head>
                         <title>${selectedTemplate?.name || 'Document'}</title>

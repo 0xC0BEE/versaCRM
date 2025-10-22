@@ -4,6 +4,7 @@ import useLocalStorage from '../hooks/useLocalStorage';
 import { industryConfigs } from '../config/industryConfig';
 import { featureFlags as defaultFlags } from '../config/featureFlags';
 import { AnyContact } from '../types';
+import { adminTourSteps, teamTourSteps } from '../config/tourConfig';
 
 interface AppContextType {
     // Page navigation
@@ -48,22 +49,24 @@ interface AppContextType {
     currentEnvironment: string;
     setCurrentEnvironment: (env: string) => void;
     simulatedDate: Date;
-    setSimulatedDate: React.Dispatch<React.SetStateAction<Date>>;
+    setSimulatedDate: (date: Date) => void;
     
     // FIX: Add properties for deep-linking to KB articles
     initialKbArticleId: string | null;
     setInitialKbArticleId: (id: string | null) => void;
 
-    // Guided Tour
-    isTourOpen: boolean;
-    startTour: (tour: TourStep[]) => void;
-    closeTour: () => void;
-    tourStep: number;
-    setTourStep: React.Dispatch<React.SetStateAction<number>>;
-    tourConfig: TourStep[] | null;
-    openSidebarSection: (sectionName: string) => void;
+    // Sidebar State
     openSections: Record<string, boolean>;
     setOpenSections: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+
+    // Guided Tour
+    isTourOpen: boolean;
+    startTour: (tourType: 'admin' | 'team') => void;
+    closeTour: () => void;
+    tourStep: number;
+    setTourStep: (step: number) => void;
+    tourConfig: TourStep[] | null;
+    openSidebarSection: (section: string) => void;
 
     // AI Tips Engine
     actionsLog: UserAction[];
@@ -78,23 +81,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [currentPage, setCurrentPage] = useLocalStorage<Page>('page', 'Dashboard');
     const [currentIndustry, setCurrentIndustry] = useLocalStorage<Industry>('industry', 'Health');
     const [contactFilters, setContactFilters] = useLocalStorage<FilterCondition[]>('contact-filters', []);
-    const [dashboardDateRange, setDashboardDateRange] = useState({ start: new Date(new Date().setDate(new Date().getDate() - 30)), end: new Date() });
+    const [dashboardDateRange, setDashboardDateRange] = useState(() => ({ 
+        start: new Date(new Date().setDate(new Date().getDate() - 30)), 
+        end: new Date() 
+    }));
     const [isCallModalOpen, setIsCallModalOpen] = useState(false);
     const [callContact, setCallContact] = useState<AnyContact | null>(null);
     const [isLiveCopilotOpen, setIsLiveCopilotOpen] = useState(false);
     const [currentCustomObjectDefId, setCurrentCustomObjectDefId] = useLocalStorage<string | null>('current-custom-object-def-id', null);
     const [reportToEditId, setReportToEditId] = useState<string | null>(null);
     const [currentEnvironment, setCurrentEnvironment] = useLocalStorage<string>('currentEnvironment', 'production');
-    const [simulatedDate, setSimulatedDate] = useLocalStorage('simulatedDate', new Date());
+    
+    const [simulatedDateString, setSimulatedDateString] = useLocalStorage('simulatedDate', new Date().toISOString());
+
     const [currentDashboardId, setCurrentDashboardId] = useLocalStorage<string>('current-dashboard-id', 'dash_default');
     const [initialRecordLink, setInitialRecordLink] = useState<{ page: Page; recordId?: string } | null>(null);
     const [initialKbArticleId, setInitialKbArticleId] = useState<string | null>(null);
 
-    // Guided Tour & Sidebar State
-    const [tourConfig, setTourConfig] = useState<TourStep[] | null>(null);
+    // Sidebar State
+    const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => ({ Core: true }));
+
+    // Guided Tour State
+    const [isTourOpen, setIsTourOpen] = useState(false);
     const [tourStep, setTourStep] = useState(0);
-    const [openSections, setOpenSections] = useState<Record<string, boolean>>({ Core: true });
-    const isTourOpen = useMemo(() => tourConfig !== null, [tourConfig]);
+    const [tourConfig, setTourConfig] = useState<TourStep[] | null>(null);
 
     // AI Tips Engine State
     const [actionsLog, setActionsLog] = useLocalStorage<UserAction[]>('user-actions-log', []);
@@ -105,25 +115,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // Keep the log from getting too big
         setActionsLog(prev => [newAction, ...prev.slice(0, 19)]);
     }, [setActionsLog]);
-
-    const startTour = useCallback((tour: TourStep[]) => {
-        setTourConfig(tour);
-        setTourStep(0);
-        // The first step of any tour should always define a page.
-        if (tour[0]?.page) {
-            setCurrentPage(tour[0].page);
-        }
-    }, [setCurrentPage]);
-
-    const closeTour = useCallback(() => {
-        setTourConfig(null);
-        setTourStep(0);
-    }, []);
-    
-    const openSidebarSection = useCallback((sectionName: string) => {
-        setOpenSections(prev => ({ ...prev, [sectionName]: true }));
-    }, []);
-
 
     const industryConfig = useMemo(() => industryConfigs[currentIndustry] || industryConfigs.Generic, [currentIndustry]);
     
@@ -144,17 +135,46 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const defaultFlag = defaultFlags.find(f => f.id === featureId);
         return featureFlags[featureId] ?? defaultFlag?.isEnabled ?? false;
     }, [featureFlags]);
-
-    const handleSetCurrentIndustry = (industry: Industry) => {
-        setCurrentIndustry(industry);
-        window.location.reload();
-    }
     
-    const handleSetCurrentEnvironment = (env: string) => {
-        setCurrentEnvironment(env);
-        window.location.reload();
-    }
+    const startTour = useCallback((tourType: 'admin' | 'team') => {
+        const config = tourType === 'admin' ? adminTourSteps : teamTourSteps;
+        setTourConfig(config);
+        setTourStep(0);
+        
+        const firstStep = config[0];
+        if (firstStep.page) {
+            setCurrentPage(firstStep.page);
+        }
+        if (firstStep.openSection) {
+            setOpenSections(prev => ({ ...prev, [firstStep.openSection!]: true }));
+        }
 
+        setIsTourOpen(true);
+    }, [setCurrentPage, setOpenSections]);
+
+    const closeTour = useCallback(() => {
+        setIsTourOpen(false);
+        setTourConfig(null);
+        setTourStep(0);
+    }, []);
+    
+    const openSidebarSection = useCallback((section: string) => {
+        setOpenSections(prev => ({...prev, [section]: true }));
+    }, [setOpenSections]);
+
+    const handleSetCurrentIndustry = useCallback((industry: Industry) => {
+        setCurrentIndustry(industry);
+    }, [setCurrentIndustry]);
+    
+    const handleSetCurrentEnvironment = useCallback((env: string) => {
+        setCurrentEnvironment(env);
+        window.location.reload(); // Reload is still needed for sandbox environment switching
+    }, [setCurrentEnvironment]);
+
+    const memoizedSimulatedDate = useMemo(() => new Date(simulatedDateString), [simulatedDateString]);
+    const setSimulatedDate = useCallback((date: Date) => {
+        setSimulatedDateString(date.toISOString());
+    }, [setSimulatedDateString]);
 
     const value: AppContextType = useMemo(() => ({
         currentPage,
@@ -179,15 +199,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         isFeatureEnabled,
         currentEnvironment,
         setCurrentEnvironment: handleSetCurrentEnvironment,
-        simulatedDate: new Date(simulatedDate),
-        setSimulatedDate: setSimulatedDate as any,
+        simulatedDate: memoizedSimulatedDate,
+        setSimulatedDate,
         currentDashboardId,
         setCurrentDashboardId,
         initialRecordLink,
         setInitialRecordLink,
         initialKbArticleId,
         setInitialKbArticleId,
-        // Tour & Sidebar
+        // Sidebar
+        openSections,
+        setOpenSections,
+        // Guided Tour
         isTourOpen,
         startTour,
         closeTour,
@@ -195,23 +218,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setTourStep,
         tourConfig,
         openSidebarSection,
-        openSections,
-        setOpenSections,
         // AI Tips
         actionsLog,
         logUserAction,
         activeAiTip,
         setActiveAiTip,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // FIX: Removed stable state setters from the useMemo dependency array. React guarantees that state setter functions have a stable identity and do not need to be included in dependency arrays. Their inclusion was causing a build error.
     }), [
-        currentPage, setCurrentPage, currentIndustry, industryConfig, 
-        contactFilters, setContactFilters, dashboardDateRange, 
-        isCallModalOpen, callContact, isLiveCopilotOpen, 
-        currentCustomObjectDefId, reportToEditId, isFeatureEnabled,
-        currentEnvironment, simulatedDate, currentDashboardId,
-        initialRecordLink, initialKbArticleId,
-        isTourOpen, startTour, closeTour, tourStep, tourConfig, openSidebarSection, openSections,
-        actionsLog, logUserAction, activeAiTip, setActiveAiTip
+        currentPage,
+        currentIndustry,
+        handleSetCurrentIndustry,
+        industryConfig,
+        contactFilters,
+        dashboardDateRange,
+        isCallModalOpen,
+        callContact,
+        isLiveCopilotOpen,
+        currentCustomObjectDefId,
+        reportToEditId,
+        isFeatureEnabled,
+        currentEnvironment,
+        handleSetCurrentEnvironment,
+        memoizedSimulatedDate,
+        setSimulatedDate,
+        currentDashboardId,
+        initialRecordLink,
+        initialKbArticleId,
+        openSections,
+        isTourOpen,
+        startTour,
+        closeTour,
+        tourStep,
+        tourConfig,
+        openSidebarSection,
+        actionsLog,
+        logUserAction,
+        activeAiTip,
     ]);
 
     return (

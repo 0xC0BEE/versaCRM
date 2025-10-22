@@ -30,7 +30,6 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ organization }) => 
     const [isLoading, setIsLoading] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState('');
     const isSubmittingRef = useRef(false);
-    const hasSkippedRef = useRef(false);
 
     const [featureSuggestions, setFeatureSuggestions] = useState<(FeatureFlag & { reason: string })[]>([]);
     const [enabledFeatures, setEnabledFeatures] = useState<Record<string, boolean>>({});
@@ -55,10 +54,10 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ organization }) => 
             }
         });
     }, [organization, updateOrganizationMutation, queryClient]);
-
+    
+    // This effect handles the case where the AI wizard is disabled by a feature flag
     useEffect(() => {
-        if (!isFeatureEnabled('aiOnboardingWizard') && !hasSkippedRef.current) {
-            hasSkippedRef.current = true; // Set guard immediately
+        if (!isFeatureEnabled('aiOnboardingWizard')) {
             handleSkip();
         }
     }, [isFeatureEnabled, handleSkip]);
@@ -312,11 +311,12 @@ Generate a JSON object with three keys: 'customObjects', 'dealStages', and 'star
         }
     };
 
-    if (!isFeatureEnabled('aiOnboardingWizard') && step !== 8) {
+    // If the feature flag is disabled, this component will trigger the skip and then essentially become a loading screen.
+    if (!isFeatureEnabled('aiOnboardingWizard')) {
         return (
-             <div className="fixed inset-0 bg-bg-primary z-50 flex items-center justify-center">
+            <div className="fixed inset-0 bg-bg-primary z-50 flex items-center justify-center">
                 <div className="bg-card-bg p-8 rounded-lg shadow-lg w-full max-w-2xl border border-border-subtle">
-                    {renderStep()}
+                   {renderStep()}
                 </div>
             </div>
         );
