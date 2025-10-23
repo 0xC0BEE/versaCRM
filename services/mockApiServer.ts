@@ -188,11 +188,13 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     // --- DATA MIGRATION ---
     if (path === '/api/v1/data-migration/export-all' && method === 'GET') {
         const contactMap = new Map(db.contacts.map((c: AnyContact) => [c.id, c.email]));
+        const dealStageMap = new Map(db.dealStages.map((s: DealStage) => [s.id, s.name]));
+        const projectPhaseMap = new Map(db.projectPhases.map((p: ProjectPhase) => [p.id, p.name]));
         
         const contactsTemplate = db.contacts.map((c: AnyContact) => ({ contactName: c.contactName, email: c.email, phone: c.phone, status: c.status, leadSource: c.leadSource }));
         const productsTemplate = db.products.map((p: Product) => ({ name: p.name, sku: p.sku, category: p.category, description: p.description || '', costPrice: p.costPrice, salePrice: p.salePrice, stockLevel: p.stockLevel }));
-        const dealsTemplate = db.deals.map((d: Deal) => ({ name: d.name, value: d.value, stageId: d.stageId, contactEmail: contactMap.get(d.contactId) || '', expectedCloseDate: d.expectedCloseDate }));
-        const projectsTemplate = db.projects.map((p: Project) => ({ name: p.name, phaseId: p.phaseId, contactEmail: contactMap.get(p.contactId) || '', assignedToId: p.assignedToId || '' }));
+        const dealsTemplate = db.deals.map((d: Deal) => ({ name: d.name, value: d.value, stageName: dealStageMap.get(d.stageId) || '', contactEmail: contactMap.get(d.contactId) || '', expectedCloseDate: d.expectedCloseDate }));
+        const projectsTemplate = db.projects.map((p: Project) => ({ name: p.name, phaseName: projectPhaseMap.get(p.phaseId) || '', contactEmail: contactMap.get(p.contactId) || '', assignedToId: p.assignedToId || '' }));
         const ticketsTemplate = db.tickets.map((t: Ticket) => ({ subject: t.subject, description: t.description, status: t.status, priority: t.priority, contactEmail: contactMap.get(t.contactId) || '', assignedToId: t.assignedToId || '' }));
         const tasksTemplate = db.tasks.map((t: Task) => ({ title: t.title, dueDate: t.dueDate, contactEmail: contactMap.get(t.contactId) || '', assignedToId: t.userId || '' }));
 
@@ -208,8 +210,13 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
 
     if (path === '/api/v1/data-migration/import' && method === 'POST') {
         const { contactsCsv, dealsCsv, productsCsv, projectsCsv, ticketsCsv, tasksCsv } = body;
-        const summary = { contactsCreated: 0, dealsCreated: 0, productsCreated: 0, projectsCreated: 0, ticketsCreated: 0, tasksCreated: 0, contactsSkipped: 0, dealsSkipped: 0 };
+        const summary = { contactsCreated: 0, dealsCreated: 0, productsCreated: 0, projectsCreated: 0, ticketsCreated: 0, tasksCreated: 0, contactsSkipped: 0, dealsSkipped: 0, projectsSkipped: 0 };
         const emailToNewIdMap = new Map<string, string>();
+
+        const dealStageNameMap = new Map(db.dealStages.map((s: DealStage) => [s.name.toLowerCase(), s.id]));
+        const projectPhaseNameMap = new Map(db.projectPhases.map((p: ProjectPhase) => [p.name.toLowerCase(), p.id]));
+        const firstDealStageId = db.dealStages.sort((a: DealStage, b: DealStage) => a.order - b.order)[0]?.id;
+        const firstProjectPhaseId = db.projectPhases.sort((a: ProjectPhase, b: ProjectPhase) => a.order - b.order)[0]?.id;
 
         if (productsCsv) {
             const newProducts = parseCsv(productsCsv);
@@ -265,10 +272,18 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
             for (const dealData of newDeals) {
                 const contactId = findContactIdByEmail(dealData.contactEmail);
                 if (!contactId) { summary.dealsSkipped++; continue; }
+                
+                const stageId = dealData.stageName ? dealStageNameMap.get(dealData.stageName.toLowerCase()) : firstDealStageId;
+                if (!stageId) { summary.dealsSkipped++; continue; }
+
                 const newDeal: Omit<Deal, 'id'> = {
                     organizationId: 'org_1',
-                    name: dealData.name, value: parseFloat(dealData.value) || 0, stageId: dealData.stageId,
-                    contactId: contactId, expectedCloseDate: dealData.expectedCloseDate || new Date().toISOString(), createdAt: new Date().toISOString(),
+                    name: dealData.name, 
+                    value: parseFloat(dealData.value) || 0, 
+                    stageId: stageId,
+                    contactId: contactId, 
+                    expectedCloseDate: dealData.expectedCloseDate || new Date().toISOString(), 
+                    createdAt: new Date().toISOString(),
                 };
                 db.deals.push({ ...newDeal, id: `deal_${Date.now()}_${Math.random()}`});
                 summary.dealsCreated++;
@@ -279,10 +294,18 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
             const newProjects = parseCsv(projectsCsv);
             for (const projectData of newProjects) {
                 const contactId = findContactIdByEmail(projectData.contactEmail);
-                if (!contactId) continue;
+                if (!contactId) { summary.projectsSkipped++; continue; }
+                
+                const phaseId = projectData.phaseName ? projectPhaseNameMap.get(projectData.phaseName.toLowerCase()) : firstProjectPhaseId;
+                if (!phaseId) { summary.projectsSkipped++; continue; }
+
                 const newProject: Omit<Project, 'id'> = {
-                     organizationId: 'org_1', name: projectData.name, phaseId: projectData.phaseId, contactId: contactId,
-                     createdAt: new Date().toISOString(), assignedToId: projectData.assignedToId || undefined
+                     organizationId: 'org_1', 
+                     name: projectData.name, 
+                     phaseId: phaseId,
+                     contactId: contactId,
+                     createdAt: new Date().toISOString(), 
+                     assignedToId: projectData.assignedToId || undefined
                 };
                 db.projects.push({...newProject, id: `project_${Date.now()}_${Math.random()}`});
                 summary.projectsCreated++;
@@ -584,7 +607,8 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     // --- GENERIC CATCH-ALL FOR DEMO PURPOSES ---
     // This is a simplified pattern to handle all basic CRUD operations.
     // A real mock server would have more specific logic for each endpoint.
-    const resourceMatch = path.match(/^\/api\/v1\/([a-z-]+)(?:\/([a-z0-9_-]+))?/);
+    // FIX: Updated the regex to include the '.' character to correctly match IDs generated by the import function.
+    const resourceMatch = path.match(/^\/api\/v1\/([a-z-]+)(?:\/([a-z0-9_.-]+))?/);
     if (resourceMatch) {
         const resource = resourceMatch[1];
         const resourceId = resourceMatch[2];

@@ -88,8 +88,9 @@ const DataImportModal: React.FC<DataImportModalProps> = ({ isOpen, onClose, impo
                         </p>
                         <ul className="list-disc list-inside bg-hover-bg p-4 rounded-md">
                             {Object.entries(importData).map(([fileName, content]) => (
-                                // FIX: Cast `content` to string. For some reason, TypeScript is losing the type information from the `importData` prop and inferring it as `unknown`, causing a type error. This explicit cast resolves the issue.
-                                <li key={fileName}>{countRows(content as string)} records from {fileName}</li>
+                                // FIX: Explicitly convert `content` to a string. The type of `content` can be inferred as `unknown`
+                                // when iterating over the importData object, so this conversion prevents a type error.
+                                <li key={fileName}>{countRows(String(content))} records from {fileName}</li>
                             ))}
                         </ul>
                          <div className="mt-6 flex justify-end space-x-2">

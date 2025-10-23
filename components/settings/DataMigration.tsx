@@ -23,17 +23,17 @@ const DataMigration: React.FC = () => {
     const handleExport = async () => {
         toast.loading("Generating template files...", { id: 'export-toast' });
         try {
-            // FIX: The `exportAllData` function is incorrectly typed to return a single Blob,
-            // but the mock API returns an object where keys are filenames and values are CSV strings.
-            // Casting the result to its actual type resolves the downstream type error.
-            const filesToExport = await exportAllData() as unknown as { [key: string]: string };
+            // FIX: Removed an unnecessary type cast on `exportAllData` after correcting its return type in the DataContext. The function now correctly returns a promise resolving to an object of file contents.
+            const filesToExport = await exportAllData();
 
             let delay = 0;
             for (const filename in filesToExport) {
                 if (Object.prototype.hasOwnProperty.call(filesToExport, filename)) {
                     setTimeout(() => {
                         const csvContent = filesToExport[filename];
-                        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                        // FIX: Explicitly convert csvContent to a string to ensure it's a valid BlobPart,
+                        // as its type can be inferred as 'unknown' from the API response.
+                        const blob = new Blob([String(csvContent)], { type: 'text/csv;charset=utf-8;' });
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;

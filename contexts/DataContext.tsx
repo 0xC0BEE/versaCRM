@@ -75,7 +75,8 @@ interface DataContextType {
     systemAuditLogsQuery: any;
     audienceProfilesQuery: any;
     dataHygieneQuery: any;
-    exportAllData: () => Promise<Blob>;
+    // FIX: Corrected the type definition for `exportAllData` to reflect that it returns an object of file contents, not a single Blob. This resolves a TypeScript error in downstream components.
+    exportAllData: () => Promise<{ [key: string]: string }>;
 
     // Mutations
     createOrganizationMutation: any;
@@ -493,12 +494,17 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     const importDataMutation = useMutation({
         mutationFn: (data: { [key: string]: string }) => apiClient.importData(data),
         onSuccess: () => {
+            // Invalidate all queries that could be affected by new data
             queryClient.invalidateQueries({ queryKey: ['contacts'] });
             queryClient.invalidateQueries({ queryKey: ['deals'] });
             queryClient.invalidateQueries({ queryKey: ['projects'] });
             queryClient.invalidateQueries({ queryKey: ['tickets'] });
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
             queryClient.invalidateQueries({ queryKey: ['products'] });
+            
+            // Invalidate aggregate/dashboard queries
+            queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
+            queryClient.invalidateQueries({ queryKey: ['dataHygiene'] });
         }
     });
 
