@@ -20,10 +20,56 @@ import { checkAndTriggerWorkflows } from './workflowService';
 import { recalculateAllScores, recalculateScoreForContact } from './leadScoringService';
 import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
-import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, AppNotification, ClientChecklist, SubscriptionPlan, Relationship, AudienceProfile, AnyContact, Deal, DealStage, Document, Product, CustomObjectRecord, CustomObjectDefinition, User, Project, AttributedDeal, Campaign, ProjectPhase } from '../types';
+import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, AppNotification, ClientChecklist, SubscriptionPlan, Relationship, AudienceProfile, AnyContact, Deal, DealStage, Document, Product, CustomObjectRecord, CustomObjectDefinition, User, Project, AttributedDeal, Campaign, ProjectPhase, Task, Ticket } from '../types';
 import { GoogleGenAI, Type } from '@google/genai';
 // FIX: Imported 'addDays' from date-fns to resolve reference error.
 import { addMonths, addDays } from 'date-fns';
+
+// --- CSV Helper Functions (copied from utils/export.ts to avoid import issues in service) ---
+function flattenObject(obj: any, parent: string = '', res: { [key: string]: any } = {}): { [key: string]: any } {
+  for (let key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const propName = parent ? parent + '.' + key : key;
+      if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+        flattenObject(obj[key], propName, res);
+      } else {
+        res[propName] = obj[key];
+      }
+    }
+  }
+  return res;
+}
+
+function convertToCSV(data: any[]): string {
+    if (!data || data.length === 0) {
+        return '';
+    }
+
+    const flattenedData = data.map(row => flattenObject(row));
+    
+    // Get all unique headers from all rows
+    const allHeaders = new Set<string>();
+    flattenedData.forEach(row => {
+        Object.keys(row).forEach(key => allHeaders.add(key));
+    });
+    const headers = Array.from(allHeaders);
+
+    const csvRows = [headers.join(',')];
+
+    for (const row of flattenedData) {
+        const values = headers.map(header => {
+            const val = row[header] === null || row[header] === undefined ? '' : String(row[header]);
+            const escaped = val.replace(/"/g, '""');
+            if (escaped.includes(',') || escaped.includes('"') || escaped.includes('\n')) {
+                 return `"${escaped}"`;
+            }
+            return escaped;
+        });
+        csvRows.push(values.join(','));
+    }
+
+    return csvRows.join('\n');
+}
 
 // Function to get a fresh, deep-copied initial state of the database.
 // This ensures that every session starts with the full set of mock data.
@@ -100,6 +146,26 @@ const respond = (data: any, status = 200) => {
     });
 };
 
+const parseCsv = (csv: string): Record<string, any>[] => {
+  const lines = csv.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  const headers = lines[0].split(',').map(h => h.trim());
+  const rows = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    // This is a simplified parser and won't handle commas within quoted fields.
+    const values = lines[i].split(',');
+    const obj: Record<string, any> = {};
+    for (let j = 0; j < headers.length; j++) {
+      obj[headers[j]] = values[j] ? values[j].trim() : '';
+    }
+    rows.push(obj);
+  }
+  return rows;
+};
+
+
 const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<Response> => {
     const db = getActiveDb();
     const urlString = url.toString();
@@ -114,9 +180,143 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     // --- AUTH ---
     if (path === '/api/v1/auth/login' && method === 'POST') {
         const { email } = body;
-        const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        const user = db.users.find((u: User) => u.email.toLowerCase() === email.toLowerCase());
         if (user) return respond(user);
         return respond({ message: 'Invalid credentials' }, 401);
+    }
+
+    // --- DATA MIGRATION ---
+    if (path === '/api/v1/data-migration/export-all' && method === 'GET') {
+        const contactMap = new Map(db.contacts.map((c: AnyContact) => [c.id, c.email]));
+        
+        const contactsTemplate = db.contacts.map((c: AnyContact) => ({ contactName: c.contactName, email: c.email, phone: c.phone, status: c.status, leadSource: c.leadSource }));
+        const productsTemplate = db.products.map((p: Product) => ({ name: p.name, sku: p.sku, category: p.category, description: p.description || '', costPrice: p.costPrice, salePrice: p.salePrice, stockLevel: p.stockLevel }));
+        const dealsTemplate = db.deals.map((d: Deal) => ({ name: d.name, value: d.value, stageId: d.stageId, contactEmail: contactMap.get(d.contactId) || '', expectedCloseDate: d.expectedCloseDate }));
+        const projectsTemplate = db.projects.map((p: Project) => ({ name: p.name, phaseId: p.phaseId, contactEmail: contactMap.get(p.contactId) || '', assignedToId: p.assignedToId || '' }));
+        const ticketsTemplate = db.tickets.map((t: Ticket) => ({ subject: t.subject, description: t.description, status: t.status, priority: t.priority, contactEmail: contactMap.get(t.contactId) || '', assignedToId: t.assignedToId || '' }));
+        const tasksTemplate = db.tasks.map((t: Task) => ({ title: t.title, dueDate: t.dueDate, contactEmail: contactMap.get(t.contactId) || '', assignedToId: t.userId || '' }));
+
+        return respond({
+            'contacts_template.csv': convertToCSV(contactsTemplate),
+            'products_template.csv': convertToCSV(productsTemplate),
+            'deals_template.csv': convertToCSV(dealsTemplate),
+            'projects_template.csv': convertToCSV(projectsTemplate),
+            'tickets_template.csv': convertToCSV(ticketsTemplate),
+            'tasks_template.csv': convertToCSV(tasksTemplate),
+        });
+    }
+
+    if (path === '/api/v1/data-migration/import' && method === 'POST') {
+        const { contactsCsv, dealsCsv, productsCsv, projectsCsv, ticketsCsv, tasksCsv } = body;
+        const summary = { contactsCreated: 0, dealsCreated: 0, productsCreated: 0, projectsCreated: 0, ticketsCreated: 0, tasksCreated: 0, contactsSkipped: 0, dealsSkipped: 0 };
+        const emailToNewIdMap = new Map<string, string>();
+
+        if (productsCsv) {
+            const newProducts = parseCsv(productsCsv);
+            for (const productData of newProducts) {
+                 const newProduct: Omit<Product, 'id'> = {
+                    organizationId: 'org_1',
+                    name: productData.name,
+                    sku: productData.sku,
+                    category: productData.category,
+                    description: productData.description,
+                    costPrice: parseFloat(productData.costPrice) || 0,
+                    salePrice: parseFloat(productData.salePrice) || 0,
+                    stockLevel: parseInt(productData.stockLevel, 10) || 0,
+                };
+                db.products.push({ ...newProduct, id: `prod_${Date.now()}_${Math.random()}`});
+                summary.productsCreated++;
+            }
+        }
+        
+        if (contactsCsv) {
+            const newContacts = parseCsv(contactsCsv);
+            for (const contactData of newContacts) {
+                if (!contactData.email || db.contacts.some((c: AnyContact) => c.email.toLowerCase() === contactData.email.toLowerCase())) {
+                    summary.contactsSkipped++;
+                    continue;
+                }
+                const newContact: AnyContact = {
+                    id: `contact_${Date.now()}_${Math.random()}`,
+                    organizationId: 'org_1',
+                    contactName: contactData.contactName || 'N/A',
+                    email: contactData.email,
+                    phone: contactData.phone || '',
+                    status: contactData.status || 'Lead',
+                    leadSource: 'Import',
+                    createdAt: new Date().toISOString(),
+                    customFields: {},
+                };
+                db.contacts.push(newContact);
+                emailToNewIdMap.set(newContact.email, newContact.id);
+                summary.contactsCreated++;
+            }
+        }
+
+        const findContactIdByEmail = (email: string) => {
+            if (!email) return null;
+            if (emailToNewIdMap.has(email)) return emailToNewIdMap.get(email);
+            const existing = db.contacts.find((c: AnyContact) => c.email.toLowerCase() === email.toLowerCase());
+            return existing ? existing.id : null;
+        }
+
+        if (dealsCsv) {
+            const newDeals = parseCsv(dealsCsv);
+            for (const dealData of newDeals) {
+                const contactId = findContactIdByEmail(dealData.contactEmail);
+                if (!contactId) { summary.dealsSkipped++; continue; }
+                const newDeal: Omit<Deal, 'id'> = {
+                    organizationId: 'org_1',
+                    name: dealData.name, value: parseFloat(dealData.value) || 0, stageId: dealData.stageId,
+                    contactId: contactId, expectedCloseDate: dealData.expectedCloseDate || new Date().toISOString(), createdAt: new Date().toISOString(),
+                };
+                db.deals.push({ ...newDeal, id: `deal_${Date.now()}_${Math.random()}`});
+                summary.dealsCreated++;
+            }
+        }
+
+        if (projectsCsv) {
+            const newProjects = parseCsv(projectsCsv);
+            for (const projectData of newProjects) {
+                const contactId = findContactIdByEmail(projectData.contactEmail);
+                if (!contactId) continue;
+                const newProject: Omit<Project, 'id'> = {
+                     organizationId: 'org_1', name: projectData.name, phaseId: projectData.phaseId, contactId: contactId,
+                     createdAt: new Date().toISOString(), assignedToId: projectData.assignedToId || undefined
+                };
+                db.projects.push({...newProject, id: `project_${Date.now()}_${Math.random()}`});
+                summary.projectsCreated++;
+            }
+        }
+
+        if (ticketsCsv) {
+            const newTickets = parseCsv(ticketsCsv);
+            for (const ticketData of newTickets) {
+                const contactId = findContactIdByEmail(ticketData.contactEmail);
+                if (!contactId) continue;
+                const newTicket: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt' | 'replies'> = {
+                    organizationId: 'org_1', subject: ticketData.subject, description: ticketData.description,
+                    status: ticketData.status || 'New', priority: ticketData.priority || 'Medium', contactId: contactId, assignedToId: ticketData.assignedToId || undefined
+                };
+                db.tickets.push({...newTicket, id: `ticket_${Date.now()}_${Math.random()}`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), replies: []});
+                summary.ticketsCreated++;
+            }
+        }
+
+        if (tasksCsv) {
+            const newTasks = parseCsv(tasksCsv);
+            for (const taskData of newTasks) {
+                const contactId = findContactIdByEmail(taskData.contactEmail);
+                const newTask: Omit<Task, 'id' | 'isCompleted'> = {
+                    organizationId: 'org_1', title: taskData.title, dueDate: taskData.dueDate || new Date().toISOString(),
+                    userId: taskData.assignedToId || MOCK_USERS[1].id, contactId: contactId || undefined
+                };
+                db.tasks.push({...newTask, id: `task_${Date.now()}_${Math.random()}`, isCompleted: false});
+                summary.tasksCreated++;
+            }
+        }
+
+        return respond(summary);
     }
     
     // --- SANDBOXES (Managed outside the main DB object) ---
@@ -201,7 +401,7 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     const orgMatch = path.match(/^\/api\/v1\/organizations\/([a-zA-Z0-9_]+)$/);
     if (orgMatch && method === 'PUT') {
         const orgId = orgMatch[1];
-        const index = db.organizations.findIndex(o => o.id === orgId);
+        const index = db.organizations.findIndex((o: any) => o.id === orgId);
         if (index > -1) {
             db.organizations[index] = { ...db.organizations[index], ...body };
             return respond(db.organizations[index]);
@@ -218,7 +418,7 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     const customObjectDefMatch = path.match(/^\/api\/v1\/custom-object-definitions\/(.+)$/);
     if (customObjectDefMatch && method === 'PUT') {
         const defId = customObjectDefMatch[1];
-        const index = db.customObjectDefs.findIndex(d => d.id === defId);
+        const index = db.customObjectDefs.findIndex((d: any) => d.id === defId);
         if (index > -1) {
             db.customObjectDefs[index] = { ...db.customObjectDefs[index], ...body };
             return respond(db.customObjectDefs[index]);
@@ -229,7 +429,7 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     // --- DEAL STAGES ---
     if (path === '/api/v1/deal-stages' && method === 'PUT') {
         const { orgId, stages } = body;
-        db.dealStages = db.dealStages.filter(s => s.organizationId !== orgId);
+        db.dealStages = db.dealStages.filter((s: DealStage) => s.organizationId !== orgId);
         const newStages = stages.map((name: string, index: number) => ({
             id: `stage_ai_${index}_${Date.now()}`,
             organizationId: orgId,
@@ -289,7 +489,7 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
     const settingsMatch = path.match(/^\/api\/v1\/organizations\/([a-zA-Z0-9_]+)\/settings$/);
     if (settingsMatch) {
         const orgId = settingsMatch[1];
-        const org = db.organizations.find(o => o.id === orgId);
+        const org = db.organizations.find((o: any) => o.id === orgId);
         if (!org) {
             return respond({ message: 'Organization not found' }, 404);
         }
@@ -309,36 +509,36 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
             const dashboardData = generateDashboardData(db.contacts, db.interactions);
             return respond(dashboardData);
         }
-        if (path === '/api/v1/contacts') return respond(db.contacts.filter(c => c.organizationId === orgId));
-        if (path === '/api/v1/team') return respond(db.users.filter(u => u.organizationId === orgId && !u.isClient));
-        if (path === '/api/v1/roles') return respond(db.roles.filter(r => r.organizationId === orgId));
+        if (path === '/api/v1/contacts') return respond(db.contacts.filter((c: any) => c.organizationId === orgId));
+        if (path === '/api/v1/team') return respond(db.users.filter((u: any) => u.organizationId === orgId && !u.isClient));
+        if (path === '/api/v1/roles') return respond(db.roles.filter((r: any) => r.organizationId === orgId));
         if (path === '/api/v1/tasks') {
             const userId = searchParams.get('userId');
             const canViewAll = searchParams.get('canViewAll') === 'true';
-            const userTasks = db.tasks.filter(t => t.organizationId === orgId && (canViewAll || t.userId === userId));
+            const userTasks = db.tasks.filter((t: any) => t.organizationId === orgId && (canViewAll || t.userId === userId));
             return respond(userTasks);
         }
-        if (path === '/api/v1/calendar/events') return respond(db.calendarEvents.filter(e => (e as any).organizationId === orgId));
-        if (path === '/api/v1/products') return respond(db.products.filter(p => p.organizationId === orgId));
-        if (path === '/api/v1/deals') return respond(db.deals.filter(d => d.organizationId === orgId));
-        if (path === '/api/v1/deal-stages') return respond(db.dealStages.filter(d => d.organizationId === orgId));
-        if (path === '/api/v1/projects') return respond(db.projects.filter(p => p.organizationId === orgId));
-        if (path === '/api/v1/project-phases') return respond(db.projectPhases.filter(p => p.organizationId === orgId));
-        if (path === '/api/v1/interactions') return respond(db.interactions.filter(i => i.organizationId === orgId));
-        if (path === '/api/v1/tickets') return respond(db.tickets.filter(t => t.organizationId === orgId));
-        if (path === '/api/v1/email-templates') return respond(db.emailTemplates.filter(t => t.organizationId === orgId));
-        if (path === '/api/v1/workflows') return respond(db.workflows.filter(w => w.organizationId === orgId));
-        if (path === '/api/v1/advanced-workflows') return respond(db.advancedWorkflows.filter(w => w.organizationId === orgId));
-        if (path === '/api/v1/api-keys') return respond(db.apiKeys.filter(k => k.organizationId === orgId));
-        if (path === '/api/v1/forms') return respond(db.forms.filter(f => f.organizationId === orgId));
-        if (path === '/api/v1/campaigns') return respond(db.campaigns.filter(c => c.organizationId === orgId));
-        if (path === '/api/v1/landing-pages') return respond(db.landingPages.filter(l => l.organizationId === orgId));
-        if (path === '/api/v1/custom-reports') return respond(db.customReports.filter(r => r.organizationId === orgId));
-        if (path === '/api/v1/dashboards') return respond(db.dashboards.filter(d => d.organizationId === orgId));
-        if (path === '/api/v1/custom-object-definitions') return respond(db.customObjectDefs.filter(d => d.organizationId === orgId));
+        if (path === '/api/v1/calendar/events') return respond(db.calendarEvents.filter((e: any) => (e as any).organizationId === orgId));
+        if (path === '/api/v1/products') return respond(db.products.filter((p: any) => p.organizationId === orgId));
+        if (path === '/api/v1/deals') return respond(db.deals.filter((d: any) => d.organizationId === orgId));
+        if (path === '/api/v1/deal-stages') return respond(db.dealStages.filter((d: any) => d.organizationId === orgId));
+        if (path === '/api/v1/projects') return respond(db.projects.filter((p: any) => p.organizationId === orgId));
+        if (path === '/api/v1/project-phases') return respond(db.projectPhases.filter((p: any) => p.organizationId === orgId));
+        if (path === '/api/v1/interactions') return respond(db.interactions.filter((i: any) => i.organizationId === orgId));
+        if (path === '/api/v1/tickets') return respond(db.tickets.filter((t: any) => t.organizationId === orgId));
+        if (path === '/api/v1/email-templates') return respond(db.emailTemplates.filter((t: any) => t.organizationId === orgId));
+        if (path === '/api/v1/workflows') return respond(db.workflows.filter((w: any) => w.organizationId === orgId));
+        if (path === '/api/v1/advanced-workflows') return respond(db.advancedWorkflows.filter((w: any) => w.organizationId === orgId));
+        if (path === '/api/v1/api-keys') return respond(db.apiKeys.filter((k: any) => k.organizationId === orgId));
+        if (path === '/api/v1/forms') return respond(db.forms.filter((f: any) => f.organizationId === orgId));
+        if (path === '/api/v1/campaigns') return respond(db.campaigns.filter((c: any) => c.organizationId === orgId));
+        if (path === '/api/v1/landing-pages') return respond(db.landingPages.filter((l: any) => l.organizationId === orgId));
+        if (path === '/api/v1/custom-reports') return respond(db.customReports.filter((r: any) => r.organizationId === orgId));
+        if (path === '/api/v1/dashboards') return respond(db.dashboards.filter((d: any) => d.organizationId === orgId));
+        if (path === '/api/v1/custom-object-definitions') return respond(db.customObjectDefs.filter((d: any) => d.organizationId === orgId));
         if (path === '/api/v1/inbox') {
             const conversations: Conversation[] = [];
-            const interactionGroups = db.interactions.reduce((acc, i) => {
+            const interactionGroups = db.interactions.reduce((acc: any, i: any) => {
                 if (!i.notes.includes('Subject:')) return acc; // Only process emails
                 const key = `${i.contactId}-${i.notes.match(/Subject: (.*)/)![1]}`;
                 if (!acc[key]) acc[key] = [];
@@ -349,8 +549,8 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
             for (const key in interactionGroups) {
                 const group = interactionGroups[key].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
                 const last = group[group.length - 1];
-                const contact = db.contacts.find(c => c.id === last.contactId);
-                const teamMember = db.users.find(u => u.id === last.userId);
+                const contact = db.contacts.find((c: any) => c.id === last.contactId);
+                const teamMember = db.users.find((u: any) => u.id === last.userId);
                 if (contact && teamMember) {
                      conversations.push({
                         id: `conv_${contact.id}_${group[0].id}`,
@@ -359,25 +559,25 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
                         channel: 'Email',
                         lastMessageTimestamp: last.date,
                         lastMessageSnippet: last.notes.split('\n\n')[1] || last.notes,
-                        messages: group.map(i => ({ id: i.id, senderId: i.userId, body: i.notes.split('\n\n')[1] || i.notes, timestamp: i.date })),
+                        messages: group.map((i: any) => ({ id: i.id, senderId: i.userId, body: i.notes.split('\n\n')[1] || i.notes, timestamp: i.date })),
                         participants: [{id: contact.id, name: contact.contactName, email: contact.email}, {id: teamMember.id, name: teamMember.name, email: teamMember.email}],
                     });
                 }
             }
             return respond(conversations.sort((a,b) => new Date(b.lastMessageTimestamp).getTime() - new Date(a.lastMessageTimestamp).getTime()));
         }
-        if (path === '/api/v1/team-channels') return respond(db.teamChannels.filter(c => c.organizationId === orgId));
+        if (path === '/api/v1/team-channels') return respond(db.teamChannels.filter((c: any) => c.organizationId === orgId));
         // ... and so on for all other GET endpoints that are filtered by orgId
     }
     
     // --- OTHER DYNAMIC GETs ---
     const dashboardId = searchParams.get('dashboardId');
     if (dashboardId && path === '/api/v1/dashboard-widgets') {
-        return respond(db.dashboardWidgets.filter(w => w.dashboardId === dashboardId));
+        return respond(db.dashboardWidgets.filter((w: any) => w.dashboardId === dashboardId));
     }
     const defId = searchParams.get('defId');
     if (path === '/api/v1/custom-object-records') {
-        const records = defId ? db.customObjectRecords.filter(r => r.objectDefId === defId) : db.customObjectRecords;
+        const records = defId ? db.customObjectRecords.filter((r: any) => r.objectDefId === defId) : db.customObjectRecords;
         return respond(records);
     }
     

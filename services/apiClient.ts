@@ -266,6 +266,10 @@ const apiClient = {
 
     // Data Hygiene
     getDataHygieneSuggestions: (orgId: string) => get(`/api/v1/data-hygiene/suggestions?orgId=${orgId}`),
+
+    // Data Migration
+    exportAllData: () => get('/api/v1/data-migration/export-all'),
+    importData: (data: { [key: string]: string }) => post('/api/v1/data-migration/import', data),
 };
 
 const handleResponse = async (response: Response) => {
