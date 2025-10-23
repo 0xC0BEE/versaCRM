@@ -105,6 +105,9 @@ const DealEditModal: React.FC<DealEditModalProps> = ({ isOpen, onClose, deal }) 
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,
+                config: {
+                    systemInstruction: "You are an AI assistant that links CRM records based on text similarity."
+                }
             });
 
             const text = response.text;

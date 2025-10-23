@@ -23,7 +23,7 @@ const AiLeadScoringSettings: React.FC = () => {
         // Optimistically set the status to 'training'
         updateOrganizationSettingsMutation.mutate({ 
             aiLeadScoringModel: { 
-                ...model,
+                ...(model || {}),
                 status: 'training' 
             } 
         });

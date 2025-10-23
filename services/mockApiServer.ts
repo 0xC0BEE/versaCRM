@@ -20,9 +20,10 @@ import { checkAndTriggerWorkflows } from './workflowService';
 import { recalculateAllScores, recalculateScoreForContact } from './leadScoringService';
 import { campaignService } from './campaignService';
 import { campaignSchedulerService } from './campaignSchedulerService';
-import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, AppNotification, ClientChecklist, SubscriptionPlan, Relationship, AudienceProfile, AnyContact, Deal, DealStage, Document, Product, CustomObjectRecord, CustomObjectDefinition, User, Project, AttributedDeal, Campaign } from '../types';
+import { Sandbox, Conversation, CannedResponse, Interaction, Survey, SurveyResponse, Snapshot, TeamChannel, TeamChatMessage, AppNotification, ClientChecklist, SubscriptionPlan, Relationship, AudienceProfile, AnyContact, Deal, DealStage, Document, Product, CustomObjectRecord, CustomObjectDefinition, User, Project, AttributedDeal, Campaign, ProjectPhase } from '../types';
 import { GoogleGenAI, Type } from '@google/genai';
-import { addMonths } from 'date-fns';
+// FIX: Imported 'addDays' from date-fns to resolve reference error.
+import { addMonths, addDays } from 'date-fns';
 
 // Function to get a fresh, deep-copied initial state of the database.
 // This ensures that every session starts with the full set of mock data.
@@ -321,6 +322,8 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
         if (path === '/api/v1/products') return respond(db.products.filter(p => p.organizationId === orgId));
         if (path === '/api/v1/deals') return respond(db.deals.filter(d => d.organizationId === orgId));
         if (path === '/api/v1/deal-stages') return respond(db.dealStages.filter(d => d.organizationId === orgId));
+        if (path === '/api/v1/projects') return respond(db.projects.filter(p => p.organizationId === orgId));
+        if (path === '/api/v1/project-phases') return respond(db.projectPhases.filter(p => p.organizationId === orgId));
         if (path === '/api/v1/interactions') return respond(db.interactions.filter(i => i.organizationId === orgId));
         if (path === '/api/v1/tickets') return respond(db.tickets.filter(t => t.organizationId === orgId));
         if (path === '/api/v1/email-templates') return respond(db.emailTemplates.filter(t => t.organizationId === orgId));
@@ -392,8 +395,34 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
 
             if (method === 'POST') {
                 const newItem = { ...body, id: `${resource.slice(0, 4)}_${Date.now()}` };
-                if (resource === 'contacts') newItem.createdAt = new Date().toISOString();
+                if (newItem.createdAt === undefined) {
+                    newItem.createdAt = new Date().toISOString();
+                }
+                if (dbKey === 'tickets') {
+                    newItem.updatedAt = new Date().toISOString();
+                }
                 table.push(newItem);
+                
+                // Special handling after creation
+                if (dbKey === 'projects' && newItem.templateId) {
+                    const template = db.projectTemplates.find((t: any) => t.id === newItem.templateId);
+                    if (template) { // FIX: Added check to prevent error when template is not found
+                        template.defaultTasks.forEach((taskDef: any) => {
+                            const newTask = {
+                                id: `task_${Date.now()}`,
+                                organizationId: newItem.organizationId,
+                                title: taskDef.title,
+                                dueDate: addDays(new Date(), taskDef.daysAfterStart).toISOString(),
+                                isCompleted: false,
+                                userId: newItem.assignedToId,
+                                projectId: newItem.id,
+                                contactId: newItem.contactId,
+                            };
+                            db.tasks.push(newTask);
+                        });
+                    }
+                }
+
                 return respond(newItem, 201);
             }
             if (resourceId) {
@@ -401,8 +430,12 @@ const mockFetch = async (url: RequestInfo | URL, config?: RequestInit): Promise<
                 if (itemIndex > -1) {
                     if (method === 'GET') return respond(table[itemIndex]);
                     if (method === 'PUT') {
-                        table[itemIndex] = { ...table[itemIndex], ...body };
-                        return respond(table[itemIndex]);
+                        const updatedItem = { ...table[itemIndex], ...body };
+                        if (dbKey === 'tickets') {
+                            updatedItem.updatedAt = new Date().toISOString();
+                        }
+                        table[itemIndex] = updatedItem;
+                        return respond(updatedItem);
                     }
                     if (method === 'DELETE') {
                         table.splice(itemIndex, 1);

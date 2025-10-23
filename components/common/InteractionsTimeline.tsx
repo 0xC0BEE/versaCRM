@@ -80,8 +80,8 @@ const InteractionsTimeline: React.FC<InteractionsTimelineProps> = ({ interaction
                             ) : null}
                             <div className="relative flex space-x-3">
                                 <div>
-                                    <span className={`h-8 w-8 rounded-full flex items-center justify-center ${interactionColors[interaction.type]}`}>
-                                        {interactionIcons[interaction.type]}
+                                    <span className={`h-8 w-8 rounded-full flex items-center justify-center ${interactionColors[interaction.type] || 'bg-gray-400'}`}>
+                                        {interactionIcons[interaction.type] || <FileText className="h-4 w-4 text-white" />}
                                     </span>
                                 </div>
                                 <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">

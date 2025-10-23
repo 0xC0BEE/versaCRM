@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Project, ProjectPhase, AnyContact, User } from '../../types';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -35,11 +35,10 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ isOpen, onClose, pr
     const initialState = useMemo(() => ({
         name: '',
         contactId: '',
-        phaseId: (projectPhases as ProjectPhase[])[0]?.id || '',
+        phaseId: '',
         assignedToId: '',
-    }), [projectPhases]);
-    
-    // FIX: Create a memoized dependency to safely handle the optional `assignedToId` property on the `project` prop, ensuring compatibility with the `useForm` hook.
+    }), []);
+
     const formDependency = useMemo(() => {
         if (!project) return null;
         return {
@@ -49,7 +48,21 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ isOpen, onClose, pr
         };
     }, [project, initialState]);
 
-    const { formData, handleChange } = useForm(initialState, formDependency);
+    const { formData, handleChange, setFormData } = useForm(initialState, formDependency);
+
+    useEffect(() => {
+        // For new projects, set the default phase once phases have loaded.
+        // This avoids dependency on formData to prevent re-render race conditions.
+        if (isNew && isOpen && projectPhases.length > 0) {
+            setFormData(currentData => {
+                // Only set the default phase if one isn't already selected.
+                if (!currentData.phaseId) {
+                    return { ...currentData, phaseId: (projectPhases as ProjectPhase[])[0].id };
+                }
+                return currentData;
+            });
+        }
+    }, [isNew, isOpen, projectPhases, setFormData]);
     
     const handleSave = () => {
         if (!formData.name.trim() || !formData.contactId) {

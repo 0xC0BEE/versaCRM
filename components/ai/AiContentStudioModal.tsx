@@ -50,6 +50,9 @@ const AiContentStudioModal: React.FC<AiContentStudioModalProps> = ({ isOpen, onC
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,
+                config: {
+                    systemInstruction: "You are a marketing content expert for a CRM."
+                }
             });
             const text = response.text;
             

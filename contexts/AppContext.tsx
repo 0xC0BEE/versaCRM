@@ -5,6 +5,7 @@ import { industryConfigs } from '../config/industryConfig';
 import { featureFlags as defaultFlags } from '../config/featureFlags';
 import { AnyContact } from '../types';
 import { adminTourSteps, teamTourSteps } from '../config/tourConfig';
+import { GoogleGenAI, Type } from '@google/genai';
 
 interface AppContextType {
     // Page navigation
